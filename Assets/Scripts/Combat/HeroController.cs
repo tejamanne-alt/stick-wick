@@ -55,7 +55,13 @@ namespace ProjectInk
             ApplyStyleVisuals();
         }
 
-        void Start() { body.Play(IdleClip, 0f); }
+        void Start()
+        {
+            body.Play(IdleClip, 0f);
+            Invoke(nameof(CheckBody), 0.3f);
+        }
+
+        void CheckBody() { body.CheckVisible(); }
 
         void Update()
         {

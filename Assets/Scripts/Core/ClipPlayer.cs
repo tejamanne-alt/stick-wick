@@ -45,7 +45,23 @@ namespace ProjectInk
             Vector3 fwd = transform.InverseTransformPoint(knee.position) - transform.InverseTransformPoint(hips.position);
             fwd.y = 0f;
             if (fwd.sqrMagnitude < 1e-4f) return;
-            transform.localRotation = Quaternion.FromToRotation(fwd.normalized, Vector3.right);
+            // a pure turn about the vertical axis. (FromToRotation is ambiguous when the model
+            // faces exactly the opposite way, which it does after the FBX axis conversion, and
+            // could roll the model upside down below the floor.)
+            float yaw = Vector3.SignedAngle(fwd.normalized, Vector3.right, Vector3.up);
+            transform.localRotation = Quaternion.AngleAxis(yaw, Vector3.up);
+            Debug.Log($"[ClipPlayer] {transform.parent?.name}: model faced {fwd.normalized:F2}, turned {yaw:F0}°");
+        }
+
+        /// <summary>Warn if the visible body is not standing on the fighter's position.</summary>
+        public void CheckVisible()
+        {
+            var smr = GetComponentInChildren<SkinnedMeshRenderer>();
+            if (smr == null) { Debug.LogWarning($"[ClipPlayer] {name}: no SkinnedMeshRenderer"); return; }
+            var b = smr.bounds;
+            float baseY = transform.position.y;
+            if (b.max.y < baseY + 0.5f || b.min.y < baseY - 0.5f || b.size.y < 0.5f || b.size.y > 5f)
+                Debug.LogWarning($"[ClipPlayer] {transform.parent?.name}: body bounds look wrong (min {b.min}, max {b.max}, size {b.size}) - send this line to Claude");
         }
 
         void Awake()
