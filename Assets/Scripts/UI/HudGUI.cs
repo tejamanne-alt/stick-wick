@@ -86,7 +86,7 @@ namespace ProjectInk
             GUI.matrix = Matrix4x4.identity;
         }
 
-        public bool showDiagnostics = true;   // F1 toggles; turn off once the first run is confirmed
+        public bool showDiagnostics = false;   // F1 toggles the diagnostics readout
 
         void Update()
         {

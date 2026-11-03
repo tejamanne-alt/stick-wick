@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/ProjectInk.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 4;
+        public const int SceneVersion = 5;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Project INK/Build Prototype Scene")]
@@ -39,6 +39,8 @@ namespace ProjectInk.EditorTools
             var ink = Mat("Ink", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
             var enemyInk = Mat("EnemyInk", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
             var ground = Mat("Ground", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
+            // architecture is dark grey, not black: black fighters must read against it
+            var arch = Mat("Architecture", "Unlit/Color", new Color(0.30f, 0.30f, 0.30f));
             var particle = Mat("InkParticle", "Legacy Shaders/Particles/Alpha Blended", Color.white);
             var glow = Mat("LightBurst", "Legacy Shaders/Particles/Additive", new Color(0.5f, 0.5f, 0.5f));
             var trail = Mat("Trail", "Sprites/Default", Color.white);
@@ -52,23 +54,26 @@ namespace ProjectInk.EditorTools
             // ---------------------------------------------------------------- room (all black silhouette)
             var room = new GameObject("Room").transform;
             Box(room, "Ground", new Vector3(0, -2f, 0.5f), new Vector3(60, 4, 9), ground);
-            DoorFrame(room, "DoorLeft", new Vector3(-12.6f, 0, 0.9f), ground, 1.8f);
-            DoorFrame(room, "DoorRight", new Vector3(12.6f, 0, 0.9f), ground, 1.8f);
-            DoorFrame(room, "DoorBack", new Vector3(-3f, 0, 4.4f), ground, 1.6f, true);
+            DoorFrame(room, "DoorLeft", new Vector3(-12.6f, 0, 0.9f), arch, 1.8f);
+            DoorFrame(room, "DoorRight", new Vector3(12.6f, 0, 0.9f), arch, 1.8f);
+            DoorFrame(room, "DoorBack", new Vector3(-3f, 0, 4.4f), arch, 1.6f, true);
 
-            // staircase up to a landing: enemies come down it, and from under it
+            // staircase up to a landing: enemies come down it, and from under it.
+            // The blocks are drawn BEHIND the fighters' lane (z = 0), while their colliders
+            // reach forward through the lane so fighters still walk up the steps.
             const int steps = 8;
             const float rise = 0.3f, run = 0.5f, x0 = 2f;
+            const float visFront = 0.45f, back = 2.0f, colFront = -0.8f;
             for (int i = 0; i < steps; i++)
             {
                 float hgt = rise * (i + 1);
-                Box(room, $"Step{i}", new Vector3(x0 + run * (i + 0.5f), hgt * 0.5f, 0.6f), new Vector3(run, hgt, 2.2f), ground);
+                LaneBox(room, $"Step{i}", x0 + run * (i + 0.5f), hgt * 0.5f, run, hgt, visFront, back, colFront, arch);
             }
             float top = rise * steps;
             float landingX0 = x0 + run * steps;
-            Box(room, "Landing", new Vector3(landingX0 + 2f, top - 0.15f, 0.6f), new Vector3(4f, 0.3f, 2.2f), ground);
-            Box(room, "LandingPillar", new Vector3(landingX0 + 3.8f, (top - 0.3f) * 0.5f, 1.5f), new Vector3(0.25f, top - 0.3f, 0.25f), ground);
-            Box(room, "Railing", new Vector3(landingX0 + 2f, top + 0.5f, 1.55f), new Vector3(4f, 0.06f, 0.06f), ground);
+            LaneBox(room, "Landing", landingX0 + 2f, top - 0.15f, 4f, 0.3f, visFront, back, colFront, arch);
+            Box(room, "LandingPillar", new Vector3(landingX0 + 3.8f, (top - 0.3f) * 0.5f, 1.5f), new Vector3(0.25f, top - 0.3f, 0.25f), arch);
+            Box(room, "Railing", new Vector3(landingX0 + 2f, top + 0.5f, 1.55f), new Vector3(4f, 0.06f, 0.06f), arch);
 
             // ---------------------------------------------------------------- spawn points
             var spawnRoot = new GameObject("SpawnPoints").transform;
@@ -234,6 +239,19 @@ namespace ProjectInk.EditorTools
             go.GetComponent<Renderer>().sharedMaterial = mat;
             go.isStatic = true;
             return go.transform;
+        }
+
+        /// <summary>A block whose visible part spans z = visFront..back (behind the fighters)
+        /// while its collider spans colFront..back, so the walkable top reaches the lane.</summary>
+        static void LaneBox(Transform parent, string name, float x, float y, float sx, float sy,
+                            float visFront, float back, float colFront, Material mat)
+        {
+            float depth = back - visFront;
+            var t = Box(parent, name, new Vector3(x, y, (visFront + back) * 0.5f), new Vector3(sx, sy, depth), mat);
+            var col = t.GetComponent<BoxCollider>();
+            float cz = ((colFront + back) * 0.5f - (visFront + back) * 0.5f) / depth;
+            col.center = new Vector3(0f, 0f, cz);
+            col.size = new Vector3(1f, 1f, (back - colFront) / depth);
         }
 
         static void DoorFrame(Transform parent, string name, Vector3 basePos, Material mat, float width, bool facingCamera = false)
