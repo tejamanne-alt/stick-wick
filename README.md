@@ -50,6 +50,14 @@ pip install bpy==5.2.3 pillow
 python tools/blender/build_stickman.py --preview
 ```
 
+## Open and play on a Mac (or PC)
+
+1. Clone the repo, then in Unity Hub choose **Add → Add project from disk** and pick the repo folder. Use Unity **6000.3.27f2** (6.3 LTS). A newer 6.3 patch also works: let Hub upgrade it.
+2. The first import takes a few minutes. If a dialog asks to enable the Input System backends, either answer works; the code supports both.
+3. When the import finishes, the prototype scene is built and opened automatically (`Assets/Scenes/Prototype.unity`). If it isn't, run **Project INK → Build Prototype Scene**.
+4. Set the Game view to a landscape size (for example 1920×1080), then press **Play**. Use A/D or click the left/right half to strike, W for the flying kick, Q/E to dodge, and R to restart.
+5. Commit and push what Unity generated (`*.meta` files, `ProjectSettings/`, `Packages/packages-lock.json`), so the asset IDs stay stable for everyone.
+
 ## Build
 
 In the Unity editor: **Project INK → Build Prototype Scene**, then press Play. Or use **Build Android APK**.
