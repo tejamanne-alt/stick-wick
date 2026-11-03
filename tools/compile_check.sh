@@ -8,7 +8,12 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 docker run --rm -v "$ROOT":/proj -w /proj "$IMAGE" bash -c '
 set -e
 D=/opt/unity/Editor/Data
-CSC="$D/NetCoreRuntime/dotnet $D/DotNetSdkRoslyn/csc.dll"
+# the compiler moved between Unity versions: 6.3 ships DotNetSdkRoslyn, 6.6 a full .NET SDK
+if [ -f $D/DotNetSdkRoslyn/csc.dll ]; then
+  CSC="$D/NetCoreRuntime/dotnet $D/DotNetSdkRoslyn/csc.dll"
+else
+  CSC="$D/DotNetSdk/dotnet $(find $D/DotNetSdk/sdk -path "*Roslyn/bincore/csc.dll" | head -1)"
+fi
 REFS=""
 for f in $D/Managed/UnityEngine/*.dll; do REFS="$REFS -r:$f"; done
 REFS="$REFS -r:$D/NetStandard/ref/2.1.0/netstandard.dll"

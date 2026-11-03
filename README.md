@@ -78,4 +78,4 @@ The workflow needs a Unity license. In the GitHub repo, go to **Settings → Sec
 
 ## Status
 
-Code compiles against Unity 6000.6.8f1 (`tools/compile_check.sh`). The first in-editor run and device build are waiting on the Unity license.
+Code compiles against Unity 6000.6.8f1 (`tools/compile_check.sh`). Input System 1.20.1 and the built-in shaders the prototype uses ship with that version. The first in-editor run is next.
