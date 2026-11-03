@@ -3,45 +3,45 @@
 A cinematic stickman fighting game for Android and iOS, built with Unity 6.6 and Blender.
 The design is in the plan doc; this repo is the build.
 
-## Prototype 0.1: what's in it
+## Prototype 0.2: what's in it
 
-One grey-box room with a staircase and landing. Three waves of grunts come from the left
-door, the right door (under the landing), down the stairs, out of the background, and
-drop from the ceiling.
+A cut-away of a two-floor building, seen side-on:
+- a ground floor and an upper floor with an open ledge
+- a staircase, a back door, a ceiling vent
+- doors on both floors
+
+Enemies come in colours, so you can read a crowd at a glance. They pour in from every door, climb the stairs, leap off the ledge and drop from the vent. Every fight leaves its colours on the floors and walls.
 
 | Input (touch) | Key | Action |
 | --- | --- | --- |
-| Tap left / right half | A / D or arrows | Dash to the best enemy on that side and strike (combo: jab, cross, front kick, jab, cross, roundhouse) |
-| Swipe up | W / Up | Flying kick |
-| Swipe left / right | Q / E | Dodge (just before a hit = bullet time) |
-| Tap while an enemy glows red | | Counter (slow-mo, knockdown) |
-| Swipe down | S / Down / Tab, or 1/2/3 | Switch fighting style: Fists → Sword → Gun-Fu |
+| Tap left / right half | A / D or arrows | Dash (or leap or dive to another floor) to the best enemy on that side and strike |
+| Swipe up | W / Up | Leap attack |
+| Swipe left / right | Q / E | Dodge. Into an attacker's red flash, it becomes a slow-mo vault over them, landing at their back |
+| Swipe down | S / Down / F | Throw the weapon in hand (a spinning kill) |
+| Two-finger tap (Flow full) | Space | RAMPAGE: 5 s of slowed time; every tap blinks to an enemy for a one-hit finisher |
+| Tap while an enemy glows red | | Counter |
+| | Tab, 1/2/3 | Testing: give the hero a weapon |
 | | R | Restart |
 
-Three fighting styles share the same controls:
+| Enemy | Colour | What it does | What it leaves |
+| --- | --- | --- | --- |
+| Brawler | teal, olive, ochre, violet, rust, green | Punches and kicks | |
+| Swordsman | crimson | Overhead cuts | A sword (10 cuts) |
+| Gunner | steel blue | Keeps its distance; a red laser sight, then a shot (dodge it) | A pistol (8 shots) |
+| Brute (every 5th wave) | deep red | A giant; shrugs off light hits | |
 
-| Style | Moves |
-| --- | --- |
-| **Fists** | Motion-captured martial arts: jab, cross, knee, front kick, roundhouse, back kick behind, flying kick, spin-kick finisher |
-| **Sword** | Rising cut, overhead cut and lunging thrust that cut through everyone in reach; back slash behind without turning; leaping slam (swipe up); white crescent slash trails |
-| **Gun-Fu** | Shots at range, behind you without turning; up close, pistol-whip, then grapple and throw followed by a finishing shot; 12-round magazine with reloads |
+Weapons wear out, and then the hero throws them.
 
-From wave 2, some enemies carry swords.
-
-The game picks the move for you:
-- an enemy close behind gets a back kick, without turning around
-- an enemy above you on the stairs gets a flying kick
-- a blow that will finish an enemy becomes a roundhouse
+The loop:
+- Hits fill the **Flow** meter, which powers Rampage.
+- A **style rank** (D → C → B → A → S → SS → SSS) rises with varied moves and environment kills (wall splats, drops off the ledge), and falls when you're hit. Your rank multiplies your score.
+- **Endless floors:** 5 waves each, getting harder.
+- Best score and floor are saved.
 
 Cinematic layer:
-- hit-stop of 2–8 frames on every hit
-- camera shake and a zoom punch on heavy hits
-- a one-frame impact flash, ink splashes and limb motion trails
-- the last enemy of each wave triggers a slow-mo orbit "kill cam" that returns to the gameplay side
-- look matched to the reference: solid black silhouettes on a soft grey backdrop, white slash trails, light bursts, the fallen pile up on the ground
-- landscape only
-
-Only 2 enemies may attack at once (attack tokens). The rest circle and wait.
+- Motion-captured martial arts, hand-keyed weapon moves, hit-stop, white slash and limb trails, light bursts, coloured ink.
+- Letterbox bars slide in during every slow-mo.
+- Every wave ends with a slow-mo orbit "kill cam".
 
 ## Layout
 

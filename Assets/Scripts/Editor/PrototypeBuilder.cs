@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/ProjectInk.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 5;
+        public const int SceneVersion = 6;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Project INK/Build Prototype Scene")]
@@ -51,42 +51,50 @@ namespace ProjectInk.EditorTools
             RenderSettings.ambientLight = Color.white;
             RenderSettings.skybox = null;
 
-            // ---------------------------------------------------------------- room (all black silhouette)
-            var room = new GameObject("Room").transform;
+            // ---------------------------------------------------------------- the building
+            // A cut-away of a two-floor building, seen side-on: black floors and outer walls, a
+            // light interior back wall (black fighters and coloured enemies both read on it, and
+            // it keeps the colour of every fight), a staircase in a lane just behind the fight
+            // lane, an open ledge on the upper floor, doors on both floors and at the back.
+            var interior = Mat("Interior", "Unlit/Color", new Color(0.76f, 0.75f, 0.72f));
+            var room = new GameObject("Building").transform;
+            const float halfW = 13.2f, floorY = 3.2f, roofY = 6.8f, laneFront = -0.6f, wallZ = 2.4f;
             Box(room, "Ground", new Vector3(0, -2f, 0.5f), new Vector3(60, 4, 9), ground);
-            DoorFrame(room, "DoorLeft", new Vector3(-12.6f, 0, 0.9f), arch, 1.8f);
-            DoorFrame(room, "DoorRight", new Vector3(12.6f, 0, 0.9f), arch, 1.8f);
-            DoorFrame(room, "DoorBack", new Vector3(-3f, 0, 4.4f), arch, 1.6f, true);
-
-            // staircase up to a landing: enemies come down it, and from under it.
-            // The blocks are drawn BEHIND the fighters' lane (z = 0), while their colliders
-            // reach forward through the lane so fighters still walk up the steps.
-            const int steps = 8;
-            const float rise = 0.3f, run = 0.5f, x0 = 2f;
-            const float visFront = 0.45f, back = 2.0f, colFront = -0.8f;
+            Box(room, "BackWall", new Vector3(0, roofY * 0.5f, wallZ), new Vector3(halfW * 2f, roofY, 0.3f), interior);
+            Box(room, "Roof", new Vector3(0, roofY + 0.1f, (laneFront + wallZ) * 0.5f), new Vector3(halfW * 2f + 0.4f, 0.2f, wallZ - laneFront), ground);
+            Box(room, "WallLeft", new Vector3(-halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
+            Box(room, "WallRight", new Vector3(halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
+            // upper floor: from the left wall to an open ledge at x = 0
+            Box(room, "UpperFloor", new Vector3(-halfW * 0.5f, floorY - 0.075f, (laneFront + wallZ) * 0.5f), new Vector3(halfW, 0.15f, wallZ - laneFront), ground);
+            // staircase up to the ledge, in its own lane (z 0.9 to 1.7) so fights on the ground pass in front of it
+            const int steps = 10;
+            const float rise = floorY / steps, run = 0.5f;
             for (int i = 0; i < steps; i++)
             {
-                float hgt = rise * (i + 1);
-                LaneBox(room, $"Step{i}", x0 + run * (i + 0.5f), hgt * 0.5f, run, hgt, visFront, back, colFront, arch);
+                float hgt = rise * (steps - i);
+                LaneBox(room, $"Step{i}", run * (i + 0.5f), hgt * 0.5f, run, hgt, 0.9f, 1.7f, 0.9f, arch);
             }
-            float top = rise * steps;
-            float landingX0 = x0 + run * steps;
-            LaneBox(room, "Landing", landingX0 + 2f, top - 0.15f, 4f, 0.3f, visFront, back, colFront, arch);
-            Box(room, "LandingPillar", new Vector3(landingX0 + 3.8f, (top - 0.3f) * 0.5f, 1.5f), new Vector3(0.25f, top - 0.3f, 0.25f), arch);
-            Box(room, "Railing", new Vector3(landingX0 + 2f, top + 0.5f, 1.55f), new Vector3(4f, 0.06f, 0.06f), arch);
+            Box(room, "StairRail", new Vector3(steps * run * 0.5f, floorY * 0.5f + 0.9f, 1.75f), new Vector3(Mathf.Sqrt(steps * run * steps * run + floorY * floorY), 0.05f, 0.05f), arch)
+                .rotation = Quaternion.Euler(0f, 0f, -Mathf.Atan2(floorY, steps * run) * Mathf.Rad2Deg);
+            DoorFrame(room, "DoorLeft", new Vector3(-12.4f, 0, 0.9f), arch, 1.8f);
+            DoorFrame(room, "DoorRight", new Vector3(12.4f, 0, 0.9f), arch, 1.8f);
+            DoorFrame(room, "DoorUpper", new Vector3(-12.4f, floorY, 0.9f), arch, 1.8f);
+            DoorFrame(room, "DoorBack", new Vector3(-6f, 0, wallZ - 0.2f), arch, 1.6f, true);
+            DoorFrame(room, "Window", new Vector3(-6f, floorY + 1.0f, wallZ - 0.2f), arch, 1.4f, true);
+            DoorFrame(room, "Vent", new Vector3(3f, roofY - 0.1f, wallZ - 0.2f), arch, 1.0f, true);
 
             // ---------------------------------------------------------------- spawn points
             var spawnRoot = new GameObject("SpawnPoints").transform;
             var points = new Transform[5];
             points[(int)SpawnKind.LeftDoor] = Point(spawnRoot, "LeftDoor", new Vector3(-12.2f, 0, 0));
             points[(int)SpawnKind.RightDoor] = Point(spawnRoot, "RightDoor", new Vector3(12.2f, 0, 0));
-            points[(int)SpawnKind.StairsTop] = Point(spawnRoot, "StairsTop", new Vector3(landingX0 + 3.2f, top, 0));
-            points[(int)SpawnKind.Background] = Point(spawnRoot, "Background", new Vector3(-3f, 0, 4.3f));
-            points[(int)SpawnKind.Ceiling] = Point(spawnRoot, "Ceiling", new Vector3(0f, 7.5f, 0));
+            points[(int)SpawnKind.UpperDoor] = Point(spawnRoot, "UpperDoor", new Vector3(-12.2f, floorY, 0));
+            points[(int)SpawnKind.Background] = Point(spawnRoot, "Background", new Vector3(-6f, 0, wallZ - 0.4f));
+            points[(int)SpawnKind.Ceiling] = Point(spawnRoot, "Ceiling", new Vector3(0f, roofY - 0.6f, 0));
 
             // ---------------------------------------------------------------- hero + systems
             var heroGo = FighterFactory.Build(model, moves, ink, "Hero", true, trail);
-            heroGo.transform.position = Vector3.zero;
+            heroGo.transform.position = new Vector3(6f, 0f, 0f);
             var hero = heroGo.GetComponent<HeroController>();
 
             var systems = new GameObject("Systems");
@@ -96,12 +104,14 @@ namespace ProjectInk.EditorTools
             fx.particleMaterial = particle;
             fx.glowMaterial = glow;
             fx.lineMaterial = trail;
+            fx.wallZ = 2.24f;
             var director = systems.AddComponent<WaveDirector>();
             director.hero = hero;
             director.enemyModel = model;
             director.moves = moves;
             director.enemyMaterial = enemyInk;
             director.trailMaterial = trail;
+            director.weaponMaterial = ink;
             director.spawnPoints = points;
             var hud = systems.AddComponent<HudGUI>();
             hud.hero = hero;
@@ -117,11 +127,13 @@ namespace ProjectInk.EditorTools
             camGo.AddComponent<AudioListener>();
             var dirCam = camGo.AddComponent<CameraDirector>();
             dirCam.hero = heroGo.transform;
-            dirCam.minDistance = 9.5f;
-            dirCam.maxDistance = 16f;
-            dirCam.height = 1.3f;
-            dirCam.lookHeight = 1.05f;
-            camGo.transform.position = new Vector3(0, 1.3f, -9.5f);
+            dirCam.minDistance = 11f;
+            dirCam.maxDistance = 19f;
+            dirCam.height = 1.6f;
+            dirCam.lookHeight = 1.35f;
+            dirCam.minX = -7f;
+            dirCam.maxX = 7f;
+            camGo.transform.position = new Vector3(6f, 1.6f, -11f);
 
             // grey gradient backdrop that travels with the camera, so it fills every shot,
             // including the kill-cam orbits

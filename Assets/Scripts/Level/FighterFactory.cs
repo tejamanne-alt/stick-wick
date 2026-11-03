@@ -7,7 +7,7 @@ namespace ProjectInk
     public static class FighterFactory
     {
         public static GameObject Build(GameObject model, MoveSet moves, Material material, string name, bool hero,
-                                       Material trailMaterial = null, bool armedWithSword = false)
+                                       Material trailMaterial = null, bool armedWithSword = false, bool armedWithGun = false)
         {
             var root = new GameObject(name);
             // the model is inactive while we wire it up, so Awake runs once everything is set
@@ -41,7 +41,7 @@ namespace ProjectInk
             Transform muzzle = null;
             if (hero || armedWithSword)
                 sword = BuildSword(player, material, trailMaterial, out swordTrail);
-            if (hero)
+            if (hero || armedWithGun)
                 pistol = BuildPistol(player, material, out muzzle);
 
             Fighter f = hero ? root.AddComponent<HeroController>() : (Fighter)root.AddComponent<Enemy>();
@@ -52,8 +52,9 @@ namespace ProjectInk
                 h.pistol = pistol;
                 h.swordTrail = swordTrail;
                 h.muzzle = muzzle;
+                h.weaponMaterial = material;
+                h.trailMaterial = trailMaterial;
             }
-            else if (f is Enemy e) e.Armed = armedWithSword;
             root.SetActive(true);
             return root;
         }
@@ -74,7 +75,7 @@ namespace ProjectInk
             return mount;
         }
 
-        static Transform Part(Transform parent, Vector3 localPos, Vector3 size, Material mat)
+        public static Transform Part(Transform parent, Vector3 localPos, Vector3 size, Material mat)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Object.DestroyImmediate(go.GetComponent<Collider>());
@@ -88,14 +89,29 @@ namespace ProjectInk
             return go.transform;
         }
 
+        /// <summary>Sword geometry along the parent's +Z, from the fist (handle, guard, blade).</summary>
+        public static Transform SwordModel(Transform parent, Material mat)
+        {
+            Part(parent, new Vector3(0, 0, -0.04f), new Vector3(0.035f, 0.035f, 0.2f), mat);   // handle
+            Part(parent, new Vector3(0, 0, 0.07f), new Vector3(0.05f, 0.13f, 0.025f), mat);   // guard
+            Part(parent, new Vector3(0, 0, 0.55f), new Vector3(0.022f, 0.05f, 0.95f), mat);   // blade
+            return parent;
+        }
+
+        /// <summary>Pistol geometry along the parent's +Z (slide and barrel, grip).</summary>
+        public static Transform PistolModel(Transform parent, Material mat)
+        {
+            Part(parent, new Vector3(0, 0.02f, 0.06f), new Vector3(0.045f, 0.06f, 0.22f), mat);
+            Part(parent, new Vector3(0, -0.05f, -0.01f), new Vector3(0.04f, 0.12f, 0.055f), mat);
+            return parent;
+        }
+
         static GameObject BuildSword(ClipPlayer player, Material mat, Material trailMat, out TrailRenderer trail)
         {
             trail = null;
             var mount = Mount(player, "Sword");
             if (mount == null) return null;
-            Part(mount, new Vector3(0, 0, -0.04f), new Vector3(0.035f, 0.035f, 0.2f), mat);   // handle
-            Part(mount, new Vector3(0, 0, 0.07f), new Vector3(0.05f, 0.13f, 0.025f), mat);   // guard
-            Part(mount, new Vector3(0, 0, 0.55f), new Vector3(0.022f, 0.05f, 0.95f), mat);   // blade
+            SwordModel(mount, mat);
             var tip = new GameObject("Tip").transform;
             tip.SetParent(mount, false);
             tip.localPosition = new Vector3(0, 0, 1.0f);
@@ -120,8 +136,7 @@ namespace ProjectInk
             muzzle = null;
             var mount = Mount(player, "Pistol");
             if (mount == null) return null;
-            Part(mount, new Vector3(0, 0.02f, 0.06f), new Vector3(0.045f, 0.06f, 0.22f), mat);  // slide and barrel
-            Part(mount, new Vector3(0, -0.05f, -0.01f), new Vector3(0.04f, 0.12f, 0.055f), mat); // grip
+            PistolModel(mount, mat);
             muzzle = new GameObject("Muzzle").transform;
             muzzle.SetParent(mount, false);
             muzzle.localPosition = new Vector3(0, 0.02f, 0.2f);

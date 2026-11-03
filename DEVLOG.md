@@ -90,3 +90,30 @@ You switch styles with a swipe down (Fists → Sword → Gun-Fu). Controls stay 
 - **Enemies:** from wave 2, 30–45% carry swords and attack with telegraphed overhead cuts.
 - **Mocap note:** CMU's swordplay (02_07–09) and shooting (79_96, 80_03) recordings were tried. They are slow demonstrations, so the weapon moves are hand-animated for big readable arcs instead. Their joint caches are kept in `tools/mocap/cache` for later use.
 - Scene version 4.
+
+## 2026-11-04: Gameplay redesign (0.2)
+
+Your feedback was that the gameplay wasn't good, along with a second reference: the early-2000s Flash stickman fights. I took the qualities of that reference rather than its content: vertical play in a building cut-away, colourful crowds, improvised weapons, acrobatics.
+
+- **Arena:** a two-floor cut-away:
+    - light interior back wall, black floors and outer walls
+    - an open ledge on the upper floor
+    - a staircase in a lane behind the fight lane, so ground fights pass in front of it
+    - doors on both floors, a back door, a ceiling vent
+- **Enemies** rewritten, with four colour-coded types: brawler, swordsman, gunner (laser sight, then a shot), and brute (every 5th wave).
+    - Up to 3 attack at once (attack tokens).
+    - They path between floors: up the stairs lane, or a flip off the ledge.
+    - They get up after knockdowns and taunt while waiting.
+    - Wall splats and drops off the ledge are kills.
+    - The fallen leave colour stains on the floors and walls.
+- **Weapons are earned:** swordsmen and gunners drop their weapons, and the hero grabs them on the run. A spent weapon is thrown as a homing, spinning kill; swipe down throws it early.
+- **Vault:** a dodge into an attacker's red flash is a slow-mo front flip over them, landing at their back.
+- **Floors:** the hero leaps up to the upper floor, or dives down from it, by striking at an enemy there.
+- **Rampage:** the Flow meter fills with action. When it's full, a two-finger tap gives 5 s of slowed time where each tap blinks to an enemy for a one-hit finisher.
+- **Hooks:**
+    - a live style rank (D–SSS) that multiplies your score; variety counts
+    - endless floors of 5 waves with rising difficulty
+    - saved best score and floor
+- **HUD:** health, Flow and Rampage prompt, weapon uses, rank letter, floor and wave, letterbox bars in slow-mo, results with bests.
+- **New animations:** front-flip vault, weapon throw, get-up, taunt, gunner aim.
+- Scene version 6.

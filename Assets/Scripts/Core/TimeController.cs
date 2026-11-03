@@ -13,6 +13,16 @@ namespace ProjectInk
 
         float freezeUntil;
         float slowScale = 1f, slowUntil, slowIn, slowOut, slowStart;
+        float rampageScale = 1f, rampageUntil;
+
+        /// <summary>Rampage: hold time at `scale` for `seconds` of real time, under any other slow-mo.</summary>
+        public void Rampage(float scale, float seconds)
+        {
+            rampageScale = scale;
+            rampageUntil = UnityEngine.Time.unscaledTime + seconds;
+        }
+
+        public bool InRampage => UnityEngine.Time.unscaledTime < rampageUntil;
 
         public bool InSlowMo => UnityEngine.Time.unscaledTime < slowUntil;
         public float Scale => UnityEngine.Time.timeScale;
@@ -62,6 +72,7 @@ namespace ProjectInk
         {
             freezeUntil = 0f;
             slowUntil = 0f;
+            rampageUntil = 0f;
         }
 
         void Update()
@@ -73,6 +84,11 @@ namespace ProjectInk
                 float a = Mathf.Clamp01((now - slowStart) / Mathf.Max(0.001f, slowIn));
                 float b = Mathf.Clamp01((slowUntil - now) / Mathf.Max(0.001f, slowOut));
                 scale = Mathf.Lerp(1f, slowScale, Mathf.Min(a, b));
+            }
+            if (now < rampageUntil)
+            {
+                float k = Mathf.Clamp01((rampageUntil - now) / 0.3f);   // ease out at the end
+                scale = Mathf.Min(scale, Mathf.Lerp(1f, rampageScale, k));
             }
             if (now < freezeUntil) scale = 0.02f;
             UnityEngine.Time.timeScale = scale;

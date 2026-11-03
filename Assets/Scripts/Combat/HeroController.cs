@@ -4,13 +4,15 @@ namespace ProjectInk
 {
     public enum FightStyle { Fists, Sword, Gun }
 
-    /// <summary>The player's stickman. The player picks direction and timing; this
-    /// script picks the target, dashes to it and chooses the move. Three fighting styles
-    /// share the same controls (swipe down to switch):
-    /// Fists — mocap martial arts combo, back kick behind, flying kick up the stairs.
-    /// Sword — big cleaving cuts, back slash behind, leaping slam.
-    /// Gun   — shots at range (behind without turning), pistol-whip and throw up close,
-    ///         then a finishing shot on the ground; 12-round magazine with reloads.</summary>
+    /// <summary>The player's stickman. The player picks direction and timing; this script picks
+    /// the target, dashes or leaps to it and chooses the move.
+    /// Fists  — motion-captured martial arts; back kick behind; flying kick up a floor.
+    /// Sword  — taken from a fallen swordsman: cleaving cuts, back slash, leaping slam. Wears out.
+    /// Gun    — taken from a fallen gunner: shots at range (behind without turning), pistol-whip
+    ///          and throw up close, then a finishing shot. Runs dry.
+    /// A worn-out or empty weapon is thrown (also on swipe down) as a spinning kill.
+    /// Dodging an attacker's red flash vaults over them in slow-mo. A full Flow meter unlocks
+    /// Rampage: slowed time where every tap teleports into a one-hit cinematic finisher.</summary>
     public class HeroController : Fighter
     {
         enum State { Idle, Dash, Attack, Dodge, Hurt, Dead }
@@ -18,31 +20,37 @@ namespace ProjectInk
         public float targetRange = 9f;
         public float gunRange = 14f;
         public float closeQuarters = 2.0f;
-        public float dashSpeed = 17f;
+        public float dashSpeed = 20f;
         public float comboWindow = 0.9f;
+        public float rampageSeconds = 5f;
 
         [Header("Weapons (set by FighterFactory)")]
         public GameObject sword;
         public GameObject pistol;
         public TrailRenderer swordTrail;
         public Transform muzzle;
+        public Material weaponMaterial;
+        public Material trailMaterial;
 
         State state = State.Idle;
         AttackData currentAttack;
         Enemy target, pendingExecution;
-        bool hitDone, isCounter, reloading;
+        bool hitDone, isCounter, throwPending;
         int attackDir;
-        float stateTime, invulnerableUntil, lastAttackEnd;
+        float stateTime, invulnerableUntil, lastAttackEnd, rampageUntil;
         int comboStep, closeStep;
         TrailRenderer[] limbTrails;
 
         public FightStyle Style { get; private set; } = FightStyle.Fists;
-        public int Ammo { get; private set; } = AttackData.MagazineSize;
-        public bool Reloading => reloading;
+        public int Ammo { get; private set; }
+        public int SwordUses { get; private set; }
+        public bool Reloading => false;
+        public bool InRampage => Time.unscaledTime < rampageUntil;
+        public float RampageLeft => Mathf.Max(0f, rampageUntil - Time.unscaledTime);
         public int ComboCount { get; private set; }
         public float ComboTimer { get; private set; }
         public bool IsDead => state == State.Dead;
-        public bool Invulnerable => Time.time < invulnerableUntil || state == State.Dead;
+        public bool Invulnerable => Time.time < invulnerableUntil || state == State.Dead || InRampage;
 
         string IdleClip => Style == FightStyle.Sword ? "sword_idle" : Style == FightStyle.Gun ? "gun_idle" : "idle";
 
@@ -79,29 +87,77 @@ namespace ProjectInk
                 case State.Hurt: if (stateTime > 0.35f) EnterIdle(); break;
                 case State.Dead: break;
             }
+            if (state != State.Dead) TryPickup();
 
             if (state != State.Dash && state != State.Dodge && Grounded) velocity.x = Mathf.MoveTowards(velocity.x, 0f, 30f * dt);
             Integrate(dt);
             UpdateTint();
         }
 
-        // ------------------------------------------------------------------ style
+        // ------------------------------------------------------------------ weapons
 
-        public void SetStyle(FightStyle s)
+        void Equip(FightStyle s, int uses)
         {
-            if (Style == s) return;
             Style = s;
             comboStep = 0;
             closeStep = 0;
+            if (s == FightStyle.Sword) SwordUses = uses;
+            if (s == FightStyle.Gun) Ammo = uses;
             ApplyStyleVisuals();
             if (state == State.Idle) body.Play(IdleClip, 0.15f);
-            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, s == FightStyle.Sword ? "SWORD" : s == FightStyle.Gun ? "GUN-FU" : "FISTS");
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, s == FightStyle.Sword ? "SWORD!" : s == FightStyle.Gun ? "GUN!" : "FISTS");
         }
+
+        public void SetStyle(FightStyle s) { Equip(s, s == FightStyle.Sword ? 10 : s == FightStyle.Gun ? 8 : 0); } // debug keys
 
         void ApplyStyleVisuals()
         {
             if (sword != null) sword.SetActive(Style == FightStyle.Sword);
             if (pistol != null) pistol.SetActive(Style == FightStyle.Gun);
+        }
+
+        void TryPickup()
+        {
+            if (Style != FightStyle.Fists) return;
+            foreach (var p in WeaponPickup.All)
+            {
+                if (Mathf.Abs(p.transform.position.x - transform.position.x) < 0.9f &&
+                    Mathf.Abs(p.transform.position.y - 0.35f - transform.position.y) < 0.8f)
+                {
+                    Equip(p.kind, p.uses);
+                    if (InkFx.Instance != null) InkFx.Instance.Burst(p.transform.position, 1.6f);
+                    Destroy(p.gameObject);
+                    return;
+                }
+            }
+        }
+
+        bool WeaponSpent => (Style == FightStyle.Sword && SwordUses <= 0) || (Style == FightStyle.Gun && Ammo <= 0);
+
+        void ThrowWeapon()
+        {
+            if (Style == FightStyle.Fists) return;
+            var t = PickTarget(Facing, 16f) ?? PickTarget(-Facing, 16f);
+            if (t != null) FaceTowards(t.transform.position.x);
+            currentAttack = new AttackData { clip = "throw_weapon", ranged = true };
+            target = t;
+            attackDir = Facing;
+            hitDone = false;
+            throwPending = true;
+            state = State.Attack;
+            stateTime = 0f;
+            body.Play("throw_weapon", 0.05f);
+            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+        }
+
+        void ReleaseThrow()
+        {
+            hitDone = true;
+            throwPending = false;
+            var from = (Style == FightStyle.Sword && sword != null) ? sword.transform.position : muzzle != null ? muzzle.position : Chest;
+            ThrownWeapon.Throw(this, Style, from + Vector3.up * 0.2f, target, Facing, weaponMaterial, trailMaterial);
+            Style = FightStyle.Fists;
+            ApplyStyleVisuals();
         }
 
         // ------------------------------------------------------------------ input
@@ -123,7 +179,8 @@ namespace ProjectInk
         {
             // after the strike lands, the next tap cancels the follow-through: fluid chains
             var e = body.Current;
-            return hitDone && pendingExecution == null && !reloading && e != null && body.Time >= e.hitTime + 0.06f;
+            float window = InRampage ? 0.02f : 0.04f;
+            return hitDone && pendingExecution == null && !throwPending && e != null && body.Time >= e.hitTime + window;
         }
 
         void HandleCommand(Command cmd)
@@ -135,6 +192,8 @@ namespace ProjectInk
                 case Command.JumpKick: JumpAttack(); break;
                 case Command.DodgeLeft: Dodge(-1); break;
                 case Command.DodgeRight: Dodge(1); break;
+                case Command.ThrowWeapon: ThrowWeapon(); break;
+                case Command.Rampage: StartRampage(); break;
                 case Command.CycleStyle: SetStyle((FightStyle)(((int)Style + 1) % 3)); break;
                 case Command.StyleFists: SetStyle(FightStyle.Fists); break;
                 case Command.StyleSword: SetStyle(FightStyle.Sword); break;
@@ -142,7 +201,7 @@ namespace ProjectInk
             }
         }
 
-        Enemy PickTarget(int side, float range)
+        Enemy PickTarget(int side, float range, bool anyLevel = true)
         {
             Enemy best = null;
             float bestScore = float.MaxValue;
@@ -151,7 +210,9 @@ namespace ProjectInk
                 if (!e.Targetable) continue;
                 float dx = e.transform.position.x - transform.position.x;
                 if (Mathf.Sign(dx) != side && Mathf.Abs(dx) > 0.2f) continue;
-                float d = Mathf.Abs(dx) + Mathf.Abs(e.transform.position.y - transform.position.y) * 0.5f;
+                float dy = Mathf.Abs(e.transform.position.y - transform.position.y);
+                if (!anyLevel && dy > 1.4f) continue;
+                float d = Mathf.Abs(dx) + dy * 1.2f;          // prefer my own floor
                 if (d > range) continue;
                 float score = d - (e.Telegraphing ? 2.5f : 0f) - (e.HasToken ? 0.8f : 0f);
                 if (score < bestScore) { bestScore = score; best = e; }
@@ -159,10 +220,53 @@ namespace ProjectInk
             return best;
         }
 
+        // ------------------------------------------------------------------ rampage
+
+        void StartRampage()
+        {
+            var wd = WaveDirector.Instance;
+            if (wd == null || !wd.FlowReady || InRampage) return;
+            wd.SpendFlow();
+            rampageUntil = Time.unscaledTime + rampageSeconds;
+            if (TimeController.Instance != null) TimeController.Instance.Rampage(0.4f, rampageSeconds);
+            if (InkFx.Instance != null) { InkFx.Instance.ImpactFlash(0.08f); InkFx.Instance.Burst(Chest, 6f); }
+            if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(8f, 0.25f);
+            wd.AddStyle(300, "RAMPAGE!");
+        }
+
+        /// <summary>During Rampage every tap blinks next to an enemy on that side (any floor)
+        /// and lands a one-hit finisher.</summary>
+        void RampageStrike(int side)
+        {
+            var t = PickTarget(side, 30f) ?? PickTarget(-side, 30f);
+            if (t == null) return;
+            int dir = t.transform.position.x > transform.position.x ? 1 : -1;
+            var p = t.transform.position - new Vector3(dir * 1.0f, 0f, t.transform.position.z);
+            if (InkFx.Instance != null) InkFx.Instance.Burst(Chest, 2.2f);   // vanish...
+            transform.position = p;                                           // ...and appear
+            velocity = Vector3.zero;
+            Grounded = true;
+            SetFacing(dir);
+            AttackData move = Style == FightStyle.Sword ? AttackData.SwordC
+                            : Style == FightStyle.Gun ? AttackData.GunShoot
+                            : (Random.value < 0.5f ? AttackData.SpinKick : AttackData.Roundhouse);
+            currentAttack = move;
+            target = t;
+            attackDir = dir;
+            hitDone = false;
+            isCounter = true;
+            state = State.Attack;
+            stateTime = 0f;
+            body.Play(move.clip, 0.02f, true, 1.25f);
+            SetTrails(!move.ranged);
+            if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(6f, 0.12f);
+        }
+
         // ------------------------------------------------------------------ choosing the move
 
         void Strike(int side)
         {
+            if (InRampage) { RampageStrike(side); return; }
             if (state == State.Idle && Time.time - lastAttackEnd > comboWindow) { comboStep = 0; closeStep = 0; }
             if (Style == FightStyle.Gun) { GunStrike(side); return; }
 
@@ -177,15 +281,17 @@ namespace ProjectInk
 
             float dx = t.transform.position.x - transform.position.x;
             float dy = t.transform.position.y - transform.position.y;
-            bool counter = t.Telegraphing && Mathf.Abs(dx) < 4f;
+            bool counter = t.Telegraphing && Mathf.Abs(dx) < 4f && Mathf.Abs(dy) < 1.4f;
             bool behindClose = Facing != side && Mathf.Abs(dx) < 1.7f && Mathf.Abs(dy) < 0.5f;
 
             AttackData move;
-            if (Style == FightStyle.Sword)
+            if (dy > 1.4f || dy < -1.4f)
+                move = Style == FightStyle.Sword ? AttackData.SwordLeap : AttackData.FlyingKick;   // another floor: leap or dive
+            else if (Style == FightStyle.Sword)
             {
                 if (counter) move = AttackData.SwordC;
                 else if (behindClose) move = AttackData.SwordBack;               // cut behind without turning
-                else if (dy > 0.8f) move = AttackData.SwordLeap;                 // leap at enemies up the stairs
+                else if (dy > 0.8f) move = AttackData.SwordLeap;
                 else
                 {
                     move = combo[comboStep % combo.Length];
@@ -197,7 +303,7 @@ namespace ProjectInk
             {
                 if (counter) move = AttackData.Counter;
                 else if (behindClose) move = AttackData.BackKick;                // kick behind without turning
-                else if (dy > 0.8f) move = AttackData.FlyingKick;                // enemy above (stairs)
+                else if (dy > 0.8f) move = AttackData.FlyingKick;
                 else
                 {
                     move = combo[comboStep % combo.Length];
@@ -212,22 +318,19 @@ namespace ProjectInk
 
         void GunStrike(int side)
         {
-            if (reloading) return;
             var t = PickTarget(side, gunRange);
             bool behind = Facing != side;
-            bool close = t != null && Mathf.Abs(t.transform.position.x - transform.position.x) <= closeQuarters;
-            if (Ammo <= 0 && !close) { StartReload(); return; }
             if (t == null)
             {
-                // nothing there: fire anyway, it reads as suppressing fire
                 if (!behind) SetFacing(side);
                 StartAttack(behind ? AttackData.GunShootBack : AttackData.GunShoot, null, side, false);
                 return;
             }
             float dist = Mathf.Abs(t.transform.position.x - transform.position.x);
             bool counter = t.Telegraphing && dist < 4f;
+            bool sameFloor = Mathf.Abs(t.transform.position.y - transform.position.y) < 0.6f;
 
-            if (dist <= closeQuarters && !counter && Mathf.Abs(t.transform.position.y - transform.position.y) < 0.6f)
+            if (dist <= closeQuarters && !counter && sameFloor)
             {
                 // close quarters: pistol-whip, then grapple and throw (followed by a finishing shot)
                 SetFacing(side);
@@ -236,14 +339,14 @@ namespace ProjectInk
                 StartAttack(move, t, side, false);
                 return;
             }
-            // at range: shoot, behind without turning if the target is behind
             if (!behind) SetFacing(side);
             StartAttack(behind ? AttackData.GunShootBack : AttackData.GunShoot, t, side, counter);
         }
 
         void JumpAttack()
         {
-            var t = PickTarget(Facing, 7f) ?? PickTarget(-Facing, 7f);
+            if (InRampage) { RampageStrike(Facing); return; }
+            var t = PickTarget(Facing, 9f) ?? PickTarget(-Facing, 9f);
             if (t != null) SetFacing(t.transform.position.x > transform.position.x ? 1 : -1);
             StartAttack(Style == FightStyle.Sword ? AttackData.SwordLeap : AttackData.FlyingKick, t, Facing, false);
         }
@@ -262,14 +365,15 @@ namespace ProjectInk
                 TimeController.Instance.SlowMo(0.25f, 0.9f);
                 t.Interrupt();
             }
-            if (t != null && !move.ranged && !move.behind)
+            bool leap = move.clip == "flying_kick" || move.clip == "sword_leap";
+            if (t != null && !move.ranged && !move.behind && !leap)
             {
                 float gap = Mathf.Abs(t.transform.position.x - transform.position.x);
                 if (gap > move.reach + 0.15f)
                 {
                     state = State.Dash;
                     stateTime = 0f;
-                    body.Play("run", 0.05f, false, 1.6f);
+                    body.Play("run", 0.05f, false, 1.7f);
                     return;
                 }
             }
@@ -296,12 +400,22 @@ namespace ProjectInk
             if (InkFx.Instance != null && !currentAttack.ranged) InkFx.Instance.PlayWhoosh();
             if (currentAttack.clip == "flying_kick" || currentAttack.clip == "sword_leap")
             {
-                // the animation already jumps; physics only lifts the hero to targets up the stairs
+                // the animation already jumps; physics carries the hero to another floor
                 velocity.x = 0f;
-                if (target != null && target.transform.position.y - transform.position.y > 0.5f)
+                if (target != null)
                 {
-                    velocity.y = 6.5f;
-                    Grounded = false;
+                    float dy = target.transform.position.y - transform.position.y;
+                    if (dy > 0.5f)
+                    {
+                        velocity.y = Mathf.Sqrt(2f * gravity * (dy + 0.9f));   // leap up through to the upper floor
+                        Grounded = false;
+                    }
+                    else if (dy < -1.4f)
+                    {
+                        dropThroughUntil = Time.time + 0.5f;                     // dive down to the floor below
+                        velocity.y = 3f;
+                        Grounded = false;
+                    }
                 }
             }
         }
@@ -317,13 +431,14 @@ namespace ProjectInk
                 // glide onto the target during the jump
                 var p = transform.position;
                 float goal = target.transform.position.x - attackDir * currentAttack.reach * 0.9f;
-                p.x = Mathf.MoveTowards(p.x, goal, dashSpeed * 0.6f * Time.deltaTime);
+                p.x = Mathf.MoveTowards(p.x, goal, dashSpeed * 0.7f * Time.deltaTime);
                 transform.position = p;
             }
 
             if (!hitDone && e.hitTime >= 0f && body.Time >= e.hitTime)
             {
-                if (currentAttack.ranged) ResolveShot();
+                if (throwPending) ReleaseThrow();
+                else if (currentAttack.ranged) ResolveShot();
                 else ResolveHit();
             }
 
@@ -334,21 +449,8 @@ namespace ProjectInk
             }
             if (body.Finished && Grounded)
             {
-                if (reloading)
-                {
-                    reloading = false;
-                    Ammo = AttackData.MagazineSize;
-                }
-                else if (pendingExecution != null)
-                {
-                    StartExecution();
-                    return;
-                }
-                else if (Style == FightStyle.Gun && Ammo <= 0)
-                {
-                    StartReload();
-                    return;
-                }
+                if (pendingExecution != null) { StartExecution(); return; }
+                if (WeaponSpent && !InRampage) { ThrowWeapon(); return; }   // worn out: throw it
                 lastAttackEnd = Time.time;
                 EnterIdle();
             }
@@ -368,7 +470,6 @@ namespace ProjectInk
             };
 
             bool landed = false;
-            // primary target, then anyone else in the strike's path (heavy moves and swords)
             foreach (var e in Enemy.All.ToArray())
             {
                 if (!e.Targetable) continue;
@@ -379,13 +480,17 @@ namespace ProjectInk
                 float yTol = currentAttack.clip == "flying_kick" || currentAttack.clip == "sword_leap" ? 1.8f : 1.0f;
                 if (dx < -0.2f || dx > reach || dy > yTol) continue;
                 if (!primary && !currentAttack.heavy && !currentAttack.cleave && target != null) continue;
-                bool killing = e.Health <= hit.damage;
-                e.TakeHit(hit);
+                bool killing = InRampage || e.Health <= hit.damage;
+                if (InRampage) e.Kill(hit); else e.TakeHit(hit);
                 landed = true;
-                OnLanded(e, killing);
+                OnStrikeLanded(e, killing);
                 if (currentAttack.clip == "gun_throw" && primary && !killing) pendingExecution = e;
             }
-            if (landed) Impact();
+            if (landed)
+            {
+                if (Style == FightStyle.Sword && !InRampage) SwordUses--;
+                Impact();
+            }
         }
 
         void ResolveShot()
@@ -393,23 +498,22 @@ namespace ProjectInk
             hitDone = true;
             Vector3 from = muzzle != null ? muzzle.position : Chest + Vector3.right * attackDir * 0.6f;
             bool execution = currentAttack.clip == "gun_shoot_down";
-            if (!execution) Ammo = Mathf.Max(0, Ammo - 1);
+            if (!execution && !InRampage) Ammo = Mathf.Max(0, Ammo - 1);
 
             Vector3 to;
             if (target != null && (execution ? target.Alive : target.Targetable))
             {
                 to = execution ? target.transform.position + Vector3.up * 0.25f : target.Chest;
-                bool killing = execution || target.Health <= currentAttack.damage;
-                if (execution) target.Execute(this);
-                else
+                bool killing = execution || InRampage || target.Health <= currentAttack.damage;
+                var hit = new HitInfo
                 {
-                    target.TakeHit(new HitInfo
-                    {
-                        damage = currentAttack.damage, direction = attackDir, knockback = currentAttack.knockback,
-                        knockdown = killing, heavy = false, attacker = this
-                    });
-                }
-                OnLanded(target, killing);
+                    damage = currentAttack.damage, direction = attackDir, knockback = currentAttack.knockback,
+                    knockdown = killing, heavy = false, attacker = this
+                };
+                if (execution) target.Execute(this);
+                else if (InRampage) target.Kill(hit);
+                else target.TakeHit(hit);
+                OnStrikeLanded(target, killing);
                 Impact();
             }
             else to = from + new Vector3(attackDir, 0f, 0f) * 16f;
@@ -418,14 +522,15 @@ namespace ProjectInk
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.05f, 0.08f);
         }
 
-        void OnLanded(Enemy e, bool killing)
+        void OnStrikeLanded(Enemy e, bool killing)
         {
             ComboCount++;
             ComboTimer = 2f;
-            if (WaveDirector.Instance != null) WaveDirector.Instance.OnHeroHit(e, ComboCount, currentAttack.heavy || currentAttack.cleave, killing);
+            if (WaveDirector.Instance != null)
+                WaveDirector.Instance.OnHeroHit(e, ComboCount, currentAttack.heavy || currentAttack.cleave, killing, currentAttack.clip);
             if (InkFx.Instance != null)
             {
-                InkFx.Instance.Splash(e.Chest, new Vector3(attackDir, 0.3f, 0f), killing ? 40 : currentAttack.heavy ? 26 : 12);
+                InkFx.Instance.Splash(e.Chest, new Vector3(attackDir, 0.3f, 0f), killing ? 40 : currentAttack.heavy ? 26 : 12, e.InkColor);
                 if (killing || currentAttack.heavy || isCounter) InkFx.Instance.Burst(e.Chest, killing ? 5f : 3.2f);
             }
         }
@@ -433,17 +538,17 @@ namespace ProjectInk
         void Impact()
         {
             var time = TimeController.Instance;
-            if (time != null) time.HitStop(currentAttack.hitStopFrames);
+            if (time != null) time.HitStop(InRampage ? 7 : currentAttack.hitStopFrames);
             var cam = CameraDirector.Instance;
             if (cam != null)
             {
                 cam.Shake(currentAttack.shake, 0.18f);
-                if (currentAttack.heavy) cam.ZoomPunch(4f, 0.08f);
+                if (currentAttack.heavy || InRampage) cam.ZoomPunch(4f, 0.08f);
             }
             if (InkFx.Instance != null)
             {
-                if (!currentAttack.ranged) InkFx.Instance.PlayHit(currentAttack.heavy);
-                if (currentAttack.heavy || isCounter) InkFx.Instance.ImpactFlash(isCounter ? 0.07f : 0.035f);
+                if (!currentAttack.ranged) InkFx.Instance.PlayHit(currentAttack.heavy || InRampage);
+                if (currentAttack.heavy || isCounter) InkFx.Instance.ImpactFlash(isCounter ? 0.06f : 0.035f);
             }
         }
 
@@ -462,44 +567,61 @@ namespace ProjectInk
             BeginSwing();
         }
 
-        void StartReload()
-        {
-            reloading = true;
-            state = State.Attack;
-            stateTime = 0f;
-            hitDone = true;
-            currentAttack = new AttackData { clip = "gun_reload", ranged = true };
-            body.Play("gun_reload", 0.08f);
-            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, "RELOAD");
-        }
-
         // ------------------------------------------------------------------ defence
 
         void Dodge(int dir)
         {
-            state = State.Dodge;
-            stateTime = 0f;
-            invulnerableUntil = Time.time + 0.5f;
             pendingExecution = null;
-            SetFacing(-dir);          // the dodge is a backflip: face away so it carries the hero towards `dir`
-            velocity.x = dir * 7f;
-            body.Play("dodge", 0.04f);
-            SetTrails(false);
-            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
-            // a perfect dodge (an enemy was about to hit) earns bullet time
+            throwPending = false;
+            // a dodge into an attacker that is about to strike: vault over them, land behind
+            Enemy over = null;
             foreach (var e in Enemy.All)
             {
-                if (e.Telegraphing && Mathf.Abs(e.transform.position.x - transform.position.x) < 2.2f)
+                float dx = (e.transform.position.x - transform.position.x) * dir;
+                if (e.Telegraphing && dx > 0f && dx < 2.6f && Mathf.Abs(e.transform.position.y - transform.position.y) < 0.6f) { over = e; break; }
+            }
+            state = State.Dodge;
+            stateTime = 0f;
+            SetTrails(false);
+            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+            if (over != null)
+            {
+                float land = over.transform.position.x + dir * 1.3f;
+                SetFacing(dir);                                    // flip forwards over them...
+                velocity.x = (land - transform.position.x) / 0.55f;
+                invulnerableUntil = Time.time + 0.75f;
+                body.Play("front_flip", 0.03f);
+                over.Interrupt();
+                if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.3f, 0.9f);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.OnPerfectDodge("VAULT!");
+                vaultFacing = -dir;                                // ...and land facing their back
+                return;
+            }
+            invulnerableUntil = Time.time + 0.5f;
+            SetFacing(-dir);          // a backflip: face away so it carries the hero towards `dir`
+            velocity.x = dir * 7f;
+            body.Play("dodge", 0.04f);
+            vaultFacing = 0;
+            foreach (var e in Enemy.All)
+            {
+                if (e.Telegraphing && Mathf.Abs(e.transform.position.x - transform.position.x) < 2.6f)
                 {
                     if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.3f, 0.8f);
-                    if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(150, "PERFECT DODGE");
+                    if (WaveDirector.Instance != null) WaveDirector.Instance.OnPerfectDodge("PERFECT DODGE");
                     break;
                 }
             }
         }
 
+        int vaultFacing;
+
         void UpdateDodge()
         {
+            if (vaultFacing != 0)
+            {
+                if (stateTime > 0.55f) { velocity.x = 0f; SetFacing(vaultFacing); vaultFacing = 0; EnterIdle(); }
+                return;
+            }
             velocity.x = Mathf.MoveTowards(velocity.x, 0f, 9f * Time.deltaTime);
             if (stateTime > 0.72f) EnterIdle();
         }
@@ -511,7 +633,7 @@ namespace ProjectInk
             ComboCount = 0;
             comboStep = 0;
             pendingExecution = null;
-            if (reloading) { reloading = false; Ammo = AttackData.MagazineSize; }
+            throwPending = false;
             velocity.x = hit.direction * hit.knockback;
             Tint(new Color(0.8f, 0.1f, 0.1f), 0.12f);
             if (InkFx.Instance != null)

@@ -9,6 +9,7 @@ namespace ProjectInk
         public float knockback;    // horizontal speed, m/s
         public bool knockdown;     // launch and fall
         public bool heavy;
+        public bool hitsDowned;    // can hit an enemy that is already down (finishers, throws)
         public Fighter attacker;
     }
 
@@ -46,6 +47,13 @@ namespace ProjectInk
             SetFacing(1);
         }
 
+        /// <summary>Change the body colour (enemies come in colours; the hero is black).</summary>
+        public void SetBaseColor(Color c)
+        {
+            baseColor = c;
+            UpdateTint();
+        }
+
         public void SetFacing(int dir)
         {
             Facing = dir >= 0 ? 1 : -1;
@@ -78,36 +86,64 @@ namespace ProjectInk
             return 0f;
         }
 
-        /// <summary>Move by velocity, apply gravity, land on the ground and follow stairs.</summary>
-        protected void Integrate(float dt)
+        /// <summary>While set, the ground probe starts below the fighter's feet, so they drop
+        /// through the floor they stand on (diving down to the level below).</summary>
+        protected float dropThroughUntil;
+        float fallStartY;
+
+        /// <summary>The level a fighter is on: 0 = ground floor, 1 = upper floor.</summary>
+        public int Level => transform.position.y > 1.9f ? 1 : 0;
+
+        float Probe(Vector3 p)
+        {
+            if (Time.time < dropThroughUntil)
+            {
+                var below = p + Vector3.down * 0.35f;
+                return Physics.Raycast(below, Vector3.down, out var hit, 40f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+            }
+            return GroundY(p);
+        }
+
+        /// <summary>Move by velocity, apply gravity, land on the ground and follow stairs.
+        /// Returns the wall side (-1/+1) if the fighter was stopped by the arena edge.</summary>
+        protected int Integrate(float dt)
         {
             var p = transform.position;
             p.x += velocity.x * dt;
             p.z += velocity.z * dt;
-            p.x = Mathf.Clamp(p.x, arenaMinX, arenaMaxX);
-            float ground = GroundY(p);
+            int wall = 0;
+            if (p.x < arenaMinX) { p.x = arenaMinX; wall = -1; }
+            else if (p.x > arenaMaxX) { p.x = arenaMaxX; wall = 1; }
+            float ground = Probe(p);
             if (Grounded)
             {
-                if (velocity.y > 0.01f) Grounded = false;
-                else if (p.y - ground > 0.55f) Grounded = false;   // walked off a ledge
+                if (velocity.y > 0.01f || p.y - ground > 0.55f)   // jumped, or walked off a ledge
+                {
+                    Grounded = false;
+                    fallStartY = p.y;
+                }
                 else p.y = Mathf.MoveTowards(p.y, ground, 12f * dt); // follow steps
             }
             if (!Grounded)
             {
                 velocity.y -= gravity * dt;
                 p.y += velocity.y * dt;
+                fallStartY = Mathf.Max(fallStartY, p.y);
                 if (p.y <= ground && velocity.y <= 0f)
                 {
                     p.y = ground;
                     velocity.y = 0f;
                     Grounded = true;
-                    OnLanded();
+                    transform.position = p;
+                    OnLanded(fallStartY - ground);
+                    return wall;
                 }
             }
             transform.position = p;
+            return wall;
         }
 
-        protected virtual void OnLanded() { }
+        protected virtual void OnLanded(float fallHeight) { }
 
         public abstract void TakeHit(HitInfo hit);
     }

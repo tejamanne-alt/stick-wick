@@ -321,6 +321,51 @@ WEAPON_CLIPS = {
         (9, pose(GUN_IDLE, upperarm_R=30, forearm_R=150, hand_R=165, upperarm_L=40, forearm_L=135, hand_L=150)),
         (12, pose(GUN_IDLE, upperarm_R=34, forearm_R=140, hand_R=150, upperarm_L=46, forearm_L=128, hand_L=120)),
         (20, GUN_IDLE)]),
+
+    # ---- acrobatics and life between blows
+    "front_flip": dict(frames=18, loop=False, hit=None, keys=[  # vault over an attacker
+        (0, STANCE),
+        (3, pose(spine=166, chest=160, thigh_L=62, shin_L=-12, thigh_R=48, shin_R=-36,
+                 upperarm_L=-40, upperarm_R=-50, forearm_L=-10, forearm_R=-20, dz=-0.22)),
+        (6, rotated(pose(STRAIGHT, thigh_L=110, shin_L=-20, thigh_R=100, shin_R=-30,
+                         upperarm_L=100, forearm_L=150, upperarm_R=90, forearm_R=140), -110, dz=1.15)),
+        (9, rotated(pose(STRAIGHT, thigh_L=120, shin_L=-30, thigh_R=115, shin_R=-35,
+                         upperarm_L=60, forearm_L=140, upperarm_R=50, forearm_R=130), -220, dz=1.45)),
+        (12, rotated(pose(STRAIGHT, thigh_L=80, shin_L=-10, thigh_R=60, shin_R=-20,
+                          upperarm_L=140, forearm_L=160, upperarm_R=130, forearm_R=150), -320, dz=0.75)),
+        (15, pose(spine=168, chest=162, thigh_L=58, shin_L=-8, thigh_R=-10, shin_R=-50,
+                  upperarm_L=120, forearm_L=150, upperarm_R=-30, forearm_R=10, dz=-0.18)),
+        (18, STANCE)]),
+    "throw_weapon": dict(frames=14, loop=False, hit=5, keys=[
+        (0, STANCE),
+        (3, pose(spine=184, chest=194, head=186, upperarm_R=200, forearm_R=228, hand_R=240,
+                 upperarm_L=80, forearm_L=110, thigh_L=30, thigh_R=-30)),
+        (5, pose(spine=164, chest=150, head=160, upperarm_R=82, forearm_R=70, hand_R=60,
+                 upperarm_L=-30, forearm_L=0, thigh_L=52, shin_L=0, thigh_R=-46, shin_R=-14)),
+        (9, pose(spine=166, chest=154, upperarm_R=30, forearm_R=20, hand_R=10,
+                 upperarm_L=-30, forearm_L=0, thigh_L=52, shin_L=0, thigh_R=-46, shin_R=-14)),
+        (14, STANCE)]),
+    "getup": dict(frames=20, loop=False, hit=None, keys=[        # from flat on the back to standing
+        (0, rotated(pose(STRAIGHT, upperarm_L=165, forearm_L=170, upperarm_R=150, forearm_R=155,
+                         thigh_L=20, shin_L=-15, thigh_R=5, shin_R=-5), 90, dz=-0.85)),
+        (6, rotated(pose(STRAIGHT, spine=180, chest=180, upperarm_L=-30, forearm_L=-20, upperarm_R=-20,
+                         forearm_R=-10, thigh_L=100, shin_L=-20, thigh_R=60, shin_R=-60), 45, dz=-0.55)),
+        (12, pose(spine=150, chest=140, head=150, thigh_L=95, shin_L=0, thigh_R=-30, shin_R=-100,
+                  upperarm_L=60, forearm_L=40, upperarm_R=30, forearm_R=20, dz=-0.42)),
+        (16, pose(spine=166, chest=160, thigh_L=50, shin_L=-5, thigh_R=-20, shin_R=-40, dz=-0.15)),
+        (20, STANCE)]),
+    "taunt": dict(frames=32, loop=False, hit=None, keys=[        # beckoning: "come on"
+        (0, STANCE),
+        (6, pose(chest=176, head=182, upperarm_L=80, forearm_L=110, hand_L=110)),
+        (11, pose(chest=176, head=182, upperarm_L=80, forearm_L=165, hand_L=175)),
+        (16, pose(chest=176, head=182, upperarm_L=80, forearm_L=110, hand_L=110)),
+        (21, pose(chest=176, head=182, upperarm_L=80, forearm_L=165, hand_L=175)),
+        (26, pose(chest=176, head=182, upperarm_L=80, forearm_L=110, hand_L=110)),
+        (32, STANCE)]),
+    "gun_aim": dict(frames=10, loop=False, hit=None, keys=[      # a gunner holding aim
+        (0, GUN_IDLE),
+        (5, pose(GUN_IDLE, upperarm_R=88, forearm_R=90, hand_R=90, upperarm_L=80, forearm_L=92, hand_L=90)),
+        (10, pose(GUN_IDLE, upperarm_R=88, forearm_R=90, hand_R=90, upperarm_L=80, forearm_L=92, hand_L=90))]),
 }
 CLIPS.update(WEAPON_CLIPS)
 

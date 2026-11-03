@@ -3,66 +3,94 @@ using UnityEngine;
 
 namespace ProjectInk
 {
-    public enum SpawnKind { LeftDoor, RightDoor, StairsTop, Background, Ceiling }
+    public enum SpawnKind { LeftDoor, RightDoor, UpperDoor, Background, Ceiling }
+    public enum EnemyType { Brawler, Swordsman, Gunner, Brute }
 
-    /// <summary>A grunt. Enters from its spawn point, circles the hero at a distance and
-    /// only attacks while holding one of the two attack tokens, so fights stay readable.
-    /// Every attack is telegraphed with a red flash: dodge it, or strike to counter.</summary>
+    /// <summary>An enemy. Comes in through a door (or drops from above), finds its way to the
+    /// hero's floor (up the stairs, or leaping off the upper floor), circles at a distance and
+    /// attacks only while holding an attack token. Every attack is telegraphed: a red flash for
+    /// melee, a red laser sight for gunners. Dodge it, or strike first to counter.
+    /// Brawlers punch and kick, swordsmen cut, gunners keep their distance and shoot, the brute
+    /// is a giant that shrugs off light hits. Each has its own colour, which it leaves behind.</summary>
     public class Enemy : Fighter
     {
         public static readonly List<Enemy> All = new List<Enemy>();
         public static readonly Queue<GameObject> Corpses = new Queue<GameObject>();
-        public static int MaxCorpses = 30;
+        public static int MaxCorpses = 40;
 
-        enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, Dead }
+        enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, GetUp, Dead }
 
-        public float walkSpeed = 2.4f;
-        public float windupSeconds = 0.55f;
-        public static readonly Color TelegraphColor = new Color(0.85f, 0.08f, 0.05f);
+        public float walkSpeed = 2.6f;
+        public float windupSeconds = 0.45f;
+        public static readonly Color TelegraphColor = new Color(0.9f, 0.08f, 0.05f);
+
+        // building layout (set by the WaveDirector from the scene)
+        public static float StairsBottomX = 5.6f, StairsTopX = -0.8f, StairsLaneZ = 1.3f, LedgeX = 0f;
 
         State state = State.Enter;
-        float stateTime, ringDistance, waitUntil, enterZ;
+        float stateTime, ringDistance, waitUntil;
         AttackData attack;
-        bool hitDone;
+        bool hitDone, onStairs, tauntedThisWait;
         SpawnKind kind;
         HeroController hero;
+        LineRenderer laser;
 
+        public EnemyType Type { get; private set; }
+        public Color InkColor { get; private set; } = Color.black;
         public bool HasToken { get; private set; }
         public bool Telegraphing => state == State.Windup;
-        public bool Targetable => Alive && state != State.Down && state != State.Dead && (state != State.Enter || kind != SpawnKind.Background);
-        public bool Finished => state == State.Dead;
+        public bool Targetable => Alive && state != State.Down && state != State.GetUp && state != State.Dead &&
+                                  !(state == State.Enter && kind == SpawnKind.Background);
+        public bool IsDown => state == State.Down || state == State.GetUp;
         public bool Engaged => state == State.Advance || state == State.Windup || state == State.Attack;
-        /// <summary>Carries a sword (set by the WaveDirector): cuts instead of punching.</summary>
-        public bool Armed { get; set; }
-        string IdleClip => Armed ? "sword_idle" : "idle";
-
-        protected override void Awake()
-        {
-            base.Awake();
-            ringDistance = Random.Range(2.3f, 3.6f);
-        }
+        public bool Armed => Type == EnemyType.Swordsman;
+        public bool Gunner => Type == EnemyType.Gunner;
+        string IdleClip => Armed ? "sword_idle" : Gunner ? "gun_idle" : "idle";
 
         void OnEnable() { All.Add(this); }
-        void OnDisable() { All.Remove(this); AttackTokens.Release(this); }
+        void OnDisable() { All.Remove(this); AttackTokens.Release(this); if (laser != null) laser.enabled = false; }
 
-        public void Init(HeroController h, SpawnKind spawnKind, float health)
+        public void Init(HeroController h, SpawnKind spawnKind, EnemyType type, float health, Color color, Material lineMaterial)
         {
             hero = h;
+            Type = type;
             maxHealth = health;
             Health = health;
             kind = spawnKind;
+            InkColor = color;
+            SetBaseColor(color);
+            ringDistance = Gunner ? Random.Range(4.5f, 7f) : Random.Range(2.2f, 3.4f);
+            if (type == EnemyType.Brute)
+            {
+                transform.localScale = Vector3.one * 1.35f;
+                walkSpeed = 1.9f;
+                windupSeconds = 0.6f;
+                ringDistance = 2.4f;
+            }
+            if (Gunner && lineMaterial != null)
+            {
+                laser = new GameObject("Laser").AddComponent<LineRenderer>();
+                laser.transform.SetParent(transform, false);
+                laser.sharedMaterial = lineMaterial;
+                laser.positionCount = 2;
+                laser.widthMultiplier = 0.025f;
+                laser.startColor = laser.endColor = new Color(1f, 0.1f, 0.05f, 0.85f);
+                laser.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                laser.enabled = false;
+            }
             state = State.Enter;
             stateTime = 0f;
-            enterZ = transform.position.z;
             if (kind == SpawnKind.Ceiling)
             {
                 Grounded = false;
                 velocity.y = -1f;
-                body.Play("dodge", 0f); // flips down from above
+                body.Play("front_flip", 0f); // flips down from above
             }
-            else body.Play("run", 0.05f, true, 0.8f);
+            else body.Play("run", 0.05f, true, 0.85f);
             FaceTowards(hero.transform.position.x);
         }
+
+        // ------------------------------------------------------------------ brain
 
         void Update()
         {
@@ -71,133 +99,245 @@ namespace ProjectInk
             if (hero == null) return;
             float dx = hero.transform.position.x - transform.position.x;
             float dist = Mathf.Abs(dx);
+            bool sameLevel = Mathf.Abs(hero.transform.position.y - transform.position.y) < 1.4f && !onStairs;
 
             switch (state)
             {
-                case State.Enter: UpdateEnter(dt, dx); break;
+                case State.Enter: UpdateEnter(dx); break;
                 case State.Approach:
+                    if (!sameLevel || onStairs) { Travel(dt); break; }
+                    LeaveStairsLane(dt);
                     FaceTowards(hero.transform.position.x);
                     if (dist > ringDistance + 0.3f) Walk(Mathf.Sign(dx));
-                    else if (dist < ringDistance - 0.6f) Walk(-Mathf.Sign(dx) * 0.6f);
+                    else if (dist < ringDistance - 0.7f) Walk(-Mathf.Sign(dx) * 0.6f);
                     else GoWait();
                     break;
                 case State.Wait:
                     FaceTowards(hero.transform.position.x);
                     velocity.x = 0f;
-                    if (Mathf.Abs(dist - ringDistance) > 1.0f) { state = State.Approach; body.Play("run", 0.1f, false, 0.8f); }
+                    if (!sameLevel || Mathf.Abs(dist - ringDistance) > 1.0f) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
                     else if (Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
                         HasToken = true;
-                        state = State.Advance;
+                        state = Gunner ? State.Windup : State.Advance;
                         stateTime = 0f;
-                        body.Play("run", 0.08f, false, 1.0f);
+                        if (Gunner) BeginWindup(); else body.Play("run", 0.08f, false, 1.1f);
+                    }
+                    else if (!tauntedThisWait && stateTime > 0.4f && Random.value < 0.004f)
+                    {
+                        tauntedThisWait = true;
+                        body.Play("taunt", 0.15f);
                     }
                     break;
                 case State.Advance:
                     FaceTowards(hero.transform.position.x);
-                    if (dist > 1.05f && stateTime < 2.5f) Walk(Mathf.Sign(dx) * 1.5f);
+                    if (!sameLevel) { ReleaseToken(); state = State.Approach; break; }
+                    if (dist > attackReach() - 0.25f && stateTime < 2.5f) Walk(Mathf.Sign(dx) * 1.6f);
                     else BeginWindup();
                     break;
                 case State.Windup:
                     velocity.x = 0f;
                     Tint(TelegraphColor, 0.05f);
-                    if (stateTime >= windupSeconds) BeginAttack();
+                    if (Gunner) AimLaser();
+                    if (stateTime >= (Gunner ? 0.75f : windupSeconds)) BeginAttack();
                     break;
                 case State.Attack:
                     velocity.x = 0f;
-                    if (!hitDone && body.Current != null && body.Current.hitTime >= 0f && body.Time >= body.Current.hitTime) ResolveHit();
+                    if (!hitDone && body.Current != null && body.Current.hitTime >= 0f && body.Time >= body.Current.hitTime) ResolveAttack();
                     if (body.Finished) { ReleaseToken(); state = State.Recover; stateTime = 0f; body.Play(IdleClip, 0.12f); }
                     break;
                 case State.Recover:
-                    if (dist < ringDistance) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
-                    if (stateTime > 0.7f) GoWait();
+                    if (dist < ringDistance && !Gunner) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
+                    if (stateTime > 0.5f) GoWait();
                     break;
                 case State.Hurt:
                     velocity.x = Mathf.MoveTowards(velocity.x, 0f, 20f * dt);
-                    if (stateTime > 0.38f) GoWait();
+                    if (stateTime > 0.35f) GoWait();
                     break;
                 case State.Down:
                     if (Grounded) velocity.x = Mathf.MoveTowards(velocity.x, 0f, 14f * dt);
-                    if (Grounded && stateTime > 1.3f)
+                    if (Grounded && stateTime > 1.0f)
                     {
-                        if (Alive) { GoWait(); body.Play(IdleClip, 0.3f); }
-                        else { state = State.Dead; stateTime = 0f; }
+                        if (Alive) { state = State.GetUp; stateTime = 0f; body.Play("getup", 0.1f); }
+                        else Die();
                     }
                     break;
-                case State.Dead:
-                    // the fallen stay on the ground and pile up, as in the reference;
-                    // the script switches off so a corpse costs nothing per frame
+                case State.GetUp:
                     velocity.x = 0f;
-                    if (Grounded && stateTime > 0.3f)
-                    {
-                        UpdateTint();
-                        Corpses.Enqueue(gameObject);
-                        while (Corpses.Count > MaxCorpses)
-                        {
-                            var old = Corpses.Dequeue();
-                            if (old != null) Destroy(old);
-                        }
-                        enabled = false;
-                        return;
-                    }
+                    if (body.Finished) { GoWait(); body.Play(IdleClip, 0.15f); }
+                    break;
+                case State.Dead:
+                    velocity.x = 0f;
+                    if (Grounded && stateTime > 0.3f) { Settle(); return; }
                     break;
             }
 
-            Integrate(dt);
+            if (laser != null && state != State.Windup) laser.enabled = false;
+            int wall = Integrate(dt);
+            if (wall != 0 && IsDown && Mathf.Abs(velocity.x) > 4f && Mathf.Sign(velocity.x) == wall) WallSplat(wall);
             UpdateTint();
         }
 
-        void UpdateEnter(float dt, float dx)
+        float attackReach() => Type == EnemyType.Brute ? 1.3f : Armed ? 1.45f : 1.05f;
+
+        void UpdateEnter(float dx)
         {
             switch (kind)
             {
                 case SpawnKind.Background:
-                    // walk forward out of the background into the fight lane
+                    // step out of the back door into the fight lane
                     var p = transform.position;
-                    p.z = Mathf.MoveTowards(p.z, 0f, walkSpeed * dt);
+                    p.z = Mathf.MoveTowards(p.z, 0f, walkSpeed * Time.deltaTime);
                     transform.position = p;
                     velocity.x = Mathf.Sign(dx) * walkSpeed * 0.3f;
-                    if (Mathf.Abs(p.z) < 0.02f) { state = State.Approach; }
+                    if (Mathf.Abs(p.z) < 0.02f) state = State.Approach;
                     break;
                 case SpawnKind.Ceiling:
                     if (Grounded) { body.Play(IdleClip, 0.1f); GoWait(); }
                     break;
                 default:
                     Walk(Mathf.Sign(dx));
-                    if (stateTime > 0.8f) state = State.Approach;
+                    if (stateTime > 0.7f) state = State.Approach;
                     break;
             }
         }
 
-        protected override void OnLanded()
+        /// <summary>Find a way to the hero's floor: up the stairs (a lane behind the fight lane),
+        /// or off the upper floor's open edge.</summary>
+        void Travel(float dt)
         {
-            if (kind == SpawnKind.Ceiling && state == State.Enter && CameraDirector.Instance != null)
+            var p = transform.position;
+            if (!Grounded) return;                      // mid-leap: let the flip play out
+            bool heroAbove = hero.transform.position.y > p.y + 1.4f;
+            if (onStairs)
+            {
+                // climbing: step sideways into the stairs lane first, then walk up it
+                p.z = Mathf.MoveTowards(p.z, StairsLaneZ, 3f * dt);
+                transform.position = p;
+                if (Mathf.Abs(p.z - StairsLaneZ) > 0.05f && p.y < 0.2f) { velocity.x = 0f; return; }
+                Walk(Mathf.Sign(StairsTopX - p.x));
+                if (p.x <= StairsTopX + 0.2f && p.y > 2.8f) onStairs = false;
+                return;
+            }
+            if (heroAbove)
+            {
+                // walk to the foot of the stairs (moving into the stairs lane), then climb
+                float tx = StairsBottomX;
+                Walk(Mathf.Sign(tx - p.x));
+                if (Mathf.Abs(tx - p.x) < 0.35f) { onStairs = true; velocity.x = 0f; }
+            }
+            else
+            {
+                // hero below: run off the open edge of the upper floor (with a little hop)
+                LeaveStairsLane(dt);
+                Walk(Mathf.Sign(LedgeX + 0.6f - p.x) * 1.2f);
+                if (p.x > LedgeX - 0.25f && Grounded && p.y > 1.9f)
+                {
+                    velocity.y = 3.5f;
+                    velocity.x = 3f;
+                    Grounded = false;
+                    body.Play("front_flip", 0.05f);
+                }
+            }
+        }
+
+        void LeaveStairsLane(float dt)
+        {
+            var p = transform.position;
+            if (Mathf.Abs(p.z) > 0.01f && kind != SpawnKind.Background)
+            {
+                p.z = Mathf.MoveTowards(p.z, 0f, 3f * dt);
+                transform.position = p;
+            }
+        }
+
+        protected override void OnLanded(float fallHeight)
+        {
+            if (state == State.Enter && kind == SpawnKind.Ceiling && CameraDirector.Instance != null)
                 CameraDirector.Instance.Shake(0.08f, 0.12f);
+            // knocked off the upper floor: the fall finishes them
+            if (IsDown && fallHeight > 2.3f && Alive)
+            {
+                Health = 0f;
+                if (InkFx.Instance != null)
+                {
+                    InkFx.Instance.Splash(transform.position + Vector3.up * 0.3f, Vector3.up, 40, InkColor);
+                    InkFx.Instance.Stain(transform.position, InkColor, 1.6f, false);
+                }
+                if (WaveDirector.Instance != null) WaveDirector.Instance.OnEnvironmentKill(this, "FLOOR DROP", 250);
+            }
+            else if (state != State.Down && state != State.Dead && body.CurrentName == "front_flip" && state != State.Enter)
+                body.Play("run", 0.1f, false, 0.85f);
+        }
+
+        void WallSplat(int wall)
+        {
+            velocity.x = -wall * 1.5f;
+            float before = Health;
+            Health = Mathf.Max(0f, Health - 18f);
+            if (InkFx.Instance != null)
+            {
+                InkFx.Instance.Splash(Chest, new Vector3(-wall, 0.4f, 0f), 30, InkColor);
+                InkFx.Instance.StainWall(transform.position.x + wall * 0.2f, Chest.y, InkColor, 1.4f);
+                InkFx.Instance.PlayHit(true);
+            }
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.14f, 0.15f);
+            if (TimeController.Instance != null) TimeController.Instance.HitStop(4);
+            if (WaveDirector.Instance != null)
+                WaveDirector.Instance.OnEnvironmentKill(this, before > 0f && Health <= 0f ? "WALL SPLAT KILL" : "WALL SPLAT", before > 0f && Health <= 0f ? 220 : 120);
         }
 
         void Walk(float dirTimesSpeed)
         {
             velocity.x = dirTimesSpeed * walkSpeed;
-            if (body.CurrentName != "run") body.Play("run", 0.1f, false, 0.8f);
+            if (body.CurrentName != "run") body.Play("run", 0.1f, false, 0.85f);
         }
 
         void GoWait()
         {
             state = State.Wait;
             stateTime = 0f;
-            waitUntil = Time.time + Random.Range(0.6f, 2.0f);
+            tauntedThisWait = false;
+            waitUntil = Time.time + (Type == EnemyType.Brute ? Random.Range(0.6f, 1.4f) : Random.Range(0.3f, 1.2f));
             if (body.CurrentName != IdleClip) body.Play(IdleClip, 0.15f);
         }
+
+        // ------------------------------------------------------------------ attacking
 
         void BeginWindup()
         {
             state = State.Windup;
             stateTime = 0f;
             velocity.x = 0f;
-            int r = Random.Range(0, 3);
-            attack = r == 0 ? AttackData.EnemyJab : r == 1 ? AttackData.EnemyCross : AttackData.EnemyKick;
-            if (Armed) attack = AttackData.EnemySword;
-            body.Play(Armed ? "sword_idle" : "windup", 0.08f);
+            switch (Type)
+            {
+                case EnemyType.Swordsman:
+                    attack = AttackData.EnemySword;
+                    body.Play("sword_idle", 0.08f);
+                    break;
+                case EnemyType.Gunner:
+                    attack = AttackData.EnemyShot;
+                    body.Play("gun_aim", 0.08f);
+                    break;
+                case EnemyType.Brute:
+                    attack = Random.value < 0.5f ? AttackData.BruteSmash : AttackData.BruteKick;
+                    body.Play("windup", 0.08f);
+                    break;
+                default:
+                    int r = Random.Range(0, 3);
+                    attack = r == 0 ? AttackData.EnemyJab : r == 1 ? AttackData.EnemyCross : AttackData.EnemyKick;
+                    body.Play("windup", 0.08f);
+                    break;
+            }
+        }
+
+        void AimLaser()
+        {
+            if (laser == null) return;
+            var muzzle = Chest + Vector3.up * 0.12f + Vector3.right * Facing * 0.7f;
+            laser.enabled = true;
+            laser.SetPosition(0, muzzle);
+            laser.SetPosition(1, hero.Chest);
         }
 
         void BeginAttack()
@@ -208,25 +348,84 @@ namespace ProjectInk
             body.Play(attack.clip, 0.04f);
         }
 
-        void ResolveHit()
+        void ResolveAttack()
         {
             hitDone = true;
             float dx = (hero.transform.position.x - transform.position.x) * Facing;
             float dy = Mathf.Abs(hero.transform.position.y - transform.position.y);
-            if (dx > -0.1f && dx < attack.reach + 0.35f && dy < 0.9f)
+            if (Gunner)
+            {
+                var from = Chest + Vector3.up * 0.12f + Vector3.right * Facing * 0.7f;
+                bool hit = dx > 0f && dy < 1.2f && !hero.Invulnerable;
+                if (InkFx.Instance != null) InkFx.Instance.Shot(from, hit ? hero.Chest : from + Vector3.right * Facing * 16f);
+                if (hit) hero.TakeHit(new HitInfo { damage = attack.damage, direction = Facing, knockback = attack.knockback, attacker = this });
+                return;
+            }
+            float reach = attack.reach * transform.localScale.x + 0.35f;
+            if (dx > -0.1f && dx < reach && dy < 0.9f)
             {
                 hero.TakeHit(new HitInfo
                 {
                     damage = attack.damage,
                     direction = Facing,
                     knockback = attack.knockback,
-                    heavy = attack.clip == "front_kick",
+                    heavy = attack.heavy,
                     attacker = this
                 });
             }
         }
 
-        /// <summary>Cancel a windup or attack (the hero countered).</summary>
+        /// <summary>Cancel a windup or attack (the hero countered or vaulted).</summary>
+        public void Interrupt()
+        {
+            if (state == State.Windup || state == State.Attack || state == State.Advance)
+            {
+                ReleaseToken();
+                state = State.Hurt;
+                stateTime = 0f;
+                body.Play("hit_front", 0.05f);
+            }
+        }
+
+        void ReleaseToken()
+        {
+            if (!HasToken) return;
+            HasToken = false;
+            AttackTokens.Release(this);
+        }
+
+        // ------------------------------------------------------------------ taking hits
+
+        public override void TakeHit(HitInfo hit)
+        {
+            if (!Targetable && !hit.hitsDowned) return;
+            ReleaseToken();
+            float dmg = hit.damage;
+            bool brute = Type == EnemyType.Brute;
+            if (brute && !hit.heavy) dmg *= 0.6f;          // the brute shrugs off light hits
+            Health = Mathf.Max(0f, Health - dmg);
+            Tint(Color.white, 0.06f);
+            FaceTowards(hit.attacker != null ? hit.attacker.transform.position.x : transform.position.x - hit.direction);
+            velocity.x = hit.direction * hit.knockback * (brute ? 0.4f : 1f);
+            bool knock = (hit.knockdown && (!brute || dmg >= 25f || Health <= 0f)) || !Alive;
+            if (knock)
+            {
+                state = State.Down;
+                stateTime = 0f;
+                velocity.y = hit.knockdown ? 5.5f : 3f;
+                velocity.x = hit.direction * Mathf.Max(hit.knockback, 4f) * (brute ? 0.6f : 1f);
+                Grounded = false;
+                body.Play("knockdown", 0.04f);
+            }
+            else if (!brute || dmg >= 15f)
+            {
+                state = State.Hurt;
+                stateTime = 0f;
+                bool fromFront = hit.direction == -Facing;
+                body.Play(fromFront ? "hit_front" : "hit_back", 0.03f);
+            }
+        }
+
         /// <summary>The gun-fu finishing shot on an enemy that is down.</summary>
         public void Execute(Fighter by)
         {
@@ -242,54 +441,45 @@ namespace ProjectInk
             }
         }
 
-        public void Interrupt()
+        /// <summary>Instant kill (rampage finishers, thrown weapons).</summary>
+        public void Kill(HitInfo hit)
         {
-            if (state == State.Windup || state == State.Attack || state == State.Advance)
-            {
-                ReleaseToken();
-                state = State.Hurt;
-                stateTime = 0f;
-            }
+            hit.damage = 9999f;
+            hit.knockdown = true;
+            hit.hitsDowned = true;
+            TakeHit(hit);
         }
 
-        void ReleaseToken()
+        void Die()
         {
-            if (!HasToken) return;
-            HasToken = false;
-            AttackTokens.Release(this);
+            state = State.Dead;
+            stateTime = 0f;
+            if (WaveDirector.Instance != null) WaveDirector.Instance.OnEnemyDied(this);
         }
 
-        public override void TakeHit(HitInfo hit)
+        void Settle()
         {
-            if (!Targetable) return;
-            ReleaseToken();
-            Health = Mathf.Max(0f, Health - hit.damage);
-            Tint(Color.white, 0.06f);
-            FaceTowards(hit.attacker != null ? hit.attacker.transform.position.x : transform.position.x - hit.direction);
-            velocity.x = hit.direction * hit.knockback;
-            if (hit.knockdown || !Alive)
+            // the fallen stay where they lie, and the building keeps their colour
+            UpdateTint();
+            if (InkFx.Instance != null)
             {
-                state = State.Down;
-                stateTime = 0f;
-                velocity.y = hit.knockdown ? 5.5f : 3f;
-                velocity.x = hit.direction * Mathf.Max(hit.knockback, 4f);
-                Grounded = false;
-                body.Play("knockdown", 0.04f);
+                InkFx.Instance.Stain(transform.position + Vector3.right * Random.Range(-0.3f, 0.3f), InkColor, Random.Range(1.0f, 1.6f), false);
+                if (Random.value < 0.6f) InkFx.Instance.StainWall(transform.position.x + Random.Range(-0.8f, 0.8f), transform.position.y + Random.Range(0.4f, 1.8f), InkColor, Random.Range(0.6f, 1.3f));
             }
-            else
+            Corpses.Enqueue(gameObject);
+            while (Corpses.Count > MaxCorpses)
             {
-                state = State.Hurt;
-                stateTime = 0f;
-                bool fromFront = hit.direction == -Facing;
-                body.Play(fromFront ? "hit_front" : "hit_back", 0.03f);
+                var old = Corpses.Dequeue();
+                if (old != null) Destroy(old);
             }
+            enabled = false;
         }
     }
 
-    /// <summary>At most two enemies may attack at once; the rest circle and wait.</summary>
+    /// <summary>Only a few enemies may attack at once; the rest circle, taunt and wait.</summary>
     public static class AttackTokens
     {
-        public static int Max = 2;
+        public static int Max = 3;
         static readonly HashSet<Enemy> holders = new HashSet<Enemy>();
 
         public static bool TryTake(Enemy e)

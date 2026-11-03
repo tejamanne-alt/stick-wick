@@ -39,6 +39,9 @@ namespace ProjectInk
         public static readonly AttackData GunThrow = new AttackData { clip = "gun_throw", damage = 8, reach = 0.9f, knockback = 2f, hitStopFrames = 6, shake = 0.16f, heavy = true, knockdown = true };
         public const int MagazineSize = 12;
 
+        public static readonly AttackData EnemyShot = new AttackData { clip = "gun_shoot", damage = 12, reach = 14f, knockback = 3f, hitStopFrames = 3, shake = 0.1f, ranged = true };
+        public static readonly AttackData BruteSmash = new AttackData { clip = "cross", damage = 22, reach = 1.3f, knockback = 9f, hitStopFrames = 6, shake = 0.22f, heavy = true };
+        public static readonly AttackData BruteKick = new AttackData { clip = "front_kick", damage = 20, reach = 1.5f, knockback = 10f, hitStopFrames = 6, shake = 0.22f, heavy = true };
         public static readonly AttackData EnemySword = new AttackData { clip = "sword_b", damage = 14, reach = 1.4f, knockback = 4f, hitStopFrames = 4, shake = 0.12f };
         public static readonly AttackData EnemyJab = new AttackData { clip = "jab", damage = 7, reach = 1.0f, knockback = 2f, hitStopFrames = 3, shake = 0.08f };
         public static readonly AttackData EnemyCross = new AttackData { clip = "cross", damage = 10, reach = 1.05f, knockback = 3f, hitStopFrames = 3, shake = 0.1f };
