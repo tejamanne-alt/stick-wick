@@ -46,3 +46,29 @@ The reference video set the look: solid black stickmen with thick limbs and big 
 - Landscape only: player settings are applied on editor open and on every build; the game also locks orientation at runtime.
 - The scene is versioned (`SceneVersion = 2`), so an open editor rebuilds it automatically after a pull.
 - Swords: later, as planned.
+
+## 2026-11-04: Real martial arts from motion capture
+
+Twelve of the 15 moves are now real human motion from the CMU motion-capture database, which is free for commercial use; the credit is in `tools/mocap/README.md`.
+
+| Moves | Source |
+| --- | --- |
+| idle (boxing guard), jab, cross | boxing sessions |
+| front kick, roundhouse, back kick, knee | kicking sessions |
+| flying kick, spin kick | acrobatic jump kicks |
+| dodge | a real backflip |
+| knockdown | a real fall |
+| run | a real run |
+
+- `tools/blender/retarget.py` maps the actor onto the 12-bone stickman:
+    - the hips and chest take full orientation, so twist and turns come through
+    - the limbs follow the actor's limb directions
+    - the hips height keeps the feet on the ground
+    - each move is aimed along the screen, or backwards for the back kick
+- Punches are straightened to full extension at impact, so they read side-on.
+- Impact frames are set to each strike's maximum reach.
+- New attacks:
+    - knee (in the combo: jab, cross, knee, front kick, jab, cross, roundhouse)
+    - spin kick, which alternates with the roundhouse as the cinematic finisher
+- Dodge is a backflip, carried in the swiped direction; ceiling enemies flip down.
+- Still hand-keyed: hit reactions and the enemy wind-up.

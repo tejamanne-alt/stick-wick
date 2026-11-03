@@ -130,7 +130,7 @@ namespace ProjectInk
             else
             {
                 move = AttackData.Combo[comboStep % AttackData.Combo.Length];
-                if (t.Health <= move.damage && !move.knockdown) move = AttackData.Roundhouse;                   // finisher
+                if (t.Health <= move.damage) move = comboStep % 2 == 0 ? AttackData.SpinKick : AttackData.Roundhouse; // cinematic finisher
                 comboStep++;
             }
 
@@ -193,9 +193,13 @@ namespace ProjectInk
             if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
             if (currentAttack.clip == "flying_kick")
             {
-                velocity.y = 6.5f;
+                // the motion capture already jumps; physics only lifts the hero to targets up the stairs
                 velocity.x = 0f;
-                Grounded = false;
+                if (target != null && target.transform.position.y - transform.position.y > 0.5f)
+                {
+                    velocity.y = 6.5f;
+                    Grounded = false;
+                }
             }
         }
 
@@ -204,7 +208,7 @@ namespace ProjectInk
             var e = body.Current;
             if (e == null) { EnterIdle(); return; }
 
-            if (currentAttack.clip == "flying_kick" && !Grounded && target != null && target.Targetable)
+            if ((currentAttack.clip == "flying_kick" || currentAttack.clip == "spin_kick") && !hitDone && target != null && target.Targetable)
             {
                 // glide onto the target during the jump
                 var p = transform.position;
@@ -285,8 +289,9 @@ namespace ProjectInk
         {
             state = State.Dodge;
             stateTime = 0f;
-            invulnerableUntil = Time.time + 0.4f;
-            velocity.x = dir * 8f;
+            invulnerableUntil = Time.time + 0.5f;
+            SetFacing(-dir);          // the dodge is a backflip: face away so it carries the hero towards `dir`
+            velocity.x = dir * 7f;
             body.Play("dodge", 0.04f);
             SetTrails(false);
             if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
@@ -304,8 +309,8 @@ namespace ProjectInk
 
         void UpdateDodge()
         {
-            velocity.x = Mathf.MoveTowards(velocity.x, 0f, 22f * Time.deltaTime);
-            if (stateTime > 0.38f) EnterIdle();
+            velocity.x = Mathf.MoveTowards(velocity.x, 0f, 9f * Time.deltaTime);
+            if (stateTime > 0.72f) EnterIdle();
         }
 
         public override void TakeHit(HitInfo hit)

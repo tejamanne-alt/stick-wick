@@ -6,7 +6,12 @@ Run with the Blender Python module (bpy):
 Outputs:
     Assets/Art/Stickman/Stickman.fbx       model + rig + every clip as an FBX take
     Assets/Art/Stickman/stickman_clips.json clip timing data read by the Unity setup
-    docs/previews/<clip>.png                contact sheets (with --preview)
+    docs/previews/<clip>.png                contact sheets of the hand-keyed clips (with --preview)
+
+Motion: most moves are real motion capture (CMU database) retargeted by retarget.py, with
+the windows chosen in mocap_clips.py; hit reactions and the enemy wind-up are hand-keyed
+below. Pass --no-mocap to build only the hand-keyed set. Preview mocap clips with
+preview_mocap.py.
 
 Posing model
 ------------
@@ -301,10 +306,12 @@ def apply_pose(arm, p):
             pb.location = rest_rot.inverted() @ Vector((p.get("_dx", 0.0), 0, dz))
 
 
-def build_actions(arm):
+def build_actions(arm, skip=()):
     arm.animation_data_create()
     meta = []
     for clip, spec in CLIPS.items():
+        if clip in skip:
+            continue
         act = bpy.data.actions.new(clip)
         act.use_fake_user = True
         arm.animation_data.action = act
@@ -318,7 +325,6 @@ def build_actions(arm):
         act.frame_range = (0, spec["frames"])
         meta.append(dict(name=clip, frames=spec["frames"], fps=FPS, loop=spec["loop"],
                          hitFrame=spec["hit"] if spec["hit"] is not None else -1))
-    arm.animation_data.action = bpy.data.actions["idle"]
     return meta
 
 
@@ -362,6 +368,10 @@ def render_previews(arm):
     bpy.ops.mesh.primitive_plane_add(size=0.02, location=(0, 0, -5))  # keeps cycles happy
     tmp = os.path.join(PREVIEW_DIR, "_frame.png")
     for clip, spec in CLIPS.items():
+        if clip not in bpy.data.actions or "keys" not in spec:
+            continue
+        if bpy.data.actions[clip].get("mocap"):
+            continue
         arm.animation_data.action = bpy.data.actions[clip]
         frames = [k for k, _ in spec["keys"]]
         tiles = []
@@ -377,11 +387,44 @@ def render_previews(arm):
     os.remove(tmp)
 
 
+def build_mocap_actions(arm):
+    """Real motion: CMU motion capture retargeted onto the rig (see retarget.py)."""
+    import retarget
+    from mocap_clips import MOCAP_CLIPS
+    cache = os.path.join(ROOT, "tools", "mocap", "cache")
+    src = os.path.join(ROOT, "tools", "mocap", "bvh")  # only needed if a cache file is missing
+    meta = []
+    for name, spec in MOCAP_CLIPS.items():
+        frames = retarget.prepare(spec, cache, src)
+        act = bpy.data.actions.new(name)
+        act.use_fake_user = True
+        act["mocap"] = True
+        arm.animation_data.action = act
+        last = retarget.key_action(arm, frames, arm.pose.bones, FOOT_Z, BONES["hips"][1])
+        act.frame_range = (0, last)
+        hit = -1
+        if spec.get("hit") is not None:
+            hit = int(round((spec["hit"] - spec["start"]) / spec.get("speed", 1.0)))
+            hit = retarget.impact_frame(frames, spec, hit)
+        meta.append(dict(name=name, frames=last, fps=FPS, loop=bool(spec.get("loop")), hitFrame=hit,
+                         source="CMU " + spec["file"]))
+    return meta
+
+
 def main():
     reset_scene()
     arm = build_armature()
     build_mesh(arm)
-    meta = build_actions(arm)
+    sys.path.insert(0, os.path.dirname(__file__))
+    use_mocap = "--no-mocap" not in sys.argv
+    mocap_names = ()
+    if use_mocap:
+        from mocap_clips import MOCAP_CLIPS
+        mocap_names = tuple(MOCAP_CLIPS)
+    meta = build_actions(arm, skip=mocap_names)
+    if use_mocap:
+        meta += build_mocap_actions(arm)
+    arm.animation_data.action = bpy.data.actions["idle"]
     export(arm, meta)
     if "--preview" in sys.argv:
         render_previews(arm)

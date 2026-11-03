@@ -55,7 +55,7 @@ namespace ProjectInk
             {
                 Grounded = false;
                 velocity.y = -1f;
-                body.Play("flying_kick", 0f);
+                body.Play("dodge", 0f); // flips down from above
             }
             else body.Play("run", 0.05f, true, 0.8f);
             FaceTowards(hero.transform.position.x);

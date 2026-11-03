@@ -15,3 +15,4 @@
 *.aab
 docs/previews/_frame.png
 __pycache__/
+tools/mocap/bvh/

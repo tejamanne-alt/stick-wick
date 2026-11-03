@@ -1,69 +1,6 @@
 {
   "clips": [
     {
-      "name": "idle",
-      "frames": 24,
-      "fps": 30,
-      "loop": true,
-      "hitFrame": -1
-    },
-    {
-      "name": "run",
-      "frames": 16,
-      "fps": 30,
-      "loop": true,
-      "hitFrame": -1
-    },
-    {
-      "name": "jab",
-      "frames": 12,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 4
-    },
-    {
-      "name": "cross",
-      "frames": 14,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 5
-    },
-    {
-      "name": "front_kick",
-      "frames": 16,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 6
-    },
-    {
-      "name": "roundhouse",
-      "frames": 18,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 7
-    },
-    {
-      "name": "back_kick",
-      "frames": 16,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 6
-    },
-    {
-      "name": "flying_kick",
-      "frames": 20,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 10
-    },
-    {
-      "name": "dodge",
-      "frames": 14,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": -1
-    },
-    {
       "name": "hit_front",
       "frames": 12,
       "fps": 30,
@@ -78,18 +15,107 @@
       "hitFrame": -1
     },
     {
-      "name": "knockdown",
-      "frames": 30,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": -1
-    },
-    {
       "name": "windup",
       "frames": 10,
       "fps": 30,
       "loop": false,
       "hitFrame": -1
+    },
+    {
+      "name": "idle",
+      "frames": 35,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "source": "CMU 13_17"
+    },
+    {
+      "name": "jab",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 9,
+      "source": "CMU 14_01"
+    },
+    {
+      "name": "cross",
+      "frames": 20,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 10,
+      "source": "CMU 14_01"
+    },
+    {
+      "name": "front_kick",
+      "frames": 28,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 14,
+      "source": "CMU 86_06"
+    },
+    {
+      "name": "roundhouse",
+      "frames": 29,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 15,
+      "source": "CMU 86_08"
+    },
+    {
+      "name": "back_kick",
+      "frames": 28,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 14,
+      "source": "CMU 86_08"
+    },
+    {
+      "name": "knee",
+      "frames": 25,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 11,
+      "source": "CMU 86_06"
+    },
+    {
+      "name": "flying_kick",
+      "frames": 50,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 24,
+      "source": "CMU 90_05"
+    },
+    {
+      "name": "spin_kick",
+      "frames": 37,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 14,
+      "source": "CMU 88_06"
+    },
+    {
+      "name": "dodge",
+      "frames": 28,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "source": "CMU 88_01"
+    },
+    {
+      "name": "knockdown",
+      "frames": 41,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "source": "CMU 90_18"
+    },
+    {
+      "name": "run",
+      "frames": 22,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "source": "CMU 09_02"
     }
   ]
 }
