@@ -8,12 +8,13 @@ using ETouch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 namespace ProjectInk
 {
-    public enum Command { None, StrikeLeft, StrikeRight, JumpKick, DodgeLeft, DodgeRight, Restart }
+    public enum Command { None, StrikeLeft, StrikeRight, JumpKick, DodgeLeft, DodgeRight, Restart, CycleStyle, StyleFists, StyleSword, StyleGun }
 
     /// <summary>Turns touches (or keys in the editor) into fight commands.
     /// Tap left/right half = strike that side · swipe up = flying kick ·
-    /// swipe left/right = dodge that way. Keys: A/D or arrows strike, W/Up jump kick,
-    /// Q/E dodge, R restart. Commands queue briefly so fast taps are never lost.</summary>
+    /// swipe left/right = dodge that way · swipe down = switch fighting style.
+    /// Keys: A/D or arrows strike, W/Up jump attack, Q/E dodge, S/Down or Tab switch style,
+    /// 1/2/3 fists/sword/gun, R restart. Commands queue briefly so fast taps are never lost.</summary>
     public class GestureInput : MonoBehaviour
     {
         public static GestureInput Instance { get; private set; }
@@ -75,7 +76,7 @@ namespace ProjectInk
             Vector2 d = end - start;
             float min = Screen.height * swipeFraction;
             if (d.magnitude < min) return start.x < Screen.width * 0.5f ? Command.StrikeLeft : Command.StrikeRight;
-            if (Mathf.Abs(d.y) > Mathf.Abs(d.x)) return d.y > 0 ? Command.JumpKick : Command.None;
+            if (Mathf.Abs(d.y) > Mathf.Abs(d.x)) return d.y > 0 ? Command.JumpKick : Command.CycleStyle;
             return d.x < 0 ? Command.DodgeLeft : Command.DodgeRight;
         }
 
@@ -106,6 +107,10 @@ namespace ProjectInk
                 if (kb.qKey.wasPressedThisFrame) Push(Command.DodgeLeft);
                 if (kb.eKey.wasPressedThisFrame) Push(Command.DodgeRight);
                 if (kb.rKey.wasPressedThisFrame) Push(Command.Restart);
+                if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame) Push(Command.CycleStyle);
+                if (kb.digit1Key.wasPressedThisFrame) Push(Command.StyleFists);
+                if (kb.digit2Key.wasPressedThisFrame) Push(Command.StyleSword);
+                if (kb.digit3Key.wasPressedThisFrame) Push(Command.StyleGun);
                 if (kb.anyKey.wasPressedThisFrame) AnyPressThisFrame = true;
             }
             var mouse = Mouse.current;
@@ -140,6 +145,10 @@ namespace ProjectInk
             if (Input.GetKeyDown(KeyCode.Q)) Push(Command.DodgeLeft);
             if (Input.GetKeyDown(KeyCode.E)) Push(Command.DodgeRight);
             if (Input.GetKeyDown(KeyCode.R)) Push(Command.Restart);
+            if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.Tab)) Push(Command.CycleStyle);
+            if (Input.GetKeyDown(KeyCode.Alpha1)) Push(Command.StyleFists);
+            if (Input.GetKeyDown(KeyCode.Alpha2)) Push(Command.StyleSword);
+            if (Input.GetKeyDown(KeyCode.Alpha3)) Push(Command.StyleGun);
             if (Input.anyKeyDown) AnyPressThisFrame = true;
 #endif
         }

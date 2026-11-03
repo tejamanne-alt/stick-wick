@@ -15,7 +15,18 @@ drop from the ceiling.
 | Swipe up | W / Up | Flying kick |
 | Swipe left / right | Q / E | Dodge (just before a hit = bullet time) |
 | Tap while an enemy glows red | | Counter (slow-mo, knockdown) |
+| Swipe down | S / Down / Tab, or 1/2/3 | Switch fighting style: Fists → Sword → Gun-Fu |
 | | R | Restart |
+
+Three fighting styles share the same controls:
+
+| Style | Moves |
+| --- | --- |
+| **Fists** | Motion-captured martial arts: jab, cross, knee, front kick, roundhouse, back kick behind, flying kick, spin-kick finisher |
+| **Sword** | Rising cut, overhead cut and lunging thrust that cut through everyone in reach; back slash behind without turning; leaping slam (swipe up); white crescent slash trails |
+| **Gun-Fu** | Shots at range, behind you without turning; up close, pistol-whip, then grapple and throw followed by a finishing shot; 12-round magazine with reloads |
+
+From wave 2, some enemies carry swords.
 
 The game picks the move for you:
 - an enemy close behind gets a back kick, without turning around

@@ -72,3 +72,21 @@ Twelve of the 15 moves are now real human motion from the CMU motion-capture dat
     - spin kick, which alternates with the roundhouse as the cinematic finisher
 - Dodge is a backflip, carried in the swiped direction; ceiling enemies flip down.
 - Still hand-keyed: hit reactions and the enemy wind-up.
+
+## 2026-11-04: Sword and Gun-Fu styles
+
+You switch styles with a swipe down (Fists → Sword → Gun-Fu). Controls stay the same; the moves change.
+
+- **Rig:** hand bones added. A hand's angle is its weapon's direction, so each pose aims the blade or barrel exactly. Motion-captured clips carry the hand rigidly with the forearm.
+- **Sword (hand-keyed, reference style):**
+    - idle; rising cut, overhead cut, lunging thrust as the finisher
+    - back slash behind without turning; leaping overhead slam on swipe up
+    - cuts cleave everyone in reach; a wide white tip trail draws the crescent slash arcs
+- **Gun-Fu (hand-keyed):**
+    - idle at a compressed ready position; shoot forward with recoil; shoot behind without turning
+    - pistol-whip, then grapple and throw, followed automatically by a slow-mo finishing shot on the downed enemy
+    - 12-round magazine with an automatic reload
+    - each shot draws a white tracer, a muzzle flash and a generated gunshot sound
+- **Enemies:** from wave 2, 30–45% carry swords and attack with telegraphed overhead cuts.
+- **Mocap note:** CMU's swordplay (02_07–09) and shooting (79_96, 80_03) recordings were tried. They are slow demonstrations, so the weapon moves are hand-animated for big readable arcs instead. Their joint caches are kept in `tools/mocap/cache` for later use.
+- Scene version 4.

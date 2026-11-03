@@ -36,7 +36,7 @@ FPS = 30
 # name: (parent, head, tail, depth y, rest angle, radius of the limb mesh)
 HIP_Z = 0.95
 THIGH, SHIN = 0.45, 0.44
-UPPER, FORE = 0.28, 0.27
+UPPER, FORE, HAND = 0.28, 0.27, 0.09
 BONES = {
     "hips":      (None,    (0, 0, HIP_Z),  (0, 0, 1.05), 0.0, 180, 0.072),
     "spine":     ("hips",  (0, 0, 1.05),   (0, 0, 1.30), 0.0, 180, 0.070),
@@ -46,6 +46,9 @@ BONES = {
     "forearm.L": ("upperarm.L", (0, 0, 1.48 - UPPER), (0, 0, 1.48 - UPPER - FORE), 0.05, 0, 0.047),
     "upperarm.R": ("chest", (0, 0, 1.48), (0, 0, 1.48 - UPPER), -0.05, 0, 0.052),
     "forearm.R": ("upperarm.R", (0, 0, 1.48 - UPPER), (0, 0, 1.48 - UPPER - FORE), -0.05, 0, 0.047),
+    # hands carry no mesh: their angle is the weapon's direction (blade or barrel)
+    "hand.L":    ("forearm.L", (0, 0, 1.48 - UPPER - FORE), (0, 0, 1.48 - UPPER - FORE - HAND), 0.05, 0, 0.0),
+    "hand.R":    ("forearm.R", (0, 0, 1.48 - UPPER - FORE), (0, 0, 1.48 - UPPER - FORE - HAND), -0.05, 0, 0.0),
     "thigh.L":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), 0.05, 0, 0.060),
     "shin.L":    ("thigh.L", (0, 0, HIP_Z - THIGH), (0, 0, HIP_Z - THIGH - SHIN), 0.05, 0, 0.054),
     "thigh.R":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), -0.05, 0, 0.060),
@@ -81,9 +84,10 @@ def rotated(p, delta, dz=None):
 
 def mirror_legs_arms(p):
     q = dict(p)
-    for a, b in (("upperarm.L", "upperarm.R"), ("forearm.L", "forearm.R"),
+    for a, b in (("upperarm.L", "upperarm.R"), ("forearm.L", "forearm.R"), ("hand.L", "hand.R"),
                  ("thigh.L", "thigh.R"), ("shin.L", "shin.R")):
-        q[a], q[b] = p[b], p[a]
+        if a in p or b in p:
+            q[a], q[b] = p.get(b, p.get("forearm" + b[-2:])), p.get(a, p.get("forearm" + a[-2:]))
     return q
 
 
@@ -200,6 +204,127 @@ CLIPS = {
 }
 
 
+# ---------------------------------------------------------------- weapon clips
+# hand_R is the weapon's direction (blade or barrel), absolute like every other angle:
+# 0 = pointing down, 90 = forward, 180 = up, -90 = backwards.
+
+SW_IDLE = pose(spine=174, chest=168, head=176,
+               upperarm_R=38, forearm_R=72, hand_R=118,      # blade forward and up
+               upperarm_L=-25, forearm_L=15,                 # free hand back
+               thigh_L=36, shin_L=-4, thigh_R=-30, shin_R=-22)
+SW_LUNGE = dict(thigh_L=52, shin_L=2, thigh_R=-48, shin_R=-14)
+
+GUN_IDLE = pose(spine=176, chest=172, head=178,
+                upperarm_R=40, forearm_R=118, hand_R=92,      # pistol close to the chest, level
+                upperarm_L=46, forearm_L=122, hand_L=92,      # support hand on the grip
+                thigh_L=26, shin_L=0, thigh_R=-20, shin_R=-10)
+
+WEAPON_CLIPS = {
+    # ---- sword (all hand-keyed for big, readable arcs, like the reference)
+    "sword_idle": dict(frames=30, loop=True, hit=None, keys=[
+        (0, SW_IDLE),
+        (15, pose(SW_IDLE, chest=165, forearm_R=76, hand_R=122, dz=-0.10)),
+        (30, SW_IDLE)]),
+    "sword_a": dict(frames=14, loop=False, hit=4, keys=[       # rising diagonal cut
+        (0, SW_IDLE),
+        (2, pose(SW_IDLE, spine=178, chest=184, upperarm_R=-35, forearm_R=-15, hand_R=-70)),
+        (4, pose(SW_IDLE, spine=166, chest=158, head=170, upperarm_R=118, forearm_R=140, hand_R=172, **SW_LUNGE)),
+        (6, pose(SW_IDLE, spine=166, chest=160, upperarm_R=160, forearm_R=178, hand_R=215, **SW_LUNGE)),
+        (10, pose(SW_IDLE, upperarm_R=90, forearm_R=115, hand_R=150)),
+        (14, SW_IDLE)]),
+    "sword_b": dict(frames=14, loop=False, hit=5, keys=[       # overhead diagonal cut
+        (0, SW_IDLE),
+        (2, pose(SW_IDLE, spine=180, chest=188, upperarm_R=168, forearm_R=200, hand_R=232,
+                 upperarm_L=120, forearm_L=160)),
+        (5, pose(SW_IDLE, spine=160, chest=148, head=164, upperarm_R=72, forearm_R=58, hand_R=38,
+                 upperarm_L=-30, forearm_L=0, thigh_L=58, shin_L=0, thigh_R=-52, shin_R=-10)),
+        (8, pose(SW_IDLE, spine=160, chest=150, head=166, upperarm_R=22, forearm_R=8, hand_R=-25,
+                 upperarm_L=-30, forearm_L=0, thigh_L=58, shin_L=0, thigh_R=-52, shin_R=-10)),
+        (14, SW_IDLE)]),
+    "sword_c": dict(frames=18, loop=False, hit=6, keys=[       # lunging thrust (heavy)
+        (0, SW_IDLE),
+        (3, pose(SW_IDLE, spine=182, chest=188, upperarm_R=-25, forearm_R=62, hand_R=90,
+                 thigh_L=20, thigh_R=-15, shin_R=-30)),
+        (6, pose(SW_IDLE, spine=156, chest=148, head=160, upperarm_R=92, forearm_R=92, hand_R=92,
+                 upperarm_L=-65, forearm_L=-45, thigh_L=72, shin_L=4, thigh_R=-62, shin_R=-28)),
+        (10, pose(SW_IDLE, spine=156, chest=148, head=160, upperarm_R=90, forearm_R=90, hand_R=90,
+                  upperarm_L=-65, forearm_L=-45, thigh_L=72, shin_L=4, thigh_R=-62, shin_R=-28)),
+        (18, SW_IDLE)]),
+    "sword_back": dict(frames=14, loop=False, hit=5, keys=[    # slash behind without turning
+        (0, SW_IDLE),
+        (3, pose(SW_IDLE, chest=164, upperarm_R=100, forearm_R=150, hand_R=185)),
+        (5, pose(SW_IDLE, spine=186, chest=196, head=205, upperarm_R=-100, forearm_R=-112, hand_R=-128,
+                 upperarm_L=60, forearm_L=90, thigh_L=20, thigh_R=-42, shin_R=-6)),
+        (8, pose(SW_IDLE, spine=184, chest=192, head=200, upperarm_R=-120, forearm_R=-140, hand_R=-165,
+                 upperarm_L=60, forearm_L=90, thigh_L=20, thigh_R=-42, shin_R=-6)),
+        (14, SW_IDLE)]),
+    "sword_leap": dict(frames=26, loop=False, hit=13, keys=[   # leaping overhead slam
+        (0, SW_IDLE),
+        (3, pose(SW_IDLE, spine=168, chest=164, thigh_L=70, shin_L=-10, thigh_R=50, shin_R=-40, dz=-0.25)),
+        (8, pose(SW_IDLE, spine=184, chest=192, head=186, upperarm_R=180, forearm_R=205, hand_R=240,
+                 upperarm_L=150, forearm_L=170, thigh_L=100, shin_L=-20, thigh_R=60, shin_R=-70, dz=0.65)),
+        (13, pose(SW_IDLE, spine=150, chest=138, head=150, upperarm_R=62, forearm_R=40, hand_R=18,
+                  upperarm_L=-40, forearm_L=-10, thigh_L=82, shin_L=8, thigh_R=-70, shin_R=-62, dz=-0.32)),
+        (19, pose(SW_IDLE, spine=152, chest=140, head=152, upperarm_R=60, forearm_R=38, hand_R=15,
+                  upperarm_L=-40, forearm_L=-10, thigh_L=82, shin_L=8, thigh_R=-70, shin_R=-62, dz=-0.30)),
+        (26, SW_IDLE)]),
+
+    # ---- gun-fu (pistol in the right hand)
+    "gun_idle": dict(frames=30, loop=True, hit=None, keys=[
+        (0, GUN_IDLE),
+        (15, pose(GUN_IDLE, chest=169, dz=-0.07)),
+        (30, GUN_IDLE)]),
+    "gun_shoot": dict(frames=10, loop=False, hit=2, keys=[     # extend and fire forward
+        (0, GUN_IDLE),
+        (2, pose(GUN_IDLE, upperarm_R=88, forearm_R=90, hand_R=90, upperarm_L=80, forearm_L=92, hand_L=90)),
+        (4, pose(GUN_IDLE, chest=175, head=176, upperarm_R=92, forearm_R=100, hand_R=112,
+                 upperarm_L=82, forearm_L=96, hand_L=100)),
+        (7, pose(GUN_IDLE, upperarm_R=88, forearm_R=90, hand_R=90, upperarm_L=80, forearm_L=92, hand_L=90)),
+        (10, pose(GUN_IDLE, upperarm_R=88, forearm_R=90, hand_R=90, upperarm_L=80, forearm_L=92, hand_L=90))]),
+    "gun_shoot_back": dict(frames=12, loop=False, hit=3, keys=[  # fire behind without turning
+        (0, GUN_IDLE),
+        (3, pose(GUN_IDLE, chest=178, head=205, upperarm_R=-88, forearm_R=-90, hand_R=-90,
+                 upperarm_L=40, forearm_L=110)),
+        (5, pose(GUN_IDLE, chest=180, head=205, upperarm_R=-92, forearm_R=-100, hand_R=-112,
+                 upperarm_L=40, forearm_L=110)),
+        (9, pose(GUN_IDLE, chest=178, head=205, upperarm_R=-88, forearm_R=-90, hand_R=-90,
+                 upperarm_L=40, forearm_L=110)),
+        (12, GUN_IDLE)]),
+    "gun_shoot_down": dict(frames=14, loop=False, hit=4, keys=[  # finishing shot at a downed enemy
+        (0, GUN_IDLE),
+        (4, pose(GUN_IDLE, spine=166, chest=156, head=150, upperarm_R=52, forearm_R=44, hand_R=38,
+                 upperarm_L=48, forearm_L=50, hand_L=40, thigh_L=40, thigh_R=-30)),
+        (6, pose(GUN_IDLE, spine=166, chest=158, head=152, upperarm_R=58, forearm_R=56, hand_R=58,
+                 upperarm_L=50, forearm_L=58, hand_L=52, thigh_L=40, thigh_R=-30)),
+        (14, GUN_IDLE)]),
+    "gun_whip": dict(frames=12, loop=False, hit=4, keys=[      # pistol-whip
+        (0, GUN_IDLE),
+        (2, pose(GUN_IDLE, chest=186, upperarm_R=150, forearm_R=200, hand_R=205, upperarm_L=60, forearm_L=130)),
+        (4, pose(GUN_IDLE, spine=166, chest=154, head=164, upperarm_R=102, forearm_R=70, hand_R=38,
+                 upperarm_L=40, forearm_L=100, thigh_L=42, thigh_R=-34, shin_R=-14)),
+        (7, pose(GUN_IDLE, spine=168, chest=156, upperarm_R=70, forearm_R=30, hand_R=10,
+                 thigh_L=42, thigh_R=-34, shin_R=-14)),
+        (12, GUN_IDLE)]),
+    "gun_throw": dict(frames=20, loop=False, hit=9, keys=[     # grapple and throw
+        (0, GUN_IDLE),
+        (3, pose(GUN_IDLE, spine=168, chest=162, upperarm_L=92, forearm_L=96, hand_L=96,
+                 upperarm_R=86, forearm_R=92, hand_R=95, thigh_L=42, thigh_R=-26)),
+        (6, pose(GUN_IDLE, spine=160, chest=150, head=160, upperarm_L=62, forearm_L=140, hand_L=140,
+                 upperarm_R=58, forearm_R=135, hand_R=120, thigh_L=50, shin_L=-10, thigh_R=-40, shin_R=-30, dz=-0.2)),
+        (9, pose(GUN_IDLE, spine=140, chest=128, head=136, upperarm_L=-40, forearm_L=-25, hand_L=-25,
+                 upperarm_R=-30, forearm_R=0, hand_R=10, thigh_L=62, shin_L=0, thigh_R=-44, shin_R=-14, dz=-0.18)),
+        (14, pose(GUN_IDLE, spine=160, chest=150, upperarm_R=40, forearm_R=80, hand_R=70)),
+        (20, GUN_IDLE)]),
+    "gun_reload": dict(frames=20, loop=False, hit=None, keys=[
+        (0, GUN_IDLE),
+        (4, pose(GUN_IDLE, upperarm_R=30, forearm_R=150, hand_R=165, upperarm_L=5, forearm_L=40, hand_L=40)),
+        (9, pose(GUN_IDLE, upperarm_R=30, forearm_R=150, hand_R=165, upperarm_L=40, forearm_L=135, hand_L=150)),
+        (12, pose(GUN_IDLE, upperarm_R=34, forearm_R=140, hand_R=150, upperarm_L=46, forearm_L=128, hand_L=120)),
+        (20, GUN_IDLE)]),
+}
+CLIPS.update(WEAPON_CLIPS)
+
+
 # ---------------------------------------------------------------- build
 def reset_scene():
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -249,6 +374,8 @@ def build_mesh(arm):
                                                  location=(0, 0, 1.69))
             add_part(bpy.context.object, name)
             continue
+        if radius <= 0:
+            continue
         length = (t - h).length
         bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=length, vertices=10,
                                             location=(h + t) / 2)
@@ -289,6 +416,9 @@ def ground_dz(p):
 
 
 def apply_pose(arm, p):
+    p = dict(p)
+    for side in ("L", "R"):  # a hand not posed explicitly continues its forearm
+        p.setdefault("hand." + side, p["forearm." + side])
     for name in BONES:
         pb = arm.pose.bones[name]
         parent = BONES[name][0]
@@ -344,6 +474,33 @@ def export(arm, meta):
     print("exported", path)
 
 
+def add_prop(arm, kind):
+    """A sword or pistol in the right hand, pointing where the hand bone points
+    (the weapon direction the poses set), as in the game."""
+    bpy.ops.mesh.primitive_cube_add(size=2)
+    prop = bpy.context.object
+    prop.name = kind
+    prop.parent = arm
+    prop.parent_type = "BONE"
+    prop.parent_bone = "hand.R"
+    prop.matrix_parent_inverse.identity()
+    # bone-parented children sit at the bone's tail, Y along the bone: the weapon points
+    # where the hand bone points, starting at the fist (HAND back from the tail)
+    if kind == "sword":
+        prop.location = (0.0, 0.5 - 0.09, 0.0)
+        prop.scale = (0.02, 0.5, 0.04)
+    else:
+        prop.location = (0.0, 0.05 - 0.09, 0.0)
+        prop.scale = (0.03, 0.1, 0.06)
+    mat = bpy.data.materials.new("PropInk")
+    mat.diffuse_color = (0.02, 0.02, 0.02, 1)
+    bsdf = mat.node_tree.nodes.get("Principled BSDF") if mat.node_tree else None
+    if bsdf:
+        bsdf.inputs["Base Color"].default_value = (0.02, 0.02, 0.02, 1)
+    prop.data.materials.append(mat)
+    return prop
+
+
 def render_previews(arm):
     from PIL import Image
     os.makedirs(PREVIEW_DIR, exist_ok=True)
@@ -367,9 +524,12 @@ def render_previews(arm):
     scene.camera = cam
     bpy.ops.mesh.primitive_plane_add(size=0.02, location=(0, 0, -5))  # keeps cycles happy
     tmp = os.path.join(PREVIEW_DIR, "_frame.png")
+    props = {"sword": add_prop(arm, "sword"), "gun": add_prop(arm, "gun")}
     for clip, spec in CLIPS.items():
         if clip not in bpy.data.actions or "keys" not in spec:
             continue
+        for kind, obj in props.items():
+            obj.hide_render = not clip.startswith(kind)
         if bpy.data.actions[clip].get("mocap"):
             continue
         arm.animation_data.action = bpy.data.actions[clip]

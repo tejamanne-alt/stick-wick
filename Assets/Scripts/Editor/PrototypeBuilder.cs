@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/ProjectInk.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 3;
+        public const int SceneVersion = 4;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Project INK/Build Prototype Scene")]
@@ -90,11 +90,13 @@ namespace ProjectInk.EditorTools
             var fx = systems.AddComponent<InkFx>();
             fx.particleMaterial = particle;
             fx.glowMaterial = glow;
+            fx.lineMaterial = trail;
             var director = systems.AddComponent<WaveDirector>();
             director.hero = hero;
             director.enemyModel = model;
             director.moves = moves;
             director.enemyMaterial = enemyInk;
+            director.trailMaterial = trail;
             director.spawnPoints = points;
             var hud = systems.AddComponent<HudGUI>();
             hud.hero = hero;

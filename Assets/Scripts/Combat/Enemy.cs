@@ -32,6 +32,9 @@ namespace ProjectInk
         public bool Targetable => Alive && state != State.Down && state != State.Dead && (state != State.Enter || kind != SpawnKind.Background);
         public bool Finished => state == State.Dead;
         public bool Engaged => state == State.Advance || state == State.Windup || state == State.Attack;
+        /// <summary>Carries a sword (set by the WaveDirector): cuts instead of punching.</summary>
+        public bool Armed { get; set; }
+        string IdleClip => Armed ? "sword_idle" : "idle";
 
         protected override void Awake()
         {
@@ -103,7 +106,7 @@ namespace ProjectInk
                 case State.Attack:
                     velocity.x = 0f;
                     if (!hitDone && body.Current != null && body.Current.hitTime >= 0f && body.Time >= body.Current.hitTime) ResolveHit();
-                    if (body.Finished) { ReleaseToken(); state = State.Recover; stateTime = 0f; body.Play("idle", 0.12f); }
+                    if (body.Finished) { ReleaseToken(); state = State.Recover; stateTime = 0f; body.Play(IdleClip, 0.12f); }
                     break;
                 case State.Recover:
                     if (dist < ringDistance) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
@@ -117,7 +120,7 @@ namespace ProjectInk
                     if (Grounded) velocity.x = Mathf.MoveTowards(velocity.x, 0f, 14f * dt);
                     if (Grounded && stateTime > 1.3f)
                     {
-                        if (Alive) { GoWait(); body.Play("idle", 0.3f); }
+                        if (Alive) { GoWait(); body.Play(IdleClip, 0.3f); }
                         else { state = State.Dead; stateTime = 0f; }
                     }
                     break;
@@ -157,7 +160,7 @@ namespace ProjectInk
                     if (Mathf.Abs(p.z) < 0.02f) { state = State.Approach; }
                     break;
                 case SpawnKind.Ceiling:
-                    if (Grounded) { body.Play("idle", 0.1f); GoWait(); }
+                    if (Grounded) { body.Play(IdleClip, 0.1f); GoWait(); }
                     break;
                 default:
                     Walk(Mathf.Sign(dx));
@@ -183,7 +186,7 @@ namespace ProjectInk
             state = State.Wait;
             stateTime = 0f;
             waitUntil = Time.time + Random.Range(0.6f, 2.0f);
-            if (body.CurrentName != "idle") body.Play("idle", 0.15f);
+            if (body.CurrentName != IdleClip) body.Play(IdleClip, 0.15f);
         }
 
         void BeginWindup()
@@ -193,7 +196,8 @@ namespace ProjectInk
             velocity.x = 0f;
             int r = Random.Range(0, 3);
             attack = r == 0 ? AttackData.EnemyJab : r == 1 ? AttackData.EnemyCross : AttackData.EnemyKick;
-            body.Play("windup", 0.08f);
+            if (Armed) attack = AttackData.EnemySword;
+            body.Play(Armed ? "sword_idle" : "windup", 0.08f);
         }
 
         void BeginAttack()
@@ -223,6 +227,21 @@ namespace ProjectInk
         }
 
         /// <summary>Cancel a windup or attack (the hero countered).</summary>
+        /// <summary>The gun-fu finishing shot on an enemy that is down.</summary>
+        public void Execute(Fighter by)
+        {
+            if (!Alive) return;
+            ReleaseToken();
+            Health = 0f;
+            Tint(Color.white, 0.06f);
+            if (state != State.Down)
+            {
+                state = State.Down;
+                stateTime = 0f;
+                body.Play("knockdown", 0.05f);
+            }
+        }
+
         public void Interrupt()
         {
             if (state == State.Windup || state == State.Attack || state == State.Advance)

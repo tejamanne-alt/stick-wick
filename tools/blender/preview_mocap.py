@@ -32,6 +32,8 @@ def main():
         bs.reset_scene()
         arm = bs.build_armature()
         bs.build_mesh(arm)
+        if spec.get("prop"):
+            bs.add_prop(arm, spec["prop"])
         arm.animation_data_create()
         act = bpy.data.actions.new(name)
         arm.animation_data.action = act

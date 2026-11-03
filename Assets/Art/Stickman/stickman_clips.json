@@ -22,6 +22,97 @@
       "hitFrame": -1
     },
     {
+      "name": "sword_idle",
+      "frames": 30,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "sword_a",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4
+    },
+    {
+      "name": "sword_b",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5
+    },
+    {
+      "name": "sword_c",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6
+    },
+    {
+      "name": "sword_back",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5
+    },
+    {
+      "name": "sword_leap",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 13
+    },
+    {
+      "name": "gun_idle",
+      "frames": 30,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "gun_shoot",
+      "frames": 10,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 2
+    },
+    {
+      "name": "gun_shoot_back",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 3
+    },
+    {
+      "name": "gun_shoot_down",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4
+    },
+    {
+      "name": "gun_whip",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4
+    },
+    {
+      "name": "gun_throw",
+      "frames": 20,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 9
+    },
+    {
+      "name": "gun_reload",
+      "frames": 20,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
       "name": "idle",
       "frames": 35,
       "fps": 30,

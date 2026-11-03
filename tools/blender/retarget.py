@@ -30,8 +30,8 @@ SWING = {
     "thigh.R": ("RightUpLeg", "RightLeg"),
     "shin.R": ("RightLeg", "RightFoot"),
 }
-ORDER = ["hips", "spine", "chest", "head", "upperarm.L", "forearm.L", "upperarm.R", "forearm.R",
-         "thigh.L", "shin.L", "thigh.R", "shin.R"]
+ORDER = ["hips", "spine", "chest", "head", "upperarm.L", "forearm.L", "hand.L", "upperarm.R", "forearm.R",
+         "hand.R", "thigh.L", "shin.L", "thigh.R", "shin.R"]
 
 
 def _interp(pos, t):
@@ -177,6 +177,9 @@ def key_action(arm, frames, bones, foot_z, hip_rest):
                 # CMU's Neck often sits on Spine1; use the first joint above it that is distinct
                 top = next((f[j] for j in ("Neck", "Neck1", "Head") if np.linalg.norm(f[j] - f["Spine1"]) > 0.03), f["Head"])
                 world[n] = _frame_matrix(top - f["Spine1"], f["LeftArm"] - f["RightArm"])
+                continue
+            if n not in SWING:      # hands: carried rigidly by the forearm
+                world[n] = unswung
                 continue
             a, b = SWING[n]
             target = Vector(f[b] - f[a])

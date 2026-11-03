@@ -38,6 +38,9 @@ namespace ProjectInk
                 Rect bar = new Rect(24, 20, 300, 18);
                 Fill(bar, new Color(0, 0, 0, 0.15f));
                 Fill(new Rect(bar.x, bar.y, bar.width * Mathf.Clamp01(hero.Health / hero.maxHealth), bar.height), new Color(0.08f, 0.08f, 0.08f));
+                string style = hero.Style == FightStyle.Sword ? "SWORD" : hero.Style == FightStyle.Gun ? "GUN-FU" : "FISTS";
+                if (hero.Style == FightStyle.Gun) style += hero.Reloading ? "   reloading" : $"   {hero.Ammo}/{AttackData.MagazineSize}";
+                GUI.Label(new Rect(w * 0.5f - 200, 14, 400, 30), style + "   (swipe down to switch)", small);
                 if (hero.ComboCount >= 2)
                     GUI.Label(new Rect(24, 50, 300, 60), $"{hero.ComboCount} HITS", new GUIStyle(mid) { alignment = TextAnchor.UpperLeft });
             }
@@ -71,7 +74,7 @@ namespace ProjectInk
 
                 if (director.CurrentPhase == WaveDirector.Phase.Intro || (director.WaveIndex == 0 && director.ElapsedTime < 7f))
                     GUI.Label(new Rect(0, h - 60, w, 40),
-                        "Tap left / right: strike  ·  Swipe up: flying kick  ·  Swipe sideways: dodge  ·  Strike a red enemy to counter", small);
+                        "Tap left / right: strike  ·  Swipe up: jump attack  ·  Swipe sideways: dodge  ·  Swipe down: fists / sword / gun  ·  Strike a red enemy to counter", small);
 
                 if (director.CurrentPhase == WaveDirector.Phase.Cleared)
                     Results(w, h, true);

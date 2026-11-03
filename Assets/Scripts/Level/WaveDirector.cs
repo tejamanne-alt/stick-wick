@@ -14,6 +14,7 @@ namespace ProjectInk
         public GameObject enemyModel;
         public MoveSet moves;
         public Material enemyMaterial;
+        public Material trailMaterial;
         public Transform[] spawnPoints = new Transform[5]; // indexed by SpawnKind
         public float enemyHealth = 30f;
 
@@ -125,7 +126,9 @@ namespace ProjectInk
             Vector3 pos = point.position + new Vector3(Random.Range(-0.4f, 0.4f), 0f, kind == SpawnKind.Background ? 0f : Random.Range(-0.25f, 0.25f));
             if (kind == SpawnKind.Ceiling && hero != null)
                 pos.x = Mathf.Clamp(hero.transform.position.x + Random.Range(-2.5f, 2.5f), -11f, 11f);
-            var go = FighterFactory.Build(enemyModel, moves, enemyMaterial, $"Enemy_{spawnSerial++}", false);
+            // from wave 2, some enemies carry swords, as in the reference
+            bool armed = WaveIndex >= 1 && Random.value < (WaveIndex == 1 ? 0.3f : 0.45f);
+            var go = FighterFactory.Build(enemyModel, moves, enemyMaterial, $"Enemy_{spawnSerial++}", false, trailMaterial, armed);
             go.transform.position = pos;
             var enemy = go.GetComponent<Enemy>();
             enemy.Init(hero, kind, enemyHealth);

@@ -13,12 +13,18 @@ namespace ProjectInk
         public Material particleMaterial;
         [Tooltip("Additive particle material for the light bursts (Legacy Shaders/Particles/Additive).")]
         public Material glowMaterial;
+        [Tooltip("Vertex-coloured material for bullet tracers (Sprites/Default).")]
+        public Material lineMaterial;
         public Color inkColor = new Color(0.02f, 0.02f, 0.02f, 1f);
         public Color redInk = new Color(0.75f, 0.05f, 0.05f, 1f);
 
         ParticleSystem splash, glow;
         AudioSource audioSource;
-        AudioClip punchLight, punchHeavy, whoosh;
+        AudioClip punchLight, punchHeavy, whoosh, gunshot;
+        LineRenderer[] tracers;
+        float[] tracerUntil;
+        int nextTracer;
+        const float TracerSeconds = 0.09f;
         float flashUntil;
         Texture2D white;
 
@@ -33,6 +39,8 @@ namespace ProjectInk
             punchLight = Synth("punch_light", 0.09f, 900f, 0.6f, 1);
             punchHeavy = Synth("punch_heavy", 0.16f, 420f, 0.9f, 2);
             whoosh = Synth("whoosh", 0.14f, 2400f, 0.25f, 3);
+            gunshot = Synth("gunshot", 0.22f, 5200f, 1.0f, 4);
+            BuildTracers();
             white = Texture2D.whiteTexture;
         }
 
@@ -100,6 +108,61 @@ namespace ProjectInk
             if (glowMaterial != null)
                 renderer.sharedMaterial = new Material(glowMaterial) { mainTexture = RadialTexture(128, 0f, 2.2f) };
             return ps;
+        }
+
+        void BuildTracers()
+        {
+            tracers = new LineRenderer[6];
+            tracerUntil = new float[tracers.Length];
+            for (int i = 0; i < tracers.Length; i++)
+            {
+                var go = new GameObject("Tracer" + i);
+                go.transform.SetParent(transform, false);
+                var lr = go.AddComponent<LineRenderer>();
+                lr.positionCount = 2;
+                lr.useWorldSpace = true;
+                lr.widthCurve = AnimationCurve.Linear(0f, 0.05f, 1f, 0.015f);
+                lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                lr.receiveShadows = false;
+                if (lineMaterial != null) lr.sharedMaterial = lineMaterial;
+                lr.enabled = false;
+                tracers[i] = lr;
+            }
+        }
+
+        /// <summary>A gunshot: muzzle flash, a white tracer to the hit point, the bang.</summary>
+        public void Shot(Vector3 from, Vector3 to)
+        {
+            if (tracers != null)
+            {
+                var lr = tracers[nextTracer];
+                tracerUntil[nextTracer] = UnityEngine.Time.unscaledTime + TracerSeconds;
+                nextTracer = (nextTracer + 1) % tracers.Length;
+                lr.SetPosition(0, from);
+                lr.SetPosition(1, to);
+                lr.startColor = lr.endColor = Color.white;
+                lr.enabled = true;
+            }
+            Burst(from, 1.4f);
+            if (audioSource != null)
+            {
+                audioSource.pitch = Random.Range(0.95f, 1.08f);
+                audioSource.PlayOneShot(gunshot, 0.9f);
+            }
+        }
+
+        void Update()
+        {
+            if (tracers == null) return;
+            float now = UnityEngine.Time.unscaledTime;
+            for (int i = 0; i < tracers.Length; i++)
+            {
+                if (!tracers[i].enabled) continue;
+                float left = tracerUntil[i] - now;
+                if (left <= 0f) { tracers[i].enabled = false; continue; }
+                var c = new Color(1f, 1f, 1f, left / TracerSeconds);
+                tracers[i].startColor = tracers[i].endColor = c;
+            }
         }
 
         /// <summary>White radial falloff: solid out to `core` (0..1 of the radius), then fading.</summary>
