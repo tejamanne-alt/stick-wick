@@ -2,17 +2,21 @@ using UnityEngine;
 
 namespace ProjectInk
 {
-    /// <summary>Hit effects: ink splashes, the one-frame impact flash and procedural
-    /// punch sounds (so the prototype needs no audio files).</summary>
+    /// <summary>Hit effects in the style of the reference: black ink spatter, soft white
+    /// light bursts behind big hits, the one-frame impact flash, and procedural punch
+    /// sounds (so the prototype needs no audio files). Textures are generated at start.</summary>
     public class InkFx : MonoBehaviour
     {
         public static InkFx Instance { get; private set; }
 
+        [Tooltip("Alpha-blended particle material (Legacy Shaders/Particles/Alpha Blended).")]
         public Material particleMaterial;
-        public Color inkColor = new Color(0.05f, 0.05f, 0.05f, 1f);
+        [Tooltip("Additive particle material for the light bursts (Legacy Shaders/Particles/Additive).")]
+        public Material glowMaterial;
+        public Color inkColor = new Color(0.02f, 0.02f, 0.02f, 1f);
         public Color redInk = new Color(0.75f, 0.05f, 0.05f, 1f);
 
-        ParticleSystem splash;
+        ParticleSystem splash, glow;
         AudioSource audioSource;
         AudioClip punchLight, punchHeavy, whoosh;
         float flashUntil;
@@ -22,6 +26,7 @@ namespace ProjectInk
         {
             Instance = this;
             splash = BuildSplash();
+            glow = BuildGlow();
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
@@ -58,8 +63,75 @@ namespace ProjectInk
             sizeLife.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 0.2f));
             var renderer = go.GetComponent<ParticleSystemRenderer>();
             renderer.renderMode = ParticleSystemRenderMode.Billboard;
-            if (particleMaterial != null) renderer.sharedMaterial = particleMaterial;
+            if (particleMaterial != null)
+                renderer.sharedMaterial = new Material(particleMaterial) { mainTexture = RadialTexture(32, 0.8f, 6f) }; // round ink blots
             return ps;
+        }
+
+        ParticleSystem BuildGlow()
+        {
+            var go = new GameObject("LightBurst");
+            go.transform.SetParent(transform, false);
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = ps.main;
+            main.playOnAwake = false;
+            main.loop = false;
+            main.startSpeed = 0f;
+            main.startLifetime = 0.35f;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 16;
+            var emission = ps.emission;
+            emission.rateOverTime = 0f;
+            var shape = ps.shape;
+            shape.enabled = false;
+            var sizeLife = ps.sizeOverLifetime;
+            sizeLife.enabled = true;
+            sizeLife.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 0.55f, 1f, 1f));
+            var colorLife = ps.colorOverLifetime;
+            colorLife.enabled = true;
+            var fade = new Gradient();
+            fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                         new[] { new GradientAlphaKey(0.9f, 0f), new GradientAlphaKey(0.6f, 0.3f), new GradientAlphaKey(0f, 1f) });
+            colorLife.color = fade;
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.sortingFudge = 50f; // draw behind the fighters
+            if (glowMaterial != null)
+                renderer.sharedMaterial = new Material(glowMaterial) { mainTexture = RadialTexture(128, 0f, 2.2f) };
+            return ps;
+        }
+
+        /// <summary>White radial falloff: solid out to `core` (0..1 of the radius), then fading.</summary>
+        static Texture2D RadialTexture(int size, float core, float power)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[size * size];
+            float c = (size - 1) * 0.5f;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float d = Mathf.Sqrt((x - c) * (x - c) + (y - c) * (y - c)) / c;
+                    float a = d <= core ? 1f : Mathf.Pow(Mathf.Clamp01(1f - (d - core) / (1f - core + 1e-4f)), power);
+                    px[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255));
+                }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return tex;
+        }
+
+        /// <summary>A soft white burst of light behind a big hit, like a camera flare.</summary>
+        public void Burst(Vector3 point, float size)
+        {
+            if (glow == null) return;
+            var emit = new ParticleSystem.EmitParams
+            {
+                position = point + Vector3.forward * 0.6f,
+                startSize = size,
+                startColor = Color.white,
+                applyShapeToPosition = false
+            };
+            glow.Emit(emit, 1);
         }
 
         /// <summary>Splash ink at a hit point, sprayed along `direction`.</summary>

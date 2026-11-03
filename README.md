@@ -27,6 +27,8 @@ Cinematic layer:
 - camera shake and a zoom punch on heavy hits
 - a one-frame impact flash, ink splashes and limb motion trails
 - the last enemy of each wave triggers a slow-mo orbit "kill cam" that returns to the gameplay side
+- look matched to the reference: solid black silhouettes on a soft grey backdrop, white slash trails, light bursts, the fallen pile up on the ground
+- landscape only
 
 Only 2 enemies may attack at once (attack tokens). The rest circle and wait.
 

@@ -50,6 +50,7 @@ namespace ProjectInk
         {
             Instance = this;
             AttackTokens.Clear();
+            Enemy.Corpses.Clear();
         }
 
         void Start()

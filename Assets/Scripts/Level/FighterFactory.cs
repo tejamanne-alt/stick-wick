@@ -41,7 +41,7 @@ namespace ProjectInk
             return root;
         }
 
-        /// <summary>Motion trail at the end of a limb (the hand or foot). In the rest pose the
+        /// <summary>White motion trail (a slash arc, as in the reference) at the end of a limb (the hand or foot). In the rest pose the
         /// limb is straight, so the tip lies on the line parent → bone.</summary>
         static void AddTrail(ClipPlayer player, string boneName, string parentName, Material mat)
         {
@@ -55,11 +55,11 @@ namespace ProjectInk
             tip.position = bone.position + dir * length;
             var tr = tip.gameObject.AddComponent<TrailRenderer>();
             tr.sharedMaterial = mat;
-            tr.time = 0.12f;
+            tr.time = 0.14f;
             tr.minVertexDistance = 0.02f;
-            tr.widthCurve = AnimationCurve.Linear(0f, 0.07f, 1f, 0f);
-            tr.startColor = new Color(0f, 0f, 0f, 0.55f);
-            tr.endColor = new Color(0f, 0f, 0f, 0f);
+            tr.widthCurve = AnimationCurve.Linear(0f, 0.11f, 1f, 0f);
+            tr.startColor = new Color(1f, 1f, 1f, 0.9f); // white slash arcs
+            tr.endColor = new Color(1f, 1f, 1f, 0f);
             tr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             tr.emitting = false;
         }

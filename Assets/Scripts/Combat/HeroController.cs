@@ -258,7 +258,11 @@ namespace ProjectInk
                 ComboCount++;
                 ComboTimer = 2f;
                 if (WaveDirector.Instance != null) WaveDirector.Instance.OnHeroHit(e, ComboCount, currentAttack.heavy, killing);
-                if (InkFx.Instance != null) InkFx.Instance.Splash(e.Chest, new Vector3(attackDir, 0.3f, 0f), currentAttack.heavy ? 26 : 12);
+                if (InkFx.Instance != null)
+                {
+                    InkFx.Instance.Splash(e.Chest, new Vector3(attackDir, 0.3f, 0f), killing ? 40 : currentAttack.heavy ? 26 : 12);
+                    if (killing || currentAttack.heavy || isCounter) InkFx.Instance.Burst(e.Chest, killing ? 5f : 3.2f);
+                }
             }
 
             if (!landed) return;

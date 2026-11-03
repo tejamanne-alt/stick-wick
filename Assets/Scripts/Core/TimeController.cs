@@ -21,6 +21,12 @@ namespace ProjectInk
         {
             Instance = this;
             Application.targetFrameRate = 60;
+            // landscape only, whatever the build settings say
+            Screen.autorotateToPortrait = false;
+            Screen.autorotateToPortraitUpsideDown = false;
+            Screen.autorotateToLandscapeLeft = true;
+            Screen.autorotateToLandscapeRight = true;
+            if (Application.isMobilePlatform) Screen.orientation = ScreenOrientation.AutoRotation;
             UnityEngine.Time.timeScale = 1f;
             UnityEngine.Time.fixedDeltaTime = BaseFixedDelta;
         }

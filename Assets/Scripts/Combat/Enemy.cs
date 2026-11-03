@@ -11,6 +11,8 @@ namespace ProjectInk
     public class Enemy : Fighter
     {
         public static readonly List<Enemy> All = new List<Enemy>();
+        public static readonly Queue<GameObject> Corpses = new Queue<GameObject>();
+        public static int MaxCorpses = 30;
 
         enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, Dead }
 
@@ -120,13 +122,20 @@ namespace ProjectInk
                     }
                     break;
                 case State.Dead:
+                    // the fallen stay on the ground and pile up, as in the reference;
+                    // the script switches off so a corpse costs nothing per frame
                     velocity.x = 0f;
-                    if (stateTime > 1.2f)
+                    if (Grounded && stateTime > 0.3f)
                     {
-                        var p = transform.position;
-                        p.y -= dt * 0.8f; // sink into the floor, then go
-                        transform.position = p;
-                        if (stateTime > 2.4f) Destroy(gameObject);
+                        UpdateTint();
+                        Corpses.Enqueue(gameObject);
+                        while (Corpses.Count > MaxCorpses)
+                        {
+                            var old = Corpses.Dequeue();
+                            if (old != null) Destroy(old);
+                        }
+                        enabled = false;
+                        return;
                     }
                     break;
             }

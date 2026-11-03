@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace ProjectInk.EditorTools
 {
-    /// <summary>On the first open of the project (no prototype scene yet), build the
-    /// prototype scene automatically and open it, so pressing Play just works.
-    /// Skipped in batch mode (CI builds the scene itself).</summary>
+    /// <summary>Builds and opens the prototype scene automatically: on the first open, and
+    /// again whenever a pull brings a newer scene version (PrototypeBuilder.SceneVersion).
+    /// Also re-applies the landscape-only player settings. Skipped in batch mode.</summary>
     [InitializeOnLoad]
     static class FirstOpenSetup
     {
@@ -16,8 +16,15 @@ namespace ProjectInk.EditorTools
 
         static FirstOpenSetup()
         {
-            if (Application.isBatchMode || SessionState.GetBool(SessionKey, false)) return;
+            if (Application.isBatchMode) return;
+            if (SessionState.GetBool(SessionKey, false) && !Outdated()) return;
             EditorApplication.delayCall += Run;
+        }
+
+        static bool Outdated()
+        {
+            if (!File.Exists(PrototypeBuilder.VersionFile)) return File.Exists(ScenePath);
+            return File.ReadAllText(PrototypeBuilder.VersionFile).Trim() != PrototypeBuilder.SceneVersion.ToString();
         }
 
         static void Run()
@@ -31,7 +38,8 @@ namespace ProjectInk.EditorTools
             SessionState.SetBool(SessionKey, true);
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
 
-            if (!File.Exists(ScenePath))
+            PrototypeBuilder.ConfigurePlayer();
+            if (!File.Exists(ScenePath) || Outdated())
             {
                 if (AssetDatabase.LoadAssetAtPath<GameObject>(StickmanImport.ModelPath) == null)
                 {
@@ -47,6 +55,7 @@ namespace ProjectInk.EditorTools
             }
 
             var active = EditorSceneManager.GetActiveScene();
+            if (active.path == ScenePath) return;
             if (active.path != ScenePath && !active.isDirty)
                 EditorSceneManager.OpenScene(ScenePath);
         }

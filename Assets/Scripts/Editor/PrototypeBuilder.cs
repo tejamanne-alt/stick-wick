@@ -19,7 +19,9 @@ namespace ProjectInk.EditorTools
         const string GenDir = "Assets/Generated";
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/ProjectInk.apk";
-        static readonly Color Paper = new Color(0.93f, 0.92f, 0.88f);
+        /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
+        public const int SceneVersion = 2;
+        public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Project INK/Build Prototype Scene")]
         public static void BuildScene()
@@ -32,35 +34,27 @@ namespace ProjectInk.EditorTools
             if (model == null) throw new BuildFailedException("Stickman.fbx not found - run tools/blender/build_stickman.py");
             var moves = BuildMoveSet();
 
-            var ink = Mat("Ink", "Unlit/Color", new Color(0.04f, 0.04f, 0.04f));
-            var enemyInk = Mat("EnemyInk", "Unlit/Color", new Color(0.30f, 0.30f, 0.31f));
-            var floor = Mat("Floor", "Standard", Paper);
-            var wall = Mat("Wall", "Standard", new Color(0.86f, 0.85f, 0.81f));
-            var step = Mat("Step", "Standard", new Color(0.78f, 0.77f, 0.74f));
-            var dark = Mat("Frame", "Standard", new Color(0.35f, 0.34f, 0.33f));
-            var particle = Mat("InkParticle", "Particles/Standard Unlit", Color.white);
+            // Look of the reference: flat black silhouettes on a soft grey backdrop. Everything is
+            // unlit, so no lights are needed and phones render it cheaply.
+            var ink = Mat("Ink", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
+            var enemyInk = Mat("EnemyInk", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
+            var ground = Mat("Ground", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
+            var particle = Mat("InkParticle", "Legacy Shaders/Particles/Alpha Blended", Color.white);
+            var glow = Mat("LightBurst", "Legacy Shaders/Particles/Additive", new Color(0.5f, 0.5f, 0.5f));
             var trail = Mat("Trail", "Sprites/Default", Color.white);
+            var backdropMat = Mat("Backdrop", "Sprites/Default", Color.white);
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.62f, 0.61f, 0.58f);
+            RenderSettings.ambientLight = Color.white;
             RenderSettings.skybox = null;
 
-            var sun = new GameObject("Sun").AddComponent<Light>();
-            sun.type = LightType.Directional;
-            sun.intensity = 0.9f;
-            sun.shadows = LightShadows.Soft;
-            sun.transform.rotation = Quaternion.Euler(52f, -28f, 0f);
-
-            // ---------------------------------------------------------------- room
+            // ---------------------------------------------------------------- room (all black silhouette)
             var room = new GameObject("Room").transform;
-            Box(room, "Floor", new Vector3(0, -0.5f, 1f), new Vector3(30, 1, 8), floor);
-            Box(room, "BackWall", new Vector3(0, 4f, 5.25f), new Vector3(30, 8, 0.5f), wall);
-            Box(room, "WallLeft", new Vector3(-13.75f, 4f, 1f), new Vector3(0.5f, 8, 8), wall);
-            Box(room, "WallRight", new Vector3(13.75f, 4f, 1f), new Vector3(0.5f, 8, 8), wall);
-            DoorFrame(room, "DoorLeft", new Vector3(-12.6f, 0, 0.9f), dark, 1.8f);
-            DoorFrame(room, "DoorRight", new Vector3(12.6f, 0, 0.9f), dark, 1.8f);
-            DoorFrame(room, "DoorBack", new Vector3(-3f, 0, 4.9f), dark, 1.6f, true);
+            Box(room, "Ground", new Vector3(0, -2f, 0.5f), new Vector3(60, 4, 9), ground);
+            DoorFrame(room, "DoorLeft", new Vector3(-12.6f, 0, 0.9f), ground, 1.8f);
+            DoorFrame(room, "DoorRight", new Vector3(12.6f, 0, 0.9f), ground, 1.8f);
+            DoorFrame(room, "DoorBack", new Vector3(-3f, 0, 4.4f), ground, 1.6f, true);
 
             // staircase up to a landing: enemies come down it, and from under it
             const int steps = 8;
@@ -68,13 +62,13 @@ namespace ProjectInk.EditorTools
             for (int i = 0; i < steps; i++)
             {
                 float hgt = rise * (i + 1);
-                Box(room, $"Step{i}", new Vector3(x0 + run * (i + 0.5f), hgt * 0.5f, 0.2f), new Vector3(run, hgt, 3f), step);
+                Box(room, $"Step{i}", new Vector3(x0 + run * (i + 0.5f), hgt * 0.5f, 0.6f), new Vector3(run, hgt, 2.2f), ground);
             }
             float top = rise * steps;
             float landingX0 = x0 + run * steps;
-            Box(room, "Landing", new Vector3(landingX0 + 2f, top - 0.15f, 0.2f), new Vector3(4f, 0.3f, 3f), step);
-            Box(room, "LandingPillar", new Vector3(landingX0 + 3.8f, (top - 0.3f) * 0.5f, 1.5f), new Vector3(0.25f, top - 0.3f, 0.25f), dark);
-            Box(room, "Railing", new Vector3(landingX0 + 2f, top + 0.5f, 1.55f), new Vector3(4f, 0.06f, 0.06f), dark);
+            Box(room, "Landing", new Vector3(landingX0 + 2f, top - 0.15f, 0.6f), new Vector3(4f, 0.3f, 2.2f), ground);
+            Box(room, "LandingPillar", new Vector3(landingX0 + 3.8f, (top - 0.3f) * 0.5f, 1.5f), new Vector3(0.25f, top - 0.3f, 0.25f), ground);
+            Box(room, "Railing", new Vector3(landingX0 + 2f, top + 0.5f, 1.55f), new Vector3(4f, 0.06f, 0.06f), ground);
 
             // ---------------------------------------------------------------- spawn points
             var spawnRoot = new GameObject("SpawnPoints").transform;
@@ -95,6 +89,7 @@ namespace ProjectInk.EditorTools
             systems.AddComponent<GestureInput>();
             var fx = systems.AddComponent<InkFx>();
             fx.particleMaterial = particle;
+            fx.glowMaterial = glow;
             var director = systems.AddComponent<WaveDirector>();
             director.hero = hero;
             director.enemyModel = model;
@@ -108,16 +103,35 @@ namespace ProjectInk.EditorTools
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = Paper;
-            cam.fieldOfView = 38f;
+            cam.backgroundColor = new Color(0.6f, 0.6f, 0.6f);
+            cam.fieldOfView = 32f;
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 120f;
             camGo.AddComponent<AudioListener>();
             var dirCam = camGo.AddComponent<CameraDirector>();
             dirCam.hero = heroGo.transform;
-            camGo.transform.position = new Vector3(0, 1.6f, -8f);
+            dirCam.minDistance = 9.5f;
+            dirCam.maxDistance = 16f;
+            dirCam.height = 1.3f;
+            dirCam.lookHeight = 1.05f;
+            camGo.transform.position = new Vector3(0, 1.3f, -9.5f);
+
+            // grey gradient backdrop that travels with the camera, so it fills every shot,
+            // including the kill-cam orbits
+            var backdrop = new GameObject("Backdrop");
+            backdrop.transform.SetParent(camGo.transform, false);
+            backdrop.transform.localPosition = new Vector3(0, 0, 60f);
+            backdrop.AddComponent<MeshFilter>().sharedMesh = BackdropMesh();
+            var br = backdrop.AddComponent<MeshRenderer>();
+            br.sharedMaterial = backdropMat;
+            br.shadowCastingMode = ShadowCastingMode.Off;
+            br.receiveShadows = false;
+
+            ConfigurePlayer();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
+            File.WriteAllText(VersionFile, SceneVersion.ToString());
+            AssetDatabase.ImportAsset(VersionFile);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
             AssetDatabase.SaveAssets();
             Debug.Log("[Project INK] prototype scene built: " + ScenePath);
@@ -155,6 +169,42 @@ namespace ProjectInk.EditorTools
             return set;
         }
 
+        /// <summary>A large grid quad with vertex colours: light grey in the middle, darker
+        /// towards the edges and the bottom, like the soft-lit backdrop of the reference.</summary>
+        static Mesh BackdropMesh()
+        {
+            string path = GenDir + "/Backdrop.asset";
+            AssetDatabase.DeleteAsset(path);
+            const int nx = 24, ny = 12;
+            const float w = 110f, h = 48f;
+            var verts = new List<Vector3>();
+            var cols = new List<Color>();
+            var tris = new List<int>();
+            for (int y = 0; y <= ny; y++)
+                for (int x = 0; x <= nx; x++)
+                {
+                    float u = (float)x / nx, v = (float)y / ny;
+                    verts.Add(new Vector3((u - 0.5f) * w, (v - 0.5f) * h, 0f));
+                    float dx = (u - 0.5f) * 2f, dy = (v - 0.55f) * 2.2f;
+                    float light = Mathf.Exp(-(dx * dx * 2.2f + dy * dy * 1.6f));   // soft glow in the middle
+                    float g = Mathf.Lerp(0.42f, 0.74f, light);
+                    cols.Add(new Color(g, g, g, 1f));
+                }
+            for (int y = 0; y < ny; y++)
+                for (int x = 0; x < nx; x++)
+                {
+                    int i = y * (nx + 1) + x;
+                    tris.AddRange(new[] { i, i + nx + 1, i + 1, i + 1, i + nx + 1, i + nx + 2 });
+                }
+            var mesh = new Mesh { name = "Backdrop" };
+            mesh.SetVertices(verts);
+            mesh.SetColors(cols);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateBounds();
+            AssetDatabase.CreateAsset(mesh, path);
+            return mesh;
+        }
+
         static Material Mat(string name, string shader, Color color)
         {
             string path = $"{GenDir}/{name}.mat";
@@ -168,7 +218,6 @@ namespace ProjectInk.EditorTools
             }
             m.shader = sh;
             m.color = color;
-            if (shader == "Standard") m.SetFloat("_Glossiness", 0.05f);
             EditorUtility.SetDirty(m);
             return m;
         }
@@ -210,13 +259,14 @@ namespace ProjectInk.EditorTools
             return t;
         }
 
-        static void ConfigurePlayer()
+        /// <summary>Landscape only, on every build path.</summary>
+        public static void ConfigurePlayer()
         {
             PlayerSettings.companyName = "Project INK";
             PlayerSettings.productName = "Project INK";
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.projectink.prototype");
             PlayerSettings.bundleVersion = "0.1.0";
-            PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
+            PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation; // landscape left/right only (below)
             PlayerSettings.allowedAutorotateToLandscapeLeft = true;
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
             PlayerSettings.allowedAutorotateToPortrait = false;

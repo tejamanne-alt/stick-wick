@@ -33,20 +33,20 @@ HIP_Z = 0.95
 THIGH, SHIN = 0.45, 0.44
 UPPER, FORE = 0.28, 0.27
 BONES = {
-    "hips":      (None,    (0, 0, HIP_Z),  (0, 0, 1.05), 0.0, 180, 0.050),
-    "spine":     ("hips",  (0, 0, 1.05),   (0, 0, 1.30), 0.0, 180, 0.045),
-    "chest":     ("spine", (0, 0, 1.30),   (0, 0, 1.50), 0.0, 180, 0.045),
+    "hips":      (None,    (0, 0, HIP_Z),  (0, 0, 1.05), 0.0, 180, 0.072),
+    "spine":     ("hips",  (0, 0, 1.05),   (0, 0, 1.30), 0.0, 180, 0.070),
+    "chest":     ("spine", (0, 0, 1.30),   (0, 0, 1.50), 0.0, 180, 0.074),
     "head":      ("chest", (0, 0, 1.52),   (0, 0, 1.80), 0.0, 180, 0.0),
-    "upperarm.L": ("chest", (0, 0, 1.48), (0, 0, 1.48 - UPPER), 0.05, 0, 0.032),
-    "forearm.L": ("upperarm.L", (0, 0, 1.48 - UPPER), (0, 0, 1.48 - UPPER - FORE), 0.05, 0, 0.030),
-    "upperarm.R": ("chest", (0, 0, 1.48), (0, 0, 1.48 - UPPER), -0.05, 0, 0.032),
-    "forearm.R": ("upperarm.R", (0, 0, 1.48 - UPPER), (0, 0, 1.48 - UPPER - FORE), -0.05, 0, 0.030),
-    "thigh.L":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), 0.05, 0, 0.036),
-    "shin.L":    ("thigh.L", (0, 0, HIP_Z - THIGH), (0, 0, HIP_Z - THIGH - SHIN), 0.05, 0, 0.033),
-    "thigh.R":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), -0.05, 0, 0.036),
-    "shin.R":    ("thigh.R", (0, 0, HIP_Z - THIGH), (0, 0, HIP_Z - THIGH - SHIN), -0.05, 0, 0.033),
+    "upperarm.L": ("chest", (0, 0, 1.48), (0, 0, 1.48 - UPPER), 0.05, 0, 0.052),
+    "forearm.L": ("upperarm.L", (0, 0, 1.48 - UPPER), (0, 0, 1.48 - UPPER - FORE), 0.05, 0, 0.047),
+    "upperarm.R": ("chest", (0, 0, 1.48), (0, 0, 1.48 - UPPER), -0.05, 0, 0.052),
+    "forearm.R": ("upperarm.R", (0, 0, 1.48 - UPPER), (0, 0, 1.48 - UPPER - FORE), -0.05, 0, 0.047),
+    "thigh.L":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), 0.05, 0, 0.060),
+    "shin.L":    ("thigh.L", (0, 0, HIP_Z - THIGH), (0, 0, HIP_Z - THIGH - SHIN), 0.05, 0, 0.054),
+    "thigh.R":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), -0.05, 0, 0.060),
+    "shin.R":    ("thigh.R", (0, 0, HIP_Z - THIGH), (0, 0, HIP_Z - THIGH - SHIN), -0.05, 0, 0.054),
 }
-HEAD_RADIUS = 0.13
+HEAD_RADIUS = 0.165
 FOOT_Z = HIP_Z - THIGH - SHIN  # shin tip height in the rest pose (0.06)
 
 # ---------------------------------------------------------------- poses
@@ -241,7 +241,7 @@ def build_mesh(arm):
         t = Vector(tail) + Vector((0, y, 0))
         if name == "head":
             bpy.ops.mesh.primitive_uv_sphere_add(radius=HEAD_RADIUS, segments=20, ring_count=12,
-                                                 location=(0, 0, 1.66))
+                                                 location=(0, 0, 1.69))
             add_part(bpy.context.object, name)
             continue
         length = (t - h).length
@@ -349,7 +349,7 @@ def render_previews(arm):
     scene.render.resolution_y = 220
     world = bpy.data.worlds.new("Paper")
     world.use_nodes = True
-    world.node_tree.nodes["Background"].inputs[0].default_value = (0.93, 0.92, 0.88, 1)
+    world.node_tree.nodes["Background"].inputs[0].default_value = (0.62, 0.62, 0.62, 1)
     scene.world = world
     cam_data = bpy.data.cameras.new("Cam")
     cam_data.type = "ORTHO"
