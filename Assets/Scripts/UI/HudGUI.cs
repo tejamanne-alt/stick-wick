@@ -81,7 +81,70 @@ namespace ProjectInk
                 else if (director.CurrentPhase == WaveDirector.Phase.Dead)
                     Results(w, h, false);
             }
+            HeroMarker();
+            if (showDiagnostics) Diagnostics();
             GUI.matrix = Matrix4x4.identity;
+        }
+
+        public bool showDiagnostics = true;   // F1 toggles; turn off once the first run is confirmed
+
+        void Update()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (kb != null && kb.f1Key.wasPressedThisFrame) showDiagnostics = !showDiagnostics;
+#else
+            if (Input.GetKeyDown(KeyCode.F1)) showDiagnostics = !showDiagnostics;
+#endif
+        }
+
+        /// <summary>A small white marker over the hero's head (every fighter is black), drawn
+        /// from the root position, so it shows where the hero is even if the body does not.</summary>
+        void HeroMarker()
+        {
+            var cam = Camera.main;
+            if (hero == null || cam == null) return;
+            Vector3 sp = cam.WorldToScreenPoint(hero.transform.position + Vector3.up * 2.15f);
+            if (sp.z <= 0f) return;
+            float x = sp.x / scale, y = (Screen.height - sp.y) / scale;
+            var st = new GUIStyle(small) { fontSize = 26, fontStyle = FontStyle.Bold };
+            st.normal.textColor = Color.white;
+            GUI.Label(new Rect(x - 20, y - 20, 40, 30), "v", st);
+        }
+
+        void Diagnostics()
+        {
+            var cam = Camera.main;
+            var smr = hero != null ? hero.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
+            var lines = new System.Text.StringBuilder();
+            lines.AppendLine("DIAGNOSTICS (F1 to hide) - screenshot this for Claude");
+            if (hero == null) lines.AppendLine("hero: MISSING reference");
+            else
+            {
+                lines.AppendLine($"hero active={hero.gameObject.activeInHierarchy} pos={hero.transform.position:F2} rot={hero.transform.eulerAngles:F0} health={hero.Health:F0}");
+                if (hero.body != null)
+                    lines.AppendLine($"model localRot={hero.body.transform.localEulerAngles:F0} localScale={hero.body.transform.localScale:F2} clip={hero.body.CurrentName} t={hero.body.Time:F2}");
+            }
+            if (smr == null) lines.AppendLine("body renderer: NOT FOUND");
+            else
+            {
+                var b = smr.bounds;
+                lines.AppendLine($"body enabled={smr.enabled} visible={smr.isVisible} mesh={(smr.sharedMesh != null ? smr.sharedMesh.vertexCount.ToString() : "null")} bones={smr.bones.Length}");
+                lines.AppendLine($"body bounds center={b.center:F2} size={b.size:F2}");
+                var m = smr.sharedMaterial;
+                lines.AppendLine($"material={(m != null ? m.name + " / " + m.shader.name + " supported=" + m.shader.isSupported : "null")}");
+                if (cam != null)
+                {
+                    var vp = cam.WorldToViewportPoint(b.center);
+                    lines.AppendLine($"body on screen at viewport {vp:F2} (x,y in 0..1 and z>0 means in view)");
+                }
+            }
+            if (cam != null) lines.AppendLine($"camera pos={cam.transform.position:F2} fwd={cam.transform.forward:F2} fov={cam.fieldOfView:F0}");
+            lines.AppendLine($"enemies alive={Enemy.All.Count} pipeline={(UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline != null ? UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline.name : "built-in")}");
+            var st = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 15, wordWrap = false };
+            st.normal.textColor = new Color(0.05f, 0.05f, 0.05f);
+            Fill(new Rect(20, 100, 760, 190), new Color(1f, 1f, 1f, 0.75f));
+            GUI.Label(new Rect(28, 104, 750, 186), lines.ToString(), st);
         }
 
         void Results(float w, float h, bool cleared)
