@@ -1,0 +1,95 @@
+{
+  "clips": [
+    {
+      "name": "idle",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "run",
+      "frames": 16,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "jab",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4
+    },
+    {
+      "name": "cross",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5
+    },
+    {
+      "name": "front_kick",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6
+    },
+    {
+      "name": "roundhouse",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 7
+    },
+    {
+      "name": "back_kick",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6
+    },
+    {
+      "name": "flying_kick",
+      "frames": 20,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 10
+    },
+    {
+      "name": "dodge",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "hit_front",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "hit_back",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "knockdown",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "windup",
+      "frames": 10,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    }
+  ]
+}
