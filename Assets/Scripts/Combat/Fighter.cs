@@ -26,7 +26,15 @@ namespace ProjectInk
         public bool Alive => Health > 0f;
         public int Facing { get; private set; } = 1;
         public bool Grounded { get; protected set; } = true;
-        public Vector3 Chest => transform.position + Vector3.up * 1.3f;
+        /// <summary>Chibi proportions: about 1.45 m tall, hips at 0.70 m. Melee reaches scale with it.</summary>
+        public const float BodyScale = 0.76f;
+        public Vector3 Chest => transform.position + Vector3.up * 0.92f * transform.localScale.y;
+        public float Reach(AttackData a) => a.ranged ? a.reach : a.reach * BodyScale * transform.localScale.x;
+
+        [Tooltip("The eyes (built by FighterFactory): two small white ovals that blink.")]
+        public Transform[] eyes;
+        float nextBlink, blinkUntil;
+        bool facingSet;
 
         protected Vector3 velocity;
         Renderer[] renderers;
@@ -56,7 +64,11 @@ namespace ProjectInk
 
         public void SetFacing(int dir)
         {
-            Facing = dir >= 0 ? 1 : -1;
+            int f = dir >= 0 ? 1 : -1;
+            // turning round is eased on the body, so it never snaps
+            if (facingSet && f != Facing && body != null) body.EaseTurn(180f);
+            facingSet = true;
+            Facing = f;
             transform.rotation = Quaternion.Euler(0f, Facing > 0 ? 0f : 180f, 0f);
         }
 
@@ -73,9 +85,20 @@ namespace ProjectInk
 
         protected void UpdateTint()
         {
+            UpdateEyes();
             Color c = Time.time < tintUntil ? tintColor : baseColor;
             block.SetColor(ColorId, c);
             foreach (var r in renderers) if (r != null) r.SetPropertyBlock(block);
+        }
+
+        void UpdateEyes()
+        {
+            if (eyes == null || eyes.Length == 0) return;
+            float t = Time.time;
+            if (t > nextBlink) { blinkUntil = t + 0.11f; nextBlink = t + Random.Range(2.2f, 5.5f); }
+            bool closed = !Alive || t < blinkUntil;
+            foreach (var e in eyes)
+                if (e != null) e.localScale = new Vector3(e.localScale.x, closed ? 0.012f : 0.07f, e.localScale.z);
         }
 
         /// <summary>Height of the walkable surface under a point (floors, stairs, landings).</summary>
@@ -148,7 +171,7 @@ namespace ProjectInk
         // ------------------------------------------------------------------ ledge climbing
         // The upper floor's open edge: fighters jump up, hang by their hands, and pull up.
         public static float LedgeX = 0f, LedgeY = 3.2f;
-        const float HangDrop = 2.03f;               // hands above the feet with the arms straight up
+        const float HangDrop = 1.43f;               // hands above the feet with the arms straight up
         protected enum LedgeStage { None, Jump, Hang, Climb }
         protected LedgeStage ledge = LedgeStage.None;
         float ledgeTime, hangSeconds;
@@ -176,7 +199,7 @@ namespace ProjectInk
         {
             if (ledge == LedgeStage.None) return false;
             ledgeTime += dt;
-            var hangPos = new Vector3(LedgeX + 0.22f, LedgeY - HangDrop, 0f);
+            var hangPos = new Vector3(LedgeX + 0.2f, LedgeY - HangDrop, 0f);
             switch (ledge)
             {
                 case LedgeStage.Jump:
@@ -193,7 +216,7 @@ namespace ProjectInk
                         ledge = LedgeStage.Climb;
                         ledgeTime = 0f;
                         // the climb clip starts from the hanging offset and ends standing here
-                        transform.position = new Vector3(LedgeX - 0.38f, LedgeY, 0f);
+                        transform.position = new Vector3(LedgeX - 0.24f, LedgeY, 0f);
                         body.Play("climb_up", 0.02f);
                     }
                     break;

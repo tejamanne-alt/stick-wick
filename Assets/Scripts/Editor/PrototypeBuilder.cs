@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/ProjectInk.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 7;
+        public const int SceneVersion = 8;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Project INK/Build Prototype Scene")]
@@ -95,7 +95,8 @@ namespace ProjectInk.EditorTools
             points[(int)SpawnKind.Ceiling] = Point(spawnRoot, "Ceiling", new Vector3(0f, roofY - 0.6f, 0));
 
             // ---------------------------------------------------------------- hero + systems
-            var heroGo = FighterFactory.Build(model, moves, ink, "Hero", true, trail);
+            var eyeMat = Mat("Eyes", "Unlit/Color", new Color(0.97f, 0.96f, 0.92f));
+            var heroGo = FighterFactory.Build(model, moves, ink, "Hero", true, trail, FightStyle.Fists, eyeMat);
             heroGo.transform.position = new Vector3(6f, 0f, 0f);
             var hero = heroGo.GetComponent<HeroController>();
 
@@ -114,6 +115,7 @@ namespace ProjectInk.EditorTools
             director.enemyMaterial = enemyInk;
             director.trailMaterial = trail;
             director.weaponMaterial = ink;
+            director.eyeMaterial = eyeMat;
             director.spawnPoints = points;
             var hud = systems.AddComponent<HudGUI>();
             hud.hero = hero;
@@ -129,10 +131,10 @@ namespace ProjectInk.EditorTools
             camGo.AddComponent<AudioListener>();
             var dirCam = camGo.AddComponent<CameraDirector>();
             dirCam.hero = heroGo.transform;
-            dirCam.minDistance = 11f;
-            dirCam.maxDistance = 19f;
-            dirCam.height = 1.6f;
-            dirCam.lookHeight = 1.35f;
+            dirCam.minDistance = 9.5f;
+            dirCam.maxDistance = 17f;
+            dirCam.height = 1.35f;
+            dirCam.lookHeight = 1.1f;
             dirCam.minX = -7f;
             dirCam.maxX = 7f;
             camGo.transform.position = new Vector3(6f, 1.6f, -11f);

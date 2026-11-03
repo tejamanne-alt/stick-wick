@@ -17,6 +17,7 @@ namespace ProjectInk
         public Material enemyMaterial;
         public Material trailMaterial;
         public Material weaponMaterial;
+        public Material eyeMaterial;
         public Transform[] spawnPoints = new Transform[5]; // indexed by SpawnKind
 
         public const int WavesPerFloor = 5;
@@ -214,7 +215,7 @@ namespace ProjectInk
                 EnemyType.Piper => FightStyle.Pipe,
                 _ => FightStyle.Fists,
             };
-            var go = FighterFactory.Build(enemyModel, moves, enemyMaterial, $"Enemy_{spawnSerial++}", false, trailMaterial, weapon);
+            var go = FighterFactory.Build(enemyModel, moves, enemyMaterial, $"Enemy_{spawnSerial++}", false, trailMaterial, weapon, eyeMaterial);
             go.transform.position = pos;
             var e = go.GetComponent<Enemy>();
             float scale = 1f + 0.12f * (Floor - 1);

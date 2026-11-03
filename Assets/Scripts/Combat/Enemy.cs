@@ -196,7 +196,7 @@ namespace ProjectInk
             UpdateTint();
         }
 
-        float attackReach() => Type == EnemyType.Brute ? 1.3f : Armed ? 1.45f : 1.05f;
+        float attackReach() => (Type == EnemyType.Brute ? 1.3f : Armed || Type == EnemyType.Piper ? 1.45f : 1.05f) * BodyScale * transform.localScale.x;
 
         void UpdateEnter(float dx)
         {
@@ -377,7 +377,7 @@ namespace ProjectInk
         void AimLaser()
         {
             if (laser == null) return;
-            var muzzle = Chest + Vector3.up * 0.12f + Vector3.right * Facing * 0.7f;
+            var muzzle = Chest + Vector3.up * 0.1f + Vector3.right * Facing * 0.55f;
             laser.enabled = true;
             laser.SetPosition(0, muzzle);
             laser.SetPosition(1, hero.Chest);
@@ -398,14 +398,14 @@ namespace ProjectInk
             float dy = Mathf.Abs(hero.transform.position.y - transform.position.y);
             if (Type == EnemyType.Thrower)
             {
-                var from = Chest + Vector3.up * 0.3f + Vector3.right * Facing * 0.5f;
+                var from = Chest + Vector3.up * 0.2f + Vector3.right * Facing * 0.4f;
                 EnemyKnife.Throw(this, hero, from, hero.Chest, weaponMat);
                 if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
                 return;
             }
             if (attack.clip == "grab_attack")
             {
-                if (dx > -0.1f && dx < attack.reach + 0.3f && dy < 0.8f && hero.GetGrabbed(this))
+                if (dx > -0.1f && dx < Reach(attack) + 0.3f && dy < 0.8f && hero.GetGrabbed(this))
                 {
                     state = State.Holding;
                     stateTime = 0f;
@@ -415,14 +415,14 @@ namespace ProjectInk
             }
             if (Gunner)
             {
-                var from = Chest + Vector3.up * 0.12f + Vector3.right * Facing * 0.7f;
+                var from = Chest + Vector3.up * 0.1f + Vector3.right * Facing * 0.55f;
                 bool hit = dx > 0f && dy < 1.2f && !hero.Invulnerable;
                 if (InkFx.Instance != null) InkFx.Instance.Shot(from, hit ? hero.Chest : from + Vector3.right * Facing * 16f);
                 hit &= !hero.Ducking;
                 if (hit) hero.TakeHit(new HitInfo { damage = attack.damage, direction = Facing, knockback = attack.knockback, attacker = this });
                 return;
             }
-            float reach = attack.reach * transform.localScale.x + 0.35f;
+            float reach = Reach(attack) + 0.3f;
             if (dx > -0.1f && dx < reach && dy < 0.9f)
             {
                 hero.TakeHit(new HitInfo
@@ -507,7 +507,7 @@ namespace ProjectInk
             foreach (var other in All.ToArray())
             {
                 if (other == this || !other.Targetable) continue;
-                if (Vector3.Distance(other.transform.position + Vector3.up * 0.9f, transform.position + Vector3.up * 0.5f) < 1.0f)
+                if (Vector3.Distance(other.Chest, transform.position + Vector3.up * 0.35f) < 0.85f)
                 {
                     other.TakeHit(new HitInfo { damage = 22f, direction = velocity.x >= 0 ? 1 : -1, knockback = 7f, knockdown = true, heavy = true, attacker = launchedBy });
                     if (InkFx.Instance != null) InkFx.Instance.Splash(other.Chest, velocity.normalized, 24, other.InkColor);

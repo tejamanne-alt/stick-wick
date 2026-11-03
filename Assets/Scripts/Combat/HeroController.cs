@@ -537,13 +537,13 @@ namespace ProjectInk
             swingAngle += speed * dt;
             transform.rotation = Quaternion.Euler(0f, swingAngle, 0f);
             Vector3 fwd = transform.right;                                     // the hero's facing
-            var holdPos = transform.position + fwd * 1.35f + Vector3.up * 1.0f;
+            var holdPos = transform.position + fwd * 1.1f + Vector3.up * 0.75f;
             e.transform.position = holdPos;
             e.transform.rotation = Quaternion.Euler(0f, swingAngle + 180f, 0f);  // feet to the hero, head out
             foreach (var other in Enemy.All.ToArray())
             {
                 if (other == e || !other.Targetable || swingHit.Contains(other)) continue;
-                if (Vector3.Distance(other.Chest, holdPos) < 1.2f)
+                if (Vector3.Distance(other.Chest, holdPos) < 1.0f)
                 {
                     swingHit.Add(other);
                     other.TakeHit(new HitInfo { damage = 22f, direction = other.transform.position.x > transform.position.x ? 1 : -1, knockback = 9f, knockdown = true, heavy = true, attacker = this });
@@ -597,7 +597,7 @@ namespace ProjectInk
             if (t != null && !move.ranged && !move.behind && !leap)
             {
                 float gap = Mathf.Abs(t.transform.position.x - transform.position.x);
-                if (gap > move.reach + 0.15f)
+                if (gap > Reach(move) + 0.15f)
                 {
                     state = State.Dash;
                     stateTime = 0f;
@@ -611,7 +611,7 @@ namespace ProjectInk
         void UpdateDash(float dt)
         {
             if (target == null || !target.Targetable) { BeginSwing(); return; }
-            float goal = target.transform.position.x - attackDir * currentAttack.reach * 0.92f;
+            float goal = target.transform.position.x - attackDir * Reach(currentAttack) * 0.92f;
             velocity.x = 0f;
             var p = transform.position;
             p.x = Mathf.MoveTowards(p.x, goal, dashSpeed * dt);
@@ -658,7 +658,7 @@ namespace ProjectInk
             if (glides && !hitDone && target != null && target.Targetable)
             {
                 var p = transform.position;
-                float goal = target.transform.position.x - attackDir * currentAttack.reach * 0.9f;
+                float goal = target.transform.position.x - attackDir * Reach(currentAttack) * 0.9f;
                 p.x = Mathf.MoveTowards(p.x, goal, dashSpeed * 0.7f * Time.deltaTime);
                 transform.position = p;
             }
@@ -725,7 +725,7 @@ namespace ProjectInk
                 float dx = (e.transform.position.x - transform.position.x) * attackDir;
                 float dy = Mathf.Abs(e.transform.position.y - transform.position.y);
                 bool primary = e == target;
-                float reach = currentAttack.reach + (primary ? 0.45f : 0.1f);
+                float reach = Reach(currentAttack) + (primary ? 0.4f : 0.1f);
                 float yTol = currentAttack.clip == "flying_kick" || currentAttack.clip == "sword_leap" ? 1.8f : 1.0f;
                 if (dx < -0.2f || dx > reach || dy > yTol) continue;
                 if (!primary && !currentAttack.heavy && !currentAttack.cleave && target != null) continue;
@@ -947,7 +947,7 @@ namespace ProjectInk
             SetTrails(false);
             FaceTowards(by.transform.position.x);
             var p = transform.position;
-            p.x = by.transform.position.x - Facing * 0.75f;
+            p.x = by.transform.position.x - Facing * 0.6f;
             transform.position = p;
             body.Play("struggle", 0.06f);
             if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, "GRABBED! TAP!");

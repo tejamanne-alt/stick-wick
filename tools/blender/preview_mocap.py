@@ -37,7 +37,7 @@ def main():
         arm.animation_data_create()
         act = bpy.data.actions.new(name)
         arm.animation_data.action = act
-        last = retarget.key_action(arm, frames, arm.pose.bones, bs.FOOT_Z, bs.BONES["hips"][1])
+        last = retarget.key_action(arm, frames, arm.pose.bones, bs.FOOT_Z, bs.BONES["hips"][1], (bs.THIGH + bs.SHIN) / 0.89)
         scene = bpy.context.scene
         scene.render.engine = "CYCLES"
         scene.cycles.samples = 2

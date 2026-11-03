@@ -34,28 +34,36 @@ FPS = 30
 
 # ---------------------------------------------------------------- skeleton
 # name: (parent, head, tail, depth y, rest angle, radius of the limb mesh)
-HIP_Z = 0.95
-THIGH, SHIN = 0.45, 0.44
-UPPER, FORE, HAND = 0.28, 0.27, 0.09
+# Chibi proportions: about 1.45 m tall, a big round head, a round belly and chest, short
+# thick limbs and little round feet. Poses are angles, so they all carry over; explicit
+# hip offsets in the poses are written for the original 0.95 m hip height and scaled by S.
+HIP_Z = 0.70
+THIGH, SHIN = 0.34, 0.30
+UPPER, FORE, HAND = 0.21, 0.19, 0.07
+SHOULDER = 1.00
+D = 0.07                                   # left/right depth offset of the limbs
 BONES = {
-    "hips":      (None,    (0, 0, HIP_Z),  (0, 0, 1.05), 0.0, 180, 0.072),
-    "spine":     ("hips",  (0, 0, 1.05),   (0, 0, 1.30), 0.0, 180, 0.070),
-    "chest":     ("spine", (0, 0, 1.30),   (0, 0, 1.50), 0.0, 180, 0.074),
-    "head":      ("chest", (0, 0, 1.52),   (0, 0, 1.80), 0.0, 180, 0.0),
-    "upperarm.L": ("chest", (0, 0, 1.48), (0, 0, 1.48 - UPPER), 0.05, 0, 0.052),
-    "forearm.L": ("upperarm.L", (0, 0, 1.48 - UPPER), (0, 0, 1.48 - UPPER - FORE), 0.05, 0, 0.047),
-    "upperarm.R": ("chest", (0, 0, 1.48), (0, 0, 1.48 - UPPER), -0.05, 0, 0.052),
-    "forearm.R": ("upperarm.R", (0, 0, 1.48 - UPPER), (0, 0, 1.48 - UPPER - FORE), -0.05, 0, 0.047),
+    "hips":      (None,    (0, 0, HIP_Z),  (0, 0, 0.78), 0.0, 180, 0.11),
+    "spine":     ("hips",  (0, 0, 0.78),   (0, 0, 0.92), 0.0, 180, 0.12),
+    "chest":     ("spine", (0, 0, 0.92),   (0, 0, 1.04), 0.0, 180, 0.12),
+    "head":      ("chest", (0, 0, 1.05),   (0, 0, 1.30), 0.0, 180, 0.0),
+    "upperarm.L": ("chest", (0, 0, SHOULDER), (0, 0, SHOULDER - UPPER), D, 0, 0.060),
+    "forearm.L": ("upperarm.L", (0, 0, SHOULDER - UPPER), (0, 0, SHOULDER - UPPER - FORE), D, 0, 0.058),
+    "upperarm.R": ("chest", (0, 0, SHOULDER), (0, 0, SHOULDER - UPPER), -D, 0, 0.060),
+    "forearm.R": ("upperarm.R", (0, 0, SHOULDER - UPPER), (0, 0, SHOULDER - UPPER - FORE), -D, 0, 0.058),
     # hands carry no mesh: their angle is the weapon's direction (blade or barrel)
-    "hand.L":    ("forearm.L", (0, 0, 1.48 - UPPER - FORE), (0, 0, 1.48 - UPPER - FORE - HAND), 0.05, 0, 0.0),
-    "hand.R":    ("forearm.R", (0, 0, 1.48 - UPPER - FORE), (0, 0, 1.48 - UPPER - FORE - HAND), -0.05, 0, 0.0),
-    "thigh.L":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), 0.05, 0, 0.060),
-    "shin.L":    ("thigh.L", (0, 0, HIP_Z - THIGH), (0, 0, HIP_Z - THIGH - SHIN), 0.05, 0, 0.054),
-    "thigh.R":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), -0.05, 0, 0.060),
-    "shin.R":    ("thigh.R", (0, 0, HIP_Z - THIGH), (0, 0, HIP_Z - THIGH - SHIN), -0.05, 0, 0.054),
+    "hand.L":    ("forearm.L", (0, 0, SHOULDER - UPPER - FORE), (0, 0, SHOULDER - UPPER - FORE - HAND), D, 0, 0.0),
+    "hand.R":    ("forearm.R", (0, 0, SHOULDER - UPPER - FORE), (0, 0, SHOULDER - UPPER - FORE - HAND), -D, 0, 0.0),
+    "thigh.L":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), D, 0, 0.072),
+    "shin.L":    ("thigh.L", (0, 0, HIP_Z - THIGH), (0, 0, HIP_Z - THIGH - SHIN), D, 0, 0.066),
+    "thigh.R":   ("hips",  (0, 0, HIP_Z), (0, 0, HIP_Z - THIGH), -D, 0, 0.072),
+    "shin.R":    ("thigh.R", (0, 0, HIP_Z - THIGH), (0, 0, HIP_Z - THIGH - SHIN), -D, 0, 0.066),
 }
-HEAD_RADIUS = 0.165
+HEAD_RADIUS = 0.21
+HEAD_CENTER = 1.24
 FOOT_Z = HIP_Z - THIGH - SHIN  # shin tip height in the rest pose (0.06)
+S = HIP_Z / 0.95               # scale for explicit hip offsets written for the original body
+HANG_DROP = SHOULDER + UPPER + FORE + 0.03   # hands above the feet with the arms straight up (1.43)
 
 # ---------------------------------------------------------------- poses
 # L = far side (lead side in the guard), R = near side (rear / power side).
@@ -378,11 +386,11 @@ WEAPON_CLIPS = {
         (12, pose(HANG, thigh_L=-6, shin_L=-10, thigh_R=10, shin_R=0, dz=0.0)),
         (24, HANG)]),
     "climb_up": dict(frames=16, loop=False, hit=None, keys=[
-        (0, pose(HANG, dz=-2.03, dx=-0.6)),
+        (0, pose(HANG, dz=-HANG_DROP / S, dx=-0.6)),
         (5, pose(STRAIGHT, spine=168, chest=160, head=168, upperarm_L=-20, forearm_L=150, upperarm_R=-25, forearm_R=145,
-                 thigh_L=5, shin_L=-5, thigh_R=-5, shin_R=-10, dz=-1.25, dx=-0.45)),
+                 thigh_L=5, shin_L=-5, thigh_R=-5, shin_R=-10, dz=-HANG_DROP * 0.62 / S, dx=-0.45)),
         (9, pose(STRAIGHT, spine=150, chest=145, head=155, upperarm_L=-30, forearm_L=40, upperarm_R=-30, forearm_R=40,
-                 thigh_L=115, shin_L=-30, thigh_R=-10, shin_R=-30, dz=-0.6, dx=-0.25)),
+                 thigh_L=115, shin_L=-30, thigh_R=-10, shin_R=-30, dz=-HANG_DROP * 0.3 / S, dx=-0.25)),
         (13, pose(spine=165, chest=160, thigh_L=70, shin_L=-10, thigh_R=-10, shin_R=-60, dz=-0.28, dx=-0.05)),
         (16, STANCE)]),
     # ---- finishing and handling bodies
@@ -482,10 +490,21 @@ def build_mesh(arm):
         h = Vector(head) + Vector((0, y, 0))
         t = Vector(tail) + Vector((0, y, 0))
         if name == "head":
-            bpy.ops.mesh.primitive_uv_sphere_add(radius=HEAD_RADIUS, segments=20, ring_count=12,
-                                                 location=(0, 0, 1.69))
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=HEAD_RADIUS, segments=24, ring_count=14,
+                                                 location=(0, 0, HEAD_CENTER))
             add_part(bpy.context.object, name)
             continue
+        if name == "spine":   # a round belly
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=0.165, segments=18, ring_count=10, location=(0, 0, 0.81))
+            bpy.context.object.scale = (1.0, 1.05, 1.12)
+            add_part(bpy.context.object, name)
+        if name == "chest":   # a round chest under the head
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=0.158, segments=18, ring_count=10, location=(0, 0, 0.935))
+            add_part(bpy.context.object, name)
+        if name in ("shin.L", "shin.R"):  # little round feet, toes forward
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=0.075, segments=12, ring_count=8, location=t + Vector((0.035, 0, -0.005)))
+            bpy.context.object.scale = (1.35, 1.0, 0.8)
+            add_part(bpy.context.object, name)
         if radius <= 0:
             continue
         length = (t - h).length
@@ -545,7 +564,8 @@ def apply_pose(arm, p):
         if name == "hips":
             dz = p.get("_dz")
             dz = ground_dz(p) if dz is None else dz
-            pb.location = rest_rot.inverted() @ Vector((p.get("_dx", 0.0), 0, dz))
+            explicit = p.get("_dz") is not None
+            pb.location = rest_rot.inverted() @ Vector((p.get("_dx", 0.0) * S, 0, dz * S if explicit else dz))
 
 
 def build_actions(arm, skip=()):
@@ -672,7 +692,7 @@ def build_mocap_actions(arm):
         act.use_fake_user = True
         act["mocap"] = True
         arm.animation_data.action = act
-        last = retarget.key_action(arm, frames, arm.pose.bones, FOOT_Z, BONES["hips"][1])
+        last = retarget.key_action(arm, frames, arm.pose.bones, FOOT_Z, BONES["hips"][1], (THIGH + SHIN) / 0.89)
         act.frame_range = (0, last)
         hit = -1
         if spec.get("hit") is not None:

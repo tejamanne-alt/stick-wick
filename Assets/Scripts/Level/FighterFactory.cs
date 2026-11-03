@@ -8,7 +8,8 @@ namespace ProjectInk
     public static class FighterFactory
     {
         public static GameObject Build(GameObject model, MoveSet moves, Material material, string name, bool hero,
-                                       Material trailMaterial = null, FightStyle enemyWeapon = FightStyle.Fists)
+                                       Material trailMaterial = null, FightStyle enemyWeapon = FightStyle.Fists,
+                                       Material eyeMaterial = null)
         {
             var root = new GameObject(name);
             // the model is inactive while we wire it up, so Awake runs once everything is set
@@ -46,6 +47,7 @@ namespace ProjectInk
 
             Fighter f = hero ? root.AddComponent<HeroController>() : (Fighter)root.AddComponent<Enemy>();
             f.body = player;
+            if (eyeMaterial != null) f.eyes = BuildEyes(player, eyeMaterial);
             if (f is HeroController h)
             {
                 h.sword = sword;
@@ -75,6 +77,7 @@ namespace ProjectInk
             mount.SetParent(hand, false);
             mount.position = hand.position;
             mount.rotation = Quaternion.LookRotation(dir, Vector3.forward);
+            mount.localScale = Vector3.one * 0.8f;     // sized for the chibi body
             return mount;
         }
 
@@ -152,6 +155,32 @@ namespace ProjectInk
                 trail.emitting = false;
             }
             return mount.gameObject;
+        }
+
+        /// <summary>Two small white ovals on the head, one on each side, so whichever way the
+        /// fighter faces the eye towards the camera shows (cute, and it blinks).
+        /// Measured in the rest pose: the head bone points up, the model faces +X.</summary>
+        static Transform[] BuildEyes(ClipPlayer player, Material mat)
+        {
+            var head = player.Bone("head");
+            if (head == null) return null;
+            var center = head.position + Vector3.up * 0.19f;          // head sphere centre above the bone
+            var eyes = new Transform[2];
+            for (int i = 0; i < 2; i++)
+            {
+                var e = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                Object.DestroyImmediate(e.GetComponent<Collider>());
+                e.name = "Eye" + i;
+                e.transform.SetParent(head, true);
+                // on the sphere's surface, towards the front of the face, one on each side
+                e.transform.position = center + new Vector3(0.84f, 0.17f, i == 0 ? 0.52f : -0.52f).normalized * 0.2f;
+                e.transform.localScale = new Vector3(0.04f, 0.07f, 0.04f);
+                var r = e.GetComponent<Renderer>();
+                r.sharedMaterial = mat;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                eyes[i] = e.transform;
+            }
+            return eyes;
         }
 
         /// <summary>White motion trail (a slash arc, as in the reference) at the end of a limb.

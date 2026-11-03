@@ -142,3 +142,21 @@ New hand-keyed clips: hang, climb_up, stomp, swing_hold, duck, slide_kick, grab_
 A design mock-up is in `docs/previews/building_mockup.png`. The first version of the mock-up showed the black hero disappearing against dark windows and the black back doorway. That led to raising the windows above head height and lighting the corridor.
 
 Scene version 7.
+
+## 2026-11-04: Chibi proportions and smoother animation
+
+- **New body:** about 1.45 m tall instead of 1.85 m.
+    - head radius 0.21 m
+    - a round belly and chest
+    - short, thick limbs
+    - little round feet
+    - two small white eyes that blink, and close when a fighter is down
+- **What adapted to it:**
+    - Poses are angles, so they carry over unchanged; explicit hip offsets in the hand-keyed poses are scaled.
+    - Motion-capture hip height is scaled to the shorter legs.
+    - In the game: melee reach, chest height, ledge hang height, swing and grab spacing, weapon size (80%), and camera framing.
+- **Smoothness:**
+    - The clip player blends up to 6 clips at once with eased crossfades, so rapid combos and interruptions never pop.
+    - Turning around eases through the motion instead of snapping.
+    - Motion capture gets a light 1-2-1 temporal filter to remove capture jitter.
+- Scene version 8.

@@ -103,6 +103,15 @@ def prepare(spec, cache_dir, src_dir):
     for f in frames:
         out.append({k: rot @ (v - origin) for k, v in f.items()})
 
+    # butter-smooth: a light 1-2-1 filter over time removes capture jitter (endpoints kept)
+    if len(out) > 4 and spec.get("smooth", True):
+        keys = [k for k in out[0] if not k.startswith("_")]
+        smoothed = [dict(f) for f in out]
+        for i in range(1, len(out) - 1):
+            for k in keys:
+                smoothed[i][k] = out[i - 1][k] * 0.25 + out[i][k] * 0.5 + out[i + 1][k] * 0.25
+        out = smoothed
+
     # punches: straighten the striking arm into full, level extension around the impact,
     # so it reads from the side (shadow-boxing punches are short and pulled)
     if spec.get("extend"):
@@ -162,7 +171,7 @@ def impact_frame(frames, spec, nominal, window=5):
     return best
 
 
-def key_action(arm, frames, bones, foot_z, hip_rest):
+def key_action(arm, frames, bones, foot_z, hip_rest, leg_scale=1.0):
     """Key one action on `arm` from prepared frames."""
     rest = {n: arm.data.bones[n].matrix_local.to_3x3() for n in ORDER}
     parent = {n: (arm.data.bones[n].parent.name if arm.data.bones[n].parent else None) for n in ORDER}
@@ -200,7 +209,7 @@ def key_action(arm, frames, bones, foot_z, hip_rest):
             pb.rotation_quaternion = basis.to_quaternion()
             pb.keyframe_insert("rotation_quaternion", frame=i, group=n)
         # hips: actor's pelvis height above its ankles -> stickman pelvis above its ankles
-        root = f["_root"]
+        root = f["_root"] * leg_scale     # the actor's pelvis height, scaled to the stickman's legs
         target = Vector((root[0], 0.0, root[2] + foot_z))
         pb = bones["hips"]
         pb.location = rest["hips"].inverted() @ (target - Vector(hip_rest))

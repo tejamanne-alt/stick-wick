@@ -4,26 +4,36 @@ using UnityEngine.Playables;
 
 namespace ProjectInk
 {
-    /// <summary>Plays MoveSet clips on the stickman rig with short crossfades, using the
-    /// Playables API so no Animator Controller asset is needed. Also works out which way
-    /// the imported model faces and turns it so "forward" is the parent's +X.</summary>
+    /// <summary>Plays MoveSet clips on the stickman rig with smooth blending, using the Playables
+    /// API (no Animator Controller asset). Up to six clips blend at once: a new clip eases in
+    /// while everything that was playing eases out from wherever it was, so even rapid combos
+    /// never pop. Turning around is eased too. Also works out which way the imported model
+    /// faces and turns it so "forward" is the parent's +X.</summary>
     [RequireComponent(typeof(Animator))]
     public class ClipPlayer : MonoBehaviour
     {
         public MoveSet moves;
+        [Tooltip("Degrees per second for easing a turn-around.")]
+        public float turnSpeed = 1500f;
 
+        const int Slots = 6;
         PlayableGraph graph;
         AnimationMixerPlayable mixer;
-        AnimationClipPlayable current, previous;
-        float fade, fadeTime;
-        MoveSet.Entry currentEntry;
+        readonly AnimationClipPlayable[] slot = new AnimationClipPlayable[Slots];
+        readonly MoveSet.Entry[] slotEntry = new MoveSet.Entry[Slots];
+        readonly float[] weight = new float[Slots];
+        readonly float[] fadeFrom = new float[Slots];
+        int current = -1;
+        float fade = 1f, fadeTime = 0.1f;
+        Quaternion calibration = Quaternion.identity;
+        float turnOffset;
 
-        public MoveSet.Entry Current => currentEntry;
-        public string CurrentName => currentEntry != null ? currentEntry.name : "";
-        public float Time => current.IsValid() ? (float)current.GetTime() : 0f;
-        public bool Finished => currentEntry != null && !currentEntry.loop && Time >= currentEntry.Length;
+        public MoveSet.Entry Current => current >= 0 ? slotEntry[current] : null;
+        public string CurrentName => Current != null ? Current.name : "";
+        public float Time => current >= 0 && slot[current].IsValid() ? (float)slot[current].GetTime() : 0f;
+        public bool Finished => Current != null && !Current.loop && Time >= Current.Length;
 
-        /// <summary>Bone transforms by name (e.g. "shin.R"), cached on first use.</summary>
+        /// <summary>Bone transforms by name (e.g. "shin.R").</summary>
         public Transform Bone(string boneName)
         {
             foreach (var t in GetComponentsInChildren<Transform>(true))
@@ -45,12 +55,16 @@ namespace ProjectInk
             Vector3 fwd = transform.InverseTransformPoint(knee.position) - transform.InverseTransformPoint(hips.position);
             fwd.y = 0f;
             if (fwd.sqrMagnitude < 1e-4f) return;
-            // a pure turn about the vertical axis. (FromToRotation is ambiguous when the model
-            // faces exactly the opposite way, which it does after the FBX axis conversion, and
-            // could roll the model upside down below the floor.)
+            // a pure turn about the vertical axis (FromToRotation is ambiguous for opposite vectors)
             float yaw = Vector3.SignedAngle(fwd.normalized, Vector3.right, Vector3.up);
-            transform.localRotation = Quaternion.AngleAxis(yaw, Vector3.up);
-            Debug.Log($"[ClipPlayer] {transform.parent?.name}: model faced {fwd.normalized:F2}, turned {yaw:F0}°");
+            calibration = Quaternion.AngleAxis(yaw, Vector3.up);
+            transform.localRotation = calibration;
+        }
+
+        /// <summary>The parent just turned round instantly: ease the body round instead.</summary>
+        public void EaseTurn(float degrees)
+        {
+            turnOffset = Mathf.Repeat(turnOffset + degrees + 180f, 360f) - 180f;
         }
 
         /// <summary>Warn if the visible body is not standing on the fighter's position.</summary>
@@ -60,7 +74,7 @@ namespace ProjectInk
             if (smr == null) { Debug.LogWarning($"[ClipPlayer] {name}: no SkinnedMeshRenderer"); return; }
             var b = smr.bounds;
             float baseY = transform.position.y;
-            if (b.max.y < baseY + 0.5f || b.min.y < baseY - 0.5f || b.size.y < 0.5f || b.size.y > 5f)
+            if (b.max.y < baseY + 0.4f || b.min.y < baseY - 0.5f || b.size.y < 0.4f || b.size.y > 5f)
                 Debug.LogWarning($"[ClipPlayer] {transform.parent?.name}: body bounds look wrong (min {b.min}, max {b.max}, size {b.size}) - send this line to Claude");
         }
 
@@ -73,7 +87,7 @@ namespace ProjectInk
             graph = PlayableGraph.Create(name + ".Clips");
             graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
             var output = AnimationPlayableOutput.Create(graph, "Animation", animator);
-            mixer = AnimationMixerPlayable.Create(graph, 2);
+            mixer = AnimationMixerPlayable.Create(graph, Slots);
             output.SetSourcePlayable(mixer);
             graph.Play();
         }
@@ -85,8 +99,8 @@ namespace ProjectInk
 
         public bool Has(string clipName) => moves != null && moves.Get(clipName) != null;
 
-        /// <summary>Play a clip by name. Restarts it if it is already playing and restart is true.</summary>
-        public MoveSet.Entry Play(string clipName, float crossfade = 0.08f, bool restart = true, float speed = 1f)
+        /// <summary>Play a clip by name, blending from whatever is playing now.</summary>
+        public MoveSet.Entry Play(string clipName, float crossfade = 0.1f, bool restart = true, float speed = 1f)
         {
             var entry = moves != null ? moves.Get(clipName) : null;
             if (entry == null || entry.clip == null)
@@ -94,56 +108,96 @@ namespace ProjectInk
                 Debug.LogWarning($"[ClipPlayer] missing clip '{clipName}'");
                 return null;
             }
-            if (!restart && entry == currentEntry) return entry;
+            if (!restart && current >= 0 && slotEntry[current] == entry)
+            {
+                slot[current].SetSpeed(speed);
+                return entry;
+            }
 
-            if (previous.IsValid())
+            // a free slot, or else the faintest one that is not the current clip
+            int s = -1;
+            float faintest = float.MaxValue;
+            for (int i = 0; i < Slots; i++)
             {
-                graph.Disconnect(mixer, 1);
-                previous.Destroy();
+                if (!slot[i].IsValid()) { s = i; break; }
+                if (i != current && weight[i] < faintest) { faintest = weight[i]; s = i; }
             }
-            if (current.IsValid())
+            if (s < 0) s = (current + 1) % Slots;
+            if (slot[s].IsValid())
             {
-                graph.Disconnect(mixer, 0);
-                previous = current;
-                graph.Connect(previous, 0, mixer, 1);
+                graph.Disconnect(mixer, s);
+                slot[s].Destroy();
             }
-            current = AnimationClipPlayable.Create(graph, entry.clip);
-            current.SetApplyFootIK(false);
-            current.SetSpeed(speed);
-            if (!entry.loop) current.SetDuration(entry.Length);
-            graph.Connect(current, 0, mixer, 0);
-            currentEntry = entry;
-            fadeTime = Mathf.Max(0.0001f, crossfade);
-            fade = previous.IsValid() ? 0f : 1f;
+
+            var p = AnimationClipPlayable.Create(graph, entry.clip);
+            p.SetApplyFootIK(false);
+            p.SetSpeed(speed);
+            if (!entry.loop) p.SetDuration(entry.Length);
+            graph.Connect(p, 0, mixer, s);
+            slot[s] = p;
+            slotEntry[s] = entry;
+            weight[s] = 0f;
+
+            // everything else fades out from where it is now
+            for (int i = 0; i < Slots; i++) fadeFrom[i] = weight[i];
+            current = s;
+            // a little longer blends read as smoother; very short ones are kept for impacts
+            fadeTime = Mathf.Max(0.04f, crossfade * 1.25f);
+            bool anythingPlaying = false;
+            for (int i = 0; i < Slots; i++) if (i != s && weight[i] > 0.001f) anythingPlaying = true;
+            fade = anythingPlaying ? 0f : 1f;
             ApplyWeights();
             return entry;
         }
 
         public void SetSpeed(float speed)
         {
-            if (current.IsValid()) current.SetSpeed(speed);
+            if (current >= 0 && slot[current].IsValid()) slot[current].SetSpeed(speed);
         }
 
         void Update()
         {
+            float dt = UnityEngine.Time.deltaTime;
             if (fade < 1f)
             {
-                fade = Mathf.Min(1f, fade + UnityEngine.Time.deltaTime / fadeTime);
+                fade = Mathf.Min(1f, fade + dt / fadeTime);
                 ApplyWeights();
             }
-            // loop clips by wrapping time; one-shots hold their last frame
-            if (currentEntry != null && current.IsValid())
+            for (int i = 0; i < Slots; i++)
             {
-                double t = current.GetTime();
-                if (currentEntry.loop && t > currentEntry.Length) current.SetTime(t % currentEntry.Length);
-                else if (!currentEntry.loop && t > currentEntry.Length) current.SetTime(currentEntry.Length);
+                if (!slot[i].IsValid() || slotEntry[i] == null) continue;
+                // loop clips wrap; one-shots hold their last frame
+                double t = slot[i].GetTime();
+                float len = slotEntry[i].Length;
+                if (slotEntry[i].loop && t > len) slot[i].SetTime(t % len);
+                else if (!slotEntry[i].loop && t > len) slot[i].SetTime(len);
+                // clean up clips that have fully faded out
+                if (i != current && fade >= 1f && weight[i] <= 0.0001f)
+                {
+                    graph.Disconnect(mixer, i);
+                    slot[i].Destroy();
+                    slotEntry[i] = null;
+                }
             }
+        }
+
+        void LateUpdate()
+        {
+            if (Mathf.Abs(turnOffset) > 0.01f)
+                turnOffset = Mathf.MoveTowards(turnOffset, 0f, turnSpeed * UnityEngine.Time.deltaTime);
+            transform.localRotation = calibration * Quaternion.Euler(0f, turnOffset, 0f);
         }
 
         void ApplyWeights()
         {
-            mixer.SetInputWeight(0, fade);
-            mixer.SetInputWeight(1, previous.IsValid() ? 1f - fade : 0f);
+            // ease-in-out blend, so neither end of a transition jolts
+            float e = fade * fade * (3f - 2f * fade);
+            for (int i = 0; i < Slots; i++)
+            {
+                if (!slot[i].IsValid()) { weight[i] = 0f; mixer.SetInputWeight(i, 0f); continue; }
+                weight[i] = i == current ? (fadeFrom[i] + (1f - fadeFrom[i]) * e) : fadeFrom[i] * (1f - e);
+                mixer.SetInputWeight(i, weight[i]);
+            }
         }
     }
 }

@@ -200,7 +200,7 @@ namespace ProjectInk
         {
             var cam = Camera.main;
             if (hero == null || cam == null || hero.IsDead) return;
-            Vector3 sp = cam.WorldToScreenPoint(hero.transform.position + Vector3.up * 2.15f);
+            Vector3 sp = cam.WorldToScreenPoint(hero.transform.position + Vector3.up * 1.75f);
             if (sp.z <= 0f) return;
             float x = sp.x / scale, y = (Screen.height - sp.y) / scale;
             var st = new GUIStyle(small) { fontSize = 26, fontStyle = FontStyle.Bold };

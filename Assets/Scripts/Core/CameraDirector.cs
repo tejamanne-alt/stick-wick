@@ -130,8 +130,8 @@ namespace ProjectInk
             if (focusTarget != null && UnityEngine.Time.unscaledTime < focusUntil)
             {
                 float k = Mathf.Clamp01((focusUntil - UnityEngine.Time.unscaledTime) / 0.4f);
-                var fp = focusTarget.position + Vector3.up * 1.4f;
-                pos = Vector3.Lerp(pos, fp + new Vector3(-1.2f, 0.3f, -4.2f), 0.85f * k);
+                var fp = focusTarget.position + Vector3.up * 1.1f;
+                pos = Vector3.Lerp(pos, fp + new Vector3(-1.0f, 0.25f, -3.6f), 0.85f * k);
                 look = Vector3.Lerp(look, fp, 0.85f * k);
             }
 
@@ -145,7 +145,7 @@ namespace ProjectInk
                     float w = Mathf.Sin(Mathf.Clamp01(u) * Mathf.PI);
                     float ang = orbitAngle * Mathf.SmoothStep(0f, 1f, w);
                     var rot = Quaternion.Euler(-8f * w, ang, 0f);
-                    var close = orbitPivot + rot * new Vector3(0, 0.5f, -3.4f);
+                    var close = orbitPivot + rot * new Vector3(0, 0.4f, -2.9f);
                     pos = Vector3.Lerp(pos, close, w);
                     look = Vector3.Lerp(look, orbitPivot + Vector3.up * 0.2f, w);
                 }
