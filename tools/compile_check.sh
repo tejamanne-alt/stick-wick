@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Compile the C# scripts against Unity 6.3's engine and editor assemblies, using the
+# Compile the C# scripts against Unity 6.6's engine and editor assemblies, using the
 # Roslyn compiler shipped inside the GameCI Unity image. Needs no Unity license.
 # Usage: tools/compile_check.sh
 set -euo pipefail
-IMAGE="${UNITY_IMAGE:-mirror.gcr.io/unityci/editor:ubuntu-6000.3.27f2-android-3}"
+IMAGE="${UNITY_IMAGE:-mirror.gcr.io/unityci/editor:ubuntu-6000.6.8f1-base-3}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 docker run --rm -v "$ROOT":/proj -w /proj "$IMAGE" bash -c '
 set -e

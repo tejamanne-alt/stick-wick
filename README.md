@@ -1,6 +1,6 @@
 # Project INK (working title)
 
-A cinematic stickman fighting game for Android and iOS, built with Unity 6.3 LTS and Blender.
+A cinematic stickman fighting game for Android and iOS, built with Unity 6.6 and Blender.
 The design is in the plan doc; this repo is the build.
 
 ## Prototype 0.1: what's in it
@@ -40,7 +40,7 @@ Only 2 enemies may attack at once (attack tokens). The rest circle and wait.
 | `Assets/Scripts/Level` | Wave director (spawns, kill cam, score, grade), fighter factory |
 | `Assets/Scripts/UI` | IMGUI prototype HUD |
 | `Assets/Scripts/Editor` | FBX import rules; `PrototypeBuilder` builds the scene, materials and the Android APK from code |
-| `tools/compile_check.sh` | Compiles all scripts against Unity 6.3's assemblies (no license needed) |
+| `tools/compile_check.sh` | Compiles all scripts against Unity 6.6's assemblies (no license needed) |
 | `.github/workflows/android.yml` | Builds the APK on every push to `main` |
 
 ## Regenerate the art
@@ -52,7 +52,7 @@ python tools/blender/build_stickman.py --preview
 
 ## Open and play on a Mac (or PC)
 
-1. Clone the repo, then in Unity Hub choose **Add → Add project from disk** and pick the repo folder. Use Unity **6000.3.27f2** (6.3 LTS). A newer 6.3 patch also works: let Hub upgrade it.
+1. Clone the repo, then in Unity Hub choose **Add → Add project from disk** and pick the repo folder. Use Unity **6000.6.8f1** (6.6).
 2. The first import takes a few minutes. If a dialog asks to enable the Input System backends, either answer works; the code supports both.
 3. When the import finishes, the prototype scene is built and opened automatically (`Assets/Scenes/Prototype.unity`). If it isn't, run **Project INK → Build Prototype Scene**.
 4. Set the Game view to a landscape size (for example 1920×1080), then press **Play**. Use A/D or click the left/right half to strike, W for the flying kick, Q/E to dodge, and R to restart.
@@ -78,4 +78,4 @@ The workflow needs a Unity license. In the GitHub repo, go to **Settings → Sec
 
 ## Status
 
-Code compiles against Unity 6.3.27f2 (`tools/compile_check.sh`). The first in-editor run and device build are waiting on the Unity license.
+Code compiles against Unity 6000.6.8f1 (`tools/compile_check.sh`). The first in-editor run and device build are waiting on the Unity license.
