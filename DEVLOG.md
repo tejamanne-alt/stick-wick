@@ -117,3 +117,28 @@ Your feedback was that the gameplay wasn't good, along with a second reference: 
 - **HUD:** health, Flow and Rampage prompt, weapon uses, rank letter, floor and wave, letterbox bars in slow-mo, results with bests.
 - **New animations:** front-flip vault, weapon throw, get-up, taunt, gunner aim.
 - Scene version 6.
+
+## 2026-11-04: Abilities from the reference, chapters, premium building (0.3)
+
+I re-studied the Xiao Xiao 3 reference frame by frame and built the abilities it shows, as original mechanics:
+- **Ledge hang and climb:** fighters jump, hang by their hands under the upper floor's edge and pull up. Enemies use it too, and can be knocked off while hanging.
+- **Grab and throw:** up close with fists. The thrown enemy becomes a projectile that knocks down others (human bowling).
+- **On-floor finishers:** stomp an enemy lying on the floor, or giant-swing it by the legs, sweeping others before letting go.
+- **Knife throwers:** knives in flight. Duck them, or tap as one arrives to catch it and throw it back.
+- **Grappling:** brawlers can grab and hold the hero. Tap 4 times to break free with a reversal throw.
+- **Wall flip and slide kick:** two more meanings for the dodge swipe.
+- **Weapon progression:** knives and pipes join the sword and gun; each chapter's waves introduce them in turn.
+- **Boss entrance:** a camera close-up and slow motion.
+
+New hand-keyed clips: hang, climb_up, stomp, swing_hold, duck, slide_kick, grab_attack, hold_victim, struggle.
+
+**Premium building:** `EnvironmentBuilder` generates and places everything in code:
+- textures: architectural concrete (formwork seams, tie holes, drips, grime) and a night skyline with a moon and lit windows
+- high clerestory windows, so fighters always stand against lit concrete
+- swaying, flickering lamps with additive light cones
+- pipes, balusters, trims, an exit sign, crates, haze and dust
+- a vignette and film grain over the HUD
+
+A design mock-up is in `docs/previews/building_mockup.png`. The first version of the mock-up showed the black hero disappearing against dark windows and the black back doorway. That led to raising the windows above head height and lighting the corridor.
+
+Scene version 7.

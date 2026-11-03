@@ -3,45 +3,55 @@
 A cinematic stickman fighting game for Android and iOS, built with Unity 6.6 and Blender.
 The design is in the plan doc; this repo is the build.
 
-## Prototype 0.2: what's in it
+## Prototype 0.3: what's in it
 
-A cut-away of a two-floor building, seen side-on:
-- a ground floor and an upper floor with an open ledge
-- a staircase, a back door, a ceiling vent
-- doors on both floors
+A film-noir cut-away of a two-floor building:
+- architectural concrete walls
+- high windows onto a night skyline
+- hanging lamps casting warm cones of light that sway and flicker
+- pipes, an exit sign, haze and drifting dust
+- vignette and film grain over the picture
 
-Enemies come in colours, so you can read a crowd at a glance. They pour in from every door, climb the stairs, leap off the ledge and drop from the vent. Every fight leaves its colours on the floors and walls.
+Each floor is a **chapter**. Each wave brings in a new armed opponent, whose weapon you take and use: brawlers → knife throwers → pipe fighters → swordsmen → gunners and the **Brute** (with a boss entrance).
 
 | Input (touch) | Key | Action |
 | --- | --- | --- |
-| Tap left / right half | A / D or arrows | Dash (or leap or dive to another floor) to the best enemy on that side and strike |
-| Swipe up | W / Up | Leap attack |
-| Swipe left / right | Q / E | Dodge. Into an attacker's red flash, it becomes a slow-mo vault over them, landing at their back |
-| Swipe down | S / Down / F | Throw the weapon in hand (a spinning kill) |
-| Two-finger tap (Flow full) | Space | RAMPAGE: 5 s of slowed time; every tap blinks to an enemy for a one-hit finisher |
-| Tap while an enemy glows red | | Counter |
-| | Tab, 1/2/3 | Testing: give the hero a weapon |
-| | R | Restart |
+| Tap left / right | A / D | Strike that side: dash, combo, and context moves (below) |
+| Tap as a knife flies in | | **Catch it** and throw it back |
+| Swipe up | W | Leap; **climb** the ledge (jump, hang by the hands, pull up) |
+| Swipe sideways | Q / E | Dodge. Into a red flash: **vault** over the attacker. Towards an enemy: **slide kick**. Towards a wall: **wall flip**. Otherwise a backflip |
+| Swipe down | S / F | Empty-handed: **duck** (knives and shots pass over). Armed: **throw** the weapon |
+| Two-finger tap | Space | **Rampage** (when Flow is full) |
+| Tap fast when grabbed | | **Break free**, ending in a reversal throw |
+| | Tab | Testing: cycle weapons |
 
-| Enemy | Colour | What it does | What it leaves |
-| --- | --- | --- | --- |
-| Brawler | teal, olive, ochre, violet, rust, green | Punches and kicks | |
-| Swordsman | crimson | Overhead cuts | A sword (10 cuts) |
-| Gunner | steel blue | Keeps its distance; a red laser sight, then a shot (dodge it) | A pistol (8 shots) |
-| Brute (every 5th wave) | deep red | A giant; shrugs off light hits | |
+Context moves:
+- An enemy on the floor next to you: **stomp** it, or **giant-swing** it by the legs into the others.
+- Up close with fists: **grab and throw**. A thrown enemy knocks down whoever it hits (human bowling).
+- An enemy on the upper floor: run to the ledge and **climb**, or leap.
+- An enemy below: **dive** down.
 
-Weapons wear out, and then the hero throws them.
+Weapons:
+- **Knives:** stab up close, throw at range; catch more.
+- **Pipe:** heavy staff swings.
+- **Sword:** cleaving cuts, back slash, leaping slam.
+- **Gun:** shots, a shot behind without turning, pistol-whip, throw, finishing shot.
+
+All of them wear out, and are then thrown as a spinning kill.
+
+Enemies:
+- Brawlers punch, kick and **grab**.
+- Throwers hurl knives; pipers swing pipes.
+- Swordsmen cut; gunners aim with a laser sight.
+- The Brute shrugs off light hits.
+
+Enemies climb the stairs, **hang from the ledge and pull up**, flip off the ledge, and get up after knockdowns.
 
 The loop:
-- Hits fill the **Flow** meter, which powers Rampage.
-- A **style rank** (D → C → B → A → S → SS → SSS) rises with varied moves and environment kills (wall splats, drops off the ledge), and falls when you're hit. Your rank multiplies your score.
-- **Endless floors:** 5 waves each, getting harder.
-- Best score and floor are saved.
-
-Cinematic layer:
-- Motion-captured martial arts, hand-keyed weapon moves, hit-stop, white slash and limb trails, light bursts, coloured ink.
-- Letterbox bars slide in during every slow-mo.
-- Every wave ends with a slow-mo orbit "kill cam".
+- Wall splats and drops off the ledge are kills.
+- Every kill leaves the enemy's colour on the building.
+- A **style rank** (D → SSS) multiplies your score.
+- Endless chapters; best score and floor are saved.
 
 ## Layout
 

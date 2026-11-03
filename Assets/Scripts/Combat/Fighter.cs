@@ -145,6 +145,83 @@ namespace ProjectInk
 
         protected virtual void OnLanded(float fallHeight) { }
 
+        // ------------------------------------------------------------------ ledge climbing
+        // The upper floor's open edge: fighters jump up, hang by their hands, and pull up.
+        public static float LedgeX = 0f, LedgeY = 3.2f;
+        const float HangDrop = 2.03f;               // hands above the feet with the arms straight up
+        protected enum LedgeStage { None, Jump, Hang, Climb }
+        protected LedgeStage ledge = LedgeStage.None;
+        float ledgeTime, hangSeconds;
+        Vector3 ledgeFrom;
+
+        public bool OnLedge => ledge != LedgeStage.None;
+        public bool Hanging => ledge == LedgeStage.Hang || ledge == LedgeStage.Jump;
+        /// <summary>Where to stand on the floor below to jump for the ledge.</summary>
+        public static float LedgeFootX => LedgeX + 0.25f;
+
+        /// <summary>Jump from the floor below up to the ledge, hang, then climb onto it.</summary>
+        protected void BeginLedgeClimb(float hang)
+        {
+            ledge = LedgeStage.Jump;
+            ledgeTime = 0f;
+            hangSeconds = hang;
+            ledgeFrom = transform.position;
+            velocity = Vector3.zero;
+            SetFacing(-1);                          // the upper floor lies towards -X
+            body.Play("hang", 0.08f);
+        }
+
+        /// <summary>Advance the ledge sequence. Returns true while it owns the fighter.</summary>
+        protected bool UpdateLedge(float dt)
+        {
+            if (ledge == LedgeStage.None) return false;
+            ledgeTime += dt;
+            var hangPos = new Vector3(LedgeX + 0.22f, LedgeY - HangDrop, 0f);
+            switch (ledge)
+            {
+                case LedgeStage.Jump:
+                    float u = Mathf.Clamp01(ledgeTime / 0.28f);
+                    var p = Vector3.Lerp(ledgeFrom, hangPos, u);
+                    p.y += Mathf.Sin(u * Mathf.PI) * 0.35f;        // a little arc up to the edge
+                    transform.position = p;
+                    if (u >= 1f) { ledge = LedgeStage.Hang; ledgeTime = 0f; }
+                    break;
+                case LedgeStage.Hang:
+                    transform.position = hangPos;
+                    if (ledgeTime >= hangSeconds)
+                    {
+                        ledge = LedgeStage.Climb;
+                        ledgeTime = 0f;
+                        // the climb clip starts from the hanging offset and ends standing here
+                        transform.position = new Vector3(LedgeX - 0.38f, LedgeY, 0f);
+                        body.Play("climb_up", 0.02f);
+                    }
+                    break;
+                case LedgeStage.Climb:
+                    if (body.Finished)
+                    {
+                        ledge = LedgeStage.None;
+                        Grounded = true;
+                        velocity = Vector3.zero;
+                        OnLedgeClimbed();
+                        return false;
+                    }
+                    break;
+            }
+            return true;
+        }
+
+        /// <summary>Let go of the ledge (hit while hanging).</summary>
+        protected void DropFromLedge()
+        {
+            if (ledge == LedgeStage.None) return;
+            ledge = LedgeStage.None;
+            Grounded = false;
+            velocity = new Vector3(0.5f, 0f, 0f);
+        }
+
+        protected virtual void OnLedgeClimbed() { }
+
         public abstract void TakeHit(HitInfo hit);
     }
 }

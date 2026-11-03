@@ -219,6 +219,9 @@ GUN_IDLE = pose(spine=176, chest=172, head=178,
                 upperarm_L=46, forearm_L=122, hand_L=92,      # support hand on the grip
                 thigh_L=26, shin_L=0, thigh_R=-20, shin_R=-10)
 
+HANG = pose(STRAIGHT, spine=180, chest=180, head=182, upperarm_L=176, forearm_L=179, hand_L=179,
+            upperarm_R=172, forearm_R=176, hand_R=176, thigh_L=8, shin_L=0, thigh_R=-5, shin_R=-8, dz=0.0)
+
 WEAPON_CLIPS = {
     # ---- sword (all hand-keyed for big, readable arcs, like the reference)
     "sword_idle": dict(frames=30, loop=True, hit=None, keys=[
@@ -366,6 +369,70 @@ WEAPON_CLIPS = {
         (0, GUN_IDLE),
         (5, pose(GUN_IDLE, upperarm_R=88, forearm_R=90, hand_R=90, upperarm_L=80, forearm_L=92, hand_L=90)),
         (10, pose(GUN_IDLE, upperarm_R=88, forearm_R=90, hand_R=90, upperarm_L=80, forearm_L=92, hand_L=90))]),
+
+    # ---- ledge work: hang by the hands below an edge, then pull up onto it.
+    # Code places the root: "hang" at (edge, ledge height - 2.03); "climb_up" on the floor
+    # just inside the edge, the clip starting from the hanging offset (dx back, dz down).
+    "hang": dict(frames=24, loop=True, hit=None, keys=[
+        (0, HANG),
+        (12, pose(HANG, thigh_L=-6, shin_L=-10, thigh_R=10, shin_R=0, dz=0.0)),
+        (24, HANG)]),
+    "climb_up": dict(frames=16, loop=False, hit=None, keys=[
+        (0, pose(HANG, dz=-2.03, dx=-0.6)),
+        (5, pose(STRAIGHT, spine=168, chest=160, head=168, upperarm_L=-20, forearm_L=150, upperarm_R=-25, forearm_R=145,
+                 thigh_L=5, shin_L=-5, thigh_R=-5, shin_R=-10, dz=-1.25, dx=-0.45)),
+        (9, pose(STRAIGHT, spine=150, chest=145, head=155, upperarm_L=-30, forearm_L=40, upperarm_R=-30, forearm_R=40,
+                 thigh_L=115, shin_L=-30, thigh_R=-10, shin_R=-30, dz=-0.6, dx=-0.25)),
+        (13, pose(spine=165, chest=160, thigh_L=70, shin_L=-10, thigh_R=-10, shin_R=-60, dz=-0.28, dx=-0.05)),
+        (16, STANCE)]),
+    # ---- finishing and handling bodies
+    "stomp": dict(frames=14, loop=False, hit=7, keys=[
+        (0, STANCE),
+        (4, pose(spine=184, chest=188, thigh_R=112, shin_R=-15, upperarm_L=120, forearm_L=150, upperarm_R=100, forearm_R=140)),
+        (7, pose(spine=160, chest=152, head=150, thigh_R=40, shin_R=25, thigh_L=-10, shin_L=-5,
+                 upperarm_L=-30, forearm_L=10, upperarm_R=-40, forearm_R=0, dz=-0.08)),
+        (10, pose(spine=160, chest=152, head=150, thigh_R=40, shin_R=25, thigh_L=-10, shin_L=-5,
+                  upperarm_L=-30, forearm_L=10, upperarm_R=-40, forearm_R=0, dz=-0.08)),
+        (14, STANCE)]),
+    "swing_hold": dict(frames=12, loop=True, hit=None, keys=[   # giant swing: leaning back, holding the legs
+        (0, pose(spine=196, chest=202, head=196, upperarm_L=78, forearm_L=82, upperarm_R=72, forearm_R=78,
+                 thigh_L=22, shin_L=-8, thigh_R=-26, shin_R=-16)),
+        (6, pose(spine=198, chest=205, head=200, upperarm_L=82, forearm_L=86, upperarm_R=76, forearm_R=82,
+                 thigh_L=-20, shin_L=-14, thigh_R=24, shin_R=-6)),
+        (12, pose(spine=196, chest=202, head=196, upperarm_L=78, forearm_L=82, upperarm_R=72, forearm_R=78,
+                  thigh_L=22, shin_L=-8, thigh_R=-26, shin_R=-16))]),
+    "duck": dict(frames=10, loop=False, hit=None, keys=[        # drop under a knife or a shot
+        (0, STANCE),
+        (3, pose(spine=150, chest=138, head=140, thigh_L=88, shin_L=-18, thigh_R=42, shin_R=-100,
+                 upperarm_L=60, forearm_L=140, upperarm_R=40, forearm_R=150, dz=-0.58)),
+        (10, pose(spine=150, chest=138, head=140, thigh_L=88, shin_L=-18, thigh_R=42, shin_R=-100,
+                  upperarm_L=60, forearm_L=140, upperarm_R=40, forearm_R=150, dz=-0.58))]),
+    "slide_kick": dict(frames=16, loop=False, hit=5, keys=[     # slide in low, lead leg first
+        (0, STANCE),
+        (3, pose(spine=200, chest=208, head=200, thigh_L=86, shin_L=86, thigh_R=22, shin_R=-62,
+                 upperarm_L=-45, forearm_L=-20, upperarm_R=-55, forearm_R=-30, dz=-0.62)),
+        (9, pose(spine=200, chest=208, head=200, thigh_L=86, shin_L=86, thigh_R=22, shin_R=-62,
+                 upperarm_L=-45, forearm_L=-20, upperarm_R=-55, forearm_R=-30, dz=-0.62)),
+        (13, pose(spine=168, chest=160, thigh_L=60, shin_L=-10, thigh_R=-10, shin_R=-60, dz=-0.2)),
+        (16, STANCE)]),
+    # ---- grappling (enemy grabs the hero; the hero struggles free)
+    "grab_attack": dict(frames=12, loop=False, hit=6, keys=[
+        (0, STANCE),
+        (3, pose(spine=172, chest=168, upperarm_L=20, forearm_L=60, upperarm_R=10, forearm_R=50, thigh_L=20)),
+        (6, pose(spine=160, chest=150, head=160, upperarm_L=92, forearm_L=96, upperarm_R=88, forearm_R=94,
+                 thigh_L=48, shin_L=0, thigh_R=-40, shin_R=-12)),
+        (12, pose(spine=168, chest=164, upperarm_L=80, forearm_L=110, upperarm_R=76, forearm_R=108))]),
+    "hold_victim": dict(frames=16, loop=True, hit=None, keys=[
+        (0, pose(spine=184, chest=188, upperarm_L=86, forearm_L=110, upperarm_R=80, forearm_R=104, thigh_L=30, thigh_R=-30)),
+        (8, pose(spine=186, chest=192, upperarm_L=84, forearm_L=118, upperarm_R=78, forearm_R=112, thigh_L=30, thigh_R=-30)),
+        (16, pose(spine=184, chest=188, upperarm_L=86, forearm_L=110, upperarm_R=80, forearm_R=104, thigh_L=30, thigh_R=-30))]),
+    "struggle": dict(frames=16, loop=True, hit=None, keys=[
+        (0, pose(spine=166, chest=160, head=150, upperarm_L=120, forearm_L=170, upperarm_R=-30, forearm_R=20,
+                 thigh_L=30, thigh_R=-30)),
+        (8, pose(spine=170, chest=166, head=158, upperarm_L=-20, forearm_L=30, upperarm_R=110, forearm_R=160,
+                 thigh_L=10, thigh_R=-10)),
+        (16, pose(spine=166, chest=160, head=150, upperarm_L=120, forearm_L=170, upperarm_R=-30, forearm_R=20,
+                  thigh_L=30, thigh_R=-30))]),
 }
 CLIPS.update(WEAPON_CLIPS)
 

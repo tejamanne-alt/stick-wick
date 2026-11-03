@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ProjectInk
 {
-    /// <summary>A weapon dropped by a defeated swordsman or gunner. It hovers and turns slowly;
+    /// <summary>A weapon dropped by a defeated armed enemy (knives, pipe, sword, pistol). It hovers and turns slowly;
     /// the hero grabs it by running over it (only with empty hands). It fades after a while.</summary>
     public class WeaponPickup : MonoBehaviour
     {
@@ -28,16 +28,14 @@ namespace ProjectInk
             p.model.SetParent(go.transform, false);
             var holder = new GameObject("Holder").transform;
             holder.SetParent(p.model, false);
-            if (kind == FightStyle.Sword)
+            switch (kind)
             {
-                holder.localPosition = new Vector3(0, 0, -0.45f);
-                FighterFactory.SwordModel(holder, mat);
+                case FightStyle.Sword: holder.localPosition = new Vector3(0, 0, -0.45f); break;
+                case FightStyle.Pipe: holder.localPosition = new Vector3(0, 0, -0.55f); break;
+                case FightStyle.Knife: holder.localScale = Vector3.one * 1.8f; holder.localPosition = new Vector3(0, 0, -0.2f); break;
+                default: holder.localScale = Vector3.one * 1.6f; break;
             }
-            else
-            {
-                holder.localScale = Vector3.one * 1.6f;
-                FighterFactory.PistolModel(holder, mat);
-            }
+            FighterFactory.Model(holder, kind, mat);
             p.model.rotation = Quaternion.Euler(0f, 90f, 0f);
             p.born = Time.time;
             return p;

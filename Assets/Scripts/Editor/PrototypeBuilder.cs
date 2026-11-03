@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/ProjectInk.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 6;
+        public const int SceneVersion = 7;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Project INK/Build Prototype Scene")]
@@ -60,7 +60,11 @@ namespace ProjectInk.EditorTools
             var room = new GameObject("Building").transform;
             const float halfW = 13.2f, floorY = 3.2f, roofY = 6.8f, laneFront = -0.6f, wallZ = 2.4f;
             Box(room, "Ground", new Vector3(0, -2f, 0.5f), new Vector3(60, 4, 9), ground);
-            Box(room, "BackWall", new Vector3(0, roofY * 0.5f, wallZ), new Vector3(halfW * 2f, roofY, 0.3f), interior);
+            // the back wall (concrete with windows), lamps, pipes, skyline, haze and dust
+            EnvironmentBuilder.Build(room, new EnvironmentBuilder.Layout
+            {
+                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f
+            }, ground);
             Box(room, "Roof", new Vector3(0, roofY + 0.1f, (laneFront + wallZ) * 0.5f), new Vector3(halfW * 2f + 0.4f, 0.2f, wallZ - laneFront), ground);
             Box(room, "WallLeft", new Vector3(-halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
             Box(room, "WallRight", new Vector3(halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
@@ -79,8 +83,6 @@ namespace ProjectInk.EditorTools
             DoorFrame(room, "DoorLeft", new Vector3(-12.4f, 0, 0.9f), arch, 1.8f);
             DoorFrame(room, "DoorRight", new Vector3(12.4f, 0, 0.9f), arch, 1.8f);
             DoorFrame(room, "DoorUpper", new Vector3(-12.4f, floorY, 0.9f), arch, 1.8f);
-            DoorFrame(room, "DoorBack", new Vector3(-6f, 0, wallZ - 0.2f), arch, 1.6f, true);
-            DoorFrame(room, "Window", new Vector3(-6f, floorY + 1.0f, wallZ - 0.2f), arch, 1.4f, true);
             DoorFrame(room, "Vent", new Vector3(3f, roofY - 0.1f, wallZ - 0.2f), arch, 1.0f, true);
 
             // ---------------------------------------------------------------- spawn points
@@ -89,7 +91,7 @@ namespace ProjectInk.EditorTools
             points[(int)SpawnKind.LeftDoor] = Point(spawnRoot, "LeftDoor", new Vector3(-12.2f, 0, 0));
             points[(int)SpawnKind.RightDoor] = Point(spawnRoot, "RightDoor", new Vector3(12.2f, 0, 0));
             points[(int)SpawnKind.UpperDoor] = Point(spawnRoot, "UpperDoor", new Vector3(-12.2f, floorY, 0));
-            points[(int)SpawnKind.Background] = Point(spawnRoot, "Background", new Vector3(-6f, 0, wallZ - 0.4f));
+            points[(int)SpawnKind.Background] = Point(spawnRoot, "Background", new Vector3(-6f, 0, wallZ - 0.4f));   // the back door
             points[(int)SpawnKind.Ceiling] = Point(spawnRoot, "Ceiling", new Vector3(0f, roofY - 0.6f, 0));
 
             // ---------------------------------------------------------------- hero + systems
@@ -120,7 +122,7 @@ namespace ProjectInk.EditorTools
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.6f, 0.6f, 0.6f);
+            cam.backgroundColor = new Color(0.03f, 0.04f, 0.08f);
             cam.fieldOfView = 32f;
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 120f;
@@ -205,9 +207,8 @@ namespace ProjectInk.EditorTools
                     float u = (float)x / nx, v = (float)y / ny;
                     verts.Add(new Vector3((u - 0.5f) * w, (v - 0.5f) * h, 0f));
                     float dx = (u - 0.5f) * 2f, dy = (v - 0.55f) * 2.2f;
-                    float light = Mathf.Exp(-(dx * dx * 2.2f + dy * dy * 1.6f));   // soft glow in the middle
-                    float g = Mathf.Lerp(0.42f, 0.74f, light);
-                    cols.Add(new Color(g, g, g, 1f));
+                    float light = Mathf.Exp(-(dx * dx * 2.2f + dy * dy * 1.6f));   // soft city glow low in the middle
+                    cols.Add(Color.Lerp(new Color(0.02f, 0.025f, 0.05f), new Color(0.12f, 0.10f, 0.17f), light * (1f - v * 0.6f)));
                 }
             for (int y = 0; y < ny; y++)
                 for (int x = 0; x < nx; x++)

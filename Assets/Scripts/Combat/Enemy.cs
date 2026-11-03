@@ -4,21 +4,24 @@ using UnityEngine;
 namespace ProjectInk
 {
     public enum SpawnKind { LeftDoor, RightDoor, UpperDoor, Background, Ceiling }
-    public enum EnemyType { Brawler, Swordsman, Gunner, Brute }
+    public enum EnemyType { Brawler, Swordsman, Gunner, Brute, Thrower, Piper }
 
     /// <summary>An enemy. Comes in through a door (or drops from above), finds its way to the
     /// hero's floor (up the stairs, or leaping off the upper floor), circles at a distance and
     /// attacks only while holding an attack token. Every attack is telegraphed: a red flash for
     /// melee, a red laser sight for gunners. Dodge it, or strike first to counter.
     /// Brawlers punch and kick, swordsmen cut, gunners keep their distance and shoot, the brute
-    /// is a giant that shrugs off light hits. Each has its own colour, which it leaves behind.</summary>
+    /// is a giant that shrugs off light hits, throwers hurl knives (catchable), pipers swing steel
+    /// pipes. Brawlers sometimes grab and hold the hero. Some climb by hanging from the ledge.
+    /// Enemies can be thrown as projectiles (human bowling) or carried in a giant swing.
+    /// Each has its own colour, which it leaves behind.</summary>
     public class Enemy : Fighter
     {
         public static readonly List<Enemy> All = new List<Enemy>();
         public static readonly Queue<GameObject> Corpses = new Queue<GameObject>();
         public static int MaxCorpses = 40;
 
-        enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, GetUp, Dead }
+        enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, GetUp, Dead, Holding, Carried }
 
         public float walkSpeed = 2.6f;
         public float windupSeconds = 0.45f;
@@ -30,7 +33,9 @@ namespace ProjectInk
         State state = State.Enter;
         float stateTime, ringDistance, waitUntil;
         AttackData attack;
-        bool hitDone, onStairs, tauntedThisWait;
+        bool hitDone, onStairs, tauntedThisWait, useLedge, projectile;
+        Fighter launchedBy;
+        Material weaponMat;
         SpawnKind kind;
         HeroController hero;
         LineRenderer laser;
@@ -39,13 +44,16 @@ namespace ProjectInk
         public Color InkColor { get; private set; } = Color.black;
         public bool HasToken { get; private set; }
         public bool Telegraphing => state == State.Windup;
-        public bool Targetable => Alive && state != State.Down && state != State.GetUp && state != State.Dead &&
+        public bool Targetable => Alive && state != State.Down && state != State.GetUp && state != State.Dead && state != State.Carried &&
                                   !(state == State.Enter && kind == SpawnKind.Background);
         public bool IsDown => state == State.Down || state == State.GetUp;
         public bool Engaged => state == State.Advance || state == State.Windup || state == State.Attack;
         public bool Armed => Type == EnemyType.Swordsman;
         public bool Gunner => Type == EnemyType.Gunner;
-        string IdleClip => Armed ? "sword_idle" : Gunner ? "gun_idle" : "idle";
+        public bool Ranged => Type == EnemyType.Gunner || Type == EnemyType.Thrower;
+        public bool Carried => state == State.Carried;
+        public bool HoldingHero => state == State.Holding;
+        string IdleClip => Armed || Type == EnemyType.Piper ? "sword_idle" : Gunner ? "gun_idle" : "idle";
 
         void OnEnable() { All.Add(this); }
         void OnDisable() { All.Remove(this); AttackTokens.Release(this); if (laser != null) laser.enabled = false; }
@@ -59,7 +67,9 @@ namespace ProjectInk
             kind = spawnKind;
             InkColor = color;
             SetBaseColor(color);
-            ringDistance = Gunner ? Random.Range(4.5f, 7f) : Random.Range(2.2f, 3.4f);
+            ringDistance = Gunner ? Random.Range(4.5f, 7f) : Type == EnemyType.Thrower ? Random.Range(4f, 6f) : Random.Range(2.2f, 3.4f);
+            useLedge = Random.value < 0.55f;
+            weaponMat = hero.weaponMaterial;
             if (type == EnemyType.Brute)
             {
                 transform.localScale = Vector3.one * 1.35f;
@@ -97,6 +107,8 @@ namespace ProjectInk
             float dt = Time.deltaTime;
             stateTime += dt;
             if (hero == null) return;
+            if (state == State.Carried) { UpdateTint(); return; }          // the hero swings us around
+            if (UpdateLedge(dt)) { UpdateTint(); return; }
             float dx = hero.transform.position.x - transform.position.x;
             float dist = Mathf.Abs(dx);
             bool sameLevel = Mathf.Abs(hero.transform.position.y - transform.position.y) < 1.4f && !onStairs;
@@ -119,9 +131,9 @@ namespace ProjectInk
                     else if (Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
                         HasToken = true;
-                        state = Gunner ? State.Windup : State.Advance;
+                        state = Ranged ? State.Windup : State.Advance;
                         stateTime = 0f;
-                        if (Gunner) BeginWindup(); else body.Play("run", 0.08f, false, 1.1f);
+                        if (Ranged) BeginWindup(); else body.Play("run", 0.08f, false, 1.1f);
                     }
                     else if (!tauntedThisWait && stateTime > 0.4f && Random.value < 0.004f)
                     {
@@ -139,15 +151,20 @@ namespace ProjectInk
                     velocity.x = 0f;
                     Tint(TelegraphColor, 0.05f);
                     if (Gunner) AimLaser();
-                    if (stateTime >= (Gunner ? 0.75f : windupSeconds)) BeginAttack();
+                    if (stateTime >= (Gunner ? 0.75f : Type == EnemyType.Thrower ? 0.55f : windupSeconds)) BeginAttack();
                     break;
                 case State.Attack:
                     velocity.x = 0f;
                     if (!hitDone && body.Current != null && body.Current.hitTime >= 0f && body.Time >= body.Current.hitTime) ResolveAttack();
                     if (body.Finished) { ReleaseToken(); state = State.Recover; stateTime = 0f; body.Play(IdleClip, 0.12f); }
                     break;
+                case State.Holding:
+                    velocity.x = 0f;
+                    FaceTowards(hero.transform.position.x);
+                    if (!hero.IsGrabbedBy(this)) { ReleaseToken(); GoWait(); }
+                    break;
                 case State.Recover:
-                    if (dist < ringDistance && !Gunner) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
+                    if (dist < ringDistance && !Ranged) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
                     if (stateTime > 0.5f) GoWait();
                     break;
                 case State.Hurt:
@@ -173,6 +190,7 @@ namespace ProjectInk
             }
 
             if (laser != null && state != State.Windup) laser.enabled = false;
+            if (projectile && !Grounded) BowlOthers();
             int wall = Integrate(dt);
             if (wall != 0 && IsDown && Mathf.Abs(velocity.x) > 4f && Mathf.Sign(velocity.x) == wall) WallSplat(wall);
             UpdateTint();
@@ -219,6 +237,15 @@ namespace ProjectInk
                 if (p.x <= StairsTopX + 0.2f && p.y > 2.8f) onStairs = false;
                 return;
             }
+            if (heroAbove && useLedge && p.y < 0.3f)
+            {
+                // run to the ledge, jump, hang by the hands and pull up
+                LeaveStairsLane(dt);
+                float fx = LedgeFootX;
+                Walk(Mathf.Sign(fx - p.x));
+                if (Mathf.Abs(fx - p.x) < 0.25f && Mathf.Abs(p.z) < 0.05f) BeginLedgeClimb(Random.Range(0.4f, 0.8f));
+                return;
+            }
             if (heroAbove)
             {
                 // walk to the foot of the stairs (moving into the stairs lane), then climb
@@ -251,8 +278,16 @@ namespace ProjectInk
             }
         }
 
+        protected override void OnLedgeClimbed()
+        {
+            state = State.Approach;
+            stateTime = 0f;
+            body.Play("run", 0.1f, false, 0.85f);
+        }
+
         protected override void OnLanded(float fallHeight)
         {
+            projectile = false;
             if (state == State.Enter && kind == SpawnKind.Ceiling && CameraDirector.Instance != null)
                 CameraDirector.Instance.Shake(0.08f, 0.12f);
             // knocked off the upper floor: the fall finishes them
@@ -323,9 +358,17 @@ namespace ProjectInk
                     attack = Random.value < 0.5f ? AttackData.BruteSmash : AttackData.BruteKick;
                     body.Play("windup", 0.08f);
                     break;
+                case EnemyType.Thrower:
+                    attack = AttackData.EnemyKnife;
+                    body.Play("idle", 0.08f);
+                    break;
+                case EnemyType.Piper:
+                    attack = AttackData.EnemyPipe;
+                    body.Play("sword_idle", 0.08f);
+                    break;
                 default:
-                    int r = Random.Range(0, 3);
-                    attack = r == 0 ? AttackData.EnemyJab : r == 1 ? AttackData.EnemyCross : AttackData.EnemyKick;
+                    int r = Random.Range(0, 4);
+                    attack = r == 0 ? AttackData.EnemyJab : r == 1 ? AttackData.EnemyCross : r == 2 ? AttackData.EnemyKick : AttackData.EnemyGrab;
                     body.Play("windup", 0.08f);
                     break;
             }
@@ -353,11 +396,29 @@ namespace ProjectInk
             hitDone = true;
             float dx = (hero.transform.position.x - transform.position.x) * Facing;
             float dy = Mathf.Abs(hero.transform.position.y - transform.position.y);
+            if (Type == EnemyType.Thrower)
+            {
+                var from = Chest + Vector3.up * 0.3f + Vector3.right * Facing * 0.5f;
+                EnemyKnife.Throw(this, hero, from, hero.Chest, weaponMat);
+                if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+                return;
+            }
+            if (attack.clip == "grab_attack")
+            {
+                if (dx > -0.1f && dx < attack.reach + 0.3f && dy < 0.8f && hero.GetGrabbed(this))
+                {
+                    state = State.Holding;
+                    stateTime = 0f;
+                    body.Play("hold_victim", 0.06f);
+                }
+                return;
+            }
             if (Gunner)
             {
                 var from = Chest + Vector3.up * 0.12f + Vector3.right * Facing * 0.7f;
                 bool hit = dx > 0f && dy < 1.2f && !hero.Invulnerable;
                 if (InkFx.Instance != null) InkFx.Instance.Shot(from, hit ? hero.Chest : from + Vector3.right * Facing * 16f);
+                hit &= !hero.Ducking;
                 if (hit) hero.TakeHit(new HitInfo { damage = attack.damage, direction = Facing, knockback = attack.knockback, attacker = this });
                 return;
             }
@@ -398,7 +459,8 @@ namespace ProjectInk
 
         public override void TakeHit(HitInfo hit)
         {
-            if (!Targetable && !hit.hitsDowned) return;
+            if (!Targetable && !hit.hitsDowned && !OnLedge) return;
+            if (OnLedge) { DropFromLedge(); }
             ReleaseToken();
             float dmg = hit.damage;
             bool brute = Type == EnemyType.Brute;
@@ -424,6 +486,51 @@ namespace ProjectInk
                 bool fromFront = hit.direction == -Facing;
                 body.Play(fromFront ? "hit_front" : "hit_back", 0.03f);
             }
+        }
+
+        /// <summary>Thrown by the hero: flies, knocking down whoever it hits (human bowling).</summary>
+        public void Launch(Vector3 vel, Fighter by)
+        {
+            ReleaseToken();
+            state = State.Down;
+            stateTime = 0f;
+            transform.rotation = Quaternion.Euler(0f, vel.x >= 0f ? 180f : 0f, 0f);
+            velocity = vel;
+            Grounded = false;
+            projectile = true;
+            launchedBy = by;
+            body.Play("knockdown", 0.03f);
+        }
+
+        void BowlOthers()
+        {
+            foreach (var other in All.ToArray())
+            {
+                if (other == this || !other.Targetable) continue;
+                if (Vector3.Distance(other.transform.position + Vector3.up * 0.9f, transform.position + Vector3.up * 0.5f) < 1.0f)
+                {
+                    other.TakeHit(new HitInfo { damage = 22f, direction = velocity.x >= 0 ? 1 : -1, knockback = 7f, knockdown = true, heavy = true, attacker = launchedBy });
+                    if (InkFx.Instance != null) InkFx.Instance.Splash(other.Chest, velocity.normalized, 24, other.InkColor);
+                    if (WaveDirector.Instance != null) WaveDirector.Instance.OnEnvironmentKill(other, "HUMAN BOWLING", 180);
+                    if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.15f, 0.15f);
+                    if (TimeController.Instance != null) TimeController.Instance.HitStop(4);
+                }
+            }
+        }
+
+        /// <summary>Picked up by the legs for a giant swing (the hero moves us).</summary>
+        public void BeginCarried()
+        {
+            ReleaseToken();
+            state = State.Carried;
+            stateTime = 0f;
+            velocity = Vector3.zero;
+            body.Play("knockdown", 0.05f);
+        }
+
+        public void EndCarried(Vector3 vel, Fighter by)
+        {
+            Launch(vel, by);
         }
 
         /// <summary>The gun-fu finishing shot on an enemy that is down.</summary>

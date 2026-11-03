@@ -31,16 +31,14 @@ namespace ProjectInk
             var holder = new GameObject("Holder").transform;
             holder.SetParent(t.spinner, false);
             holder.localRotation = Quaternion.Euler(0f, 90f, 0f);  // lies in the screen plane
-            if (kind == FightStyle.Sword)
+            switch (kind)
             {
-                holder.localPosition = new Vector3(-0.45f, 0f, 0f);
-                FighterFactory.SwordModel(holder, mat);
+                case FightStyle.Sword: holder.localPosition = new Vector3(-0.45f, 0f, 0f); break;
+                case FightStyle.Pipe: holder.localPosition = new Vector3(-0.55f, 0f, 0f); break;
+                case FightStyle.Knife: holder.localScale = Vector3.one * 1.5f; break;
+                default: holder.localScale = Vector3.one * 1.4f; break;
             }
-            else
-            {
-                holder.localScale = Vector3.one * 1.4f;
-                FighterFactory.PistolModel(holder, mat);
-            }
+            FighterFactory.Model(holder, kind, mat);
             if (trailMat != null)
             {
                 var tr = go.AddComponent<TrailRenderer>();
@@ -86,7 +84,8 @@ namespace ProjectInk
             if (TimeController.Instance != null) { TimeController.Instance.HitStop(6); TimeController.Instance.SlowMo(0.3f, 0.5f); }
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.18f, 0.2f);
             if (WaveDirector.Instance != null)
-                WaveDirector.Instance.OnHeroKill(e, kind == FightStyle.Sword ? "SWORD THROW" : "GUN THROW", 260, true);
+                WaveDirector.Instance.OnHeroKill(e, kind == FightStyle.Sword ? "SWORD THROW" : kind == FightStyle.Gun ? "GUN THROW"
+                                                 : kind == FightStyle.Pipe ? "PIPE THROW" : "KNIFE!", 260, kind != FightStyle.Knife);
             Destroy(gameObject);
         }
     }

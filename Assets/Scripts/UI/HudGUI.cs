@@ -55,6 +55,15 @@ namespace ProjectInk
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             float w = Screen.width / scale, h = 720f;
 
+            // film look: vignette and moving grain over everything
+            if (vignette == null) BuildFilmTextures();
+            GUI.DrawTexture(new Rect(0, 0, w, h), vignette);
+            var old = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, 0.06f);
+            float ox = Random.value, oy = Random.value;
+            GUI.DrawTextureWithTexCoords(new Rect(0, 0, w, h), grain, new Rect(ox, oy, w / 256f, h / 256f));
+            GUI.color = old;
+
             // cinematic bars
             if (bars > 0.001f)
             {
@@ -68,6 +77,29 @@ namespace ProjectInk
             HeroMarker();
             if (showDiagnostics) Diagnostics();
             GUI.matrix = Matrix4x4.identity;
+        }
+
+        Texture2D vignette, grain;
+
+        void BuildFilmTextures()
+        {
+            vignette = new Texture2D(128, 128, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var v = new Color32[128 * 128];
+            for (int y = 0; y < 128; y++)
+                for (int x = 0; x < 128; x++)
+                {
+                    float dx = (x - 63.5f) / 63.5f, dy = (y - 63.5f) / 63.5f;
+                    float d = Mathf.Sqrt(dx * dx * 0.8f + dy * dy);
+                    v[y * 128 + x] = new Color32(0, 0, 0, (byte)(Mathf.Clamp01((d - 0.55f) / 0.6f) * 170));
+                }
+            vignette.SetPixels32(v);
+            vignette.Apply();
+            grain = new Texture2D(256, 256, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Repeat, filterMode = FilterMode.Point };
+            var g = new Color32[256 * 256];
+            var rng = new System.Random(3);
+            for (int i = 0; i < g.Length; i++) { byte b = (byte)rng.Next(0, 256); g[i] = new Color32(b, b, b, 255); }
+            grain.SetPixels32(g);
+            grain.Apply();
         }
 
         void HeroPanel(float w)
@@ -89,7 +121,20 @@ namespace ProjectInk
                 else if (ready) { lbl.normal.textColor = new Color(1f, 1f, 1f, pulse); GUI.Label(new Rect(24, 54, 400, 22), "RAMPAGE READY: two-finger tap", lbl); }
             }
             // weapon in hand
-            string weapon = hero.Style == FightStyle.Sword ? $"SWORD  {hero.SwordUses}" : hero.Style == FightStyle.Gun ? $"GUN  {hero.Ammo}" : "FISTS";
+            string weapon = hero.Style switch
+            {
+                FightStyle.Sword => $"SWORD  {hero.SwordUses}",
+                FightStyle.Gun => $"GUN  {hero.Ammo}",
+                FightStyle.Pipe => $"PIPE  {hero.PipeUses}",
+                FightStyle.Knife => $"KNIVES  {hero.Knives}",
+                _ => "FISTS",
+            };
+            if (hero.IsGrabbed)
+            {
+                var g = new GUIStyle(big) { fontSize = 46 };
+                g.normal.textColor = new Color(0.9f, 0.1f, 0.1f, 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 18f));
+                GUI.Label(new Rect(0, 200, w, 60), $"TAP TAP TAP!  {hero.GrabTaps}/4", g);
+            }
             GUI.Label(new Rect(24, 76, 300, 30), weapon, new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 20, fontStyle = FontStyle.Bold });
             if (hero.ComboCount >= 2)
                 GUI.Label(new Rect(24, 104, 300, 50), $"{hero.ComboCount} HITS", new GUIStyle(mid) { alignment = TextAnchor.UpperLeft });
@@ -132,7 +177,7 @@ namespace ProjectInk
 
             if (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f))
                 GUI.Label(new Rect(0, h - 56, w, 40),
-                    "Tap left / right: strike  ·  Swipe up: leap  ·  Swipe sideways: dodge (into a red flash = vault)  ·  Grab dropped weapons, swipe down to throw  ·  Full Flow: two-finger tap = RAMPAGE", small);
+                    "Tap: strike (or catch a flying knife)  ·  Up: leap / climb  ·  Sideways: dodge, slide, vault, wall flip  ·  Down: duck / throw weapon  ·  Two fingers: RAMPAGE", small);
 
             if (director.CurrentPhase == WaveDirector.Phase.Dead) Results(w, h);
         }

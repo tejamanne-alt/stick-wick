@@ -28,6 +28,9 @@ namespace ProjectInk
             new Color(0.48f, 0.22f, 0.62f), new Color(0.72f, 0.32f, 0.14f), new Color(0.14f, 0.46f, 0.26f),
         };
         static readonly Color SwordColor = new Color(0.72f, 0.07f, 0.16f);
+        static readonly Color ThrowerColor = new Color(0.42f, 0.46f, 0.20f);
+        static readonly Color PiperColor = new Color(0.62f, 0.38f, 0.12f);
+        static readonly string[] ChapterTitles = { "THE LOBBY", "KNIVES OUT", "PIPE DREAMS", "COLD STEEL", "LEAD RAIN" };
         static readonly Color GunColor = new Color(0.18f, 0.34f, 0.72f);
         static readonly Color BruteColor = new Color(0.40f, 0.04f, 0.07f);
 
@@ -82,7 +85,7 @@ namespace ProjectInk
 
         void Start()
         {
-            ShowBanner("FLOOR 1", 1.6f);
+            ShowBanner("CHAPTER 1", 1.6f);
             phaseTime = 0f;
         }
 
@@ -135,30 +138,51 @@ namespace ProjectInk
 
         // ------------------------------------------------------------------ waves
 
+        /// <summary>Each floor is a chapter; each wave brings in the next kind of armed opponent,
+        /// whose weapon the hero takes and uses from then on: brawlers (fists), knife throwers,
+        /// pipers, swordsmen, gunners and the brute.</summary>
         void StartWave(int index)
         {
             WaveIndex = index;
             CurrentPhase = Phase.Fighting;
             phaseTime = 0f;
             bool boss = index == WavesPerFloor - 1;
-            ShowBanner(boss ? "BOSS WAVE" : $"WAVE {index + 1}", 1.2f);
+            ShowBanner(index == 0 ? $"CHAPTER {Floor}: THE LOBBY" : ChapterTitles[Mathf.Clamp(index, 0, ChapterTitles.Length - 1)], 1.6f);
 
-            // more enemies, more weapons, more gunners as the floors climb
             int count = Mathf.Min(3 + index + Floor, 11);
             var kinds = new[] { SpawnKind.LeftDoor, SpawnKind.RightDoor, SpawnKind.UpperDoor, SpawnKind.Background, SpawnKind.Ceiling };
-            float t = Time.time + 0.5f;
+            float t = Time.time + 0.6f;
+            // the wave's new opponent comes first, so its weapon is the first one on the floor
+            EnemyType featured = index switch
+            {
+                1 => EnemyType.Thrower,
+                2 => EnemyType.Piper,
+                3 => EnemyType.Swordsman,
+                4 => EnemyType.Gunner,
+                _ => EnemyType.Brawler,
+            };
+            if (index > 0)
+            {
+                incoming.Add(new Incoming { kind = kinds[Random.Range(0, 3)], type = featured, time = t });
+                t += 0.8f;
+                count--;
+            }
             if (boss)
             {
-                incoming.Add(new Incoming { kind = SpawnKind.RightDoor, type = EnemyType.Brute, time = t });
-                t += 1.2f;
+                incoming.Add(new Incoming { kind = SpawnKind.RightDoor, type = EnemyType.Brute, time = t + 2.5f });
                 count -= 2;
             }
             for (int i = 0; i < count; i++)
             {
                 float r = Random.value;
-                float gunP = index >= 1 ? 0.12f + 0.04f * Floor : 0f;
-                float swordP = index >= 1 ? 0.22f + 0.04f * Floor : 0.1f;
-                var type = r < gunP ? EnemyType.Gunner : r < gunP + swordP ? EnemyType.Swordsman : EnemyType.Brawler;
+                EnemyType type = EnemyType.Brawler;
+                // earlier armed types keep appearing; later floors mix in more of everything
+                float armed = Mathf.Clamp01(0.15f * index + 0.08f * (Floor - 1));
+                if (index > 0 && r < armed)
+                {
+                    int pick = Random.Range(1, index + 1);
+                    type = pick switch { 1 => EnemyType.Thrower, 2 => EnemyType.Piper, 3 => EnemyType.Swordsman, _ => EnemyType.Gunner };
+                }
                 var kind = kinds[Random.Range(0, index == 0 ? 3 : kinds.Length)];
                 incoming.Add(new Incoming { kind = kind, type = type, time = t });
                 t += Random.Range(0.35f, 0.9f) / (1f + 0.1f * Floor);
@@ -182,9 +206,15 @@ namespace ProjectInk
             Vector3 pos = point.position + new Vector3(Random.Range(-0.4f, 0.4f), 0f, 0f);
             if (inc.kind == SpawnKind.Ceiling && hero != null)
                 pos.x = Mathf.Clamp(hero.transform.position.x + Random.Range(-2.5f, 2.5f), -11f, 11f);
-            bool sword = inc.type == EnemyType.Swordsman;
-            var go = FighterFactory.Build(enemyModel, moves, enemyMaterial, $"Enemy_{spawnSerial++}", false, trailMaterial, sword,
-                                          inc.type == EnemyType.Gunner);
+            var weapon = inc.type switch
+            {
+                EnemyType.Swordsman => FightStyle.Sword,
+                EnemyType.Gunner => FightStyle.Gun,
+                EnemyType.Thrower => FightStyle.Knife,
+                EnemyType.Piper => FightStyle.Pipe,
+                _ => FightStyle.Fists,
+            };
+            var go = FighterFactory.Build(enemyModel, moves, enemyMaterial, $"Enemy_{spawnSerial++}", false, trailMaterial, weapon);
             go.transform.position = pos;
             var e = go.GetComponent<Enemy>();
             float scale = 1f + 0.12f * (Floor - 1);
@@ -193,6 +223,8 @@ namespace ProjectInk
                 EnemyType.Brute => 220f * scale,
                 EnemyType.Swordsman => 40f * scale,
                 EnemyType.Gunner => 25f * scale,
+                EnemyType.Thrower => 25f * scale,
+                EnemyType.Piper => 38f * scale,
                 _ => 30f * scale,
             };
             Color c = inc.type switch
@@ -200,10 +232,12 @@ namespace ProjectInk
                 EnemyType.Brute => BruteColor,
                 EnemyType.Swordsman => SwordColor,
                 EnemyType.Gunner => GunColor,
+                EnemyType.Thrower => ThrowerColor,
+                EnemyType.Piper => PiperColor,
                 _ => BrawlerColors[Random.Range(0, BrawlerColors.Length)],
             };
             e.Init(hero, inc.kind, inc.type, hp, c, trailMaterial);
-            if (inc.type == EnemyType.Brute) ShowBanner("THE BRUTE", 1.4f);
+            if (inc.type == EnemyType.Brute) BossIntro(e);
         }
 
         int AliveCount()
@@ -213,6 +247,15 @@ namespace ProjectInk
             return n;
         }
 
+        /// <summary>The boss walks in: the camera closes in on it in slow motion, bars, name card.</summary>
+        void BossIntro(Enemy e)
+        {
+            ShowBanner("THE BRUTE", 2.2f);
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.35f, 1.6f, 0.1f, 0.4f);
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Focus(e.transform, 1.8f);
+            if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.05f);
+        }
+
         void NextFloor()
         {
             Floor++;
@@ -220,7 +263,7 @@ namespace ProjectInk
             Enemy.Corpses.Clear();
             foreach (var p in WeaponPickup.All.ToArray()) Destroy(p.gameObject);
             if (InkFx.Instance != null) InkFx.Instance.ClearStains();
-            ShowBanner($"FLOOR {Floor}", 1.6f);
+            ShowBanner($"CHAPTER {Floor}", 1.6f);
             CurrentPhase = Phase.Intro;
             phaseTime = 0f;
         }
@@ -323,6 +366,8 @@ namespace ProjectInk
             // armed enemies drop their weapons for the hero to take
             if (e.Type == EnemyType.Swordsman) WeaponPickup.Spawn(FightStyle.Sword, 10, e.transform.position, weaponMaterial);
             else if (e.Type == EnemyType.Gunner) WeaponPickup.Spawn(FightStyle.Gun, 8, e.transform.position, weaponMaterial);
+            else if (e.Type == EnemyType.Thrower) WeaponPickup.Spawn(FightStyle.Knife, 3, e.transform.position, weaponMaterial);
+            else if (e.Type == EnemyType.Piper) WeaponPickup.Spawn(FightStyle.Pipe, 14, e.transform.position, weaponMaterial);
             else if (e.Type == EnemyType.Brute) AddScore(800, "BRUTE DOWN");
         }
 

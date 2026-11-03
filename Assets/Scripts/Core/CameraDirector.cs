@@ -36,6 +36,16 @@ namespace ProjectInk
 
         public bool Orbiting => orbiting;
 
+        Transform focusTarget;
+        float focusUntil;
+
+        /// <summary>Close in on one subject (a boss entrance) for a few real seconds.</summary>
+        public void Focus(Transform t, float realSeconds)
+        {
+            focusTarget = t;
+            focusUntil = UnityEngine.Time.unscaledTime + realSeconds;
+        }
+
         void Awake()
         {
             Instance = this;
@@ -116,6 +126,14 @@ namespace ProjectInk
 
             Vector3 pos = focus + new Vector3(0, height, -distance);
             Vector3 look = focus + Vector3.up * lookHeight;
+
+            if (focusTarget != null && UnityEngine.Time.unscaledTime < focusUntil)
+            {
+                float k = Mathf.Clamp01((focusUntil - UnityEngine.Time.unscaledTime) / 0.4f);
+                var fp = focusTarget.position + Vector3.up * 1.4f;
+                pos = Vector3.Lerp(pos, fp + new Vector3(-1.2f, 0.3f, -4.2f), 0.85f * k);
+                look = Vector3.Lerp(look, fp, 0.85f * k);
+            }
 
             if (orbiting)
             {

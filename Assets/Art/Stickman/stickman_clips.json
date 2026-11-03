@@ -148,6 +148,69 @@
       "hitFrame": -1
     },
     {
+      "name": "hang",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "climb_up",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "stomp",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 7
+    },
+    {
+      "name": "swing_hold",
+      "frames": 12,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "duck",
+      "frames": 10,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "slide_kick",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5
+    },
+    {
+      "name": "grab_attack",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6
+    },
+    {
+      "name": "hold_victim",
+      "frames": 16,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "struggle",
+      "frames": 16,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
       "name": "idle",
       "frames": 35,
       "fps": 30,

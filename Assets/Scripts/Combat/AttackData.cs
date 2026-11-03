@@ -39,6 +39,24 @@ namespace ProjectInk
         public static readonly AttackData GunThrow = new AttackData { clip = "gun_throw", damage = 8, reach = 0.9f, knockback = 2f, hitStopFrames = 6, shake = 0.16f, heavy = true, knockdown = true };
         public const int MagazineSize = 12;
 
+        // ---- pipe: a steel pipe swung like a staff (the sword's arcs, blunt and heavy)
+        public static readonly AttackData PipeA = new AttackData { clip = "sword_a", damage = 16, reach = 1.6f, knockback = 6f, hitStopFrames = 4, shake = 0.1f, cleave = true };
+        public static readonly AttackData PipeB = new AttackData { clip = "sword_b", damage = 18, reach = 1.65f, knockback = 7f, hitStopFrames = 5, shake = 0.12f, cleave = true };
+        public static readonly AttackData PipeC = new AttackData { clip = "sword_c", damage = 30, reach = 1.85f, knockback = 11f, hitStopFrames = 7, shake = 0.2f, heavy = true, knockdown = true, cleave = true };
+        public static readonly AttackData[] PipeCombo = { PipeA, PipeB, PipeC };
+
+        // ---- knives: stab up close, throw at range
+        public static readonly AttackData KnifeStab = new AttackData { clip = "jab", damage = 20, reach = 1.0f, knockback = 2f, hitStopFrames = 4, shake = 0.08f };
+        public static readonly AttackData KnifeThrow = new AttackData { clip = "throw_weapon", damage = 0f, reach = 16f, ranged = true };
+
+        // ---- grappling and bodies on the floor (fists)
+        public static readonly AttackData GrabThrow = new AttackData { clip = "gun_throw", damage = 10, reach = 0.95f, knockback = 0f, hitStopFrames = 6, shake = 0.16f, heavy = true };
+        public static readonly AttackData Stomp = new AttackData { clip = "stomp", damage = 999, reach = 1.1f, knockback = 0f, hitStopFrames = 7, shake = 0.2f, heavy = true };
+        public static readonly AttackData SlideKick = new AttackData { clip = "slide_kick", damage = 14, reach = 1.3f, knockback = 6f, hitStopFrames = 4, shake = 0.12f, knockdown = true, cleave = true };
+
+        public static readonly AttackData EnemyKnife = new AttackData { clip = "throw_weapon", damage = 10, reach = 14f, knockback = 2f, hitStopFrames = 3, shake = 0.08f, ranged = true };
+        public static readonly AttackData EnemyPipe = new AttackData { clip = "sword_b", damage = 14, reach = 1.55f, knockback = 6f, hitStopFrames = 4, shake = 0.14f };
+        public static readonly AttackData EnemyGrab = new AttackData { clip = "grab_attack", damage = 0, reach = 1.0f, knockback = 0f, hitStopFrames = 3, shake = 0.06f };
         public static readonly AttackData EnemyShot = new AttackData { clip = "gun_shoot", damage = 12, reach = 14f, knockback = 3f, hitStopFrames = 3, shake = 0.1f, ranged = true };
         public static readonly AttackData BruteSmash = new AttackData { clip = "cross", damage = 22, reach = 1.3f, knockback = 9f, hitStopFrames = 6, shake = 0.22f, heavy = true };
         public static readonly AttackData BruteKick = new AttackData { clip = "front_kick", damage = 20, reach = 1.5f, knockback = 10f, hitStopFrames = 6, shake = 0.22f, heavy = true };
