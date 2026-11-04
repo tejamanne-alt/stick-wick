@@ -219,6 +219,62 @@ namespace ProjectInk.EditorTools
             sw.anchor = center;
         }
 
+        /// <summary>A trapeze: a short steel rod hung by two thin threads from a fixing on the roof
+        /// or a beam. Swings like the rope (the hero grabs the rod with both hands).</summary>
+        internal static void Trapeze(Transform parent, Vector3 anchor, float length, Material threadMat, Material steel, Material rim,
+                                     float wallX = 13.0f)
+        {
+            var go = new GameObject("Trapeze");
+            go.transform.SetParent(parent, false);
+            go.transform.position = anchor;
+            const float half = 0.45f;
+            LineRenderer Thread(string n, float dx)
+            {
+                var t = new GameObject(n);
+                t.transform.SetParent(go.transform, false);
+                var lr = t.AddComponent<LineRenderer>();
+                lr.sharedMaterial = threadMat;
+                lr.positionCount = 2;
+                lr.useWorldSpace = true;
+                lr.widthMultiplier = 0.022f;
+                lr.startColor = lr.endColor = new Color(0.14f, 0.14f, 0.14f, 1f);
+                lr.SetPosition(0, anchor + Vector3.right * dx);
+                lr.SetPosition(1, anchor + new Vector3(dx, -length, 0f));
+                lr.shadowCastingMode = ShadowCastingMode.Off;
+                return lr;
+            }
+            var a = Thread("ThreadA", -half);
+            var b = Thread("ThreadB", half);
+            // the fixing it hangs from
+            Box(go.transform, "Fixing", anchor + Vector3.up * 0.03f, new Vector3(half * 2f + 0.16f, 0.06f, 0.08f), steel);
+            // the rod: dark steel with a bright top edge, and grip tape at the hands
+            var rod = new GameObject("Rod").transform;
+            rod.SetParent(go.transform, false);
+            rod.position = anchor + Vector3.down * length;
+            var bar = Box(rod, "RodBar", rod.position, new Vector3(half * 2f + 0.06f, 0.045f, 0.045f), steel);
+            bar.localPosition = Vector3.zero;
+            var glint = Box(rod, "RodGlint", rod.position, new Vector3(half * 2f, 0.008f, 0.01f), rim);
+            glint.localPosition = new Vector3(0f, 0.02f, -0.025f);
+            foreach (float gx in new[] { -0.16f, 0.16f })
+            {
+                var tape = Box(rod, "Grip", rod.position, new Vector3(0.12f, 0.055f, 0.055f), ColorMat("TrapezeGrip", new Color(0.32f, 0.32f, 0.32f)));
+                tape.localPosition = new Vector3(gx, 0f, 0f);
+            }
+            var sw = go.AddComponent<Swingable>();
+            sw.kind = SwingKind.Rope;
+            sw.anchor = anchor;
+            sw.length = length;
+            sw.trapeze = true;
+            sw.rodHalf = half;
+            sw.threadA = a;
+            sw.threadB = b;
+            sw.rod = rod;
+            // keep the swinging body (about 0.5 m beyond the rod) inside the walls
+            float room = wallX - 0.6f;
+            sw.maxAngle = Mathf.Min(1.4f, Mathf.Asin(Mathf.Clamp01((room - anchor.x) / length)));
+            sw.minAngle = -Mathf.Min(1.4f, Mathf.Asin(Mathf.Clamp01((room + anchor.x) / length)));
+        }
+
         internal static void Rope(Transform parent, Vector3 anchor, float length, Material mat)
         {
             var go = new GameObject("Rope");

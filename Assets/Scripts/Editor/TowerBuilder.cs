@@ -211,7 +211,9 @@ namespace ProjectInk.EditorTools
             // bars: under each mezzanine, above each mezzanine, and high over the catwalk
             EnvironmentBuilder.Bar(props, new Vector3(-9.2f, 1.4f, 0f), mezz - SlabThick, steel, rim);
             EnvironmentBuilder.Bar(props, new Vector3(9.8f, 1.4f, 0f), mezz - SlabThick, steel, rim);
-            EnvironmentBuilder.Bar(props, new Vector3(-10.6f, mezz + 1.5f, 0f), roof, steel, rim);
+            // trapezes: a long one from the roof over the left mezzanine, a short one over the catwalk
+            EnvironmentBuilder.Trapeze(props, new Vector3(-10.4f, roof - 0.1f, 0f), 4.2f, ropeMat, steel, rim);
+            EnvironmentBuilder.Trapeze(props, new Vector3(4.6f, roof - 0.1f, 0f), 1.95f, ropeMat, steel, rim);
             EnvironmentBuilder.Bar(props, new Vector3(10.8f, mezz + 1.5f, 0f), roof, steel, rim);
             EnvironmentBuilder.Bar(props, new Vector3(-4.6f, cat + 1.5f, 0f), roof, steel, rim);
             // crates to kick

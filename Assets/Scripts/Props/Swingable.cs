@@ -17,6 +17,13 @@ namespace ProjectInk
         public Vector3 anchor;
         public float length = 4f;
         public LineRenderer line;
+        [Header("Trapeze: a rod hung from two threads, swinging rigidly like a swing seat")]
+        public bool trapeze;
+        public float rodHalf = 0.45f;
+        [Tooltip("How far it may swing each way (radians): keeps a long swing off the walls.")]
+        public float minAngle = -1.4f, maxAngle = 1.4f;
+        public LineRenderer threadA, threadB;
+        public Transform rod;
 
         float angle, angVel;
         public bool Held { get; set; }
@@ -37,7 +44,7 @@ namespace ProjectInk
         public void SetAngle(float a) { angle = a; }
         public void LetGo(float velocity) { Held = false; angVel = velocity * 0.4f; }
 
-        void Update()
+        void LateUpdate()
         {
             if (kind != SwingKind.Rope) return;
             if (!Held)
@@ -52,6 +59,15 @@ namespace ProjectInk
             {
                 line.SetPosition(0, anchor);
                 line.SetPosition(1, Grip);
+            }
+            if (trapeze)
+            {
+                // the two threads stay parallel, so the rod stays level with the swing (a rigid swing)
+                var along = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * rodHalf;
+                var g = Grip;
+                if (threadA != null) { threadA.SetPosition(0, anchor + Vector3.left * rodHalf); threadA.SetPosition(1, g - along); }
+                if (threadB != null) { threadB.SetPosition(0, anchor + Vector3.right * rodHalf); threadB.SetPosition(1, g + along); }
+                if (rod != null) { rod.position = g; rod.rotation = Quaternion.Euler(0f, 0f, angle * Mathf.Rad2Deg); }
             }
         }
 

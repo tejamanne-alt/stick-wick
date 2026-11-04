@@ -939,7 +939,8 @@ namespace ProjectInk
             body.Play("pike", 0.08f);
             Sound.Play(Sfx.Cloth, 1f, transform.position);
             Sound.Play(Sfx.WhooshBig, 0.7f, transform.position);
-            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(30, "ROPE!");
+            if (sw.trapeze) Sound.Play(Sfx.MetalClang, 0.35f, transform.position, 1.3f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(30, sw.trapeze ? "TRAPEZE!" : "ROPE!");
         }
 
         void UpdateRope(float dt)
@@ -950,10 +951,11 @@ namespace ProjectInk
             // gravity, plus pumping in the stick's direction (strongest at the bottom of the arc)
             swingVel += (-(gravity / L) * Mathf.Sin(swingAng) + Axis * 3.2f * Mathf.Cos(swingAng)) * dt;
             swingVel *= 1f - 0.12f * dt;
-            swingAng = Mathf.Clamp(swingAng + swingVel * dt, -1.4f, 1.4f);
+            swingAng = swingAng + swingVel * dt;
+            if (swingAng < sw.minAngle || swingAng > sw.maxAngle) { swingAng = Mathf.Clamp(swingAng, sw.minAngle, sw.maxAngle); swingVel *= -0.3f; }
             sw.SetAngle(swingAng);
             PlaceHanging(sw.Grip, swingAng, swingVel);
-            SweepWithFeet(Mathf.Abs(swingVel) * L, "ROPE KICK!");
+            SweepWithFeet(Mathf.Abs(swingVel) * L, sw.trapeze ? "TRAPEZE KICK!" : "ROPE KICK!");
 
             var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
             bool letGo = cmd == Command.JumpKick || cmd == Command.StrikeLeft || cmd == Command.StrikeRight ||

@@ -459,3 +459,13 @@ Feedback: instead of climbing on both sides, use steps on one side.
 - **Route-finding:** new `Stairs` steps. Enemies walk to the foot (or head) of a flight and keep going until they're off it. The lobby is split in two for routing, with a walk-under link. Ten routes checked.
 - The right mezzanine door moved to x 5.4–7.0, the right office window to x 8.4–11.8 (behind the upper flight), and the crate to x 12.4.
 - `SceneVersion` → 17. Diagram updated: `docs/previews/tower_layout.png`.
+
+## 2026-11-04: 0.7.7 trapezes
+
+- New prop **trapeze**: a steel rod (bright top edge, grip tape) hung from a roof fixing by two thin threads. It swings rigidly like a swing seat; the threads stay parallel and the rod tilts with the swing.
+- It uses the rope's pendulum: jump to grab the rod, hold a direction to pump, feet sweep enemies ("TRAPEZE KICK!"), any tap or swipe lets go into a flying kick. Grabbing makes a light metal clink and shows "TRAPEZE!".
+- Swings now have their own angle limits (`minAngle`/`maxAngle`), set at build time so the body never passes the walls. Hitting a limit bounces gently.
+- In the tower:
+    - a long trapeze from the roof over the **left mezzanine** (x −10.4, rod 2.1 m above the floor; replaces the bar there; swings −28°…+80°)
+    - a short one over the **catwalk** (x 4.6, rod 1.35 m above the grating)
+- `SceneVersion` → 18.
