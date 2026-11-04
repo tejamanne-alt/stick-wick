@@ -53,7 +53,8 @@ Take it from a red swordsman (or press **2** to test).
 
 | Touch | Keys | Action |
 | --- | --- | --- |
-| Tap the left / right half | A / D, ← / → | Strike that way; the hero dashes in to the nearest enemy |
+| Tap **high** on the left / right half, again and again | A / D, ← / → | **Punch combo** that way: jab, cross, jab, hook, uppercut (launches). The hero dashes in. One more tap after the string grabs and throws |
+| Tap **low** on the left / right half, again and again | Z / X | **Kick combo** that way: front kick, roundhouse, knee, spinning kick (knocks down). Works with a weapon in hand too |
 | Press and **hold** a half | Hold A / D | Run that way (to reach ropes, bars, walls and pickups) |
 | Swipe up | W / ↑ | Jump kick. Context: grab a rope or bar, run up a wall into a corkscrew, climb the ledge |
 | Swipe left / right | Q / E | Dodge that way. Into a red flash: vault. Toward an enemy: slide kick. Toward a wall: wall flip |

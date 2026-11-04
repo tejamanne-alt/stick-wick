@@ -77,6 +77,7 @@ namespace ProjectInk
             if (cutscene) { OpeningCards(cine, w, h); GUI.matrix = Matrix4x4.identity; return; }
 
             DrawStick();
+            PunchKickZones(w, h);
             if (hero != null) HeroPanel(w);
             if (director != null) DirectorPanel(w, h);
             HeroMarker();
@@ -129,6 +130,28 @@ namespace ProjectInk
 
         /// <summary>Letter-spaced title text.</summary>
         static string Spaced(string s) => string.Join(" ", s.ToCharArray());
+
+        GUIStyle zoneStyle;
+
+        /// <summary>Faint guides at the screen edges: tap above the line to punch, below to kick.</summary>
+        void PunchKickZones(float w, float h)
+        {
+            var gi = GestureInput.Instance;
+            if (gi == null) return;
+            if (zoneStyle == null) zoneStyle = new GUIStyle { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            float y = h * (1f - gi.kickLine);
+            // stronger for the first floor, then barely there
+            float a = director != null && director.Floor == 1 && director.WaveIndex == 0 ? 0.32f : 0.12f;
+            float left = gi.Classic ? 0f : w * gi.stickZone;
+            foreach (float x in new[] { left + 8f, w - 72f })
+            {
+                if (!gi.Classic && x < w * 0.5f) continue;
+                Fill(new Rect(x, y, 64f, 1.5f), new Color(1f, 1f, 1f, a));
+                zoneStyle.normal.textColor = new Color(1f, 1f, 1f, a * 1.4f);
+                GUI.Label(new Rect(x, y - 28f, 64f, 22f), "PUNCH", zoneStyle);
+                GUI.Label(new Rect(x, y + 6f, 64f, 22f), "KICK", zoneStyle);
+            }
+        }
 
         Texture2D ring, knob;
 
@@ -276,7 +299,7 @@ namespace ProjectInk
             if (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f))
                 GUI.Label(new Rect(0, h - 56, w, 40), GestureInput.Instance != null && !GestureInput.Instance.Classic
                     ? "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE   ·   C: classic controls"
-                    : "TAP left / right = strike that way   ·   HOLD = run   ·   Swipe up = jump kick, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE   ·   C: two-thumb controls", small);
+                    : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", small);
 
             if (director.CurrentPhase == WaveDirector.Phase.Dead) Results(w, h);
         }

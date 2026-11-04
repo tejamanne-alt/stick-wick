@@ -418,6 +418,24 @@ WEAPON_CLIPS = {
         (13, pose(spine=165, chest=160, thigh_L=70, shin_L=-10, thigh_R=-10, shin_R=-60, dz=-0.28, dx=-0.05)),
         (16, STANCE)]),
     # ---- finishing and handling bodies
+    "hook": dict(frames=12, loop=False, hit=4, keys=[           # lead-hand hook: hips and shoulders turn through
+        (0, STANCE),
+        (2, pose(spine=180, chest=188, head=180, upperarm_L=38, forearm_L=138, upperarm_R=30, forearm_R=165,
+                 thigh_L=30, shin_L=0, thigh_R=-22, shin_R=-10)),
+        (4, pose(spine=166, chest=152, head=166, upperarm_L=96, forearm_L=96, upperarm_R=22, forearm_R=160,
+                 thigh_L=42, shin_L=0, thigh_R=-32, shin_R=-12)),
+        (7, pose(spine=167, chest=154, head=167, upperarm_L=86, forearm_L=116, upperarm_R=22, forearm_R=160,
+                 thigh_L=42, shin_L=0, thigh_R=-32, shin_R=-12)),
+        (12, STANCE)]),
+    "uppercut": dict(frames=15, loop=False, hit=5, keys=[       # rear-hand uppercut: dip, then drive up off the legs
+        (0, STANCE),
+        (2, pose(spine=168, chest=160, head=170, upperarm_R=8, forearm_R=42, upperarm_L=60, forearm_L=150,
+                 thigh_L=46, shin_L=-34, thigh_R=-6, shin_R=-48, dz=-0.12)),
+        (5, pose(spine=182, chest=188, head=186, upperarm_R=118, forearm_R=158, upperarm_L=40, forearm_L=140,
+                 thigh_L=20, shin_L=0, thigh_R=-14, shin_R=-6, dz=0.07)),
+        (9, pose(spine=181, chest=186, head=184, upperarm_R=124, forearm_R=164, upperarm_L=40, forearm_L=140,
+                 thigh_L=20, shin_L=0, thigh_R=-14, shin_R=-6, dz=0.04)),
+        (15, STANCE)]),
     "stomp": dict(frames=14, loop=False, hit=7, keys=[
         (0, STANCE),
         (4, pose(spine=184, chest=188, thigh_R=112, shin_R=-15, upperarm_L=120, forearm_L=150, upperarm_R=100, forearm_R=140)),

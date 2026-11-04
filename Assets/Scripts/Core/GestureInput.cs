@@ -11,7 +11,8 @@ namespace ProjectInk
     public enum Command
     {
         None, StrikeLeft, StrikeRight, JumpKick, DodgeLeft, DodgeRight, Restart, CycleStyle,
-        StyleFists, StyleSword, StyleGun, ThrowWeapon, Rampage, StrikeForward, DodgeForward
+        StyleFists, StyleSword, StyleGun, ThrowWeapon, Rampage, StrikeForward, DodgeForward,
+        KickLeft, KickRight, KickForward
     }
 
     public enum ControlScheme { Classic, TwoThumb }
@@ -36,6 +37,8 @@ namespace ProjectInk
 
         public Transform hero;
         public ControlScheme scheme = ControlScheme.Classic;
+        [Tooltip("Taps above this fraction of the screen height punch; below it, kick.")]
+        public float kickLine = 0.45f;
         [Tooltip("Classic: how long a still press must be held before it becomes a run, real seconds.")]
         public float holdToRun = 0.22f;
         public bool Classic => scheme == ControlScheme.Classic;
@@ -138,8 +141,11 @@ namespace ProjectInk
             float min = Screen.height * swipeFraction;
             if (d.magnitude < min)
             {
-                if (Classic) return start.x < Screen.width * 0.5f ? Command.StrikeLeft : Command.StrikeRight;
-                return SideOf(start) < 0 ? Command.StrikeLeft : Command.StrikeRight;
+                // tap high = punch, tap low = kick
+                bool kick = start.y < Screen.height * kickLine;
+                int side = Classic ? (start.x < Screen.width * 0.5f ? -1 : 1) : SideOf(start);
+                if (kick) return side < 0 ? Command.KickLeft : Command.KickRight;
+                return side < 0 ? Command.StrikeLeft : Command.StrikeRight;
             }
             if (Mathf.Abs(d.y) > Mathf.Abs(d.x)) return d.y > 0 ? Command.JumpKick : Command.ThrowWeapon;
             return d.x < 0 ? Command.DodgeLeft : Command.DodgeRight;
@@ -246,6 +252,8 @@ namespace ProjectInk
                 if (Classic)
                 {
                     ClassicKeys(left, right, leftDown, rightDown);
+                    if (kb.zKey.wasPressedThisFrame) Push(Command.KickLeft);
+                    if (kb.xKey.wasPressedThisFrame) Push(Command.KickRight);
                     if (kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame) Push(Command.JumpKick);
                     if (kb.qKey.wasPressedThisFrame) Push(Command.DodgeLeft);
                     if (kb.eKey.wasPressedThisFrame) Push(Command.DodgeRight);
@@ -257,6 +265,7 @@ namespace ProjectInk
                     if (left) keyAxis -= 1f;
                     if (right) keyAxis += 1f;
                     if (kb.jKey.wasPressedThisFrame) Push(Command.StrikeForward);
+                    if (kb.kKey.wasPressedThisFrame) Push(Command.KickForward);
                     if (kb.spaceKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame) Push(Command.JumpKick);
                     if (kb.lKey.wasPressedThisFrame || kb.leftShiftKey.wasPressedThisFrame) Push(Command.DodgeForward);
                     if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame || kb.fKey.wasPressedThisFrame) Push(Command.ThrowWeapon);
@@ -296,6 +305,8 @@ namespace ProjectInk
             if (Classic)
             {
                 ClassicKeys(left, right, leftDown, rightDown);
+                if (Input.GetKeyDown(KeyCode.Z)) Push(Command.KickLeft);
+                if (Input.GetKeyDown(KeyCode.X)) Push(Command.KickRight);
                 if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) Push(Command.JumpKick);
                 if (Input.GetKeyDown(KeyCode.Q)) Push(Command.DodgeLeft);
                 if (Input.GetKeyDown(KeyCode.E)) Push(Command.DodgeRight);
@@ -307,6 +318,7 @@ namespace ProjectInk
                 if (left) keyAxis -= 1f;
                 if (right) keyAxis += 1f;
                 if (Input.GetKeyDown(KeyCode.J)) Push(Command.StrikeForward);
+                if (Input.GetKeyDown(KeyCode.K)) Push(Command.KickForward);
                 if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) Push(Command.JumpKick);
                 if (Input.GetKeyDown(KeyCode.L) || Input.GetKeyDown(KeyCode.LeftShift)) Push(Command.DodgeForward);
                 if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.F)) Push(Command.ThrowWeapon);

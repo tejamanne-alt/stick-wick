@@ -261,3 +261,17 @@ Scene version 7.
     - The iai triggers on a counter, on 2+ enemies in a line, or as the kill finisher.
 - **Slow motion, kept rare:** the iai, cutting two or more at once, and heavy killing blows. Never more often than every 2.5 s.
 - `SceneVersion` → 10 (the move set must pick up the two new clips).
+
+## 2026-11-04: 0.5.1 punch and kick combos
+
+- Taps split by height (`GestureInput.kickLine` = 45% of the screen): **high = punch**, **low = kick**. The side still picks the direction.
+    - Keys: A/D punch, Z/X kick (classic); J punch, K kick (two-thumb).
+    - HUD: faint PUNCH / KICK guides at the screen edges.
+- **Punch string:** jab → cross → jab → **hook** → **uppercut** (launches). After a full string, the next tap grabs and throws.
+- **Kick string:** front kick → roundhouse → knee → spinning kick (knockdown). Kicks work with any weapon in hand, gun included.
+- Each string continues while taps keep coming and resets after a 0.9 s pause; switching limbs starts the other string.
+- A killing blow always becomes the string's finisher.
+- When a finisher lands: "PUNCH COMBO!" / "KICK COMBO!". If it kills, there's a short slow-mo (shares the 2.5 s slow-mo budget).
+- Jab, cross and hook play at 1.15× with tighter blends, for fast chains.
+- New hand-keyed clips `hook` and `uppercut`. `SceneVersion` → 11.
+

@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 10;
+        public const int SceneVersion = 11;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Stick Wick/Build Prototype Scene")]

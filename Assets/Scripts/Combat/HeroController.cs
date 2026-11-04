@@ -555,6 +555,9 @@ namespace ProjectInk
                 case Command.StrikeLeft: Strike(-1); break;
                 case Command.StrikeRight: Strike(1); break;
                 case Command.StrikeForward: Strike(AxisDir != 0 ? AxisDir : Facing); break;
+                case Command.KickLeft: Strike(-1, true); break;
+                case Command.KickRight: Strike(1, true); break;
+                case Command.KickForward: Strike(AxisDir != 0 ? AxisDir : Facing, true); break;
                 case Command.DodgeForward: Dodge(AxisDir != 0 ? AxisDir : Facing); break;
                 case Command.JumpKick: Jump(); break;
                 case Command.DodgeLeft: Dodge(-1); break;
@@ -655,16 +658,34 @@ namespace ProjectInk
 
         // ------------------------------------------------------------------ choosing the move
 
-        void Strike(int side)
+        int punchStep, kickStep;
+        string comboLabel;
+
+        /// <summary>The next move of the punch (tap high) or kick (tap low) string. A string
+        /// carries on while taps keep coming and resets after a pause; its last hit is the finisher.</summary>
+        AttackData NextInString(bool kick, Enemy t)
+        {
+            var list = kick ? AttackData.KickCombo : AttackData.PunchCombo;
+            int i = (kick ? kickStep++ : punchStep++) % list.Length;
+            if (kick) punchStep = 0; else kickStep = 0;          // switching limbs starts the other string
+            var move = list[i];
+            // the killing blow is always the string's finisher: cinematic, never a plain jab
+            if (t != null && t.Health <= move.damage && i < list.Length - 1) { move = list[list.Length - 1]; i = list.Length - 1; }
+            comboLabel = i == list.Length - 1 ? (kick ? "KICK COMBO!" : "PUNCH COMBO!") : null;
+            return move;
+        }
+
+        void Strike(int side, bool kick = false)
         {
             if (InRampage) { RampageStrike(side); return; }
-            if (state == State.Idle && Time.time - lastAttackEnd > comboWindow) { comboStep = 0; closeStep = 0; }
+            if (state == State.Idle && Time.time - lastAttackEnd > comboWindow) { comboStep = 0; closeStep = 0; punchStep = 0; kickStep = 0; }
+            comboLabel = null;
 
             // a knife flying in from that side: catch it and send it back
             var incoming = IncomingKnife(side);
             if (incoming != null) { CatchKnife(incoming, side); return; }
 
-            if (Style == FightStyle.Gun) { GunStrike(side); return; }
+            if (Style == FightStyle.Gun && !kick) { GunStrike(side); return; }   // kicks work with any weapon in hand
 
             var t = PickTarget(side, Style == FightStyle.Knife ? 16f : targetRange);
 
@@ -689,18 +710,19 @@ namespace ProjectInk
                 return;
             }
 
-            if (Style == FightStyle.Knife && t != null && Mathf.Abs(t.transform.position.x - transform.position.x) > 1.8f)
+            if (!kick && Style == FightStyle.Knife && t != null && Mathf.Abs(t.transform.position.x - transform.position.x) > 1.8f)
             {
                 KnifeThrow(t);
                 return;
             }
 
-            var combo = Style == FightStyle.Sword ? AttackData.SwordCombo : Style == FightStyle.Pipe ? AttackData.PipeCombo : AttackData.Combo;
+            bool armed = !kick && (Style == FightStyle.Sword || Style == FightStyle.Pipe || Style == FightStyle.Knife);
+            var combo = Style == FightStyle.Sword ? AttackData.SwordCombo : AttackData.PipeCombo;
             if (t == null)
             {
                 SetFacing(side);
-                if (Style == FightStyle.Knife) { StartAttack(AttackData.KnifeStab, null, side, false); return; }
-                StartAttack(combo[comboStep++ % combo.Length], null, side, false);
+                if (!kick && Style == FightStyle.Knife) { StartAttack(AttackData.KnifeStab, null, side, false); return; }
+                StartAttack(armed ? combo[comboStep++ % combo.Length] : NextInString(kick, null), null, side, false);
                 return;
             }
 
@@ -719,7 +741,7 @@ namespace ProjectInk
             AttackData move;
             if (dy > 1.4f || dy < -1.4f)
                 move = Style == FightStyle.Sword ? AttackData.SwordLeap : AttackData.FlyingKick;
-            else if (Style == FightStyle.Sword || Style == FightStyle.Pipe)
+            else if (armed && (Style == FightStyle.Sword || Style == FightStyle.Pipe))
             {
                 var finisher = Style == FightStyle.Sword ? AttackData.SwordC : AttackData.PipeC;
                 bool iai = Style == FightStyle.Sword && SwordSlowReady && Mathf.Abs(dy) < 0.6f && Grounded &&
@@ -736,20 +758,17 @@ namespace ProjectInk
                     comboStep++;
                 }
             }
-            else if (Style == FightStyle.Knife)
+            else if (armed && Style == FightStyle.Knife)
                 move = AttackData.KnifeStab;
             else
             {
-                if (counter) move = AttackData.Counter;
+                if (counter) move = kick ? AttackData.SpinKick : AttackData.Counter;
                 else if (behindClose) move = AttackData.BackKick;
                 else if (dy > 0.8f) move = AttackData.FlyingKick;
-                else if (comboStep % 4 == 3 && Mathf.Abs(dx) < 2.2f && t.Type != EnemyType.Brute) { move = AttackData.GrabThrow; comboStep++; }
-                else
-                {
-                    move = combo[comboStep % combo.Length];
-                    if (t.Health <= move.damage) move = comboStep % 2 == 0 ? AttackData.SpinKick : AttackData.Roundhouse; // cinematic finisher
-                    comboStep++;
-                }
+                // after a full punch string, the next tap grabs and hurls them
+                else if (!kick && punchStep >= AttackData.PunchCombo.Length && Mathf.Abs(dx) < 2.2f && t.Type != EnemyType.Brute)
+                { move = AttackData.GrabThrow; punchStep = 0; }
+                else move = NextInString(kick, t);
             }
 
             if (!move.behind) SetFacing(side);
@@ -1213,7 +1232,8 @@ namespace ProjectInk
             state = State.Attack;
             stateTime = 0f;
             bool swordClip = Style == FightStyle.Sword && currentAttack.clip != null && currentAttack.clip.StartsWith("sword");
-            body.Play(currentAttack.clip, swordClip ? 0.03f : 0.05f, true, swordClip && !currentAttack.iai ? 1.2f : 1f);
+            bool quick = currentAttack.clip == "jab" || currentAttack.clip == "cross" || currentAttack.clip == "hook";
+            body.Play(currentAttack.clip, swordClip || quick ? 0.03f : 0.05f, true, swordClip && !currentAttack.iai ? 1.2f : quick ? 1.15f : 1f);
             SetTrails(!currentAttack.ranged);
             if (currentAttack.iai) BeginIai();
             if (!currentAttack.ranged) SwingSound();
@@ -1368,6 +1388,18 @@ namespace ProjectInk
                     if (cut >= 2 && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(80 * cut, cut >= 3 ? "TRIPLE CUT!" : "DOUBLE CUT!");
                 }
                 if (bladeCut && currentAttack.lift > 0f && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(30, "LAUNCH!");
+                if (comboLabel != null)
+                {
+                    // the string's finisher landed: a beat of slow motion if it finished someone
+                    if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(120, comboLabel);
+                    if (lastKilled && SwordSlowReady)
+                    {
+                        swordSlowAt = Time.unscaledTime;
+                        if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.3f, 0.45f, 0.02f, 0.25f);
+                        if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(5f, 0.2f);
+                    }
+                    comboLabel = null;
+                }
             }
         }
 

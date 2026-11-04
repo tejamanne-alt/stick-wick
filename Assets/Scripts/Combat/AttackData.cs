@@ -69,7 +69,15 @@ namespace ProjectInk
         public static readonly AttackData EnemyCross = new AttackData { clip = "cross", damage = 10, reach = 1.05f, knockback = 3f, hitStopFrames = 3, shake = 0.1f };
         public static readonly AttackData EnemyKick = new AttackData { clip = "front_kick", damage = 12, reach = 1.3f, knockback = 4f, hitStopFrames = 4, shake = 0.12f };
 
-        /// <summary>The hero's combo string, one step per tap (all motion-captured).</summary>
+        public static readonly AttackData Hook = new AttackData { clip = "hook", damage = 13, reach = 0.95f, knockback = 3f, hitStopFrames = 4, shake = 0.09f };
+        public static readonly AttackData Uppercut = new AttackData { clip = "uppercut", damage = 22, reach = 0.95f, knockback = 2.5f, lift = 8.5f, hitStopFrames = 7, shake = 0.2f, heavy = true, knockdown = true };
+
+        /// <summary>Tap high, again and again: jab, cross, jab, hook, uppercut (launches).</summary>
+        public static readonly AttackData[] PunchCombo = { Jab, Cross, Jab, Hook, Uppercut };
+        /// <summary>Tap low, again and again: front kick, roundhouse, knee, spinning kick (knocks down).</summary>
+        public static readonly AttackData[] KickCombo = { FrontKick, Roundhouse, Knee, SpinKick };
+
+        /// <summary>The hero's earlier mixed combo string (kept for reference).</summary>
         public static readonly AttackData[] Combo = { Jab, Cross, Knee, FrontKick, Jab, Cross, Roundhouse };
     }
 }

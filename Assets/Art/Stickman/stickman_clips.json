@@ -176,6 +176,20 @@
       "hitFrame": -1
     },
     {
+      "name": "hook",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4
+    },
+    {
+      "name": "uppercut",
+      "frames": 15,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5
+    },
+    {
       "name": "stomp",
       "frames": 14,
       "fps": 30,
