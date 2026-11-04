@@ -153,8 +153,13 @@ namespace ProjectInk
                 float y = h - 92f;
                 cineCap.normal.textColor = new Color(1f, 1f, 1f, c.CaptionAlpha);
                 GUI.Label(new Rect(70 - slide, y + 2, w, 46), c.chapter, cineCap);
-                Fill(new Rect(72 - slide, y + 50, 50, 2), new Color(1f, 1f, 1f, 0.8f * c.CaptionAlpha));
+                // the rule under it spans the wider of the two lines, drawing out from the left,
+                // led by a short red stroke (the ink red of the title and the victory card)
                 cineTag.alignment = TextAnchor.MiddleLeft;
+                float ruleW = Mathf.Max(cineCap.CalcSize(new GUIContent(c.chapter)).x, cineTag.CalcSize(new GUIContent(Spaced(c.chapterName))).x);
+                float draw = ruleW * Mathf.SmoothStep(0f, 1f, c.CaptionAlpha);
+                Fill(new Rect(72 - slide, y + 50, draw, 2), new Color(1f, 1f, 1f, 0.8f * c.CaptionAlpha));
+                Fill(new Rect(72 - slide, y + 49, Mathf.Min(draw, 36f), 4), new Color(0.78f, 0.06f, 0.07f, c.CaptionAlpha));
                 cineTag.normal.textColor = new Color(1f, 1f, 1f, 0.75f * c.CaptionAlpha);
                 GUI.Label(new Rect(72 - slide, y + 56, w, 26), Spaced(c.chapterName), cineTag);
                 cineTag.alignment = TextAnchor.MiddleCenter;

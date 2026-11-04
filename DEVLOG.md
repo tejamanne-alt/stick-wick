@@ -711,3 +711,7 @@ The pause menu has a third row: **HINTS AUTO / HINTS ALWAYS** (saved).
 - **ALWAYS** shows every chalk mark whenever it applies and never retires them.
 
 Switching back to AUTO resumes the counts where they were. Set in `HintDirector.AlwaysShow`, which uses the PlayerPrefs key `hints_always`. The pause buttons shrink a little on short screens so all three rows fit.
+
+## 2026-11-04: Chapter card rule
+
+The rule under CHAPTER n on the opening's lower third was a 50 px dash, which read as cut off. It now spans the wider of CHAPTER n and the chapter name, and draws out from the left as the card fades in. It is led by a short red stroke in the same ink red as the title and victory cards.
