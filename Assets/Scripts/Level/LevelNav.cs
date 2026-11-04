@@ -26,31 +26,56 @@ namespace ProjectInk
         public float FootX => x - dir * 0.25f;
     }
 
+    /// <summary>A flight of stairs: walk on at the bottom (x0, y0) and up to the top (x1, y1),
+    /// joining two platforms.</summary>
+    public struct Stair
+    {
+        public float x0, y0, x1, y1;
+        public int bottom, top;
+        public Stair(float x0, float y0, float x1, float y1, int bottom, int top)
+        { this.x0 = x0; this.y0 = y0; this.x1 = x1; this.y1 = y1; this.bottom = bottom; this.top = top; }
+        public int UpDir => x1 > x0 ? 1 : -1;
+    }
+
     /// <summary>The tower: ground, two mezzanines with an open atrium between them, and a high
     /// catwalk (with a glass section in the middle) across the atrium. Shared by the scene
     /// builder (geometry) and the game (navigation), so the two always agree.</summary>
     public static class TowerPlan
     {
         public const float HalfW = 13.2f, RoofY = 9.4f, MezzY = 3.0f, CatY = 6.0f;
-        public const float MezzInnerL = -4.0f, MezzInnerR = 3.0f, CatEnd = 7.5f, GlassHalf = 1.2f;
+        public const float MezzInnerL = -4.0f, MezzInnerR = 4.5f, CatEnd = 7.5f, GlassHalf = 1.2f;
+        // the right side has stairs: a grand flight from the lobby to the right mezzanine (rising
+        // in front of the atrium window), and a flight from the mezzanine up to the catwalk
+        public const float StairLowX0 = 1.5f, StairUpX0 = 11.5f;
 
         public static readonly Platform[] Platforms =
         {
-            new Platform(-HalfW, HalfW, 0f, false),                     // 0 ground (solid)
+            new Platform(-HalfW, StairLowX0 - 0.1f, 0f, false),        // 0 lobby, left of the grand stairs (solid)
             new Platform(-HalfW, MezzInnerL, MezzY),                    // 1 left mezzanine
             new Platform(MezzInnerR, HalfW, MezzY),                     // 2 right mezzanine
             new Platform(-CatEnd, -GlassHalf, CatY),                    // 3 catwalk, left
             new Platform(-GlassHalf, GlassHalf, CatY, true, true),      // 4 the glass panel
             new Platform(GlassHalf, CatEnd, CatY),                      // 5 catwalk, right
+            new Platform(StairLowX0 + 0.5f, HalfW, 0f, false),          // 6 lobby, right of and under the grand stairs
         };
 
+        /// <summary>The left side climbs: hang from the edge and pull up.</summary>
         public static readonly Ledge[] Ledges =
         {
-            new Ledge(MezzInnerL, MezzY, -1),      // ground → left mezzanine (its inner edge)
-            new Ledge(MezzInnerR, MezzY, +1),      // ground → right mezzanine
+            new Ledge(MezzInnerL, MezzY, -1),      // lobby → left mezzanine (its inner edge)
             new Ledge(-CatEnd, CatY, +1),          // left mezzanine → catwalk (its left end)
-            new Ledge(CatEnd, CatY, -1),           // right mezzanine → catwalk
         };
+
+        /// <summary>The right side walks: two flights of open steel stairs.</summary>
+        public static readonly Stair[] Stairs =
+        {
+            new Stair(StairLowX0, 0f, MezzInnerR, MezzY, 0, 2),        // lobby → right mezzanine
+            new Stair(StairUpX0, MezzY, CatEnd, CatY, 2, 5),           // right mezzanine → catwalk
+        };
+
+        /// <summary>Walks that are not just "touching": from under the grand stairs you can walk
+        /// out to the left side of the lobby (but walking right from there takes the stairs).</summary>
+        public static readonly (int from, int to, float x)[] ExtraWalks = { (6, 0, StairLowX0 - 0.4f) };
     }
 
     /// <summary>Route-finding across the building's levels. For every pair of platforms it
@@ -59,17 +84,21 @@ namespace ProjectInk
     /// below). A breadth-first search gives the first step of the shortest route.</summary>
     public static class LevelNav
     {
-        public enum StepKind { None, Walk, Climb, Drop }
+        public enum StepKind { None, Walk, Climb, Drop, Stairs }
         public struct Step
         {
             public StepKind kind;
             public float x;          // where to go to take the step
             public int ledge;        // for Climb
             public int to;           // the platform it leads to
+            public int dir;          // for Stairs: which way to keep walking once on them
         }
 
         static Platform[] platforms;
         static Ledge[] ledges;
+        static Stair[] stairs;
+        static (int from, int to, float x)[] extraWalks;
+        public static IReadOnlyList<Stair> StairList => stairs;
         public static bool Active => platforms != null;
         public static IReadOnlyList<Platform> Platforms => platforms;
         public static IReadOnlyList<Ledge> Ledges => ledges;
@@ -78,8 +107,12 @@ namespace ProjectInk
         public static void Init(LayoutKind kind)
         {
             broken.Clear();
-            if (kind == LayoutKind.Tower) { platforms = TowerPlan.Platforms; ledges = TowerPlan.Ledges; }
-            else { platforms = null; ledges = null; }
+            if (kind == LayoutKind.Tower)
+            {
+                platforms = TowerPlan.Platforms; ledges = TowerPlan.Ledges;
+                stairs = TowerPlan.Stairs; extraWalks = TowerPlan.ExtraWalks;
+            }
+            else { platforms = null; ledges = null; stairs = null; extraWalks = null; }
         }
 
         public static void SetBroken(int platform, bool isBroken)
@@ -184,6 +217,18 @@ namespace ProjectInk
                     var B = platforms[j];
                     yield return new Step { kind = StepKind.Walk, to = j, x = Mathf.Clamp(tx, B.x0 + 0.2f, B.x1 - 0.2f) };
                 }
+            // stairs: up from their bottom platform, down from their top one
+            if (stairs != null)
+                foreach (var st in stairs)
+                {
+                    if (st.bottom == a && !broken.Contains(st.top))
+                        yield return new Step { kind = StepKind.Stairs, to = st.top, x = st.x0, dir = st.UpDir };
+                    if (st.top == a && !broken.Contains(st.bottom))
+                        yield return new Step { kind = StepKind.Stairs, to = st.bottom, x = st.x1, dir = -st.UpDir };
+                }
+            if (extraWalks != null)
+                foreach (var w in extraWalks)
+                    if (w.from == a) yield return new Step { kind = StepKind.Walk, to = w.to, x = w.x };
             // climb: any ledge whose foot stands on this platform
             for (int k = 0; k < ledges.Length; k++)
             {

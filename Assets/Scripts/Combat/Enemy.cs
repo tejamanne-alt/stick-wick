@@ -283,6 +283,7 @@ namespace ProjectInk
         // ------------------------------------------------------------------ the tower: route-finding
 
         int navPlatform = -1;
+        int stairDir;          // while on a flight of stairs: the way we are going
 
         /// <summary>Get to the hero's level: walk, climb the next ledge on the route, or drop
         /// through the floor (fighters with an attack token pounce straight onto the hero instead).
@@ -296,7 +297,8 @@ namespace ProjectInk
             if (Ranged && Mathf.Abs(dx) < 9f && Mathf.Abs(dy) < 6.5f) { FireAcrossLevels(); return; }
 
             int me = LevelNav.PlatformAt(p);
-            if (me < 0) { Walk(Mathf.Sign(dx)); return; }
+            if (me >= 0) stairDir = 0;
+            if (me < 0) { Walk(stairDir != 0 ? stairDir : Mathf.Sign(dx)); return; }   // on a flight of stairs: keep going
             var step = LevelNav.Next(me, p.x, hero.Platform, hero.transform.position.x);
             if (step.kind == LevelNav.StepKind.None)
             {
@@ -308,6 +310,14 @@ namespace ProjectInk
             }
             float d = step.x - p.x;
             if (step.kind == LevelNav.StepKind.Walk) { Walk(Mathf.Sign(d)); return; }
+            if (step.kind == LevelNav.StepKind.Stairs)
+            {
+                // walk to the foot (or head) of the flight, then straight on up (or down) it
+                if (Mathf.Abs(d) > 0.2f && Mathf.Sign(d) != step.dir) { Walk(Mathf.Sign(d)); return; }
+                stairDir = step.dir;
+                Walk(step.dir);
+                return;
+            }
             if (Mathf.Abs(d) > 0.15f) { Walk(Mathf.Sign(d) * (Mathf.Abs(d) < 0.6f ? 0.6f : 1f)); return; }
             velocity.x = 0f;
 

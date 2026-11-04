@@ -64,7 +64,7 @@ namespace ProjectInk
             if (hero == null) { Destroy(gameObject); return; }
             if (pool == null) { Build(); if (pool == null) return; }
             var p = hero.transform.position;
-            float ground = Fighter.GroundY(p + Vector3.up * 0.2f);
+            float ground = Fighter.GroundY(p, 0.3f);
             float height = Mathf.Max(0f, p.y - ground);
             // crowded: someone within 1.6 m makes the pool brighter
             float crowd = 0f;

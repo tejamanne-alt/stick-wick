@@ -146,7 +146,8 @@ namespace ProjectInk
                 below.y = Mathf.Min(below.y, ProbeCeiling);
                 return Physics.Raycast(below, Vector3.down, out var hit, 40f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
             }
-            return GroundY(p);
+            // walking: step up at most a stair's worth, so you pass under open stairs and slabs
+            return GroundY(p, LevelNav.Active ? 0.35f : 0.9f);
         }
 
         /// <summary>Move by velocity, apply gravity, land on the ground and follow stairs.

@@ -43,7 +43,8 @@ How it's built:
 ### The tower (main building)
 
 Three levels: the **lobby**, two **mezzanines** with an open atrium between them, and a **steel catwalk** across the top with a **glass panel** in the middle.
-- **Climb:** swipe up near a **striped ledge**. The hero jumps, hangs by the hands and pulls himself up.
+- **Left side, climb:** swipe up near a **striped ledge**. The hero jumps, hangs by the hands and pulls himself up.
+- **Right side, stairs:** a grand steel staircase from the lobby to the right mezzanine, and a second flight up to the catwalk. Just run.
 - **Drop:** swipe down to drop through a mezzanine or the catwalk, or just run off an edge.
 - **Ropes:** swing across the atrium. Bars are under and over the mezzanines.
 - **Throw enemies:** off the edges, or **through the glass**: a 6-metre fall.

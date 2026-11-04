@@ -80,8 +80,8 @@ namespace ProjectInk.EditorTools
                 new Rect(mL + 0.5f, 0.6f, (mR - mL) - 1.0f, 4.9f),                                  // the tall atrium window
                 new Rect(-11.2f, 7.75f, 9.8f, 1.25f), new Rect(1.4f, 7.75f, 9.8f, 1.25f),           // the skylight band (above heads on the catwalk)
             };
-            var offices = new List<Rect> { new Rect(-8.4f, 3.75f, 3.4f, 1.3f), new Rect(4.9f, 3.75f, 3.4f, 1.3f) };
-            var doors = new List<Rect> { new Rect(-10.8f, mezz, 1.6f, 2.3f), new Rect(9.2f, mezz, 1.6f, 2.3f) };
+            var offices = new List<Rect> { new Rect(-8.4f, 3.75f, 3.4f, 1.3f), new Rect(8.4f, 3.75f, 3.4f, 1.3f) };
+            var doors = new List<Rect> { new Rect(-10.8f, mezz, 1.6f, 2.3f), new Rect(5.4f, mezz, 1.6f, 2.3f) };
             var fanHole = new Rect(-1.15f, 7.0f, 2.3f, 2.0f);
             var openings = new List<Rect>(windows);
             openings.AddRange(offices);
@@ -185,6 +185,9 @@ namespace ProjectInk.EditorTools
             foreach (float x in new[] { -7.2f, -3.6f, 3.6f, 7.2f })
                 NoCollider(PrototypeBuilder.Box(env, "Hanger", new Vector3(x, (cat + roof) * 0.5f, cz1 + 0.05f), new Vector3(0.03f, roof - cat, 0.03f), steel));
 
+            // ------------------------------------------------------------ the stairs (right side)
+            foreach (var st in TowerPlan.Stairs) SteelStairs(env, st, steel, steelMid, edgeWhite);
+
             // ------------------------------------------------------------ the ledges: hazard stripes say "climb here"
             foreach (var lg in TowerPlan.Ledges)
             {
@@ -215,7 +218,7 @@ namespace ProjectInk.EditorTools
             EnvironmentBuilder.Crate(props, new Vector3(-6.4f, 0f, 0f), 0.7f, crateMat, crateEdge);
             EnvironmentBuilder.Crate(props, new Vector3(6.2f, 0f, 0f), 0.7f, crateMat, crateEdge);
             EnvironmentBuilder.Crate(props, new Vector3(-12.0f, mezz, 0f), 0.7f, crateMat, crateEdge);
-            EnvironmentBuilder.Crate(props, new Vector3(11.9f, mezz, 0f), 0.7f, crateMat, crateEdge);
+            EnvironmentBuilder.Crate(props, new Vector3(12.4f, mezz, 0f), 0.7f, crateMat, crateEdge);
 
             // ------------------------------------------------------------ light
             EnvironmentBuilder.Lamp(env, new Vector3(-8.0f, mezz - SlabThick, 1.6f), 0.35f, shade, bulb, coneMat, lampGlow);
@@ -302,6 +305,53 @@ namespace ProjectInk.EditorTools
             PrototypeBuilder.Box(parent, name, new Vector3(cx, top - thick * 0.5f, (front + back) * 0.5f), new Vector3(w, thick, back - front), body);
             NoCollider(PrototypeBuilder.Box(parent, name + "Lip", new Vector3(cx, top - 0.015f, front - 0.012f), new Vector3(w, 0.03f, 0.01f), lip));
             NoCollider(PrototypeBuilder.Box(parent, name + "Beam", new Vector3(cx, top - thick - 0.12f, front + 0.25f), new Vector3(w, 0.24f, 0.18f), beam));
+        }
+
+        /// <summary>An open steel staircase from (x0, y0) to (x1, y1): a thin walkable slope
+        /// (one-way: you can walk underneath it), open treads with white nosings, a stringer on
+        /// each side and a handrail along the back.</summary>
+        static void SteelStairs(Transform parent, Stair st, Material steel, Material tread, Material nosing)
+        {
+            var root = new GameObject("Stairs").transform;
+            root.SetParent(parent, false);
+            float dx = st.x1 - st.x0, dy = st.y1 - st.y0;
+            float len = Mathf.Sqrt(dx * dx + dy * dy);
+            float ang = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
+            const float z0 = -0.5f, z1 = 1.3f;
+            // the walkable slope: a thin collider along the line of the tread nosings
+            var mid = new Vector3((st.x0 + st.x1) * 0.5f, (st.y0 + st.y1) * 0.5f, (z0 + z1) * 0.5f);
+            var dir = new Vector3(dx, dy, 0f) / len;
+            var normal = new Vector3(-dir.y, dir.x, 0f);
+            if (normal.y < 0f) normal = -normal;
+            var ramp = new GameObject("StairSlope").transform;
+            ramp.SetParent(root, false);
+            ramp.position = mid - normal * 0.05f;
+            ramp.rotation = Quaternion.Euler(0f, 0f, ang);
+            var col = ramp.gameObject.AddComponent<BoxCollider>();
+            col.size = new Vector3(len, 0.1f, z1 - z0);
+            ramp.gameObject.isStatic = true;
+            // treads
+            int steps = Mathf.Max(6, Mathf.RoundToInt(Mathf.Abs(dy) / 0.25f));
+            float rise = dy / steps, run = dx / steps;
+            for (int i = 0; i < steps; i++)
+            {
+                float x = st.x0 + run * (i + 0.5f), y = st.y0 + rise * (i + 0.5f);
+                NoCollider(PrototypeBuilder.Box(root, "Tread", new Vector3(x, y - 0.03f, (z0 + z1) * 0.5f), new Vector3(Mathf.Abs(run) + 0.02f, 0.06f, z1 - z0), tread));
+                NoCollider(PrototypeBuilder.Box(root, "TreadNosing", new Vector3(x, y - 0.01f, z0 - 0.012f), new Vector3(Mathf.Abs(run) + 0.02f, 0.025f, 0.01f), nosing));
+            }
+            // stringers, front and back, and the handrail
+            foreach (float z in new[] { z0 - 0.03f, z1 + 0.03f })
+            {
+                var s1 = NoCollider(PrototypeBuilder.Box(root, "Stringer", mid + Vector3.down * 0.16f + new Vector3(0f, 0f, z - mid.z), new Vector3(len + 0.1f, 0.22f, 0.05f), steel));
+                s1.rotation = Quaternion.Euler(0f, 0f, ang);
+            }
+            var rail = NoCollider(PrototypeBuilder.Box(root, "StairRail", mid + Vector3.up * 0.95f + new Vector3(0f, 0f, z1 + 0.05f - mid.z), new Vector3(len, 0.04f, 0.04f), steel));
+            rail.rotation = Quaternion.Euler(0f, 0f, ang);
+            for (int k = 0; k <= 4; k++)
+            {
+                var p = new Vector3(Mathf.Lerp(st.x0, st.x1, k / 4f), Mathf.Lerp(st.y0, st.y1, k / 4f), z1 + 0.05f);
+                NoCollider(PrototypeBuilder.Box(root, "StairPost", p + Vector3.up * 0.475f, new Vector3(0.03f, 0.95f, 0.03f), steel));
+            }
         }
 
         /// <summary>A slim handrail on posts along a floor, at depth z (behind the fighters).</summary>

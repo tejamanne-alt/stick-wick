@@ -446,3 +446,16 @@ Feedback: zoomed out, enemies were too small; the camera showed past the buildin
 - Removed the fighter outline at the user's request: `InkOutline`, its shader, the read/write model import and the preview image.
 - The other readability fixes stay: the backlit atrium window, the skylight above head height, lit door corridors and the softer vignette.
 - `SceneVersion` → 16, so the scene rebuilds without it.
+
+## 2026-11-04: 0.7.6 stairs on the right side of the tower
+
+Feedback: instead of climbing on both sides, use steps on one side.
+- **Left side:** climbing, as before (lobby → left mezzanine edge, left mezzanine → catwalk end).
+- **Right side:** two flights of open steel stairs.
+    - A grand flight from the lobby (x 1.5) up to the right mezzanine's inner edge (x 4.5, y 3). It rises in front of the backlit atrium window; the mezzanine's inner edge moved from 3.0 to 4.5 to meet it.
+    - A flight from the right mezzanine (x 11.5) up to the catwalk's right end (x 7.5, y 6).
+    - Each flight is a thin one-way slope collider with open treads, white nosings, two stringers, a handrail and posts.
+- **Walking under stairs:** while walking, fighters now step up at most 0.35 m (in the tower), so they pass under the stairs and slabs instead of being lifted onto them. Walking right in the left lobby takes you up the grand stairs; from under them you can walk out to the left.
+- **Route-finding:** new `Stairs` steps. Enemies walk to the foot (or head) of a flight and keep going until they're off it. The lobby is split in two for routing, with a walk-under link. Ten routes checked.
+- The right mezzanine door moved to x 5.4–7.0, the right office window to x 8.4–11.8 (behind the upper flight), and the crate to x 12.4.
+- `SceneVersion` → 17. Diagram updated: `docs/previews/tower_layout.png`.
