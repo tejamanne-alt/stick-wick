@@ -440,3 +440,9 @@ Feedback: zoomed out, enemies were too small; the camera showed past the buildin
     - the instant pull-back pass is removed; the hero slide is only an emergency net at the screen edge
 - **Close-ups** (the boss entrance, the iai) now ease in over 0.35 s as well as out.
 - **Kill-cam orbits** are clamped to ±38°: big swings showed the cut-away building's open side.
+
+## 2026-11-04: 0.7.5 outline removed
+
+- Removed the fighter outline at the user's request: `InkOutline`, its shader, the read/write model import and the preview image.
+- The other readability fixes stay: the backlit atrium window, the skylight above head height, lit door corridors and the softer vignette.
+- `SceneVersion` → 16, so the scene rebuilds without it.

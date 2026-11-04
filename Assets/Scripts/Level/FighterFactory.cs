@@ -50,10 +50,6 @@ namespace ProjectInk
             Fighter f = hero ? root.AddComponent<HeroController>() : (Fighter)root.AddComponent<Enemy>();
             f.body = player;
             if (eyeMaterial != null) f.eyes = BuildEyes(player, eyeMaterial);
-            // a thin light outline: fighters read against dark windows and the busy building
-            var outline = root.AddComponent<InkOutline>();
-            outline.color = hero ? new Color(0.95f, 0.95f, 0.95f, 1f) : new Color(0.82f, 0.82f, 0.82f, 1f);
-            outline.width = hero ? 0.034f : 0.026f;
             if (f is HeroController h)
             {
                 h.sword = sword;
