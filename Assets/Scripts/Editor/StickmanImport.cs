@@ -38,6 +38,7 @@ namespace ProjectInk.EditorTools
             importer.bakeAxisConversion = true;
             importer.animationType = ModelImporterAnimationType.Generic;
             importer.materialImportMode = ModelImporterMaterialImportMode.None;
+            importer.isReadable = true;      // the runtime outline (InkOutline) reads the body mesh
             importer.importCameras = false;
             importer.importLights = false;
             importer.importAnimation = true;

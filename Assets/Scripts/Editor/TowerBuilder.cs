@@ -57,7 +57,7 @@ namespace ProjectInk.EditorTools
             var steelMid = PrototypeBuilder.Mat("TowerSteelMid", "Unlit/Color", new Color(0.16f, 0.16f, 0.17f));
             var edgeWhite = PrototypeBuilder.Mat("TowerEdge", "Unlit/Color", new Color(0.88f, 0.88f, 0.88f));
             var frame = PrototypeBuilder.Mat("TowerFrame", "Unlit/Color", new Color(0.06f, 0.06f, 0.06f));
-            var corridor = PrototypeBuilder.Mat("TowerCorridor", "Unlit/Color", new Color(0.38f, 0.38f, 0.38f));
+            var corridor = PrototypeBuilder.Mat("TowerCorridor", "Unlit/Color", new Color(0.62f, 0.62f, 0.6f));   // lit, so fighters read in doorways
             var shade = PrototypeBuilder.Mat("TowerLampShade", "Unlit/Color", new Color(0.05f, 0.05f, 0.05f));
             var bulb = PrototypeBuilder.Mat("TowerBulb", "Unlit/Color", Color.white);
             var sign = PrototypeBuilder.Mat("TowerSign", "Unlit/Color", new Color(0.93f, 0.93f, 0.93f));
@@ -78,11 +78,11 @@ namespace ProjectInk.EditorTools
             {
                 new Rect(-11.6f, 1.75f, 2.4f, 0.9f), new Rect(7.2f, 1.75f, 2.4f, 0.9f),           // lobby clerestories (under the mezzanines)
                 new Rect(mL + 0.5f, 0.6f, (mR - mL) - 1.0f, 4.9f),                                  // the tall atrium window
-                new Rect(-11.2f, 6.9f, 9.8f, 1.9f), new Rect(1.4f, 6.9f, 9.8f, 1.9f),               // the skylight band
+                new Rect(-11.2f, 7.75f, 9.8f, 1.25f), new Rect(1.4f, 7.75f, 9.8f, 1.25f),           // the skylight band (above heads on the catwalk)
             };
             var offices = new List<Rect> { new Rect(-8.4f, 3.75f, 3.4f, 1.3f), new Rect(4.9f, 3.75f, 3.4f, 1.3f) };
             var doors = new List<Rect> { new Rect(-10.8f, mezz, 1.6f, 2.3f), new Rect(9.2f, mezz, 1.6f, 2.3f) };
-            var fanHole = new Rect(-1.15f, 6.9f, 2.3f, 1.9f);
+            var fanHole = new Rect(-1.15f, 7.0f, 2.3f, 2.0f);
             var openings = new List<Rect>(windows);
             openings.AddRange(offices);
             openings.AddRange(doors);
@@ -108,6 +108,11 @@ namespace ProjectInk.EditorTools
                 NoCollider(PrototypeBuilder.Box(env, "Transom", new Vector3(aw.center.x, aw.y + aw.height * j / 4f, WallZ - 0.12f), new Vector3(aw.width, 0.04f, 0.04f), frame));
             // the skyline behind it all
             Quad(env, "Skyline", new Vector3(0f, 5.5f, 14f), new Vector2(70f, 34f), skyMat);
+            // the atrium window is BACKLIT: pale moonlit fog with the city in soft grey, so black
+            // fighters in front of it read as crisp silhouettes (dark glass would swallow them)
+            var fogTex = EnvironmentBuilder.SaveTex("TowerFogCity", FogCityTexture(256, 512), TextureWrapMode.Clamp);
+            var fogMat = EnvironmentBuilder.TexMat("TowerFogCityMat", "Unlit/Texture", fogTex, Vector2.one);
+            Quad(env, "AtriumBacklight", new Vector3(aw.center.x, aw.center.y, WallZ + 0.3f), new Vector2(aw.width + 0.2f, aw.height + 0.2f), fogMat);
 
             // ------------------------------------------------------------ the giant fan in the top wall
             var fan = new GameObject("VentFan").transform;
@@ -377,6 +382,39 @@ namespace ProjectInk.EditorTools
                     bool bar = (x % 16) < 5 || y < 18 || y > n - 18;
                     byte v = bar ? (byte)28 : (byte)70;
                     px[y * n + x] = new Color32(v, v, v, (byte)(bar ? 255 : 160));
+                }
+            t.SetPixels32(px); t.Apply();
+            return t;
+        }
+
+        /// <summary>Moonlit fog behind the atrium window: a pale gradient, a soft moon, and distant
+        /// towers in light grey at the bottom (never dark enough to hide a fighter).</summary>
+        static Texture2D FogCityTexture(int w, int h)
+        {
+            var t = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            var px = new Color32[w * h];
+            var rng = new System.Random(17);
+            var tops = new float[w];
+            int x0 = 0;
+            while (x0 < w)
+            {
+                int bw = rng.Next(14, 40);
+                float top = (float)(0.12 + rng.NextDouble() * 0.30);
+                for (int x = x0; x < Mathf.Min(w, x0 + bw); x++) tops[x] = top;
+                x0 += bw + rng.Next(2, 8);
+            }
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    float v = y / (float)(h - 1);
+                    float c = Mathf.Lerp(0.70f, 0.88f, v);                                     // brighter towards the top
+                    float mx = (x - w * 0.68f) / (w * 0.5f), my = (v - 0.78f) / 0.5f;          // the moon
+                    float md = Mathf.Sqrt(mx * mx + my * my * 0.25f);
+                    c = Mathf.Max(c, Mathf.Lerp(0.98f, c, Mathf.Clamp01((md - 0.08f) / 0.05f)));
+                    if (v < tops[x]) c = Mathf.Lerp(0.60f, 0.66f, v / Mathf.Max(0.01f, tops[x]));   // distant towers, light grey
+                    if (v < tops[x] && (x % 7 == 3) && ((int)(v * h) % 9 == 4)) c += 0.12f;        // a few lit windows
+                    byte b = (byte)(Mathf.Clamp01(c) * 255);
+                    px[y * w + x] = new Color32(b, b, (byte)Mathf.Min(255, b + 3), 255);
                 }
             t.SetPixels32(px); t.Apply();
             return t;

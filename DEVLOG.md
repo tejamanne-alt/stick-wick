@@ -396,3 +396,23 @@ The hall still felt basic. The new main building is **the tower**, a three-level
     - Simulated on six cases (far side, high on the catwalk, mid-orbit, behind the camera, very close, below the frame): all end in frame.
 - The boss close-up and the last-kill orbit now frame the subject **and** the hero together (centred between them, pulled back by their separation) whenever he is within ~8 m.
 - The opening cinematic is exempt: it frames the hero itself.
+
+## 2026-11-04: 0.7.2 fighters always readable
+
+Feedback: the hero and enemies were hard to see in the tower. The cause was contrast and scale, not framing:
+- the black hero stood in front of the tower's dark atrium window and skylight
+- wide shots of the tall building made everyone small
+- a heavy vignette darkened the screen edges
+
+Fixes:
+- **Outline on every fighter** (`InkOutline` + `Resources/Shaders/InkOutline.shader`): an inverted-hull rim, inflated along averaged normals, sharing the body's bones.
+    - Near-white for the hero (3.4 cm), light grey for enemies (2.6 cm).
+    - Its own colour property, so hit tints don't touch it.
+    - Built at runtime in Awake, so the opening cinematic hides it with the body. The model is now imported read/write for this.
+    - Before/after render of the real model: `docs/previews/outline_before_after.png`.
+- **The atrium window is backlit:** pale moonlit fog with the city in light grey and a soft moon, instead of black glass.
+- The **skylight band** was raised above head height on the catwalk.
+- **Door corridors** are lit (0.62).
+- **Camera** `maxDistance` 22 → 17: fighters stay big; anyone outside the shot gets the red edge marker.
+- **Vignette** softened (starts further out, 105 alpha at the corners instead of 170).
+- `SceneVersion` → 15 (re-imports the model, rebuilds the tower).

@@ -222,7 +222,7 @@ namespace ProjectInk
                 {
                     float dx = (x - 63.5f) / 63.5f, dy = (y - 63.5f) / 63.5f;
                     float d = Mathf.Sqrt(dx * dx * 0.8f + dy * dy);
-                    v[y * 128 + x] = new Color32(0, 0, 0, (byte)(Mathf.Clamp01((d - 0.55f) / 0.6f) * 170));
+                    v[y * 128 + x] = new Color32(0, 0, 0, (byte)(Mathf.Clamp01((d - 0.7f) / 0.55f) * 105));   // soft: never hides a fighter at the edge
                 }
             vignette.SetPixels32(v);
             vignette.Apply();

@@ -70,7 +70,8 @@ namespace ProjectInk
         void Start()
         {
             // wide enough to hold the whole hall (both walls, both floors) on a phone in landscape
-            maxDistance = Mathf.Max(maxDistance, 22f);
+            // close enough that fighters stay big on a phone; anyone beyond gets an edge marker
+            maxDistance = 17f;
             if (hero != null) focus = hero.position;
             distance = minDistance;
             Snap();
