@@ -17,6 +17,7 @@ namespace ProjectInk.EditorTools
         public struct Layout
         {
             public float halfW, floorY, roofY, wallZ, laneFront, ledgeX;
+            public float deckY, deckHalf, stairRun;    // the raised central deck and its two flights of stairs
         }
 
         // ---------------------------------------------------------------- materials
@@ -83,22 +84,31 @@ namespace ProjectInk.EditorTools
             var env = new GameObject("Environment").transform;
             env.SetParent(root, false);
 
-            // ---- back wall with windows: two on the ground floor, two on the upper floor, a tall hall window
-            var openings = new List<Rect>
+            // ---- back wall: high windows over each ground area, two high on the left, a tall hall window,
+            // a back door on the right and a doorway onto the deck
+            var windows = new List<Rect>
             {
                 // high clerestory windows, above head height: fighters always stand against lit concrete
-                new Rect(-10.6f, 1.95f, 2.6f, 0.85f), new Rect(7.0f, 1.95f, 2.6f, 0.85f),         // ground floor
-                new Rect(-10.6f, L.floorY + 2.0f, 2.6f, 0.95f), new Rect(-4.6f, L.floorY + 2.0f, 2.6f, 0.95f), // upper floor
-                new Rect(4.2f, L.floorY + 0.6f, 4.2f, 2.4f),                                    // tall window over the hall
-                new Rect(-6.8f, 0f, 1.6f, 2.3f),                                                // back door
+                new Rect(-11.2f, 1.95f, 2.6f, 0.85f), new Rect(7.4f, 1.95f, 2.4f, 0.85f),
+                new Rect(-10.6f, 5.0f, 2.6f, 0.95f), new Rect(-5.6f, 5.2f, 2.2f, 0.9f),
+                new Rect(4.2f, 3.8f, 4.2f, 2.4f),                                              // tall window over the hall
             };
+            var doors = new List<Rect>
+            {
+                new Rect(10.2f, 0f, 1.6f, 2.3f),                                               // back door (ground, right)
+                new Rect(-0.8f, L.deckY, 1.6f, 2.3f),                                          // doorway onto the deck
+            };
+            var openings = new List<Rect>(windows);
+            openings.AddRange(doors);
             WallWithOpenings(env, "BackWall", -L.halfW, L.halfW, 0f, L.roofY, L.wallZ, 0.3f, openings, wallMat);
-            for (int i = 0; i < openings.Count - 1; i++) Window(env, openings[i], L.wallZ, frame, glassMat);
-            var door = openings[openings.Count - 1];
-            // a dim, warm corridor beyond the back door (not black: the hero must read in front of it)
+            foreach (var wr in windows) Window(env, wr, L.wallZ, frame, glassMat);
+            // a dim, warm corridor beyond each door (not black: the hero must read in front of it)
             var corridor = ColorMat("Corridor", new Color(0.36f, 0.36f, 0.36f));
-            Box(env, "BackCorridor", new Vector3(door.center.x, door.center.y, L.wallZ + 0.25f), new Vector3(door.width, door.height, 0.05f), corridor);
-            FrameAround(env, door, L.wallZ - 0.17f, 0.12f, frame);
+            foreach (var door in doors)
+            {
+                Box(env, "BackCorridor", new Vector3(door.center.x, door.center.y, L.wallZ + 0.25f), new Vector3(door.width, door.height, 0.05f), corridor);
+                FrameAround(env, door, L.wallZ - 0.17f, 0.12f, frame);
+            }
 
             // night sky and skyline behind the windows
             var skyGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -112,27 +122,14 @@ namespace ProjectInk.EditorTools
             // structure: concrete pillars at the outer walls and the hall, crisp edge trims on the floors
             Box(env, "PillarLeft", new Vector3(-L.halfW + 0.45f, L.roofY * 0.5f, L.wallZ - 0.3f), new Vector3(0.5f, L.roofY, 0.3f), pillarMat);
             Box(env, "PillarRight", new Vector3(L.halfW - 0.45f, L.roofY * 0.5f, L.wallZ - 0.3f), new Vector3(0.5f, L.roofY, 0.3f), pillarMat);
-            Box(env, "PillarMid", new Vector3(L.ledgeX - 0.25f, L.floorY * 0.5f, L.wallZ - 0.3f), new Vector3(0.4f, L.floorY, 0.3f), pillarMat);
             Box(env, "TrimGround", new Vector3(0f, -0.02f, L.laneFront - 0.01f), new Vector3(L.halfW * 2f, 0.05f, 0.02f), trim);
-            Box(env, "TrimUpper", new Vector3((-L.halfW + L.ledgeX) * 0.5f, L.floorY - 0.02f, L.laneFront - 0.01f), new Vector3(L.halfW + L.ledgeX, 0.05f, 0.02f), trim);
             Box(env, "Skirting", new Vector3(0f, 0.08f, L.wallZ - 0.16f), new Vector3(L.halfW * 2f, 0.16f, 0.03f), frame);
-            Box(env, "SkirtingUpper", new Vector3((-L.halfW + L.ledgeX) * 0.5f, L.floorY + 0.08f, L.wallZ - 0.16f), new Vector3(L.halfW + L.ledgeX, 0.16f, 0.03f), frame);
-
-            // stair balusters in front of the stair lane
-            for (int i = 0; i <= 10; i++)
-            {
-                float x = i * 0.5f;
-                float yTop = L.floorY - x * (L.floorY / 5f);
-                Box(env, $"Baluster{i}", new Vector3(x + 0.25f, Mathf.Max(0f, yTop) + 0.45f, 0.86f), new Vector3(0.03f, 0.9f, 0.03f), metal);
-            }
+            Box(env, "SkirtingDeck", new Vector3(0f, L.deckY + 0.08f, L.wallZ - 0.16f), new Vector3(L.deckHalf * 2f, 0.16f, 0.03f), frame);
 
             // ceiling pipes
-            Pipe(env, "PipeGroundA", new Vector3((-L.halfW + L.ledgeX) * 0.5f, L.floorY - 0.35f, L.wallZ - 0.35f), L.halfW + L.ledgeX, 0.08f, metal);
-            Pipe(env, "PipeGroundB", new Vector3((-L.halfW + L.ledgeX) * 0.5f, L.floorY - 0.55f, L.wallZ - 0.45f), L.halfW + L.ledgeX, 0.05f, metal);
             Pipe(env, "PipeRoofA", new Vector3(0f, L.roofY - 0.35f, L.wallZ - 0.35f), L.halfW * 2f, 0.1f, metal);
             Pipe(env, "PipeRoofB", new Vector3(0f, L.roofY - 0.6f, L.wallZ - 0.5f), L.halfW * 2f, 0.05f, metal);
             // a thin lit edge along the top of each big pipe (rim light)
-            Box(env, "PipeGroundRim", new Vector3((-L.halfW + L.ledgeX) * 0.5f, L.floorY - 0.27f, L.wallZ - 0.42f), new Vector3(L.halfW + L.ledgeX, 0.012f, 0.02f), highlight);
             Box(env, "PipeRoofRim", new Vector3(0f, L.roofY - 0.25f, L.wallZ - 0.42f), new Vector3(L.halfW * 2f, 0.014f, 0.02f), highlight);
 
             // moonlight falling through the tall hall window in long slanted shafts
@@ -149,10 +146,8 @@ namespace ProjectInk.EditorTools
             }
 
             // hanging lamps with warm cones of light
-            Lamp(env, new Vector3(-8.5f, L.floorY - 0.05f, 1.6f), 0.7f, shade, bulb, coneMat, glowMat);
-            Lamp(env, new Vector3(-2.5f, L.floorY - 0.05f, 1.6f), 0.7f, shade, bulb, coneMat, glowMat);
-            Lamp(env, new Vector3(-8.0f, L.roofY - 0.05f, 1.6f), 0.9f, shade, bulb, coneMat, glowMat);
-            Lamp(env, new Vector3(-3.0f, L.roofY - 0.05f, 1.6f), 0.9f, shade, bulb, coneMat, glowMat);
+            Lamp(env, new Vector3(-9.5f, L.roofY - 0.05f, 1.6f), 2.6f, shade, bulb, coneMat, glowMat);
+            Lamp(env, new Vector3(-1.5f, L.roofY - 0.05f, 1.6f), 1.4f, shade, bulb, coneMat, glowMat);   // over the deck
             Lamp(env, new Vector3(4.0f, L.roofY - 0.05f, 1.6f), 2.6f, shade, bulb, coneMat, glowMat);
             Lamp(env, new Vector3(9.5f, L.roofY - 0.05f, 1.6f), 2.6f, shade, bulb, coneMat, glowMat);
 
@@ -164,11 +159,11 @@ namespace ProjectInk.EditorTools
             Box(env, "CrateA", new Vector3(-11.6f, 0.4f, 1.7f), new Vector3(0.8f, 0.8f, 0.8f), wood);
             Box(env, "CrateB", new Vector3(-10.8f, 0.3f, 1.8f), new Vector3(0.6f, 0.6f, 0.6f), wood);
             Box(env, "CrateC", new Vector3(-11.3f, 1.05f, 1.8f), new Vector3(0.5f, 0.5f, 0.5f), wood);
-            Box(env, "CrateD", new Vector3(11.6f, 0.35f, 1.8f), new Vector3(0.7f, 0.7f, 0.7f), wood);
+            Box(env, "CrateD", new Vector3(12.4f, 0.35f, 1.8f), new Vector3(0.6f, 0.7f, 0.6f), wood);
 
             // low haze over each floor and drifting dust in the light
             Haze(env, "HazeGround", 0f, L, hazeMat);
-            Haze(env, "HazeUpper", L.floorY, L, hazeMat);
+            Haze(env, "HazeUpper", L.deckY, L, hazeMat);
             Dust(env, L, glow);
         }
 
@@ -186,16 +181,17 @@ namespace ProjectInk.EditorTools
             props.SetParent(root, false);
 
             // bars: low enough under each ceiling for a full giant circle (bar ± 1.43 m)
-            Bar(props, new Vector3(-4.0f, 1.55f, 0f), L.floorY - 0.15f, steel, steelRim);
-            Bar(props, new Vector3(-9.5f, L.floorY + 1.55f, 0f), L.roofY, steel, steelRim);
-            Bar(props, new Vector3(10.3f, 1.55f, 0f), L.roofY, steel, steelRim);
-            // ropes from the roof: one over the hall, one over the upper floor
-            Rope(props, new Vector3(7.0f, L.roofY - 0.2f, 0f), 4.2f, ropeMat);
-            Rope(props, new Vector3(-6.5f, L.roofY - 0.2f, 0f), 1.5f, ropeMat);
+            Bar(props, new Vector3(-10.2f, 1.55f, 0f), L.roofY, steel, steelRim);              // over the left ground
+            Bar(props, new Vector3(10.0f, 1.55f, 0f), L.roofY, steel, steelRim);               // over the right ground
+            Bar(props, new Vector3(0f, L.deckY + 1.55f, 0f), L.roofY, steel, steelRim);        // over the deck
+            // ropes from the roof over each flight of stairs: swing between the ground and the deck
+            float stairMid = L.deckHalf + L.stairRun * 0.5f;
+            Rope(props, new Vector3(-stairMid, L.roofY - 0.2f, 0f), 4.0f, ropeMat);
+            Rope(props, new Vector3(stairMid, L.roofY - 0.2f, 0f), 4.0f, ropeMat);
             // crates in the fight lane: stand on them, or kick them into enemies
-            Crate(props, new Vector3(-1.8f, 0f, 0f), 0.7f, crateMat, crateEdge);
-            Crate(props, new Vector3(9.0f, 0f, 0f), 0.7f, crateMat, crateEdge);
-            Crate(props, new Vector3(-11.0f, L.floorY, 0f), 0.7f, crateMat, crateEdge);
+            Crate(props, new Vector3(-8.6f, 0f, 0f), 0.7f, crateMat, crateEdge);
+            Crate(props, new Vector3(8.4f, 0f, 0f), 0.7f, crateMat, crateEdge);
+            Crate(props, new Vector3(1.8f, L.deckY, 0f), 0.7f, crateMat, crateEdge);
         }
 
         static void Bar(Transform parent, Vector3 center, float ceiling, Material steel, Material rim)

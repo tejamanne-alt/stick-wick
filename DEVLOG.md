@@ -318,3 +318,24 @@ Scene version 7.
 
 - Removed the C-key scheme toggle. It sat next to the new Z/X kick keys, so a stray press switched to the two-thumb stick and saved that choice.
 - The game now always starts in classic controls and deletes any saved `controls` preference.
+
+## 2026-11-04: 0.6 the hall, redesigned for movement
+
+Feedback (video): enemies couldn't reach the upper floor (they jammed at the stair top and the ledge), and moving up and down was a struggle. The old layout had the upper floor reachable only by a stair lane behind the fight (enemies only) or a ledge climb.
+
+New layout: **one continuous walking surface**. Every x has exactly one floor height, so going up or down is just running left or right, for the player and the AI alike.
+- `ground (x -13..-7) | stairs up (-7..-3) | raised deck 2.6 m (-3..3) on a solid base | stairs down (3..7) | ground (7..13)`.
+- Stairs are smooth ramp colliders under visible steps, with white nosings and handrails along the back.
+- Ramp endpoints verified numerically: they meet the deck edge exactly and run under the ground.
+- Doors:
+    - side doors at both ends
+    - the back door moved to the right ground (x 11)
+    - a new **deck doorway** at the back of the deck; `UpperDoor` spawns step out of it like the back door
+- Props:
+    - bars over each ground area and over the deck
+    - **ropes over each flight of stairs**, to swing between the ground and the deck
+    - crates on both grounds and on the deck
+- Removed: the upper floor slab, the stair lane, the ledge climb triggers (jump/strike near the old ledge), the drop-through dive (it could sink a fighter into the deck's base), the old low lamps, pipes and balusters.
+- Enemy brain: always "same level", just walk to the hero. Gunners fire up and down the stairs.
+- The hero starts at x 9. `SceneVersion` → 12, so the scene rebuilds on pull.
+- Layout diagram: `docs/previews/hall_layout.png`.

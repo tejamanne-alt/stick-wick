@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 11;
+        public const int SceneVersion = 12;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Stick Wick/Build Prototype Scene")]
@@ -52,41 +52,33 @@ namespace ProjectInk.EditorTools
             RenderSettings.skybox = null;
 
             // ---------------------------------------------------------------- the building
-            // A cut-away of a two-floor building, seen side-on: black floors and outer walls, a
-            // light interior back wall (black fighters and coloured enemies both read on it, and
-            // it keeps the colour of every fight), a staircase in a lane just behind the fight
-            // lane, an open ledge on the upper floor, doors on both floors and at the back.
+            // A cut-away hall seen side-on, built as ONE continuous walking surface so moving
+            // between levels is just running left or right (no hidden stair lane, no ledge climb):
+            //   ground (left) | wide stairs up | raised central deck | wide stairs down | ground (right)
+            // Light concrete back wall (black fighters and coloured enemies both read on it),
+            // doors at both ends, a back door on the right and a doorway onto the deck.
             var interior = Mat("Interior", "Unlit/Color", new Color(0.76f, 0.75f, 0.72f));
             var room = new GameObject("Building").transform;
             const float halfW = 13.2f, floorY = 3.2f, roofY = 6.8f, laneFront = -0.6f, wallZ = 2.4f;
+            const float deckY = 2.6f, deckHalf = 3f, stairRun = 4f;      // deck: x -3..3; stairs: 3..7 each side
             Box(room, "Ground", new Vector3(0, -2f, 0.5f), new Vector3(60, 4, 9), ground);
             // the back wall (concrete with windows), lamps, pipes, skyline, haze and dust
             EnvironmentBuilder.Build(room, new EnvironmentBuilder.Layout
             {
-                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f
+                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f,
+                deckY = deckY, deckHalf = deckHalf, stairRun = stairRun
             }, ground);
             EnvironmentBuilder.Props(room, new EnvironmentBuilder.Layout
             {
-                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f
+                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f,
+                deckY = deckY, deckHalf = deckHalf, stairRun = stairRun
             }, trail);
             Box(room, "Roof", new Vector3(0, roofY + 0.1f, (laneFront + wallZ) * 0.5f), new Vector3(halfW * 2f + 0.4f, 0.2f, wallZ - laneFront), ground);
             Box(room, "WallLeft", new Vector3(-halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
             Box(room, "WallRight", new Vector3(halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
-            // upper floor: from the left wall to an open ledge at x = 0
-            Box(room, "UpperFloor", new Vector3(-halfW * 0.5f, floorY - 0.075f, (laneFront + wallZ) * 0.5f), new Vector3(halfW, 0.15f, wallZ - laneFront), ground);
-            // staircase up to the ledge, in its own lane (z 0.9 to 1.7) so fights on the ground pass in front of it
-            const int steps = 10;
-            const float rise = floorY / steps, run = 0.5f;
-            for (int i = 0; i < steps; i++)
-            {
-                float hgt = rise * (steps - i);
-                LaneBox(room, $"Step{i}", run * (i + 0.5f), hgt * 0.5f, run, hgt, 0.9f, 1.7f, 0.9f, arch);
-            }
-            Box(room, "StairRail", new Vector3(steps * run * 0.5f, floorY * 0.5f + 0.9f, 1.75f), new Vector3(Mathf.Sqrt(steps * run * steps * run + floorY * floorY), 0.05f, 0.05f), arch)
-                .rotation = Quaternion.Euler(0f, 0f, -Mathf.Atan2(floorY, steps * run) * Mathf.Rad2Deg);
+            BuildDeckAndStairs(room, deckY, deckHalf, stairRun, laneFront, wallZ, arch);
             DoorFrame(room, "DoorLeft", new Vector3(-12.4f, 0, 0.9f), arch, 1.8f);
             DoorFrame(room, "DoorRight", new Vector3(12.4f, 0, 0.9f), arch, 1.8f);
-            DoorFrame(room, "DoorUpper", new Vector3(-12.4f, floorY, 0.9f), arch, 1.8f);
             DoorFrame(room, "Vent", new Vector3(3f, roofY - 0.1f, wallZ - 0.2f), arch, 1.0f, true);
 
             // ---------------------------------------------------------------- spawn points
@@ -94,14 +86,14 @@ namespace ProjectInk.EditorTools
             var points = new Transform[5];
             points[(int)SpawnKind.LeftDoor] = Point(spawnRoot, "LeftDoor", new Vector3(-12.2f, 0, 0));
             points[(int)SpawnKind.RightDoor] = Point(spawnRoot, "RightDoor", new Vector3(12.2f, 0, 0));
-            points[(int)SpawnKind.UpperDoor] = Point(spawnRoot, "UpperDoor", new Vector3(-12.2f, floorY, 0));
-            points[(int)SpawnKind.Background] = Point(spawnRoot, "Background", new Vector3(-6f, 0, wallZ - 0.4f));   // the back door
+            points[(int)SpawnKind.UpperDoor] = Point(spawnRoot, "UpperDoor", new Vector3(0f, deckY, wallZ - 0.4f));   // the doorway onto the deck
+            points[(int)SpawnKind.Background] = Point(spawnRoot, "Background", new Vector3(11f, 0, wallZ - 0.4f));   // the back door
             points[(int)SpawnKind.Ceiling] = Point(spawnRoot, "Ceiling", new Vector3(0f, roofY - 0.6f, 0));
 
             // ---------------------------------------------------------------- hero + systems
             var eyeMat = Mat("Eyes", "Unlit/Color", new Color(0.97f, 0.96f, 0.92f));
             var heroGo = FighterFactory.Build(model, moves, ink, "Hero", true, trail, FightStyle.Fists, eyeMat);
-            heroGo.transform.position = new Vector3(6f, 0f, 0f);
+            heroGo.transform.position = new Vector3(9f, 0f, 0f);
             var hero = heroGo.GetComponent<HeroController>();
 
             var systems = new GameObject("Systems");
@@ -259,6 +251,73 @@ namespace ProjectInk.EditorTools
             go.GetComponent<Renderer>().sharedMaterial = mat;
             go.isStatic = true;
             return go.transform;
+        }
+
+        /// <summary>The raised deck on its solid base, and a wide flight of stairs on each side.
+        /// Walking colliders are smooth ramps (no bumps, no snagging); the visible steps sit on
+        /// them, each with a crisp white nosing. A slim handrail runs along the back.</summary>
+        static void BuildDeckAndStairs(Transform room, float deckY, float deckHalf, float run, float front, float back, Material arch)
+        {
+            var root = new GameObject("DeckAndStairs").transform;
+            root.SetParent(room, false);
+            float depth = back - front, zc = (front + back) * 0.5f;
+            var faceMat = Mat("DeckFace", "Unlit/Color", new Color(0.17f, 0.17f, 0.18f));
+            var nosing = Mat("StepNosing", "Unlit/Color", new Color(0.86f, 0.86f, 0.86f));
+            var rail = Mat("Handrail", "Unlit/Color", new Color(0.08f, 0.08f, 0.08f));
+
+            // the deck: one solid block whose top is the walkable floor
+            Box(root, "Deck", new Vector3(0f, deckY * 0.5f, zc), new Vector3(deckHalf * 2f, deckY, depth), faceMat);
+            Object.DestroyImmediate(Box(root, "DeckLip", new Vector3(0f, deckY - 0.03f, front - 0.01f), new Vector3(deckHalf * 2f, 0.06f, 0.02f), nosing).GetComponent<Collider>());
+            foreach (float px in new[] { -deckHalf + 0.6f, deckHalf - 0.6f })   // two pale pilasters on the deck's face
+                Object.DestroyImmediate(Box(root, "DeckPilaster", new Vector3(px, deckY * 0.5f, front - 0.01f), new Vector3(0.05f, deckY - 0.2f, 0.02f), nosing).GetComponent<Collider>());
+
+            const int steps = 9;
+            float rise = deckY / steps, tread = run / steps;
+            float len = Mathf.Sqrt(run * run + deckY * deckY), ang = Mathf.Atan2(deckY, run) * Mathf.Rad2Deg;
+            foreach (int s in new[] { -1, 1 })
+            {
+                // ramp collider: from the ground at x = s*(deckHalf+run) up to the deck edge at x = s*deckHalf
+                var ramp = new GameObject(s < 0 ? "RampLeft" : "RampRight").transform;
+                ramp.SetParent(root, false);
+                var dir = new Vector3(-s * run, deckY, 0f).normalized;                 // up the stairs
+                var normal = new Vector3(-dir.y * -s, Mathf.Abs(dir.x), 0f).normalized;
+                if (normal.y < 0f) normal = -normal;
+                Vector3 top = new Vector3(s * deckHalf, deckY, zc), bottom = new Vector3(s * (deckHalf + run), 0f, zc);
+                const float thick = 0.5f, extra = 0.4f;                                  // the low end runs on under the ground
+                ramp.position = (top + bottom) * 0.5f - dir * (extra * 0.5f) - normal * (thick * 0.5f);
+                ramp.rotation = Quaternion.Euler(0f, 0f, s < 0 ? ang : -ang);
+                var col = ramp.gameObject.AddComponent<BoxCollider>();
+                col.size = new Vector3(len + extra, thick, depth);
+                ramp.gameObject.isStatic = true;
+
+                // visible steps (no colliders): treads level with the ramp at their centres
+                for (int i = 0; i < steps; i++)
+                {
+                    float xi = s * (deckHalf + run - (i + 0.5f) * tread);                  // centre of step i, counted from the bottom
+                    float topY = rise * (i + 0.5f);
+                    var st = Box(root, $"Step{(s < 0 ? "L" : "R")}{i}", new Vector3(xi, topY * 0.5f, zc), new Vector3(tread, topY, depth), arch);
+                    Object.DestroyImmediate(st.GetComponent<Collider>());
+                    var edge = Box(root, "Nosing", new Vector3(xi, topY - 0.015f, front - 0.01f), new Vector3(tread, 0.03f, 0.02f), nosing);
+                    Object.DestroyImmediate(edge.GetComponent<Collider>());
+                }
+
+                // handrail along the back of the flight, on slim posts
+                const float railZ = 2.05f, railH = 0.95f;
+                var mid = (top + bottom) * 0.5f;
+                var r = Box(root, "Handrail", new Vector3(mid.x, mid.y + railH, railZ), new Vector3(len, 0.04f, 0.04f), rail);
+                r.rotation = Quaternion.Euler(0f, 0f, s < 0 ? ang : -ang);
+                Object.DestroyImmediate(r.GetComponent<Collider>());
+                for (int k = 0; k <= 4; k++)
+                {
+                    float u = k / 4f;
+                    var p = Vector3.Lerp(bottom, top, u);
+                    var post = Box(root, "RailPost", new Vector3(p.x, p.y + railH * 0.5f, railZ), new Vector3(0.03f, railH, 0.03f), rail);
+                    Object.DestroyImmediate(post.GetComponent<Collider>());
+                }
+            }
+            // the deck's rail, across the back
+            var dr = Box(root, "DeckRail", new Vector3(0f, deckY + 0.95f, 2.05f), new Vector3(deckHalf * 2f, 0.04f, 0.04f), rail);
+            Object.DestroyImmediate(dr.GetComponent<Collider>());
         }
 
         /// <summary>A block whose visible part spans z = visFront..back (behind the fighters)

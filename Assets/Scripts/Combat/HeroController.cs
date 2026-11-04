@@ -737,12 +737,6 @@ namespace ProjectInk
             bool counter = t.Telegraphing && Mathf.Abs(dx) < 4f && Mathf.Abs(dy) < 1.4f;
             bool behindClose = Facing != side && Mathf.Abs(dx) < 1.7f && Mathf.Abs(dy) < 0.5f;
 
-            // another floor: climb the ledge if it is near, otherwise leap or dive
-            if (dy > 1.4f && Level == 0 && transform.position.x > -3f && transform.position.x < 5f && Grounded)
-            {
-                GoToLedge();
-                return;
-            }
 
             AttackData move;
             if (dy > 1.4f || dy < -1.4f)
@@ -812,9 +806,6 @@ namespace ProjectInk
         {
             if (InRampage) { RampageStrike(Facing); return; }
             var t = PickTarget(Facing, 9f) ?? PickTarget(-Facing, 9f);
-            // near the ledge with nothing to hit: climb up
-            if (Level == 0 && Grounded && Mathf.Abs(transform.position.x - LedgeFootX) < 3f &&
-                (t == null || t.transform.position.y - transform.position.y > 1.4f)) { GoToLedge(); return; }
             if (t != null) SetFacing(t.transform.position.x > transform.position.x ? 1 : -1);
             StartAttack(Style == FightStyle.Sword ? AttackData.SwordLeap : AttackData.FlyingKick, t, Facing, false);
         }
@@ -871,11 +862,6 @@ namespace ProjectInk
                 Sound.Play(Sfx.Cloth, 1f, transform.position);
                 return;
             }
-
-            // near the ledge with someone above, or nothing to do: climb
-            var above = PickTarget(Facing, 9f) ?? PickTarget(-Facing, 9f);
-            if (Level == 0 && Mathf.Abs(p.x - LedgeFootX) < 2.5f && (above == null || above.transform.position.y - p.y > 1.4f))
-            { GoToLedge(); return; }
 
             // a plain jump
             state = State.Air;
@@ -1258,8 +1244,7 @@ namespace ProjectInk
                     }
                     else if (dy < -1.4f)
                     {
-                        dropThroughUntil = Time.time + 0.5f;                     // dive down to the floor below
-                        velocity.y = 3f;
+                        velocity.y = 3f;                                         // hop off the deck down onto them
                         Grounded = false;
                     }
                 }

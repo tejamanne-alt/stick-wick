@@ -115,8 +115,10 @@ namespace ProjectInk
             if (UpdateLedge(dt)) { UpdateTint(); return; }
             float dx = hero.transform.position.x - transform.position.x;
             float dist = Mathf.Abs(dx);
-            // same floor as the hero's (stable) floor; mid-stairs counts as neither
-            bool sameLevel = Level == hero.Floor && !onStairs && !onStairsDown && Mathf.Abs(hero.transform.position.y - transform.position.y) < 2.4f;
+            // the hall is one continuous walking surface (ground, stairs, deck): walking towards the
+            // hero always gets there, so everyone is always on "the same level" for the brain.
+            // (The old stair-lane / ledge travel code below is no longer reached.)
+            bool sameLevel = !onStairs && !onStairsDown;
 
             switch (state)
             {
@@ -209,7 +211,8 @@ namespace ProjectInk
             switch (kind)
             {
                 case SpawnKind.Background:
-                    // step out of the back door into the fight lane
+                case SpawnKind.UpperDoor:
+                    // step out of a back doorway (ground or deck) into the fight lane
                     var p = transform.position;
                     p.z = Mathf.MoveTowards(p.z, 0f, walkSpeed * Time.deltaTime);
                     transform.position = p;
@@ -400,7 +403,7 @@ namespace ProjectInk
         void LeaveStairsLane(float dt)
         {
             var p = transform.position;
-            if (Mathf.Abs(p.z) > 0.01f && kind != SpawnKind.Background)
+            if (Mathf.Abs(p.z) > 0.01f && kind != SpawnKind.Background && kind != SpawnKind.UpperDoor)
             {
                 p.z = Mathf.MoveTowards(p.z, 0f, 3f * dt);
                 transform.position = p;
@@ -553,7 +556,7 @@ namespace ProjectInk
             {
                 var from = Chest + Vector3.up * 0.1f + Vector3.right * Facing * 0.55f;
                 bool fromAbove = transform.position.y - hero.transform.position.y > 2f;   // shooting down from the balcony
-                bool hit = dx > 0f && (dy < 1.2f || fromAbove) && !hero.Invulnerable;
+                bool hit = dx > 0f && (dy < 3.2f || fromAbove) && !hero.Invulnerable;   // fires up or down the stairs too
                 if (InkFx.Instance != null) InkFx.Instance.Shot(from, hit ? hero.Chest : from + Vector3.right * Facing * 16f);
                 hit &= !hero.Ducking;
                 if (hit) hero.TakeHit(new HitInfo { damage = attack.damage, direction = Facing, knockback = attack.knockback, attacker = this });

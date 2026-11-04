@@ -323,7 +323,7 @@ namespace ProjectInk
                 {
                     case SpawnKind.LeftDoor: EdgeGlow(new Rect(0, h * 0.45f, 70, h * 0.45f), c, 0f); break;
                     case SpawnKind.RightDoor: EdgeGlow(new Rect(w - 70, h * 0.45f, 70, h * 0.45f), c, 180f); break;
-                    case SpawnKind.UpperDoor: EdgeGlow(new Rect(0, h * 0.08f, 70, h * 0.4f), c, 0f); break;
+                    case SpawnKind.UpperDoor: EdgeGlow(new Rect(w * 0.38f, 0, w * 0.24f, 60), c, 90f); break;   // the deck doorway, top centre
                     case SpawnKind.Ceiling: EdgeGlow(new Rect(w * 0.3f, 0, w * 0.4f, 70), c, 90f); break;
                     default: EdgeGlow(new Rect(w * 0.3f, h - 70, w * 0.4f, 70), c, 270f); break;
                 }
