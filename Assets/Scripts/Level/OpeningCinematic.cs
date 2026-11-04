@@ -39,6 +39,7 @@ namespace ProjectInk
         float t;                         // real seconds since the start
         float cutB, dropAt, cStart, cLength, outStart = -1f;
         bool dropped, landed;
+        bool cueTitle, cueRiser, cueCard;
         float barsAtOut;
         Vector3 lastPos, lastLook;
         float lastFov;
@@ -88,6 +89,14 @@ namespace ProjectInk
             var input = GestureInput.Instance;
             if (outStart < 0f && t > 0.4f && input != null && input.AnyPressThisFrame) Skip();
 
+            // the score of the edit: a slam under the title, a riser into the crash, a hit on the chapter card
+            if (outStart < 0f)
+            {
+                if (full && !cueTitle && t >= 1.0f) { cueTitle = true; Sound.Play(Sfx.CineMassive, 0.9f); }
+                if (full && !cueRiser && t >= dropAt - 2.0f) { cueRiser = true; Sound.Play(Sfx.Riser, 0.8f); }
+                if (!cueCard && t >= cStart + 0.25f) { cueCard = true; Sound.Play(Sfx.CineHit, full ? 0.6f : 0.5f); }
+            }
+
             // the hero crashes in
             if (full && !dropped && t >= dropAt)
             {
@@ -98,8 +107,10 @@ namespace ProjectInk
                 {
                     fx.Burst(new Vector3(home.x, 6.6f, 0f), 1.1f);
                     fx.Splash(new Vector3(home.x, 6.5f, 0f), Vector3.down, 10, new Color(0.75f, 0.75f, 0.75f));
-                    fx.PlayHit(true);
                 }
+                Sound.Play(Sfx.Glass, 1f, new Vector3(home.x, 6.5f, 0f));     // through the skylight
+                Sound.Play(Sfx.MetalClang, 0.8f, new Vector3(home.x, 6.5f, 0f), 0.8f);
+                Sound.PlayLater(Sfx.WhooshBig, 0.1f, 1f, new Vector3(home.x, 4f, 0f));
                 if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.12f, 0.25f);
             }
             if (full && dropped && !landed && (hero.Grounded || t > dropAt + 2.5f)) Land();
@@ -178,8 +189,10 @@ namespace ProjectInk
             {
                 fx.Burst(hero.transform.position + Vector3.up * 0.05f, 1.4f);
                 fx.ImpactFlash(0.06f);
-                fx.PlayHit(true);
             }
+            Sound.Play(Sfx.Boom, 1f);
+            Sound.Play(Sfx.Land, 1f, hero.transform.position, 0.85f);
+            Sound.Play(Sfx.PunchHeavy, 0.7f, hero.transform.position, 0.7f);
             if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.22f, 0.9f, 0.02f, 0.3f);
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.22f, 0.35f);
             foreach (var lamp in FindObjectsByType<LampFlicker>()) lamp.Shake(1f);
@@ -206,6 +219,7 @@ namespace ProjectInk
             if (outStart >= 0f) return;
             outStart = t;
             barsAtOut = BarsPixels;
+            Sound.Play(Sfx.CineHit, 0.8f);   // FIGHT!
             if (lastFov <= 0f) { lastPos = Camera.main != null ? Camera.main.transform.position : Vector3.zero; lastLook = hero.Chest; lastFov = 32f; }
             ControlReleased = true;
             hero.CineRelease(home);

@@ -149,9 +149,13 @@ namespace ProjectInk
             Burst(from, 1.4f);
             if (audioSource != null)
             {
-                audioSource.pitch = Random.Range(0.95f, 1.08f);
-                audioSource.PlayOneShot(gunshot, 0.9f);
+                // the gunshot: a synthesised crack for the transient, a recorded body and a room tail
+                audioSource.pitch = Random.Range(0.95f, 1.08f) * Mathf.Lerp(0.7f, 1f, UnityEngine.Time.timeScale);
+                audioSource.PlayOneShot(gunshot, 0.55f);
             }
+            Sound.Play(Sfx.GunBody, 1f, from);
+            Sound.Play(Sfx.GunTail, 1f, from);
+            Sound.PlayLater(Sfx.Shell, Random.Range(0.32f, 0.45f), 1f, from);
         }
 
         void Update()
@@ -307,19 +311,10 @@ namespace ProjectInk
             flashUntil = UnityEngine.Time.unscaledTime + seconds;
         }
 
-        public void PlayHit(bool heavy)
-        {
-            if (audioSource == null) return;
-            audioSource.pitch = Random.Range(0.9f, 1.1f) * Mathf.Lerp(0.75f, 1f, UnityEngine.Time.timeScale);
-            audioSource.PlayOneShot(heavy ? punchHeavy : punchLight, heavy ? 1f : 0.8f);
-        }
+        /// <summary>A generic body blow (recorded punches; specific moves call Sound directly).</summary>
+        public void PlayHit(bool heavy) { Sound.Play(heavy ? Sfx.PunchHeavy : Sfx.PunchLight); }
 
-        public void PlayWhoosh()
-        {
-            if (audioSource == null) return;
-            audioSource.pitch = Random.Range(0.9f, 1.15f);
-            audioSource.PlayOneShot(whoosh, 0.35f);
-        }
+        public void PlayWhoosh() { Sound.Play(Sfx.Whoosh); }
 
         void OnGUI()
         {

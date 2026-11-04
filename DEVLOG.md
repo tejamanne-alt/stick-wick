@@ -211,3 +211,29 @@ Scene version 7.
 - New in Classic: a still press held for 0.22 s (or holding A/D) runs that way, so ropes, bars and walls are still reachable.
 - HUD: the movement stick is drawn only in two-thumb mode; the hint line shows the active scheme.
 
+## 2026-11-04: 0.4.3 real sound
+
+- Replaced the synthesised blips with a bank of 143 recorded takes in 48 categories (6.3 MB of Ogg Vorbis). Sources:
+    - Oculus Audio Pack 01 (CC BY 4.0, via facebookincubator/meta-open-sound)
+    - SFX Kit (CC0, wyzowl/sfx-kit)
+- `tools/audio/build_audio.py` builds the bank:
+    - trims leading silence (hits play on the frame they land)
+    - folds to mono and peak-normalises
+    - layers sounds: punch + body thump, finisher + bone crack + sub boom, sword + flesh, pipe + metal
+- `Sound` mixer:
+    - creates itself and survives restarts
+    - 24 voices; takes never repeat back to back
+    - pitch and level variation, per-sound gaps, stereo pan by screen position
+    - slow-mo treatment: pitch bend (on sounds already playing too), a low-pass on everything including the ambience, a reverse whoosh in and a breath out
+    - ambience: room tone and city rain; a drone during the boss
+- Sound by event:
+    - hits by weapon and limb
+    - voices for hurt, death and effort; the brute's roar and laugh
+    - doors and the ceiling hatch on spawns
+    - footsteps synced to run speed, and landings
+    - gunshot: crack + body + tail, and a delayed shell casing
+    - crates, glass, wall splats, pickups, knife catch
+    - rank up, wave clear, floor clear and defeat stingers
+    - cues for the opening cinematic
+- `AudioImport` postprocessor: one-shots are Vorbis, decompressed on load, mono; loops stream.
+

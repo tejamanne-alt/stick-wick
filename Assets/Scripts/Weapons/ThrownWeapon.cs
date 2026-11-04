@@ -79,8 +79,9 @@ namespace ProjectInk
             {
                 InkFx.Instance.Splash(e.Chest, new Vector3(d, 0.3f, 0f), 40, e.InkColor);
                 InkFx.Instance.Burst(e.Chest, 4.5f);
-                InkFx.Instance.PlayHit(true);
             }
+            Sound.Play(kind == FightStyle.Pipe ? Sfx.PipeHit : kind == FightStyle.Gun ? Sfx.PunchHeavy : Sfx.SwordHit, 1f, e.Chest);
+            Sound.Play(Sfx.Finisher, 0.6f, e.Chest);
             if (TimeController.Instance != null) { TimeController.Instance.HitStop(6); TimeController.Instance.SlowMo(0.3f, 0.5f); }
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.18f, 0.2f);
             if (WaveDirector.Instance != null)

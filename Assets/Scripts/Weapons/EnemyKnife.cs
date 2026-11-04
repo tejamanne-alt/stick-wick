@@ -52,6 +52,7 @@ namespace ProjectInk
                     if (!hero.Invulnerable && !hero.Ducking)
                     {
                         hero.TakeHit(new HitInfo { damage = AttackData.EnemyKnife.damage, direction = velocity.x > 0 ? 1 : -1, knockback = 2f, attacker = thrower });
+                        Sound.Play(Sfx.SwordHit, 0.6f, transform.position, 1.2f);
                         Destroy(gameObject);
                         return;
                     }
@@ -63,6 +64,7 @@ namespace ProjectInk
         /// <summary>The hero caught it.</summary>
         public void Caught()
         {
+            Sound.Play(Sfx.SwordClash, 0.7f, transform.position, 1.15f);   // the blade snatched out of the air
             Destroy(gameObject);
         }
     }

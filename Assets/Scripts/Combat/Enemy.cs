@@ -67,6 +67,8 @@ namespace ProjectInk
             kind = spawnKind;
             InkColor = color;
             SetBaseColor(color);
+            // they arrive with a sound: a door banging open, or the ceiling hatch
+            Sound.Play(spawnKind == SpawnKind.Ceiling ? Sfx.MetalClang : Sfx.Door, 1f, transform.position);
             ringDistance = Gunner ? Random.Range(4.5f, 7f) : Type == EnemyType.Thrower ? Random.Range(4f, 6f) : Random.Range(2.2f, 3.4f);
             useLedge = Random.value < 0.55f;
             weaponMat = hero.weaponMaterial;
@@ -290,6 +292,9 @@ namespace ProjectInk
             projectile = false;
             if (state == State.Enter && kind == SpawnKind.Ceiling && CameraDirector.Instance != null)
                 CameraDirector.Instance.Shake(0.08f, 0.12f);
+            if (IsDown || !Alive) Sound.Play(Sfx.BodyFall, Mathf.Clamp(0.6f + fallHeight * 0.15f, 0.6f, 1f), transform.position);
+            else if (fallHeight > 0.8f) Sound.Play(Sfx.Land, 1f, transform.position);
+            if (IsDown && fallHeight > 2.3f && Alive) Sound.Play(Sfx.Bone, 1f, transform.position);
             // knocked off the upper floor: the fall finishes them
             if (IsDown && fallHeight > 2.3f && Alive)
             {
@@ -314,8 +319,8 @@ namespace ProjectInk
             {
                 InkFx.Instance.Splash(Chest, new Vector3(-wall, 0.4f, 0f), 30, InkColor);
                 InkFx.Instance.StainWall(transform.position.x + wall * 0.2f, Chest.y, InkColor, 1.4f);
-                InkFx.Instance.PlayHit(true);
             }
+            Sound.Play(Sfx.WallSplat, 1f, Chest);
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.14f, 0.15f);
             if (TimeController.Instance != null) TimeController.Instance.HitStop(4);
             if (WaveDirector.Instance != null)
@@ -389,6 +394,10 @@ namespace ProjectInk
             stateTime = 0f;
             hitDone = false;
             body.Play(attack.clip, 0.04f);
+            if (Type == EnemyType.Swordsman) Sound.Play(Sfx.SwordSwing, 0.8f, transform.position);
+            else if (!Gunner && Type != EnemyType.Thrower) Sound.Play(Sfx.Whoosh, 0.8f, transform.position, 0.92f);
+            if (Type == EnemyType.Brute) Sound.Play(Sfx.BruteHurt, 0.6f, transform.position, 0.8f);   // a roar into the swing
+            else if (Random.value < 0.25f) Sound.Play(Sfx.EnemyEffort, 1f, transform.position);
         }
 
         void ResolveAttack()
@@ -400,7 +409,7 @@ namespace ProjectInk
             {
                 var from = Chest + Vector3.up * 0.2f + Vector3.right * Facing * 0.4f;
                 EnemyKnife.Throw(this, hero, from, hero.Chest, weaponMat);
-                if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+                Sound.Play(Sfx.Knife, 1f, from);
                 return;
             }
             if (attack.clip == "grab_attack")
@@ -465,8 +474,14 @@ namespace ProjectInk
             float dmg = hit.damage;
             bool brute = Type == EnemyType.Brute;
             if (brute && !hit.heavy) dmg *= 0.6f;          // the brute shrugs off light hits
+            bool wasAlive = Alive;
             Health = Mathf.Max(0f, Health - dmg);
             Tint(Color.white, 0.06f);
+            if (wasAlive)
+            {
+                if (!Alive) Sound.Play(brute ? Sfx.BruteDeath : Sfx.EnemyDeath, 1f, Chest);
+                else Sound.Play(brute ? Sfx.BruteHurt : Sfx.EnemyHurt, 1f, Chest);
+            }
             FaceTowards(hit.attacker != null ? hit.attacker.transform.position.x : transform.position.x - hit.direction);
             velocity.x = hit.direction * hit.knockback * (brute ? 0.4f : 1f);
             bool knock = (hit.knockdown && (!brute || dmg >= 25f || Health <= 0f)) || !Alive;
@@ -500,6 +515,8 @@ namespace ProjectInk
             projectile = true;
             launchedBy = by;
             body.Play("knockdown", 0.03f);
+            Sound.Play(Sfx.WhooshBig, 1f, transform.position);
+            Sound.Play(Sfx.FallScream, 0.8f, transform.position);
         }
 
         void BowlOthers()

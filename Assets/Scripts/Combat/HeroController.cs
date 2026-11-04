@@ -99,6 +99,52 @@ namespace ProjectInk
 
         void CheckBody() { body.CheckVisible(); }
 
+        // ------------------------------------------------------------------ sound
+
+        bool IsKickClip(string c) => c != null && (c.Contains("kick") || c == "knee" || c == "stomp" || c == "slide_kick");
+
+        void SwingSound()
+        {
+            var c = currentAttack.clip;
+            if (Style == FightStyle.Sword && c != null && c.StartsWith("sword")) Sound.Play(Sfx.SwordSwing, 1f, transform.position);
+            else if (currentAttack.heavy || IsKickClip(c)) Sound.Play(Sfx.WhooshBig, 0.8f, transform.position);
+            else Sound.Play(Sfx.Whoosh, 1f, transform.position);
+            if (currentAttack.heavy && Random.value < 0.5f) Sound.Play(Sfx.HeroEffort, 1f, transform.position);
+        }
+
+        /// <summary>What a landed blow sounds like: by weapon, by limb, and heavier for kills.</summary>
+        void HitSound()
+        {
+            var c = currentAttack.clip;
+            var at = lastHitAt;
+            bool blade = Style == FightStyle.Sword && c != null && c.StartsWith("sword");
+            bool pipe = Style == FightStyle.Pipe && c != null && (c.StartsWith("sword") || c.StartsWith("pipe"));
+            if (blade) Sound.Play(Sfx.SwordHit, 1f, at);
+            else if (pipe) Sound.Play(Sfx.PipeHit, 1f, at);
+            else if (IsKickClip(c)) Sound.Play(Sfx.Kick, currentAttack.heavy ? 1f : 0.85f, at);
+            else Sound.Play(currentAttack.heavy || InRampage || isCounter ? Sfx.PunchHeavy : Sfx.PunchLight, 1f, at);
+            bool lastOne = lastKilled && Enemy.All.TrueForAll(x => x == null || !x.Alive);
+            if (lastKilled && (currentAttack.heavy || isCounter || lastOne)) Sound.Play(Sfx.Finisher, lastOne ? 1f : 0.7f, at);
+            else if (lastKilled) Sound.Play(Sfx.Bone, 0.6f, at);
+            if (isCounter) Sound.Play(Sfx.CineHit, 0.5f, at);
+        }
+
+        float stepTimer;
+        bool wasGrounded = true;
+
+        /// <summary>Footsteps while running (synced to the run speed) and the landing thump.</summary>
+        void FootSounds(float dt)
+        {
+            if (running && Grounded && state == State.Idle)
+            {
+                stepTimer -= dt * Mathf.Max(0.6f, Mathf.Abs(velocity.x) / runSpeed);
+                if (stepTimer <= 0f) { stepTimer = 0.27f; Sound.Play(Sfx.Footstep, 1f, transform.position); }
+            }
+            else stepTimer = 0.05f;
+            if (Grounded && !wasGrounded && state != State.Dead) Sound.Play(Sfx.Land, 1f, transform.position);
+            wasGrounded = Grounded;
+        }
+
         // ------------------------------------------------------------------ opening cinematic
 
         /// <summary>While set, the opening cinematic drives the hero: no input, no state machine.</summary>
@@ -196,6 +242,7 @@ namespace ProjectInk
             bool scripted = state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar ||
                             (state == State.WallRun && stateTime < 0.25f);
             if (!scripted) Integrate(dt);
+            FootSounds(dt);
             UpdateTint();
         }
 
@@ -238,6 +285,7 @@ namespace ProjectInk
                 else if (Style == FightStyle.Fists) Equip(p.kind, p.uses);
                 else continue;
                 if (InkFx.Instance != null) InkFx.Instance.Burst(p.transform.position, 1.6f);
+                Sound.Play(p.kind == FightStyle.Sword ? Sfx.SwordClash : Sfx.Pickup, p.kind == FightStyle.Sword ? 0.5f : 1f, p.transform.position);
                 Destroy(p.gameObject);
                 return;
             }
@@ -265,7 +313,8 @@ namespace ProjectInk
             state = State.Attack;
             stateTime = 0f;
             body.Play("throw_weapon", 0.05f, true, 1.4f);
-            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+            Sound.Play(Sfx.WhooshBig, 1f, transform.position);
+            Sound.Play(Sfx.HeroEffort, 1f, transform.position);
         }
 
         void ReleaseThrow()
@@ -642,7 +691,8 @@ namespace ProjectInk
                 stateTime = 0f;
                 swingHit.Clear();
                 body.Play("run", 0.04f, true, 2f);
-                if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+                Sound.Play(Sfx.Footstep, 1.6f, transform.position);
+                Sound.Play(Sfx.Cloth, 1f, transform.position);
                 return;
             }
 
@@ -657,7 +707,8 @@ namespace ProjectInk
             velocity.y = jumpSpeed;
             Grounded = false;
             body.Play("jump", 0.05f);
-            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+            Sound.Play(Sfx.Footstep, 1.4f, transform.position);
+            Sound.Play(Sfx.Cloth, 0.8f, transform.position);
         }
 
         void UpdateAir(float dt)
@@ -711,6 +762,8 @@ namespace ProjectInk
             stateTime = 0f;
             velocity = Vector3.zero;
             body.Play("pike", 0.08f);
+            Sound.Play(Sfx.Cloth, 1f, transform.position);
+            Sound.Play(Sfx.WhooshBig, 0.7f, transform.position);
             if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(30, "ROPE!");
         }
 
@@ -753,7 +806,8 @@ namespace ProjectInk
             stateTime = 0f;
             velocity = Vector3.zero;
             body.Play("pike", 0.06f);
-            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+            Sound.Play(Sfx.MetalClang, 0.45f, transform.position, 1.25f);
+            Sound.Play(Sfx.Cloth, 1f, transform.position);
         }
 
         void UpdateBar(float dt)
@@ -804,7 +858,8 @@ namespace ProjectInk
                     swingHit.Add(e);
                     int d = e.transform.position.x > feet.x ? 1 : -1;
                     e.TakeHit(new HitInfo { damage = 24f, direction = d, knockback = 9f, knockdown = true, heavy = true, attacker = this });
-                    if (InkFx.Instance != null) { InkFx.Instance.Splash(e.Chest, new Vector3(d, 0.4f, 0f), 26, e.InkColor); InkFx.Instance.PlayHit(true); }
+                    if (InkFx.Instance != null) InkFx.Instance.Splash(e.Chest, new Vector3(d, 0.4f, 0f), 26, e.InkColor);
+                    Sound.Play(Sfx.Kick, 1f, e.Chest);
                     if (TimeController.Instance != null) TimeController.Instance.HitStop(4);
                     if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.12f, 0.12f);
                     if (WaveDirector.Instance != null) WaveDirector.Instance.OnEnvironmentKill(e, label, 170);
@@ -905,7 +960,8 @@ namespace ProjectInk
             state = State.Swing;
             stateTime = 0f;
             body.Play("swing_hold", 0.08f);
-            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+            Sound.Play(Sfx.WhooshBig, 1f, transform.position);
+            Sound.Play(Sfx.HeroEffort, 1f, transform.position);
         }
 
         void UpdateSwing(float dt)
@@ -926,7 +982,9 @@ namespace ProjectInk
                 {
                     swingHit.Add(other);
                     other.TakeHit(new HitInfo { damage = 22f, direction = other.transform.position.x > transform.position.x ? 1 : -1, knockback = 9f, knockdown = true, heavy = true, attacker = this });
-                    if (InkFx.Instance != null) { InkFx.Instance.Splash(other.Chest, Vector3.up, 24, other.InkColor); InkFx.Instance.PlayHit(true); }
+                    if (InkFx.Instance != null) InkFx.Instance.Splash(other.Chest, Vector3.up, 24, other.InkColor);
+                    Sound.Play(Sfx.BodyFall, 1f, other.Chest);
+                    Sound.Play(Sfx.PunchHeavy, 1f, other.Chest);
                     if (TimeController.Instance != null) TimeController.Instance.HitStop(4);
                     if (WaveDirector.Instance != null) WaveDirector.Instance.OnEnvironmentKill(other, "SWEPT!", 150);
                 }
@@ -1004,7 +1062,7 @@ namespace ProjectInk
             stateTime = 0f;
             body.Play(currentAttack.clip, 0.05f);
             SetTrails(!currentAttack.ranged);
-            if (InkFx.Instance != null && !currentAttack.ranged) InkFx.Instance.PlayWhoosh();
+            if (!currentAttack.ranged) SwingSound();
             if (currentAttack.clip == "slide_kick") velocity.x = attackDir * 11f;
             if (currentAttack.clip == "flying_kick" || currentAttack.clip == "sword_leap")
             {
@@ -1076,7 +1134,7 @@ namespace ProjectInk
             if (InkFx.Instance != null)
             {
                 InkFx.Instance.Splash(e.transform.position + Vector3.up * 0.3f, Vector3.up, 40, e.InkColor);
-                InkFx.Instance.PlayHit(true);
+                Sound.Play(Sfx.Finisher, 1f, e.transform.position);
                 InkFx.Instance.ImpactFlash(0.04f);
             }
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.2f, 0.2f);
@@ -1172,8 +1230,13 @@ namespace ProjectInk
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.05f, 0.08f);
         }
 
+        bool lastKilled;
+        Vector3 lastHitAt;
+
         void OnStrikeLanded(Enemy e, bool killing)
         {
+            lastKilled = killing;
+            lastHitAt = e.Chest;
             ComboCount++;
             ComboTimer = 2f;
             if (WaveDirector.Instance != null)
@@ -1197,7 +1260,7 @@ namespace ProjectInk
             }
             if (InkFx.Instance != null)
             {
-                if (!currentAttack.ranged) InkFx.Instance.PlayHit(currentAttack.heavy || InRampage);
+                if (!currentAttack.ranged) HitSound();
                 if (currentAttack.heavy || isCounter) InkFx.Instance.ImpactFlash(isCounter ? 0.06f : 0.035f);
             }
         }
@@ -1244,7 +1307,8 @@ namespace ProjectInk
                 if (e.Targetable && dx > 0.6f && dx < 4.5f && level && (slideTarget == null || dx < (slideTarget.transform.position.x - transform.position.x) * dir)) slideTarget = e;
             }
             SetTrails(false);
-            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+            Sound.Play(Sfx.Whoosh, 1f, transform.position, 0.9f);
+            Sound.Play(Sfx.Cloth, 1f, transform.position);
 
             if (over != null)
             {
@@ -1359,7 +1423,8 @@ namespace ProjectInk
                 grabTick = 0f;
                 Health = Mathf.Max(1f, Health - 5f);
                 Tint(new Color(0.8f, 0.1f, 0.1f), 0.08f);
-                if (InkFx.Instance != null) InkFx.Instance.PlayHit(false);
+                Sound.Play(Sfx.PunchLight, 0.8f, transform.position);
+                Sound.Play(Sfx.HeroHurt, 0.7f, transform.position);
                 if (WaveDirector.Instance != null) WaveDirector.Instance.OnHeroDamaged(5f);
             }
             if (stateTime > 3f) { grabber = null; EnterIdle(); }
@@ -1394,8 +1459,11 @@ namespace ProjectInk
             if (InkFx.Instance != null)
             {
                 InkFx.Instance.Splash(Chest, new Vector3(hit.direction, 0.3f, 0f), 14, true);
-                InkFx.Instance.PlayHit(true);
             }
+            var weaponHit = hit.attacker is Enemy ae ? ae.Type : EnemyType.Brawler;
+            Sound.Play(weaponHit == EnemyType.Swordsman ? Sfx.SwordHit : weaponHit == EnemyType.Piper ? Sfx.PipeHit
+                       : weaponHit == EnemyType.Gunner ? Sfx.PunchLight : hit.heavy ? Sfx.PunchHeavy : Sfx.PunchLight, 1f, Chest);
+            Sound.Play(Alive ? Sfx.HeroHurt : Sfx.HeroDeath, 1f, Chest);
             if (TimeController.Instance != null) TimeController.Instance.HitStop(hit.heavy ? 5 : 3);
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.15f, 0.2f);
             if (WaveDirector.Instance != null) WaveDirector.Instance.OnHeroDamaged(hit.damage);

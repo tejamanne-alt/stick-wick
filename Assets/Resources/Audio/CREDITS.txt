@@ -1,0 +1,12 @@
+Sound credits
+
+Most sound effects are from "Oculus Audio Pack 01" by Oculus VR, LLC
+(https://developers.meta.com/vr/downloads/package/oculus-audio-pack-1/), licensed under CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/), as mirrored in
+https://github.com/facebookincubator/meta-open-sound. The files were trimmed, layered, mixed
+and loudness-matched for this game by tools/audio/build_audio.py.
+
+Cinematic hits, booms, risers, reverse whooshes and some impacts and whooshes are from
+SFX Kit (https://github.com/wyzowl/sfx-kit), CC0 1.0 (public domain).
+
+The CC BY 4.0 credit above must appear in the game's credits screen and store listing.

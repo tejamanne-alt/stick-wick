@@ -24,6 +24,22 @@ Only the fighters and their ink are in colour.
 
 Each floor is a **chapter**. Each wave brings in a new armed opponent, whose weapon you take: brawlers → knife throwers → pipe fighters → swordsmen → gunners → the **Brute**.
 
+### Sound
+
+The sounds are real studio recordings:
+- punches, kicks, swords, metal, bone cracks
+- concrete footsteps
+- grunts and death cries
+- doors, glass, wood
+- room tone and city rain
+
+Cinematic hits, booms and risers sit on top for the big moments. In slow motion everything drops in pitch and is muffled, with a reverse whoosh going in. The boss brings a low drone. A 20-second demo is in `docs/previews/sound_demo.mp3`.
+
+How it's built:
+- `Assets/Scripts/Core/Sound.cs` is the mixer.
+- The bank is built by `tools/audio/build_audio.py`, which trims, layers and normalises the clips into `Assets/Resources/Audio/`.
+- Credits are in `Assets/Resources/Audio/CREDITS.txt`. The Oculus Audio Pack is CC BY 4.0, so its credit line must go in the game's credits.
+
 ### Controls
 
 **Classic** (the default, as in the first prototypes). Press **C** to switch to two-thumb; your choice is saved.

@@ -38,7 +38,8 @@ namespace ProjectInk
             kicker = by;
             vel = new Vector3(dir * 12f, 3.5f, 0f);
             if (col != null) col.enabled = false;
-            if (InkFx.Instance != null) InkFx.Instance.PlayHit(true);
+            Sound.Play(Sfx.Kick, 1f, transform.position);
+            Sound.Play(Sfx.WhooshBig, 0.7f, transform.position);
         }
 
         void Update()
@@ -70,8 +71,8 @@ namespace ProjectInk
             if (InkFx.Instance != null)
             {
                 InkFx.Instance.Splash(transform.position, Vector3.up, 30, splinters);
-                InkFx.Instance.PlayHit(true);
             }
+            Sound.Play(Sfx.Crate, 1f, transform.position);
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.12f, 0.15f);
             gameObject.SetActive(false);
         }

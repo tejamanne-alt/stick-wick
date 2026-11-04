@@ -124,6 +124,8 @@ namespace ProjectInk
                             CurrentPhase = Phase.FloorClear;
                             phaseTime = 0f;
                             ShowBanner($"FLOOR {Floor} CLEAR", 2.4f);
+                            Sound.Tension(false);
+                            Sound.PlayLater(Sfx.FloorClear, 0.6f);
                             AddScore(1000 * Floor, "FLOOR BONUS");
                         }
                     }
@@ -257,6 +259,9 @@ namespace ProjectInk
         void BossIntro(Enemy e)
         {
             ShowBanner("THE BRUTE", 2.2f);
+            Sound.Play(Sfx.CineMassive);
+            Sound.PlayLater(Sfx.BruteLaugh, 0.5f, 1f, e.transform.position);
+            Sound.Tension(true);
             if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.35f, 1.6f, 0.1f, 0.4f);
             if (CameraDirector.Instance != null) CameraDirector.Instance.Focus(e.transform, 1.8f);
             if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.05f);
@@ -279,6 +284,8 @@ namespace ProjectInk
         {
             CurrentPhase = Phase.Dead;
             phaseTime = 0f;
+            Sound.Tension(false);
+            Sound.PlayLater(Sfx.Defeat, 0.9f);
             ShowBanner("K.O.", 99f);
             if (Score > BestScore) { BestScore = Score; NewBest = true; PlayerPrefs.SetInt("best_score", Score); }
             if (Floor > BestFloor) { BestFloor = Floor; PlayerPrefs.SetInt("best_floor", Floor); }
@@ -302,7 +309,7 @@ namespace ProjectInk
         {
             int r = 0;
             for (int i = 0; i < RankAt.Length; i++) if (StylePoints >= RankAt[i]) r = i;
-            if (r > RankIndex && r >= 4) ShowStyle(Ranks[r] + "!");
+            if (r > RankIndex && r >= 4) { ShowStyle(Ranks[r] + "!"); Sound.Play(Sfx.RankUp, 1f, null, 0.9f + 0.08f * (r - 4)); }
             RankIndex = r;
             BestRankIndex = Mathf.Max(BestRankIndex, r);
         }
@@ -365,6 +372,8 @@ namespace ProjectInk
                 if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.18f, big ? 1.6f : 1.1f, 0.03f, 0.35f);
                 if (CameraDirector.Instance != null) CameraDirector.Instance.KillCam(e.Chest, big ? 1.6f : 1.1f, big ? 160f : 100f);
                 AddScore(big ? 500 : 200, big ? "FINISH!" : "WAVE CLEAR");
+                Sound.Play(big ? Sfx.CineMassive : Sfx.CineHit, big ? 1f : 0.6f);
+                if (!big) Sound.PlayLater(Sfx.WaveClear, 0.7f);
             }
         }
 
