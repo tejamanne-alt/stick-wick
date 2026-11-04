@@ -104,7 +104,7 @@ namespace ProjectInk
                 Mathf.Abs(hero.transform.position.x - Marker.Value.x) < 0.7f && hero.Grounded)
                 Complete();
             // keep the stunt doubles in front of him
-            for (int i = doubles.Count - 1; i >= 0; i--) if (doubles[i] == null) doubles.RemoveAt(i);
+            TendDoubles();
         }
 
         void Begin()
@@ -116,46 +116,149 @@ namespace ProjectInk
             StartLesson();
         }
 
+        float lessonStart;
+        /// <summary>The lesson has been running a while: the HUD draws attention to SKIP MOVE.</summary>
+        public bool Stuck => Active && !Finale && nextAt < 0f && Time.unscaledTime - lessonStart > 20f;
+
+        /// <summary>Climbing and dropping need the tower's ledges and gratings.</summary>
+        static bool Applicable(Lesson L) =>
+            (L.evt != null && L.evt != "climb" && L.evt != "drop") || (LevelNav.Active && LevelNav.Ledges.Count > 0);
+
         void StartLesson()
         {
             if (Index >= Lessons.Length) { BeginFinale(); return; }
+            var L = Lessons[Index];
+            if (!Applicable(L)) { Index++; StartLesson(); return; }
             Progress = 0;
             Marker = null;
-            var L = Lessons[Index];
-            // stunt doubles for the fighting lessons
-            if (L.evt == "punch" || L.evt == "kick" || L.evt == "combo" || L.evt == "dodge" || L.evt == "throw") EnsureDoubles(1);
-            if (L.evt == "rampage") { EnsureDoubles(3); var wd = WaveDirector.Instance; if (wd != null) wd.FillFlow(); }
-            if (L.evt == null && LevelNav.Active && LevelNav.Ledges.Count > 0)
+            lessonStart = Time.unscaledTime;
+            var wd = WaveDirector.Instance;
+            // every lesson starts clean: the stunt doubles back on their marks, on their feet
+            SetupDoubles(L);
+            if (L.evt == "rampage" && wd != null) wd.FillFlow();
+            if ((L.evt == null || L.evt == "climb") && LevelNav.Active && LevelNav.Ledges.Count > 0)
             {
                 var ledge = LevelNav.Ledges[0];
                 Marker = new Vector3(ledge.FootX, 0f, 0f);
             }
             if (L.weapon && hero != null)
             {
-                // a sword on the floor a few steps away (away from the stunt double), marked HERE
-                var wd = WaveDirector.Instance;
-                var p = hero.transform.position;
-                float x = Mathf.Clamp(p.x - 2.4f, -11f, 11f);
-                var at = new Vector3(x, Fighter.GroundY(new Vector3(x, p.y + 0.5f, 0f), 0.6f), 0f);
-                if (wd != null && hero.Style == FightStyle.Fists) WeaponPickup.Spawn(FightStyle.Sword, 10, at, wd.weaponMaterial);
+                if (hero.Style != FightStyle.Fists) { Complete(); return; }     // already armed: nothing to pick up
+                // a sword on the floor a few steps behind him (away from the stunt double), marked HERE
+                var at = Spot(-hero.Facing * 2.4f);
+                if (wd != null) WeaponPickup.Spawn(FightStyle.Sword, 10, at, wd.weaponMaterial);
                 Marker = at;
+            }
+            if (L.evt == "throw" && hero != null && hero.Style == FightStyle.Fists)
+            {
+                // spent or dropped his sword: hand him another, so there is something to throw
+                hero.GiveWeapon(FightStyle.Sword, 10);
+                if (InkFx.Instance != null) InkFx.Instance.Burst(hero.Chest, 1.2f);
+                Sound.Play(Sfx.SwordClash, 0.5f, hero.transform.position);
             }
             Sound.Play(Sfx.CineHit, 0.35f);
         }
 
-        void EnsureDoubles(int n)
+        /// <summary>Skip just this lesson (the SKIP MOVE button).</summary>
+        public void SkipLesson()
         {
-            var wd = WaveDirector.Instance;
-            if (wd == null || hero == null) return;
-            for (int i = doubles.Count - 1; i >= 0; i--) if (doubles[i] == null || !doubles[i].Alive) doubles.RemoveAt(i);
-            while (doubles.Count < n)
+            if (!Active || Finale || nextAt > 0f) return;
+            nextAt = Time.unscaledTime + 0.15f;
+            Sound.Play(Sfx.Whoosh, 0.6f);
+        }
+
+        /// <summary>A point on the hero's own floor, dx from him (the other side if there is no room).</summary>
+        Vector3 Spot(float dx)
+        {
+            var p = hero.transform.position;
+            float x0 = -11.5f, x1 = 11.5f;
+            if (LevelNav.Active)
             {
-                float side = doubles.Count % 2 == 0 ? 1f : -1f;
-                var p = hero.transform.position;
-                float x = Mathf.Clamp(p.x + side * (2.6f + doubles.Count * 0.6f), -11f, 11f);
-                var e = wd.SpawnDummy(new Vector3(x, Fighter.GroundY(new Vector3(x, p.y + 0.5f, 0f), 0.6f), 0f));
-                if (e == null) break;
-                doubles.Add(e);
+                int pl = LevelNav.PlatformAt(p);
+                if (pl < 0) pl = hero.Platform;
+                if (pl >= 0 && LevelNav.RegionBounds(pl, out float a, out float b)) { x0 = Mathf.Max(x0, a + 0.5f); x1 = Mathf.Min(x1, b - 0.5f); }
+            }
+            float x = p.x + dx;
+            if (x < x0 || x > x1) x = p.x - dx;
+            x = Mathf.Clamp(x, x0, x1);
+            float y = hero.Grounded ? p.y : Fighter.GroundY(new Vector3(x, p.y + 0.5f, 0f), 0.6f);
+            return new Vector3(x, y, 0f);
+        }
+
+        /// <summary>Where each stunt double stands for this lesson, relative to the hero.</summary>
+        float[] Marks(Lesson L)
+        {
+            int f = hero.Facing;
+            switch (L.evt)
+            {
+                case "punch": case "kick": case "combo": case "pickup": case "dodge": return new[] { f * 2.3f };
+                case "throw": return new[] { f * 5f };                       // across the room: a throw, not a swing
+                case "rampage": return new[] { f * 2f, -f * 2.2f, f * 3.4f };
+                default: return new float[0];                              // moving lessons: a clear floor
+            }
+        }
+
+        float[] marks = new float[0];
+        float[] awayFor = new float[4];
+
+        void SetupDoubles(Lesson L)
+        {
+            if (hero == null) return;
+            marks = Marks(L);
+            for (int i = doubles.Count - 1; i >= 0; i--) if (doubles[i] == null) doubles.RemoveAt(i);
+            // too many: send the extras off in a puff
+            while (doubles.Count > marks.Length)
+            {
+                var d = doubles[doubles.Count - 1];
+                if (InkFx.Instance != null) InkFx.Instance.Burst(d.Chest, 0.6f);
+                Destroy(d.gameObject);
+                doubles.RemoveAt(doubles.Count - 1);
+            }
+            var wd = WaveDirector.Instance;
+            for (int i = 0; i < marks.Length; i++)
+            {
+                var at = Spot(marks[i]);
+                if (i < doubles.Count) Place(doubles[i], at);
+                else if (wd != null)
+                {
+                    var e = wd.SpawnDummy(at);
+                    if (e != null) { doubles.Add(e); Place(e, at); }
+                }
+                if (i < awayFor.Length) awayFor[i] = 0f;
+            }
+        }
+
+        void Place(Enemy e, Vector3 at)
+        {
+            bool moved = Vector3.Distance(e.transform.position, at) > 0.5f || !e.Targetable;
+            if (moved && InkFx.Instance != null) InkFx.Instance.Burst(e.Chest, 0.6f);
+            e.ResetTo(at, hero.transform.position.x);
+            if (moved && InkFx.Instance != null) InkFx.Instance.Burst(at + Vector3.up * 0.9f, 0.6f);
+        }
+
+        /// <summary>Keep the stunt doubles usable: one thrown across the room, knocked off a floor
+        /// or left lying too long is put back on his mark.</summary>
+        void TendDoubles()
+        {
+            if (hero == null || marks.Length == 0) return;
+            float dt = Time.unscaledDeltaTime;
+            var wd = WaveDirector.Instance;
+            for (int i = 0; i < marks.Length; i++)
+            {
+                if (i >= doubles.Count || doubles[i] == null)
+                {
+                    if (i < doubles.Count) doubles.RemoveAt(i);
+                    if (wd == null || !hero.Grounded) continue;
+                    var e = wd.SpawnDummy(Spot(marks[i]));
+                    if (e != null) { doubles.Insert(Mathf.Min(i, doubles.Count), e); Place(e, Spot(marks[i])); }
+                    continue;
+                }
+                var d = doubles[i];
+                var dp = d.transform.position - hero.transform.position;
+                bool away = Mathf.Abs(dp.x) > 8f || (Mathf.Abs(dp.y) > 1.2f && d.Grounded && hero.Grounded) || (d.IsDown && d.Grounded);
+                awayFor[i] = away ? awayFor[i] + dt : 0f;
+                float limit = d.IsDown && Mathf.Abs(dp.x) < 8f && Mathf.Abs(dp.y) < 1.2f ? 3f : 1.2f;   // lying there: give him a moment to get up
+                if (awayFor[i] > limit && hero.Grounded) { Place(d, Spot(marks[i])); awayFor[i] = 0f; }
             }
         }
 

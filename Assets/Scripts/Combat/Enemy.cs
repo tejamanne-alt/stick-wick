@@ -69,6 +69,25 @@ namespace ProjectInk
         public bool Armed => Type == EnemyType.Swordsman;
         /// <summary>A training stunt double: walks up and takes the hits, never attacks.</summary>
         public bool Passive;
+        /// <summary>Stunt doubles cannot die: they go down, and get up again.</summary>
+        float MinHealth => Passive ? 1f : 0f;
+
+        /// <summary>Training: put a stunt double back on his mark, on his feet, healed.</summary>
+        public void ResetTo(Vector3 at, float faceX)
+        {
+            ReleaseToken();
+            ledge = LedgeStage.None;
+            transform.position = at;
+            velocity = Vector3.zero;
+            Grounded = true;
+            projectile = false;
+            Health = maxHealth;
+            state = State.Wait;
+            stateTime = 0f;
+            waitUntil = Time.time + 0.5f;
+            FaceTowards(faceX);
+            body.Play(IdleClip, 0.1f);
+        }
         public bool Gunner => Type == EnemyType.Gunner;
         public bool Ranged => Type == EnemyType.Gunner || Type == EnemyType.Thrower;
         public bool Carried => state == State.Carried;
@@ -574,7 +593,7 @@ namespace ProjectInk
                 if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.2f, 0.25f);
                 if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(250, "FLOOR DROP");
             }
-            else if (IsDown && fallHeight > 2.3f && Alive)
+            else if (IsDown && fallHeight > 2.3f && Alive && !Passive)
             {
                 Health = 0f;
                 if (InkFx.Instance != null)
@@ -594,7 +613,7 @@ namespace ProjectInk
             velocity.x = -wall * 1.5f;
             float before = Health;
             if (FinalBlow(18f, new HitInfo { direction = -wall })) return;
-            Health = Mathf.Max(0f, Health - 18f);
+            Health = Mathf.Max(MinHealth, Health - 18f);
             if (InkFx.Instance != null)
             {
                 InkFx.Instance.Splash(Chest, new Vector3(-wall, 0.4f, 0f), 30, InkColor);
@@ -1188,7 +1207,7 @@ namespace ProjectInk
             else if (brute && !hit.heavy) dmg *= 0.6f;          // the brute shrugs off light hits
             if (FinalBlow(dmg, hit)) return;                        // the killing blow becomes the finale
             bool wasAlive = Alive;
-            Health = Mathf.Max(0f, Health - dmg);
+            Health = Mathf.Max(MinHealth, Health - dmg);
             Tint(Color.white, 0.06f);
             if (wasAlive)
             {
@@ -1275,6 +1294,7 @@ namespace ProjectInk
         public void Execute(Fighter by)
         {
             if (!Alive) return;
+            if (Passive) { TakeHit(new HitInfo { damage = 30f, heavy = true, knockdown = true, hitsDowned = true, attacker = by }); return; }
             if (Boss)
             {
                 TakeHit(new HitInfo { damage = 35f, heavy = true, hitsDowned = true, direction = by != null && by.transform.position.x > transform.position.x ? -1 : 1, attacker = by });

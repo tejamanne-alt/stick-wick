@@ -831,7 +831,7 @@ namespace ProjectInk
         GUIStyle gTitle, gLine, gNice, gChalk, gBtn;
         Texture2D finger, gRing;
         bool helpOpen, pauseOpen;
-        Rect helpBtn, skipBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, restartBtn, hintsBtn;
+        Rect helpBtn, skipBtn, skipMoveBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, restartBtn, hintsBtn;
 
         /// <summary>Open or close the pause screen (and stop the world, and its sound).</summary>
         void SetPause(bool on)
@@ -895,9 +895,21 @@ namespace ProjectInk
             if (training && !tut.Finale)
             {
                 skipBtn = new Rect(w - 250, 200, 230, 48);
+                skipMoveBtn = new Rect(w - 250, 256, 230, 48);
                 DrawButton(skipBtn, "SKIP TRAINING  >", 21);
-                if (repaint) GestureInput.Blocked.Add(ToScreen(skipBtn));
+                DrawButton(skipMoveBtn, "SKIP THIS MOVE  >", 21);
+                if (tut.Stuck)
+                {
+                    // taking a while: the way on lights up
+                    float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6f);
+                    var r = skipMoveBtn;
+                    var c = new Color(1f, 1f, 1f, 0.35f + 0.5f * pulse);
+                    Fill(new Rect(r.x - 2, r.y - 2, r.width + 4, 2), c); Fill(new Rect(r.x - 2, r.yMax, r.width + 4, 2), c);
+                    Fill(new Rect(r.x - 2, r.y, 2, r.height), c); Fill(new Rect(r.xMax, r.y, 2, r.height), c);
+                }
+                if (repaint) { GestureInput.Blocked.Add(ToScreen(skipBtn)); GestureInput.Blocked.Add(ToScreen(skipMoveBtn)); }
                 if (repaint && Pressed(skipBtn)) tut.End(false);
+                else if (repaint && Pressed(skipMoveBtn)) tut.SkipLesson();
             }
             bool hKey = false, pKey = false;
 #if ENABLE_INPUT_SYSTEM

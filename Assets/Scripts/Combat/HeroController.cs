@@ -910,6 +910,9 @@ namespace ProjectInk
 
         // ------------------------------------------------------------------ weapons
 
+        /// <summary>Put a weapon in his hands (the training reel's throw lesson).</summary>
+        public void GiveWeapon(FightStyle s, int uses) { if (Style == FightStyle.Fists) Equip(s, uses); }
+
         void Equip(FightStyle s, int uses)
         {
             Style = s;

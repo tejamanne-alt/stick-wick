@@ -715,3 +715,28 @@ Switching back to AUTO resumes the counts where they were. Set in `HintDirector.
 ## 2026-11-04: Chapter card rule
 
 The rule under CHAPTER n on the opening's lower third was a 50 px dash, which read as cut off. It now spans the wider of CHAPTER n and the chapter name, and draws out from the left as the card fades in. It is led by a short red stroke in the same ink red as the title and victory cards.
+
+## 2026-11-04: Training reel fixes and SKIP THIS MOVE
+
+Reported: after three stunt doubles died, the training gave no way forward. Each lesson was reviewed against the events it waits for.
+
+**Why it stalled**
+- Doubles were spawned only when a lesson started. Once one died mid-lesson (sword cuts, a thrown sword, wall splats, falls, throws, rampage hits), a punch, kick, combo or swing lesson had nobody left to land a hit on.
+- A double launched across the room or off a floor stayed there.
+- The throw lesson needs a weapon in hand. If the sword had been used up or thrown during the swing lesson, a swipe down just ducked.
+- The pickup lesson waited forever if the hero already held a weapon.
+- The run, climb and drop lessons could never finish in the classic hall, which has no ledges.
+
+**Fixes**
+- **Stunt doubles cannot die.** Every damage path (hits, kills, executions, wall splats, falls) stops at 1 health. They go down and get up again. Their "kills" are not counted, so there is no kill-cam and no WAVE CLEAR.
+- **Every lesson starts clean.** The doubles are put back on fresh marks on the hero's own floor (never past its ends), on their feet and healed, with a puff:
+    - one double in front for punch, kick, combo, the pickup/swing pair and dodge
+    - one double 5 m away for the throw
+    - three doubles round him for rampage
+    - none for run, climb and drop
+- **Doubles are tended during a lesson.** One more than 8 m away, on another floor, or lying down too long is put back on his mark. A missing one is respawned.
+- **Throw lesson:** if he has nothing to throw, he is handed a sword.
+- **Pickup lesson:** skipped if he is already armed. The sword is placed on his own floor.
+- **Climb lesson:** now also shows the marker at the ledge.
+- **Classic hall:** the run, climb and drop lessons are skipped.
+- **SKIP THIS MOVE** button under SKIP TRAINING skips just the current lesson. If a lesson runs past 20 s, its outline pulses.

@@ -423,7 +423,7 @@ namespace ProjectInk
 
         void RegisterKill(Enemy e, int bonus)
         {
-            if (e != null && e.Boss) return;           // the boss's kill is the finale's (OnBossFinished)
+            if (e != null && (e.Boss || e.Passive)) return;   // the boss's kill is the finale's; stunt doubles don't count
             Kills++;
             WaveKills++;
             if (bonus > 0) AddScore(bonus);
