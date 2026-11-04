@@ -416,3 +416,13 @@ Fixes:
 - **Camera** `maxDistance` 22 → 17: fighters stay big; anyone outside the shot gets the red edge marker.
 - **Vignette** softened (starts further out, 105 alpha at the corners instead of 170).
 - `SceneVersion` → 15 (re-imports the model, rebuilds the tower).
+
+## 2026-11-04: 0.7.3 everyone in shot, always
+
+Feedback: the hero and enemies still left the screen; the camera should zoom out more and show everyone. (The 0.7.2 cap of 17 m traded visibility for size, the wrong way round.)
+
+- `Frame` now includes the hero and **every living enemy, with no exclusions**. It sizes the shot to the safe part of the screen (sides ±0.84; top 0.70 below the HUD; bottom −0.86) and aims slightly above the group so the HUD never covers heads.
+- `maxDistance` is 30 (the whole tower fits on any aspect ratio). `minDistance` rises to 10.5 for a slightly wider standard shot.
+- New last-word pass `KeepEveryoneInShot`: after every camera move (follow, close-ups, orbits), if any fighter's feet or head would fall outside the safe frame, the camera pulls straight back along its view until they're all inside. It pulls back instantly and eases in gently.
+- Zooms out fast (0.16 s) and in slowly (0.5 s); the follow is a little quicker (0.14 s).
+- Simulated six tower fights on 19.5:9, 16:9 and a 1.5 Game view: everyone visible in all 18. The hero is ~237 px tall on 1080p in close fights and ~80–100 px in full-tower spreads.

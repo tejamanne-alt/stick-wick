@@ -70,8 +70,10 @@ namespace ProjectInk
         void Start()
         {
             // wide enough to hold the whole hall (both walls, both floors) on a phone in landscape
-            // close enough that fighters stay big on a phone; anyone beyond gets an edge marker
-            maxDistance = 17f;
+            // everyone must be in shot: allow pulling back far enough for the whole building
+            // (both walls, every level), and sit a little wider than before even in close fights
+            maxDistance = 30f;
+            minDistance = Mathf.Max(minDistance, 10.5f);
             if (hero != null) focus = hero.position;
             distance = minDistance;
             Snap();
@@ -111,53 +113,80 @@ namespace ProjectInk
         const float BodyHeight = 1.35f;     // feet to the top of the head, chibi scale
         readonly List<Transform> candidates = new List<Transform>();
 
-        /// <summary>The smallest shot that holds the hero and everyone fighting, with margins for
-        /// the HUD. The hero always fits; enemies are added nearest first while the shot stays
-        /// within maxDistance (any left out get an edge marker from the HUD). The shot slides
-        /// to stay inside the side walls, pulling back if that would cut anyone off.</summary>
+        /// <summary>The smallest shot that holds the hero and EVERY living enemy, on every level,
+        /// inside the safe part of the screen (clear of the sides, and of the HUD at the top).
+        /// Nobody is left out: the camera pulls back as far as it must. The shot slides to keep
+        /// the side walls at the frame edge when that costs nobody their place in it.</summary>
         void Frame(out Vector3 center, out float dist)
         {
             float tanV = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
             float tanH = tanV * Mathf.Max(0.5f, cam.aspect);
             var h = hero.position;
             float loX = h.x, hiX = h.x, loY = h.y, hiY = h.y + BodyHeight;
-
-            candidates.Clear();
-            foreach (var t in extras) if (t != null) candidates.Add(t);
-            candidates.Sort((a, b) => Mathf.Abs(a.position.x - h.x).CompareTo(Mathf.Abs(b.position.x - h.x)));
-            foreach (var t in candidates)
+            foreach (var t in extras)
             {
+                if (t == null) continue;
                 var p = t.position;
-                float nLoX = Mathf.Min(loX, p.x), nHiX = Mathf.Max(hiX, p.x);
-                float nLoY = Mathf.Min(loY, p.y), nHiY = Mathf.Max(hiY, p.y + BodyHeight);
-                bool close = Mathf.Abs(p.x - h.x) < 5f && Mathf.Abs(p.y - h.y) < 2f;
-                if (!close && Need(nLoX, nHiX, nLoY, nHiY, tanV, tanH) > maxDistance) continue;
-                loX = nLoX; hiX = nHiX; loY = nLoY; hiY = nHiY;
+                loX = Mathf.Min(loX, p.x); hiX = Mathf.Max(hiX, p.x);
+                loY = Mathf.Min(loY, p.y); hiY = Mathf.Max(hiY, p.y + BodyHeight);
             }
-
-            dist = Mathf.Max(minDistance, Need(loX, hiX, loY, hiY, tanV, tanH));
+            float sx = tanH * SafeX, sy = tanV * SafeY;
+            float halfW = (hiX - loX) * 0.5f + PadX, halfH = (hiY - loY) * 0.5f + PadY;
+            dist = Mathf.Max(minDistance, halfW / sx, halfH / sy);
             float cx = (loX + hiX) * 0.5f;
-            // keep the walls at the frame edges where possible, then make sure nobody was pushed out
             for (int i = 0; i < 2; i++)
             {
                 float half = dist * tanH;
                 if (half < wallX) cx = Mathf.Clamp(cx, -wallX + half, wallX - half);
-                float needHalf = Mathf.Max(cx - loX, hiX - cx) + MarginX;
-                dist = Mathf.Max(dist, needHalf / tanH);
+                float needHalf = Mathf.Max(cx - loX, hiX - cx) + PadX;
+                dist = Mathf.Max(dist, needHalf / sx);
             }
-            dist = Mathf.Min(dist, maxDistance + 2f);
-            // vertical: centre on the group, a little low so the HUD at the top never covers a head
-            float cy = (loY + hiY) * 0.5f + 0.15f;
+            dist = Mathf.Min(dist, maxDistance);
+            // the safe band is lower than the screen centre (the HUD sits at the top), so aim a little above the group
+            float cy = (loY + hiY) * 0.5f + SafeCentreY * dist * tanV;
             center = new Vector3(cx, cy, 0f);
         }
 
-        const float MarginX = 1.3f;
+        // the safe part of the screen, in -1..1 screen units: sides at ±0.84, top at 0.70 (HUD), bottom at -0.86
+        const float SafeX = 0.84f, SafeY = 0.78f, SafeCentreY = 0.08f;
+        const float PadX = 0.6f, PadY = 0.3f;      // a body's half width; a little air above heads and under feet
 
-        static float Need(float loX, float hiX, float loY, float hiY, float tanV, float tanH)
+        float pullBack;
+
+        /// <summary>How far back the camera must move for a point to sit inside the safe frame.</summary>
+        static float Need(Quaternion inv, Vector3 camPos, Vector3 world, float tanH, float tanV)
         {
-            float halfW = (hiX - loX) * 0.5f + MarginX;
-            float halfH = (hiY - loY) * 0.5f + 1.0f;      // room above heads for the HUD, below feet for the floor
-            return Mathf.Max(halfW / tanH, halfH / tanV);
+            var c = inv * (world - camPos);
+            float z = Mathf.Abs(c.x) / (tanH * 0.88f);
+            z = Mathf.Max(z, c.y > 0f ? c.y / (tanV * 0.72f) : -c.y / (tanV * 0.88f));
+            return z - c.z;
+        }
+
+        /// <summary>The last word: if anyone (hero or enemy) would still be outside the safe frame,
+        /// pull the camera straight back along its view until they are all inside. Pulls back at
+        /// once; eases in again gently, so the shot never pops.</summary>
+        void KeepEveryoneInShot(ref Vector3 pos, Vector3 look, float dt)
+        {
+            float tanV = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float tanH = tanV * Mathf.Max(0.5f, cam.aspect);
+            var rot = Quaternion.LookRotation(look - pos, Vector3.up);
+            var inv = Quaternion.Inverse(rot);
+            var from = pos;
+            float need = 0f;
+            if (hero != null)
+            {
+                need = Mathf.Max(need, Need(inv, from, hero.position + Vector3.up * 0.05f, tanH, tanV));
+                need = Mathf.Max(need, Need(inv, from, hero.position + Vector3.up * BodyHeight, tanH, tanV));
+            }
+            foreach (var t in extras)
+            {
+                if (t == null) continue;
+                need = Mathf.Max(need, Need(inv, from, t.position + Vector3.up * 0.05f, tanH, tanV));
+                need = Mathf.Max(need, Need(inv, from, t.position + Vector3.up * BodyHeight, tanH, tanV));
+            }
+            need = Mathf.Max(0f, need);
+            pullBack = need > pullBack ? need : Mathf.MoveTowards(pullBack, need, 3f * dt);
+            pos -= rot * Vector3.forward * pullBack;
         }
 
         /// <summary>Slide the camera (and its aim, together) so the hero's feet and head sit inside
@@ -217,8 +246,8 @@ namespace ProjectInk
 
             // frame the hero and everyone in the fight, on both floors (see Frame)
             Frame(out Vector3 target, out float want);
-            focus = Vector3.SmoothDamp(focus, target, ref focusVel, followSmooth, Mathf.Infinity, dt);
-            distance = Mathf.SmoothDamp(distance, want, ref distanceVel, 0.3f, Mathf.Infinity, dt);
+            focus = Vector3.SmoothDamp(focus, target, ref focusVel, Mathf.Min(followSmooth, 0.14f), Mathf.Infinity, dt);
+            distance = Mathf.SmoothDamp(distance, want, ref distanceVel, want > distance ? 0.16f : 0.5f, Mathf.Infinity, dt);
 
             // a slight downward look, so both floors and the floor itself read
             Vector3 pos = focus + new Vector3(0f, distance * 0.1f, -distance);
@@ -267,7 +296,11 @@ namespace ProjectInk
             }
 
             // the guarantee: whatever the shot, the hero stays in it
-            if (scriptWeight < 0.01f) KeepHeroInShot(ref pos, ref look);
+            if (scriptWeight < 0.01f)
+            {
+                KeepHeroInShot(ref pos, ref look);
+                KeepEveryoneInShot(ref pos, look, dt);
+            }
 
             if (UnityEngine.Time.unscaledTime < shakeUntil)
             {
