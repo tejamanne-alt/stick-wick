@@ -749,3 +749,7 @@ Reported: after three stunt doubles died, the training gave no way forward. Each
     - The hero turns to face the double at the start of each lesson.
     - The lesson lines now say "on the side of the screen he is on".
 - **SKIP THIS MOVE** and **SKIP TRAINING** moved from the right edge, where they covered the tap zone, to the top middle under the pause and ? buttons.
+
+## 2026-11-04: No chalk marks during training
+
+Chalk-mark hints are hidden while the training reel runs (and while it is waiting to start), even with HINTS set to ALWAYS. The reel teaches one move at a time, and hints for other moves on top of it were confusing. They come back when the fight starts.

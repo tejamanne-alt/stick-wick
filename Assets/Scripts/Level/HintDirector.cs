@@ -74,7 +74,8 @@ namespace ProjectInk
             var vc = VictoryCinematic.Instance;
             if (vc != null && vc.Active) return;
             var tut = TutorialDirector.Instance;
-            bool training = tut != null && tut.Active;
+            bool training = tut != null && (tut.Active || tut.Holding);
+            if (training) return;          // the training reel teaches one move at a time: no chalk marks over it
 
             all.Clear();
             var p = hero.transform.position;
