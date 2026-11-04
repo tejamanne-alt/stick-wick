@@ -12,6 +12,8 @@ namespace ProjectInk
         public bool behind;   // strikes behind the hero without turning (back kick, back slash, back shot)
         public int hitStopFrames;
         public float shake;
+        public float lift;    // launches the victim upwards
+        public bool iai;      // the draw-cut: dashes through everyone in line, the cut lands a beat later
 
         public static readonly AttackData Jab = new AttackData { clip = "jab", damage = 8, reach = 0.95f, knockback = 1.5f, hitStopFrames = 2, shake = 0.04f };
         public static readonly AttackData Cross = new AttackData { clip = "cross", damage = 11, reach = 1.0f, knockback = 2.5f, hitStopFrames = 3, shake = 0.06f };
@@ -29,7 +31,9 @@ namespace ProjectInk
         public static readonly AttackData SwordC = new AttackData { clip = "sword_c", damage = 40, reach = 1.75f, knockback = 7f, hitStopFrames = 7, shake = 0.18f, heavy = true, knockdown = true, cleave = true };
         public static readonly AttackData SwordBack = new AttackData { clip = "sword_back", damage = 26, reach = 1.5f, knockback = 5f, hitStopFrames = 5, shake = 0.12f, heavy = true, knockdown = true, cleave = true, behind = true };
         public static readonly AttackData SwordLeap = new AttackData { clip = "sword_leap", damage = 45, reach = 1.6f, knockback = 8f, hitStopFrames = 8, shake = 0.25f, heavy = true, knockdown = true, cleave = true };
-        public static readonly AttackData[] SwordCombo = { SwordA, SwordB, SwordA, SwordB, SwordC };
+        public static readonly AttackData SwordRise = new AttackData { clip = "sword_rise", damage = 18, reach = 1.45f, knockback = 1.5f, lift = 9f, hitStopFrames = 5, shake = 0.12f, heavy = true, knockdown = true, cleave = true };
+        public static readonly AttackData SwordIai = new AttackData { clip = "sword_iai", damage = 60, reach = 4.6f, knockback = 6f, hitStopFrames = 0, shake = 0.28f, heavy = true, knockdown = true, cleave = true, iai = true };
+        public static readonly AttackData[] SwordCombo = { SwordA, SwordB, SwordA, SwordRise, SwordC };
 
         // ---- gun-fu: shots at range, pistol-whip and throw up close, a finishing shot on the ground
         public static readonly AttackData GunShoot = new AttackData { clip = "gun_shoot", damage = 34, reach = 14f, knockback = 5f, hitStopFrames = 2, shake = 0.06f, knockdown = true, ranged = true };

@@ -87,6 +87,9 @@ namespace ProjectInk
             base.Awake();
             var all = GetComponentsInChildren<TrailRenderer>(true);
             limbTrails = System.Array.FindAll(all, t => t != swordTrail && t != pipeTrail);
+            swordFx = SwordFx.Attach(sword, trailMaterial, trailMaterial, true);
+            if (swordTrail != null) swordTrail.enabled = false;           // replaced by the swept ribbon
+            bodyMesh = GetComponentInChildren<SkinnedMeshRenderer>(true);
             SetTrails(false);
             ApplyStyleVisuals();
         }
@@ -98,6 +101,150 @@ namespace ProjectInk
         }
 
         void CheckBody() { body.CheckVisible(); }
+
+        // ------------------------------------------------------------------ the sword
+
+        SwordFx swordFx;
+        SkinnedMeshRenderer bodyMesh;
+        static float swordSlowAt = -9f;
+        float ghostAt;
+        bool SwordSlowReady => Time.unscaledTime - swordSlowAt > 2.5f;
+
+        static readonly Color GhostColor = new Color(0.92f, 0.95f, 1f, 0.42f);
+
+        void Ghosts(float every, float alpha)
+        {
+            if (bodyMesh == null || Time.unscaledTime - ghostAt < every) return;
+            ghostAt = Time.unscaledTime;
+            var c = GhostColor; c.a = alpha;
+            Afterimage.Spawn(bodyMesh, c);
+        }
+
+        /// <summary>Enemies standing in a line on one side, close enough for the draw-cut.</summary>
+        int InLine(int side)
+        {
+            int n = 0;
+            foreach (var e in Enemy.All)
+            {
+                if (!e.Targetable) continue;
+                float dx = (e.transform.position.x - transform.position.x) * side;
+                if (dx > 0.3f && dx < 4.2f && Mathf.Abs(e.transform.position.y - transform.position.y) < 0.6f) n++;
+            }
+            return n;
+        }
+
+        /// <summary>A sword hit's look: the white slice line across the body along the blade's path,
+        /// sparks off the steel, ink sprayed the way the blade travelled.</summary>
+        void SwordHitFx(Enemy e, bool killing, bool clash)
+        {
+            Vector3 dir = swordFx != null ? swordFx.TipVelocity : new Vector3(attackDir, 0.3f, 0f);
+            dir.z = 0f;
+            if (dir.sqrMagnitude < 0.5f) dir = new Vector3(attackDir, 0.3f, 0f);
+            dir.Normalize();
+            StreakFx.Slash(e.Chest, dir, killing ? 2.8f : 1.9f, killing ? 0.08f : 0.05f, killing ? 0.28f : 0.18f);
+            StreakFx.Sparks(e.Chest, dir, clash ? 18 : killing ? 10 : 5, clash ? 9f : 6f);
+            if (InkFx.Instance != null)
+            {
+                InkFx.Instance.Splash(e.Chest, dir * 0.8f + Vector3.up * 0.2f, killing ? 34 : 14, e.InkColor);
+                if (killing) InkFx.Instance.ImpactFlash(0.035f);
+            }
+            if (clash)
+            {
+                Sound.Play(Sfx.SwordClash, 1f, e.Chest);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(60, "CLASH!");
+            }
+        }
+
+        // ---- the draw-cut (iai): a blur through everyone in line; stillness; then they fall
+        float iaiFrom, iaiTo;
+        readonly List<Enemy> iaiVictims = new List<Enemy>();
+
+        void BeginIai()
+        {
+            float x = transform.position.x;
+            iaiFrom = x;
+            iaiVictims.Clear();
+            float far = target != null ? target.transform.position.x : x + attackDir * 2f;
+            foreach (var e in Enemy.All)
+            {
+                if (!e.Targetable) continue;
+                float dx = (e.transform.position.x - x) * attackDir;
+                if (dx > 0.2f && dx < 4.4f && Mathf.Abs(e.transform.position.y - transform.position.y) < 0.7f)
+                {
+                    iaiVictims.Add(e);
+                    if ((e.transform.position.x - far) * attackDir > 0f) far = e.transform.position.x;
+                }
+            }
+            iaiTo = Mathf.Clamp(far + attackDir * 1.25f, arenaMinX + 0.3f, arenaMaxX - 0.3f);
+            foreach (var e in iaiVictims) e.Interrupt();
+            velocity = Vector3.zero;
+            Sound.Play(Sfx.WhooshBig, 1f, transform.position, 0.9f);
+            Sound.Play(Sfx.SwordSwing, 1f, transform.position, 0.85f);
+        }
+
+        void UpdateIai()
+        {
+            // frames 1..5 at 30 fps: the dash itself, eased, leaving ghosts all the way
+            const float a = 1f / 30f, b = 5f / 30f;
+            float u = Mathf.InverseLerp(a, b, body.Time);
+            if (u > 0f && u < 1f + 1e-3f)
+            {
+                var p = transform.position;
+                p.x = Mathf.Lerp(iaiFrom, iaiTo, 1f - (1f - u) * (1f - u));
+                transform.position = p;
+                Ghosts(0.016f, 0.5f);
+            }
+            velocity.x = 0f;
+        }
+
+        void ResolveIai()
+        {
+            hitDone = true;
+            if (!InRampage) SwordUses--;
+            swordSlowAt = Time.unscaledTime;
+            // the world stops; the hero holds the follow-through
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.1f, 1.0f, 0.02f, 0.35f);
+            var cam = CameraDirector.Instance;
+            if (cam != null) { cam.ZoomPunch(7f, 0.6f); cam.Focus(transform, 0.95f); }
+            if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.03f);
+            StreakFx.Slash(Chest + Vector3.up * 0.05f, new Vector3(attackDir, 0f, 0f), Mathf.Abs(iaiTo - iaiFrom) + 1.2f, 0.035f, 0.5f);
+            StartCoroutine(IaiCut(new List<Enemy>(iaiVictims)));
+        }
+
+        System.Collections.IEnumerator IaiCut(List<Enemy> victims)
+        {
+            yield return new WaitForSecondsRealtime(0.38f);
+            int n = 0;
+            var hit = new HitInfo { damage = currentAttack.iai ? currentAttack.damage : AttackData.SwordIai.damage, direction = attackDir, knockback = 6f, knockdown = true, heavy = true, attacker = this };
+            foreach (var e in victims)
+            {
+                if (e == null || !e.Alive) continue;
+                bool killing = InRampage || e.Health <= hit.damage;
+                var dir = new Vector3(attackDir * 0.9f, Random.Range(-0.45f, 0.45f), 0f).normalized;
+                StreakFx.Slash(e.Chest, dir, 3.2f, 0.09f, 0.32f);
+                StreakFx.Sparks(e.Chest, dir, 12, 8f);
+                if (InkFx.Instance != null)
+                {
+                    InkFx.Instance.Splash(e.Chest, dir + Vector3.up * 0.3f, 44, e.InkColor);
+                    InkFx.Instance.Burst(e.Chest, 4f);
+                }
+                if (InRampage) e.Kill(hit); else e.TakeHit(hit);
+                lastKilled = killing;
+                lastHitAt = e.Chest;
+                OnStrikeLanded(e, killing);
+                Sound.Play(Sfx.SwordHit, 1f, e.Chest);
+                n++;
+            }
+            if (n > 0)
+            {
+                Sound.Play(Sfx.Finisher, 1f, transform.position);
+                Sound.Play(Sfx.CineHit, 0.7f);
+                if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.06f);
+                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.28f, 0.3f);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(150 * n, n >= 3 ? "IAI x" + n + "!" : n == 2 ? "DOUBLE IAI!" : "IAI!");
+            }
+            Sound.PlayLater(Sfx.Pickup, 0.45f, 0.8f, transform.position);   // the blade clicks home
+        }
 
         // ------------------------------------------------------------------ sound
 
@@ -575,7 +722,11 @@ namespace ProjectInk
             else if (Style == FightStyle.Sword || Style == FightStyle.Pipe)
             {
                 var finisher = Style == FightStyle.Sword ? AttackData.SwordC : AttackData.PipeC;
-                if (counter) move = finisher;
+                bool iai = Style == FightStyle.Sword && SwordSlowReady && Mathf.Abs(dy) < 0.6f && Grounded &&
+                           (counter || InLine(side) >= 2 || (t.Health <= AttackData.SwordIai.damage && comboStep % 3 == 2 && t.Type != EnemyType.Brute)
+                            || (t.Type == EnemyType.Brute && t.Health <= AttackData.SwordIai.damage));
+                if (iai) { move = AttackData.SwordIai; comboStep++; }
+                else if (counter) move = finisher;
                 else if (behindClose && Style == FightStyle.Sword) move = AttackData.SwordBack;
                 else if (dy > 0.8f && Style == FightStyle.Sword) move = AttackData.SwordLeap;
                 else
@@ -1030,7 +1181,7 @@ namespace ProjectInk
                 TimeController.Instance.SlowMo(0.25f, 0.9f);
                 t.Interrupt();
             }
-            bool leap = move.clip == "flying_kick" || move.clip == "sword_leap";
+            bool leap = move.clip == "flying_kick" || move.clip == "sword_leap" || move.iai;
             if (t != null && !move.ranged && !move.behind && !leap)
             {
                 float gap = Mathf.Abs(t.transform.position.x - transform.position.x);
@@ -1051,8 +1202,9 @@ namespace ProjectInk
             float goal = target.transform.position.x - attackDir * Reach(currentAttack) * 0.92f;
             velocity.x = 0f;
             var p = transform.position;
-            p.x = Mathf.MoveTowards(p.x, goal, dashSpeed * dt);
+            p.x = Mathf.MoveTowards(p.x, goal, dashSpeed * (Style == FightStyle.Sword ? 1.35f : 1f) * dt);
             transform.position = p;
+            if (Style == FightStyle.Sword) Ghosts(0.045f, 0.35f);
             if (Mathf.Abs(p.x - goal) < 0.05f || stateTime > 0.6f) BeginSwing();
         }
 
@@ -1060,8 +1212,10 @@ namespace ProjectInk
         {
             state = State.Attack;
             stateTime = 0f;
-            body.Play(currentAttack.clip, 0.05f);
+            bool swordClip = Style == FightStyle.Sword && currentAttack.clip != null && currentAttack.clip.StartsWith("sword");
+            body.Play(currentAttack.clip, swordClip ? 0.03f : 0.05f, true, swordClip && !currentAttack.iai ? 1.2f : 1f);
             SetTrails(!currentAttack.ranged);
+            if (currentAttack.iai) BeginIai();
             if (!currentAttack.ranged) SwingSound();
             if (currentAttack.clip == "slide_kick") velocity.x = attackDir * 11f;
             if (currentAttack.clip == "flying_kick" || currentAttack.clip == "sword_leap")
@@ -1101,12 +1255,14 @@ namespace ProjectInk
             }
             if (currentAttack.clip == "slide_kick")
                 velocity.x = Mathf.MoveTowards(velocity.x, 0f, 14f * Time.deltaTime);
+            if (currentAttack.iai) UpdateIai();
 
             if (!hitDone && e.hitTime >= 0f && body.Time >= e.hitTime)
             {
                 if (throwPending || knifeThrowPending || catchPending) ReleaseThrow();
                 else if (currentAttack.clip == "stomp") ResolveStomp();
                 else if (currentAttack.ranged) ResolveShot();
+                else if (currentAttack.iai) ResolveIai();
                 else ResolveHit();
             }
 
@@ -1160,10 +1316,13 @@ namespace ProjectInk
                 knockback = currentAttack.knockback,
                 knockdown = currentAttack.knockdown,
                 heavy = currentAttack.heavy,
+                lift = currentAttack.lift,
                 attacker = this
             };
 
             bool landed = false;
+            int cut = 0;
+            bool bladeCut = Style == FightStyle.Sword && currentAttack.clip != null && currentAttack.clip.StartsWith("sword");
             foreach (var e in Enemy.All.ToArray())
             {
                 if (!e.Targetable && !(e.OnLedge && e == target)) continue;
@@ -1185,9 +1344,11 @@ namespace ProjectInk
                     continue;
                 }
                 bool killing = InRampage || e.Health <= hit.damage;
+                bool clash = bladeCut && e.Type == EnemyType.Swordsman && e.Telegraphing;
                 if (InRampage) e.Kill(hit); else e.TakeHit(hit);
                 landed = true;
                 OnStrikeLanded(e, killing);
+                if (bladeCut) { SwordHitFx(e, killing, clash); cut++; }
                 if (currentAttack.clip == "gun_throw" && primary && !killing) pendingExecution = e;
             }
             if (landed)
@@ -1198,6 +1359,15 @@ namespace ProjectInk
                     if (Style == FightStyle.Pipe) PipeUses--;
                 }
                 Impact();
+                // a few slow-motion beats, never on every hit: cutting two at once, or a heavy killing blow
+                if (bladeCut && SwordSlowReady && (cut >= 2 || (lastKilled && currentAttack.heavy)))
+                {
+                    swordSlowAt = Time.unscaledTime;
+                    if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.3f, cut >= 2 ? 0.5f : 0.4f, 0.02f, 0.25f);
+                    if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(5f, 0.2f);
+                    if (cut >= 2 && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(80 * cut, cut >= 3 ? "TRIPLE CUT!" : "DOUBLE CUT!");
+                }
+                if (bladeCut && currentAttack.lift > 0f && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(30, "LAUNCH!");
             }
         }
 
@@ -1487,6 +1657,7 @@ namespace ProjectInk
 
         void SetTrails(bool on)
         {
+            if (swordFx != null) swordFx.Emitting = on && Style == FightStyle.Sword;
             bool blade = on && (Style == FightStyle.Sword || Style == FightStyle.Pipe);
             if (limbTrails != null)
                 foreach (var t in limbTrails)

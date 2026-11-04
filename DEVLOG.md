@@ -242,3 +242,22 @@ Scene version 7.
 
 - The title card, the app name on the phone, the Unity menu (**Stick Wick → …**), the APK file (`StickWick.apk`) and the Android package id (`com.stickwick.game`) all use the new name.
 - The code namespace stays `ProjectInk` (internal only).
+
+## 2026-11-04: 0.5 the sword, rebuilt
+
+- **Look:**
+    - `SwordFx` replaces the box blade with a mesh katana: a curved, tapered diamond-section blade with a white cutting edge, a round guard, a gold collar and a banded grip.
+    - The thin trail is replaced by a solid swept ribbon from mid-blade to tip, Catmull-Rom smoothed, bright at the tip and fading inwards. It lingers in slow motion.
+- **Hit effects:**
+    - `StreakFx` draws the white slice line across the body along the blade's path, with a glow echo, plus steel sparks. Clashes with a winding-up swordsman throw a big spark spray with a "CLASH!" sound.
+    - Ink sprays the way the blade travelled.
+- **Speed:**
+    - Every sword clip is re-keyed shorter: the hit lands 3–5 frames in (was 4–6), and the follow-through is held.
+    - Sword clips play at 1.2× with tighter crossfades.
+    - The dash-in is 35% faster and leaves white afterimages (`Afterimage`, baked from the skinned mesh).
+- **New moves:**
+    - **Rising cut** (`sword_rise`), 4th hit of the combo: launches enemies into the air.
+    - **Iai draw-cut** (`sword_iai`): the hero blurs through everyone in line in a trail of ghosts. Time nearly stops (×0.1) and the camera closes in. The hero holds the follow-through; 0.38 s later the cuts land on every victim at once. Then the blade clicks home.
+    - The iai triggers on a counter, on 2+ enemies in a line, or as the kill finisher.
+- **Slow motion, kept rare:** the iai, cutting two or more at once, and heavy killing blows. Never more often than every 2.5 s.
+- `SceneVersion` → 10 (the move set must pick up the two new clips).

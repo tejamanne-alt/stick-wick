@@ -40,6 +40,13 @@ How it's built:
 - The bank is built by `tools/audio/build_audio.py`, which trims, layers and normalises the clips into `Assets/Resources/Audio/`.
 - Credits are in `Assets/Resources/Audio/CREDITS.txt`. The Oculus Audio Pack is CC BY 4.0, so its credit line must go in the game's credits.
 
+### The sword
+
+Take it from a red swordsman (or press **2** to test).
+- **Taps:** a fast combo with a swept white slash ribbon. The 4th cut launches enemies into the air; the 5th is a lunging thrust.
+- **Iai draw-cut:** when enemies stand in a line, when you counter, or for the kill, the hero blurs through them leaving afterimages. Time nearly stops, and a beat later they all fall.
+- **Slow motion** is saved for the big cuts.
+
 ### Controls
 
 **Classic** (the default, as in the first prototypes). Press **C** to switch to two-thumb; your choice is saved.

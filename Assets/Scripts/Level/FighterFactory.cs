@@ -45,6 +45,8 @@ namespace ProjectInk
             if (hero || enemyWeapon == FightStyle.Knife) knife = BuildWeapon(player, FightStyle.Knife, material, null, out _, out _);
             if (hero || enemyWeapon == FightStyle.Pipe) pipe = BuildWeapon(player, FightStyle.Pipe, material, trailMaterial, out pipeTrail, out _);
 
+            // enemy swordsmen carry the katana too (the hero builds his own at runtime, with the slash ribbon)
+            if (!hero && sword != null && Application.isPlaying) SwordFx.Attach(sword, trailMaterial, null, false);
             Fighter f = hero ? root.AddComponent<HeroController>() : (Fighter)root.AddComponent<Enemy>();
             f.body = player;
             if (eyeMaterial != null) f.eyes = BuildEyes(player, eyeMaterial);

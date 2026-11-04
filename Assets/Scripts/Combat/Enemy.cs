@@ -489,7 +489,7 @@ namespace ProjectInk
             {
                 state = State.Down;
                 stateTime = 0f;
-                velocity.y = hit.knockdown ? 5.5f : 3f;
+                velocity.y = hit.lift > 0f ? hit.lift * (brute ? 0.5f : 1f) : hit.knockdown ? 5.5f : 3f;
                 velocity.x = hit.direction * Mathf.Max(hit.knockback, 4f) * (brute ? 0.6f : 1f);
                 Grounded = false;
                 body.Play("knockdown", 0.04f);
