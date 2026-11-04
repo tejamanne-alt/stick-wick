@@ -510,3 +510,17 @@ A new signature move, chosen by situation (never on every hit):
     - **from the air**, striking near an enemy at head height: 65%
 - The hero is invulnerable during the move. If the victim vanishes mid-move, the hero drops him and recovers.
 - Motion check: `docs/previews/head_scissors.png` (sampled from the real timings); both bodies stay above the floor.
+
+## 2026-11-04: 0.9 the building's moves
+
+Situational cinematic moves built on the level and its objects. Nothing new to learn: they're chosen when you strike, drop or run in the right place.
+- **DEATH FROM ABOVE:** drop through a floor, run off an edge, strike at an enemy ≥ 1.8 m below, or strike in mid-air above one.
+    - The hero hops into a spinning front-flip and falls on him, homing in. Slow-mo is ×0.25 for 0.8 s, with the camera framing both. The dive passes through any floors in between and lands on the target's.
+    - The last part of the fall is a stamp, or a downward plunge with a sword or pipe.
+    - Impact: 45 damage (55 with a blade) to him, 22 to anyone within 1.9 m, all knocked down. A dust shockwave rolls both ways, with a boom, cinematic hit, flash, hit-stop, shake and zoom punch, and the lamps swing. "DEATH FROM ABOVE!" (×n for several).
+    - Diving onto the catwalk glass smashes straight through and carries on down.
+- **HERO LANDING:** a fall of ≥ 3.2 m with nobody to land on: a crouched landing with dust, a thud and a shake; anyone right beside him is knocked off his feet.
+- **OVER THE EDGE:** strike an enemy (not the Brute) within 1.8 m of a mezzanine or catwalk edge with a real drop (≥ 2.2 m) beyond. The hero grabs him and heaves him up and out into the drop in slow motion, with a scream, the camera watching him fall. FLOOR DROP finishes him.
+- **HAND STOMP:** strike toward an enemy hanging from a ledge below you: a stamp on his hands, a bone crack, and he falls with a scream. Enemies now hang 0.45–0.9 s on climbs, so it's catchable.
+- **SPRINGBOARD:** a crate 0.3–1.6 m ahead and an enemy 0.6–4.5 m beyond it: the hero runs up the crate, flips off it and goes straight into a flying kick.
+- Strike decision order: hand stomp, over the edge, springboard, death from above, head scissors, then the normal strings.

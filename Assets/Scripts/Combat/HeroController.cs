@@ -24,7 +24,7 @@ namespace ProjectInk
     /// grabbed = tap to break free with a reversal throw. Full Flow = Rampage.</summary>
     public class HeroController : Fighter
     {
-        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors }
+        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors, Dive }
 
         public float targetRange = 9f;
         public float gunRange = 14f;
@@ -102,6 +102,262 @@ namespace ProjectInk
         }
 
         void CheckBody() { body.CheckVisible(); }
+
+        // ------------------------------------------------------------------ the building's moves
+        // Situational moves built on the level and its objects:
+        //   DEATH FROM ABOVE  drop, run or jump off a high floor with an enemy below: a slow-motion
+        //                     spinning dive onto him and a shockwave (a downward plunge with a blade)
+        //   HERO LANDING      a big fall with nobody to land on: a crouched landing, dust and a thud
+        //   OVER THE EDGE     an enemy near a floor's edge: grab him and heave him into the drop
+        //   HAND STOMP        an enemy hanging from a ledge below you: stamp on his hands
+        //   SPRINGBOARD       a crate between you and an enemy: run up it into a flying kick
+
+        bool wasGroundedForDive = true, diveLanded, edgeThrow;
+        Enemy diveTarget, springTarget;
+        float diveLandedAt;
+
+        /// <summary>An enemy on a lower level, roughly below and ahead of the hero.</summary>
+        Enemy PickBelow(int side, float range)
+        {
+            Enemy best = null;
+            float bestD = range;
+            var p = transform.position;
+            foreach (var e in Enemy.All)
+            {
+                if (!e.Targetable) continue;
+                var q = e.transform.position;
+                if (q.y > p.y - 1.8f) continue;
+                float dx = (q.x - p.x) * side;
+                if (dx < -0.8f || Mathf.Abs(q.x - p.x) > range) continue;
+                float d = Mathf.Abs(q.x - p.x);
+                if (d < bestD) { bestD = d; best = e; }
+            }
+            return best;
+        }
+
+        bool TryDeathFromAbove(Enemy preferred)
+        {
+            if (CinematicLock || InRampage) return false;
+            var p = transform.position;
+            Enemy t = preferred;
+            if (t == null || !t.Targetable || t.transform.position.y > p.y - 1.8f)
+            {
+                int side = Mathf.Abs(velocity.x) > 0.5f ? (velocity.x > 0f ? 1 : -1) : Facing;
+                t = PickBelow(side, 4.5f);
+            }
+            if (t == null) return false;
+            BeginDive(t);
+            return true;
+        }
+
+        void BeginDive(Enemy t)
+        {
+            var p = transform.position;
+            var q = t.transform.position;
+            int side = q.x >= p.x ? 1 : -1;
+            SetFacing(side);
+            diveTarget = t;
+            diveLanded = false;
+            state = State.Dive;
+            stateTime = 0f;
+            const float vy0 = 4.2f;
+            float h = Mathf.Max(0.5f, p.y - q.y);
+            float T = (vy0 + Mathf.Sqrt(vy0 * vy0 + 2f * gravity * h)) / gravity;
+            velocity = new Vector3(Mathf.Clamp((q.x - p.x) / T, -9f, 9f), vy0, 0f);
+            Grounded = false;
+            // pass through any floors on the way down, but land on his
+            float pass = Mathf.Max(0.1f, h - 0.6f);
+            dropThroughUntil = Time.time + (vy0 + Mathf.Sqrt(vy0 * vy0 + 2f * gravity * pass)) / gravity;
+            invulnerableUntil = Time.time + 1.6f;
+            body.Play(body.Has("front_flip") ? "front_flip" : "jump", 0.04f, true, 0.8f);
+            SetTrails(true);
+            Sound.Play(Sfx.WhooshBig, 1f, p);
+            Sound.Play(Sfx.HeroEffort, 1f, p);
+            // the moment: slow motion, the camera holding both of them
+            swordSlowAt = Time.unscaledTime;
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.25f, 0.8f, 0.05f, 0.3f);
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Focus(t.transform, 1.1f);
+        }
+
+        void UpdateDive(float dt)
+        {
+            if (diveLanded)
+            {
+                velocity.x = 0f;
+                if (Time.time - diveLandedAt > 0.38f) { SetTrails(false); EnterIdle(); }
+                return;
+            }
+            // home in a little on the target as he falls
+            if (diveTarget != null && diveTarget.Targetable)
+            {
+                float want = (diveTarget.transform.position.x - transform.position.x) * 3f;
+                velocity.x = Mathf.MoveTowards(velocity.x, Mathf.Clamp(want, -9f, 9f), 14f * dt);
+            }
+            // the strike pose for the last part of the fall: a plunge with a blade, a stamp without
+            if (velocity.y < -2f && stateTime > 0.25f)
+            {
+                string pose = (Style == FightStyle.Sword || Style == FightStyle.Pipe) && body.Has("sword_leap") ? "sword_leap" : body.Has("stomp") ? "stomp" : "flying_kick";
+                if (body.CurrentName != pose) body.Play(pose, 0.06f);
+            }
+            if (stateTime > 3f) { SetTrails(false); EnterIdle(); }
+        }
+
+        void DiveImpact(float fall)
+        {
+            diveLanded = true;
+            diveLandedAt = Time.time;
+            velocity = Vector3.zero;
+            var at = transform.position;
+            bool blade = Style == FightStyle.Sword || Style == FightStyle.Pipe;
+            int hits = 0;
+            foreach (var e in Enemy.All.ToArray())
+            {
+                if (!e.Targetable) continue;
+                var q = e.transform.position;
+                if (Mathf.Abs(q.x - at.x) > 1.9f || Mathf.Abs(q.y - at.y) > 0.8f) continue;
+                bool main = e == diveTarget || Mathf.Abs(q.x - at.x) < 0.8f;
+                int dir = q.x >= at.x ? 1 : -1;
+                float dmg = main ? (blade ? 55f : 45f) : 22f;
+                bool killing = e.Health <= dmg;
+                e.TakeHit(new HitInfo { damage = dmg, direction = dir, knockback = main ? 4f : 8f, knockdown = true, heavy = true, lift = main ? 3f : 5f, attacker = this });
+                lastKilled = killing;
+                lastHitAt = e.Chest;
+                OnStrikeLanded(e, killing);
+                if (InkFx.Instance != null) InkFx.Instance.Splash(e.Chest, new Vector3(dir, 0.6f, 0f), main ? 36 : 16, e.InkColor);
+                if (blade && main) StreakFx.Slash(e.Chest, Vector3.down + Vector3.right * dir * 0.2f, 2.6f, 0.08f, 0.3f);
+                hits++;
+            }
+            if (blade && hits > 0 && !InRampage && Style == FightStyle.Sword) SwordUses--;
+            // the shockwave: dust rolling out both ways along the floor
+            StreakFx.Sparks(at + Vector3.up * 0.1f, Vector3.right, 16, 9f);
+            StreakFx.Sparks(at + Vector3.up * 0.1f, Vector3.left, 16, 9f);
+            if (InkFx.Instance != null) { InkFx.Instance.Burst(at + Vector3.up * 0.3f, 5f); InkFx.Instance.ImpactFlash(0.05f); }
+            Sound.Play(Sfx.Boom, 1f, at);
+            Sound.Play(Sfx.CineHit, 0.7f);
+            Sound.Play(hits > 0 ? (blade ? Sfx.SwordHit : Sfx.PunchHeavy) : Sfx.Land, 1f, at);
+            if (hits > 0) Sound.Play(Sfx.BodyFall, 1f, at);
+            if (TimeController.Instance != null) TimeController.Instance.HitStop(hits > 0 ? 8 : 4);
+            if (CameraDirector.Instance != null) { CameraDirector.Instance.Shake(hits > 0 ? 0.35f : 0.2f, 0.3f); CameraDirector.Instance.ZoomPunch(6f, 0.15f); }
+            foreach (var lamp in FindObjectsByType<LampFlicker>()) lamp.Shake(0.6f);
+            body.Play(body.Has("duck") ? "duck" : IdleClip, 0.04f);
+            if (WaveDirector.Instance != null)
+                WaveDirector.Instance.AddStyle(hits > 0 ? 300 : 40, hits > 1 ? "DEATH FROM ABOVE x" + hits + "!" : hits == 1 ? "DEATH FROM ABOVE!" : "HERO LANDING");
+        }
+
+        /// <summary>A big fall with nobody under him: a crouched superhero landing.</summary>
+        void HeroLanding(float fall)
+        {
+            var at = transform.position;
+            StreakFx.Sparks(at + Vector3.up * 0.1f, Vector3.right, 10, 7f);
+            StreakFx.Sparks(at + Vector3.up * 0.1f, Vector3.left, 10, 7f);
+            if (InkFx.Instance != null) InkFx.Instance.Burst(at + Vector3.up * 0.2f, 3f);
+            Sound.Play(Sfx.Boom, 0.6f, at);
+            Sound.Play(Sfx.Land, 1f, at, 0.85f);
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.18f, 0.25f);
+            // anyone right beside him is knocked off his feet
+            foreach (var e in Enemy.All.ToArray())
+                if (e.Targetable && Mathf.Abs(e.transform.position.x - at.x) < 1.2f && Mathf.Abs(e.transform.position.y - at.y) < 0.6f)
+                    e.TakeHit(new HitInfo { damage = 8f, direction = e.transform.position.x >= at.x ? 1 : -1, knockback = 6f, knockdown = true, attacker = this });
+            state = State.Dive;            // reuse the dive's short crouch-and-rise
+            diveLanded = true;
+            diveLandedAt = Time.time;
+            body.Play(body.Has("duck") ? "duck" : IdleClip, 0.04f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(40, "HERO LANDING");
+        }
+
+        /// <summary>An enemy close to the edge of the floor he stands on, with a real drop beyond.</summary>
+        bool NearEdge(Enemy t, int side)
+        {
+            if (!LevelNav.Active || t == null) return false;
+            var q = t.transform.position;
+            int pl = LevelNav.PlatformAt(q);
+            if (pl < 0) return false;
+            var P = LevelNav.Platforms[pl];
+            if (!P.oneWay) return false;
+            float edge = side > 0 ? P.x1 : P.x0;
+            if ((edge - q.x) * side > 1.8f || (edge - q.x) * side < -0.1f) return false;
+            var beyond = new Vector3(edge + side * 0.6f, P.y, 0f);
+            if (LevelNav.PlatformAt(beyond) >= 0) return false;                  // the floor just carries on
+            float below = GroundY(new Vector3(beyond.x, P.y - 0.2f, 0f), 0f);
+            return P.y - below >= 2.2f;
+        }
+
+        bool TryOverTheEdge(Enemy t, int side)
+        {
+            if (t == null || !t.Targetable || t.Type == EnemyType.Brute || !Grounded || Style == FightStyle.Gun) return false;
+            var p = transform.position; var q = t.transform.position;
+            float dx = (q.x - p.x) * side;
+            if (dx < 0.2f || dx > 1.8f || Mathf.Abs(q.y - p.y) > 0.4f || !NearEdge(t, side)) return false;
+            edgeThrow = true;
+            SetFacing(side);
+            StartAttack(AttackData.GrabThrow, t, side, false);
+            return true;
+        }
+
+        bool TryHandStomp(int side)
+        {
+            if (!Grounded) return false;
+            var p = transform.position;
+            foreach (var e in Enemy.All)
+            {
+                if (!e.Alive || !e.Hanging) continue;
+                var q = e.transform.position;
+                float dx = (q.x - p.x) * side;
+                if (dx < -0.3f || dx > 1.8f || p.y - q.y < 0.8f || p.y - q.y > 2.4f) continue;
+                SetFacing(side);
+                currentAttack = new AttackData { clip = "stomp", ranged = true };
+                target = null;
+                hitDone = true;
+                state = State.Attack;
+                stateTime = 0f;
+                body.Play(body.Has("stomp") ? "stomp" : "front_kick", 0.04f);
+                StartCoroutine(StompHands(e));
+                return true;
+            }
+            return false;
+        }
+
+        System.Collections.IEnumerator StompHands(Enemy e)
+        {
+            yield return new WaitForSeconds(0.14f);
+            if (e == null || !e.Hanging) yield break;
+            bool killing = e.Health <= 20f;
+            e.TakeHit(new HitInfo { damage = 20f, direction = e.transform.position.x >= transform.position.x ? 1 : -1, knockback = 1f, knockdown = true, hitsDowned = true, attacker = this });
+            OnStrikeLanded(e, killing);
+            Sound.Play(Sfx.Bone, 1f, e.Chest);
+            Sound.Play(Sfx.PunchHeavy, 0.8f, e.Chest);
+            Sound.Play(Sfx.FallScream, 0.9f, e.Chest);
+            if (TimeController.Instance != null) TimeController.Instance.HitStop(6);
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.12f, 0.15f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(180, "HAND STOMP!");
+        }
+
+        bool TrySpringboard(Enemy t, int side)
+        {
+            if (t == null || !t.Targetable || !Grounded) return false;
+            var p = transform.position;
+            foreach (var c in Crate.All)
+            {
+                if (!c.Available) continue;
+                var cp = c.transform.position;
+                float cdx = (cp.x - p.x) * side;
+                if (cdx < 0.3f || cdx > 1.6f || Mathf.Abs(cp.y - 0.35f - p.y) > 0.5f) continue;
+                float tdx = (t.transform.position.x - cp.x) * side;
+                if (tdx < 0.6f || tdx > 4.5f || Mathf.Abs(t.transform.position.y - p.y) > 0.6f) continue;
+                SetFacing(side);
+                state = State.Air;
+                stateTime = 0f;
+                velocity = new Vector3(side * 5.5f, 8.5f, 0f);
+                Grounded = false;
+                springTarget = t;
+                body.Play(body.Has("front_flip") ? "front_flip" : "jump", 0.04f);
+                Sound.Play(Sfx.Footstep, 1.6f, cp);
+                Sound.Play(Sfx.WhooshBig, 1f, p);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(120, "SPRINGBOARD!");
+                return true;
+            }
+            return false;
+        }
 
         // ------------------------------------------------------------------ head scissors takedown
         // Leap onto the enemy's shoulders, lock the legs round his head, throw yourself into a
@@ -607,6 +863,7 @@ namespace ProjectInk
                 case State.Bar: UpdateBar(dt); break;
                 case State.WallRun: UpdateWallRun(dt); break;
                 case State.Scissors: UpdateScissors(); break;
+                case State.Dive: UpdateDive(dt); break;
                 case State.Dead: break;
             }
             if (state != State.Dead) TryPickup();
@@ -617,6 +874,9 @@ namespace ProjectInk
             bool scripted = state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar || state == State.Scissors ||
                             (state == State.WallRun && stateTime < 0.25f);
             if (!scripted) Integrate(dt);
+            // ran off an edge with someone below: dive on them
+            if (wasGroundedForDive && !Grounded && state == State.Idle && velocity.y <= 0.5f) TryDeathFromAbove(null);
+            wasGroundedForDive = Grounded;
             FootSounds(dt);
             UpdateTint();
         }
@@ -729,6 +989,7 @@ namespace ProjectInk
 
         void EnterIdle()
         {
+            edgeThrow = false;
             state = State.Idle;
             stateTime = 0f;
             body.Play(IdleClip, 0.12f);
@@ -944,6 +1205,11 @@ namespace ProjectInk
                 return;
             }
 
+            // situational moves, the building and its objects first
+            if (TryHandStomp(side)) return;
+            if (TryOverTheEdge(t, side)) return;
+            if (TrySpringboard(t, side)) return;
+            if (t != null && t.transform.position.y < transform.position.y - 1.8f && TryDeathFromAbove(t)) return;
             // the head scissors takedown, when the situation calls for it
             if (TryHeadScissors(t, side, kick)) return;
 
@@ -1107,6 +1373,26 @@ namespace ProjectInk
 
         void UpdateAir(float dt)
         {
+            if (springTarget != null && stateTime > 0.22f)
+            {
+                // off the crate and into a flying kick
+                var st = springTarget;
+                springTarget = null;
+                if (st.Targetable)
+                {
+                    int sd = st.transform.position.x > transform.position.x ? 1 : -1;
+                    SetFacing(sd);
+                    currentAttack = AttackData.FlyingKick;
+                    target = st;
+                    attackDir = sd;
+                    hitDone = false;
+                    state = State.Attack;
+                    stateTime = 0f;
+                    body.Play("flying_kick", 0.04f, true, 1.3f);
+                    SetTrails(true);
+                    return;
+                }
+            }
             // air control, a little softer than on the ground
             float a = Axis;
             if (Mathf.Abs(a) > 0.1f) { velocity.x = Mathf.MoveTowards(velocity.x, a * runSpeed, 18f * dt); SetFacing(a > 0 ? 1 : -1); }
@@ -1130,6 +1416,9 @@ namespace ProjectInk
                 // close enough in the air: land on his shoulders instead of kicking him
                 if (t != null && Mathf.Abs(t.transform.position.x - transform.position.x) < 1.9f && Random.value < 0.65f && CanScissors(t, side, true))
                 { BeginScissors(t, side); return; }
+                // far below: dive on him
+                var below = PickBelow(side, 4.5f);
+                if (below != null && TryDeathFromAbove(below)) return;
                 SetFacing(side);
                 currentAttack = AttackData.FlyingKick;
                 target = t;
@@ -1361,13 +1650,16 @@ namespace ProjectInk
             stateTime = 0f;
             body.Play("jump", 0.06f);
             Sound.Play(Sfx.Cloth, 1f, transform.position);
+            TryDeathFromAbove(null);
             return true;
         }
 
         protected override void OnLanded(float fallHeight)
         {
-            // a long fall onto the catwalk's glass goes straight through it
-            if (LevelNav.Active && GlassPanel.Land(transform.position, fallHeight - 0.9f, false)) Grounded = false;
+            // a long fall onto the catwalk's glass goes straight through it (a dive keeps diving)
+            if (LevelNav.Active && GlassPanel.Land(transform.position, fallHeight - 0.9f, state == State.Dive)) { Grounded = false; return; }
+            if (state == State.Dive && !diveLanded) { DiveImpact(fallHeight); return; }
+            if ((state == State.Air || state == State.Idle) && fallHeight >= 3.2f && !CinematicLock) HeroLanding(fallHeight);
         }
 
         protected override void OnLedgeClimbed() { EnterIdle(); }
@@ -1619,8 +1911,20 @@ namespace ProjectInk
                 {
                     // fists: grapple and hurl them into the others
                     e.TakeHit(new HitInfo { damage = currentAttack.damage, direction = attackDir, knockback = 0f, attacker = this });
-                    if (e.Alive) e.Launch(new Vector3(attackDir * 12f, 5f, 0f), this);
                     landed = true;
+                    if (edgeThrow)
+                    {
+                        // over the edge: a slow, high heave into the drop, the camera watching him go
+                        edgeThrow = false;
+                        if (e.Alive) e.Launch(new Vector3(attackDir * 6.5f, 6.5f, 0f), this);
+                        OnStrikeLanded(e, !e.Alive);
+                        Sound.Play(Sfx.FallScream, 1f, e.Chest);
+                        if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.3f, 1.0f, 0.03f, 0.35f);
+                        if (CameraDirector.Instance != null) CameraDirector.Instance.Focus(e.transform, 1.3f);
+                        if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(200, "OVER THE EDGE!");
+                        continue;
+                    }
+                    if (e.Alive) e.Launch(new Vector3(attackDir * 12f, 5f, 0f), this);
                     OnStrikeLanded(e, !e.Alive);
                     if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(60, "THROW!");
                     continue;

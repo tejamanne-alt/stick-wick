@@ -324,7 +324,7 @@ namespace ProjectInk
             if (step.kind == LevelNav.StepKind.Climb)
             {
                 var L = LevelNav.Ledges[step.ledge];
-                BeginLedgeClimb(Random.Range(0.2f, 0.5f), L.x, L.y, L.dir);
+                BeginLedgeClimb(Random.Range(0.45f, 0.9f), L.x, L.y, L.dir);   // long enough to be stamped on
                 return;
             }
             // drop. A fighter whose turn it is leaps down at the hero; the rest step off.
