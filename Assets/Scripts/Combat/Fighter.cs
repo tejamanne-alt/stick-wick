@@ -103,11 +103,13 @@ namespace ProjectInk
         }
 
         /// <summary>Height of the walkable surface under a point (floors, stairs, landings).</summary>
+        /// <summary>Underside of the roof for the current building (set by LevelLayout).</summary>
+        public static float RoofY = 6.8f;
         /// <summary>Highest point a floor probe starts from: just under the roof slab, so its top
         /// is never mistaken for a floor (nobody can end up standing on the roof).</summary>
-        public const float ProbeCeiling = 6.5f;
+        public static float ProbeCeiling => RoofY - 0.3f;
         /// <summary>Highest a fighter's feet may go: their head meets the roof.</summary>
-        public const float HeadRoom = 5.2f;
+        public static float HeadRoom => RoofY - 1.6f;
 
         public static float GroundY(Vector3 p, float probeUp = 0.9f)
         {
@@ -126,6 +128,16 @@ namespace ProjectInk
         /// <summary>The level a fighter is on: 0 = ground floor, 1 = upper floor.</summary>
         public int Level => transform.position.y > 1.9f ? 1 : 0;
 
+        /// <summary>Floor under a fighter in the air: probes from just above the higher of where
+        /// the feet were and are, so a thin platform passed from below is not landed on, while
+        /// one fallen onto from above is.</summary>
+        float ProbeAir(Vector3 p, float prevY)
+        {
+            if (Time.time < dropThroughUntil) return Probe(p);
+            var origin = new Vector3(p.x, Mathf.Min(Mathf.Max(prevY, p.y) + 0.5f, ProbeCeiling), p.z);
+            return Physics.Raycast(origin, Vector3.down, out var hit, 40f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
+        }
+
         float Probe(Vector3 p)
         {
             if (Time.time < dropThroughUntil)
@@ -142,12 +154,13 @@ namespace ProjectInk
         protected int Integrate(float dt)
         {
             var p = transform.position;
+            float prevY = p.y;
             p.x += velocity.x * dt;
             p.z += velocity.z * dt;
             int wall = 0;
             if (p.x < arenaMinX) { p.x = arenaMinX; wall = -1; }
             else if (p.x > arenaMaxX) { p.x = arenaMaxX; wall = 1; }
-            float ground = Probe(p);
+            float ground = Grounded ? Probe(p) : ProbeAir(p, prevY);
             if (Grounded)
             {
                 if (velocity.y > 0.01f || p.y - ground > 0.55f)   // jumped, or walked off a ledge
@@ -163,6 +176,7 @@ namespace ProjectInk
                 p.y += velocity.y * dt;
                 // the roof: a flying fighter bumps their head and falls back into the hall
                 if (p.y > HeadRoom && velocity.y > 0f) { p.y = HeadRoom; velocity.y = 0f; }
+                ground = ProbeAir(p, prevY);
                 fallStartY = Mathf.Max(fallStartY, p.y);
                 if (p.y <= ground && velocity.y <= 0f)
                 {
@@ -181,8 +195,11 @@ namespace ProjectInk
         protected virtual void OnLanded(float fallHeight) { }
 
         // ------------------------------------------------------------------ ledge climbing
-        // The upper floor's open edge: fighters jump up, hang by their hands, and pull up.
+        // A platform's edge: fighters jump up, hang by their hands, and pull up onto it.
+        // (LedgeX/LedgeY are the classic hall's single ledge; the tower passes each ledge in.)
         public static float LedgeX = 0f, LedgeY = 3.2f;
+        float ledgeX, ledgeY;
+        int ledgeDir = -1;                          // which way the floor lies from the hanging fighter
         const float HangDrop = 1.43f;               // hands above the feet with the arms straight up
         protected enum LedgeStage { None, Jump, Hang, Climb }
         protected LedgeStage ledge = LedgeStage.None;
@@ -194,15 +211,19 @@ namespace ProjectInk
         /// <summary>Where to stand on the floor below to jump for the ledge.</summary>
         public static float LedgeFootX => LedgeX + 0.25f;
 
-        /// <summary>Jump from the floor below up to the ledge, hang, then climb onto it.</summary>
-        protected void BeginLedgeClimb(float hang)
+        /// <summary>Jump from the floor below up to the classic hall's ledge.</summary>
+        protected void BeginLedgeClimb(float hang) => BeginLedgeClimb(hang, LedgeX, LedgeY, -1);
+
+        /// <summary>Jump up to the ledge at (x, y), hang, then climb onto the floor lying towards `dir`.</summary>
+        protected void BeginLedgeClimb(float hang, float x, float y, int dir)
         {
+            ledgeX = x; ledgeY = y; ledgeDir = dir >= 0 ? 1 : -1;
             ledge = LedgeStage.Jump;
             ledgeTime = 0f;
             hangSeconds = hang;
             ledgeFrom = transform.position;
             velocity = Vector3.zero;
-            SetFacing(-1);                          // the upper floor lies towards -X
+            SetFacing(ledgeDir);                    // face the floor we are climbing onto
             body.Play("hang", 0.08f);
         }
 
@@ -211,7 +232,7 @@ namespace ProjectInk
         {
             if (ledge == LedgeStage.None) return false;
             ledgeTime += dt;
-            var hangPos = new Vector3(LedgeX + 0.2f, LedgeY - HangDrop, 0f);
+            var hangPos = new Vector3(ledgeX - ledgeDir * 0.2f, ledgeY - HangDrop, 0f);
             switch (ledge)
             {
                 case LedgeStage.Jump:
@@ -228,7 +249,7 @@ namespace ProjectInk
                         ledge = LedgeStage.Climb;
                         ledgeTime = 0f;
                         // the climb clip starts from the hanging offset and ends standing here
-                        transform.position = new Vector3(LedgeX - 0.24f, LedgeY, 0f);
+                        transform.position = new Vector3(ledgeX + ledgeDir * 0.24f, ledgeY, 0f);
                         body.Play("climb_up", 0.02f);
                     }
                     break;
@@ -252,7 +273,7 @@ namespace ProjectInk
             if (ledge == LedgeStage.None) return;
             ledge = LedgeStage.None;
             Grounded = false;
-            velocity = new Vector3(0.5f, 0f, 0f);
+            velocity = new Vector3(-ledgeDir * 0.5f, 0f, 0f);
         }
 
         protected virtual void OnLedgeClimbed() { }

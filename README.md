@@ -40,6 +40,16 @@ How it's built:
 - The bank is built by `tools/audio/build_audio.py`, which trims, layers and normalises the clips into `Assets/Resources/Audio/`.
 - Credits are in `Assets/Resources/Audio/CREDITS.txt`. The Oculus Audio Pack is CC BY 4.0, so its credit line must go in the game's credits.
 
+### The tower (main building)
+
+Three levels: the **lobby**, two **mezzanines** with an open atrium between them, and a **steel catwalk** across the top with a **glass panel** in the middle.
+- **Climb:** swipe up near a **striped ledge**. The hero jumps, hangs by the hands and pulls himself up.
+- **Drop:** swipe down to drop through a mezzanine or the catwalk, or just run off an edge.
+- **Ropes:** swing across the atrium. Bars are under and over the mezzanines.
+- **Throw enemies:** off the edges, or **through the glass**: a 6-metre fall.
+- **Enemies** find their way to you: they climb, drop, pounce down from above, and shoot across levels.
+- **Classic hall backup:** the simpler building is kept on the branch `backup/classic-hall` and under the menu **Stick Wick → Build Classic Hall (backup)**.
+
 ### The sword
 
 Take it from a red swordsman (or press **2** to test).

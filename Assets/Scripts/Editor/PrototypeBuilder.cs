@@ -20,11 +20,20 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 13;
+        public const int SceneVersion = 14;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
+        const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
+
+        /// <summary>The main scene: the tower.</summary>
         [MenuItem("Stick Wick/Build Prototype Scene")]
-        public static void BuildScene()
+        public static void BuildScene() => Build(LayoutKind.Tower, ScenePath, true);
+
+        /// <summary>The backup: the classic hall, saved as its own scene (open it and press Play).</summary>
+        [MenuItem("Stick Wick/Build Classic Hall (backup)")]
+        public static void BuildClassicHall() => Build(LayoutKind.Hall, HallScenePath, false);
+
+        static void Build(LayoutKind kind, string scenePath, bool main)
         {
             Directory.CreateDirectory(GenDir);
             Directory.CreateDirectory("Assets/Scenes");
@@ -59,42 +68,26 @@ namespace ProjectInk.EditorTools
             // doors at both ends, a back door on the right and a doorway onto the deck.
             var interior = Mat("Interior", "Unlit/Color", new Color(0.76f, 0.75f, 0.72f));
             var room = new GameObject("Building").transform;
-            const float halfW = 13.2f, floorY = 3.2f, roofY = 6.8f, laneFront = -0.6f, wallZ = 2.4f;
-            const float deckY = 2.6f, deckHalf = 3f, stairRun = 4f;      // deck: x -3..3; stairs: 3..7 each side
-            Box(room, "Ground", new Vector3(0, -2f, 0.5f), new Vector3(60, 4, 9), ground);
-            // the back wall (concrete with windows), lamps, pipes, skyline, haze and dust
-            EnvironmentBuilder.Build(room, new EnvironmentBuilder.Layout
-            {
-                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f,
-                deckY = deckY, deckHalf = deckHalf, stairRun = stairRun
-            }, ground);
-            EnvironmentBuilder.Props(room, new EnvironmentBuilder.Layout
-            {
-                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f,
-                deckY = deckY, deckHalf = deckHalf, stairRun = stairRun
-            }, trail);
-            // the roof is scenery only: no collider, so nothing can ever stand on top of it
-            Object.DestroyImmediate(Box(room, "Roof", new Vector3(0, roofY + 0.1f, (laneFront + wallZ) * 0.5f), new Vector3(halfW * 2f + 0.4f, 0.2f, wallZ - laneFront), ground).GetComponent<Collider>());
-            Box(room, "WallLeft", new Vector3(-halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
-            Box(room, "WallRight", new Vector3(halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
-            BuildDeckAndStairs(room, deckY, deckHalf, stairRun, laneFront, wallZ, arch);
-            DoorFrame(room, "DoorLeft", new Vector3(-12.4f, 0, 0.9f), arch, 1.8f);
-            DoorFrame(room, "DoorRight", new Vector3(12.4f, 0, 0.9f), arch, 1.8f);
-            DoorFrame(room, "Vent", new Vector3(3f, roofY - 0.1f, wallZ - 0.2f), arch, 1.0f, true);
-
-            // ---------------------------------------------------------------- spawn points
+            var layout = room.gameObject.AddComponent<LevelLayout>();
+            layout.kind = kind;
             var spawnRoot = new GameObject("SpawnPoints").transform;
             var points = new Transform[5];
-            points[(int)SpawnKind.LeftDoor] = Point(spawnRoot, "LeftDoor", new Vector3(-12.2f, 0, 0));
-            points[(int)SpawnKind.RightDoor] = Point(spawnRoot, "RightDoor", new Vector3(12.2f, 0, 0));
-            points[(int)SpawnKind.UpperDoor] = Point(spawnRoot, "UpperDoor", new Vector3(0f, deckY, wallZ - 0.4f));   // the doorway onto the deck
-            points[(int)SpawnKind.Background] = Point(spawnRoot, "Background", new Vector3(11f, 0, wallZ - 0.4f));   // the back door
-            points[(int)SpawnKind.Ceiling] = Point(spawnRoot, "Ceiling", new Vector3(0f, roofY - 0.6f, 0));
+            Vector3 heroStart;
+            if (kind == LayoutKind.Hall)
+            {
+                layout.roofY = 6.8f;
+                BuildHall(room, ground, arch, trail, spawnRoot, points, out heroStart);
+            }
+            else
+            {
+                layout.roofY = TowerPlan.RoofY;
+                TowerBuilder.Build(room, ground, arch, trail, spawnRoot, points, out heroStart);
+            }
 
             // ---------------------------------------------------------------- hero + systems
             var eyeMat = Mat("Eyes", "Unlit/Color", new Color(0.97f, 0.96f, 0.92f));
             var heroGo = FighterFactory.Build(model, moves, ink, "Hero", true, trail, FightStyle.Fists, eyeMat);
-            heroGo.transform.position = new Vector3(9f, 0f, 0f);
+            heroGo.transform.position = heroStart;
             var hero = heroGo.GetComponent<HeroController>();
 
             var systems = new GameObject("Systems");
@@ -150,7 +143,8 @@ namespace ProjectInk.EditorTools
 
             ConfigurePlayer();
 
-            EditorSceneManager.SaveScene(scene, ScenePath);
+            EditorSceneManager.SaveScene(scene, scenePath);
+            if (!main) { AssetDatabase.SaveAssets(); Debug.Log("[Stick Wick] classic hall built: " + scenePath); return; }
             File.WriteAllText(VersionFile, SceneVersion.ToString());
             AssetDatabase.ImportAsset(VersionFile);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
@@ -225,7 +219,7 @@ namespace ProjectInk.EditorTools
             return mesh;
         }
 
-        static Material Mat(string name, string shader, Color color)
+        internal static Material Mat(string name, string shader, Color color)
         {
             string path = $"{GenDir}/{name}.mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -242,7 +236,7 @@ namespace ProjectInk.EditorTools
             return m;
         }
 
-        static Transform Box(Transform parent, string name, Vector3 pos, Vector3 size, Material mat)
+        internal static Transform Box(Transform parent, string name, Vector3 pos, Vector3 size, Material mat)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
@@ -252,6 +246,41 @@ namespace ProjectInk.EditorTools
             go.GetComponent<Renderer>().sharedMaterial = mat;
             go.isStatic = true;
             return go.transform;
+        }
+
+        /// <summary>The classic hall (kept as a backup): ground, wide stairs, a raised deck, stairs, ground.</summary>
+        static void BuildHall(Transform room, Material ground, Material arch, Material trail, Transform spawnRoot, Transform[] points, out Vector3 heroStart)
+        {
+            const float halfW = 13.2f, floorY = 3.2f, roofY = 6.8f, laneFront = -0.6f, wallZ = 2.4f;
+            const float deckY = 2.6f, deckHalf = 3f, stairRun = 4f;      // deck: x -3..3; stairs: 3..7 each side
+            Box(room, "Ground", new Vector3(0, -2f, 0.5f), new Vector3(60, 4, 9), ground);
+            // the back wall (concrete with windows), lamps, pipes, skyline, haze and dust
+            EnvironmentBuilder.Build(room, new EnvironmentBuilder.Layout
+            {
+                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f,
+                deckY = deckY, deckHalf = deckHalf, stairRun = stairRun
+            }, ground);
+            EnvironmentBuilder.Props(room, new EnvironmentBuilder.Layout
+            {
+                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f,
+                deckY = deckY, deckHalf = deckHalf, stairRun = stairRun
+            }, trail);
+            // the roof is scenery only: no collider, so nothing can ever stand on top of it
+            Object.DestroyImmediate(Box(room, "Roof", new Vector3(0, roofY + 0.1f, (laneFront + wallZ) * 0.5f), new Vector3(halfW * 2f + 0.4f, 0.2f, wallZ - laneFront), ground).GetComponent<Collider>());
+            Box(room, "WallLeft", new Vector3(-halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
+            Box(room, "WallRight", new Vector3(halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
+            BuildDeckAndStairs(room, deckY, deckHalf, stairRun, laneFront, wallZ, arch);
+            DoorFrame(room, "DoorLeft", new Vector3(-12.4f, 0, 0.9f), arch, 1.8f);
+            DoorFrame(room, "DoorRight", new Vector3(12.4f, 0, 0.9f), arch, 1.8f);
+            DoorFrame(room, "Vent", new Vector3(3f, roofY - 0.1f, wallZ - 0.2f), arch, 1.0f, true);
+
+            points[(int)SpawnKind.LeftDoor] = Point(spawnRoot, "LeftDoor", new Vector3(-12.2f, 0, 0));
+            points[(int)SpawnKind.RightDoor] = Point(spawnRoot, "RightDoor", new Vector3(12.2f, 0, 0));
+            points[(int)SpawnKind.UpperDoor] = Point(spawnRoot, "UpperDoor", new Vector3(0f, deckY, wallZ - 0.4f));   // the doorway onto the deck
+            points[(int)SpawnKind.Background] = Point(spawnRoot, "Background", new Vector3(11f, 0, wallZ - 0.4f));   // the back door
+            points[(int)SpawnKind.Ceiling] = Point(spawnRoot, "Ceiling", new Vector3(0f, roofY - 0.6f, 0));
+
+            heroStart = new Vector3(9f, 0f, 0f);
         }
 
         /// <summary>The raised deck on its solid base, and a wide flight of stairs on each side.
@@ -334,7 +363,7 @@ namespace ProjectInk.EditorTools
             col.size = new Vector3(1f, 1f, (back - colFront) / depth);
         }
 
-        static void DoorFrame(Transform parent, string name, Vector3 basePos, Material mat, float width, bool facingCamera = false)
+        internal static void DoorFrame(Transform parent, string name, Vector3 basePos, Material mat, float width, bool facingCamera = false)
         {
             var root = new GameObject(name).transform;
             root.SetParent(parent, false);
@@ -351,7 +380,7 @@ namespace ProjectInk.EditorTools
             Object.DestroyImmediate(lintel.GetComponent<Collider>());
         }
 
-        static Transform Point(Transform parent, string name, Vector3 pos)
+        internal static Transform Point(Transform parent, string name, Vector3 pos)
         {
             var t = new GameObject(name).transform;
             t.SetParent(parent, false);

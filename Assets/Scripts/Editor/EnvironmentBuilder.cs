@@ -40,7 +40,7 @@ namespace ProjectInk.EditorTools
             return m;
         }
 
-        static Material ColorMat(string name, Color c)
+        internal static Material ColorMat(string name, Color c)
         {
             string path = $"Assets/Generated/{name}.mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -194,7 +194,7 @@ namespace ProjectInk.EditorTools
             Crate(props, new Vector3(1.8f, L.deckY, 0f), 0.7f, crateMat, crateEdge);
         }
 
-        static void Bar(Transform parent, Vector3 center, float ceiling, Material steel, Material rim)
+        internal static void Bar(Transform parent, Vector3 center, float ceiling, Material steel, Material rim)
         {
             var root = new GameObject("Bar").transform;
             root.SetParent(parent, false);
@@ -219,7 +219,7 @@ namespace ProjectInk.EditorTools
             sw.anchor = center;
         }
 
-        static void Rope(Transform parent, Vector3 anchor, float length, Material mat)
+        internal static void Rope(Transform parent, Vector3 anchor, float length, Material mat)
         {
             var go = new GameObject("Rope");
             go.transform.SetParent(parent, false);
@@ -241,7 +241,7 @@ namespace ProjectInk.EditorTools
             Box(go.transform, "Knot", anchor + Vector3.down * length, new Vector3(0.09f, 0.12f, 0.09f), mat).GetComponent<Renderer>().sharedMaterial = ColorMat("RopeKnot", new Color(0.12f, 0.12f, 0.12f));
         }
 
-        static void Crate(Transform parent, Vector3 floorPoint, float size, Material mat, Material edge)
+        internal static void Crate(Transform parent, Vector3 floorPoint, float size, Material mat, Material edge)
         {
             var c = Box(parent, "Crate", floorPoint + Vector3.up * size * 0.5f, Vector3.one * size, mat, true);
             c.gameObject.isStatic = false;
@@ -254,7 +254,7 @@ namespace ProjectInk.EditorTools
 
         // ---------------------------------------------------------------- pieces
 
-        static Transform Box(Transform parent, string name, Vector3 pos, Vector3 size, Material mat, bool collider = false)
+        internal static Transform Box(Transform parent, string name, Vector3 pos, Vector3 size, Material mat, bool collider = false)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
@@ -270,7 +270,7 @@ namespace ProjectInk.EditorTools
             return go.transform;
         }
 
-        static void WallWithOpenings(Transform parent, string name, float x0, float x1, float y0, float y1, float z, float thick,
+        internal static void WallWithOpenings(Transform parent, string name, float x0, float x1, float y0, float y1, float z, float thick,
                                      List<Rect> holes, Material mat)
         {
             var root = new GameObject(name).transform;
@@ -318,7 +318,7 @@ namespace ProjectInk.EditorTools
             }
         }
 
-        static void Window(Transform parent, Rect r, float wallZ, Material frame, Material glass)
+        internal static void Window(Transform parent, Rect r, float wallZ, Material frame, Material glass)
         {
             var root = new GameObject("Window").transform;
             root.SetParent(parent, false);
@@ -337,7 +337,7 @@ namespace ProjectInk.EditorTools
             Box(root, "Sill", new Vector3(r.center.x, r.yMin - 0.05f, wallZ - 0.22f), new Vector3(r.width + 0.3f, 0.08f, 0.14f), frame);
         }
 
-        static void FrameAround(Transform parent, Rect r, float z, float t, Material mat)
+        internal static void FrameAround(Transform parent, Rect r, float z, float t, Material mat)
         {
             Box(parent, "FrameTop", new Vector3(r.center.x, r.yMax + t * 0.5f, z), new Vector3(r.width + t * 2f, t, 0.06f), mat);
             if (r.yMin > 0.05f) Box(parent, "FrameBottom", new Vector3(r.center.x, r.yMin - t * 0.5f, z), new Vector3(r.width + t * 2f, t, 0.06f), mat);
@@ -345,7 +345,7 @@ namespace ProjectInk.EditorTools
             Box(parent, "FrameRight", new Vector3(r.xMax + t * 0.5f, r.center.y, z), new Vector3(t, r.height, 0.06f), mat);
         }
 
-        static void Pipe(Transform parent, string name, Vector3 center, float length, float radius, Material mat)
+        internal static void Pipe(Transform parent, string name, Vector3 center, float length, float radius, Material mat)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             Object.DestroyImmediate(go.GetComponent<Collider>());
@@ -359,7 +359,7 @@ namespace ProjectInk.EditorTools
                 Box(parent, name + "Bracket", new Vector3(x, center.y + radius + 0.08f, center.z), new Vector3(0.04f, 0.16f + radius, 0.04f), mat);
         }
 
-        static void Billboard(Transform parent, string name, Vector3 pos, Vector2 size, Material mat)
+        internal static void Billboard(Transform parent, string name, Vector3 pos, Vector2 size, Material mat)
         {
             var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Object.DestroyImmediate(q.GetComponent<Collider>());
@@ -372,7 +372,7 @@ namespace ProjectInk.EditorTools
             r.shadowCastingMode = ShadowCastingMode.Off;
         }
 
-        static void Lamp(Transform parent, Vector3 mount, float cord, Material shade, Material bulb, Material cone, Material glow)
+        internal static void Lamp(Transform parent, Vector3 mount, float cord, Material shade, Material bulb, Material cone, Material glow)
         {
             var pivot = new GameObject("Lamp").transform;
             pivot.SetParent(parent, false);
@@ -408,7 +408,7 @@ namespace ProjectInk.EditorTools
             lamp.lights = lights.ToArray();
         }
 
-        static void Haze(Transform parent, string name, float y, Layout L, Material mat)
+        internal static void Haze(Transform parent, string name, float y, Layout L, Material mat)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -431,7 +431,7 @@ namespace ProjectInk.EditorTools
             r.shadowCastingMode = ShadowCastingMode.Off;
         }
 
-        static void Dust(Transform parent, Layout L, Texture2D glow)
+        internal static void Dust(Transform parent, Layout L, Texture2D glow)
         {
             var go = new GameObject("Dust");
             go.transform.SetParent(parent, false);
@@ -462,7 +462,7 @@ namespace ProjectInk.EditorTools
 
         // ---------------------------------------------------------------- textures
 
-        static Texture2D SaveTex(string name, Texture2D tex, TextureWrapMode wrap = TextureWrapMode.Repeat)
+        internal static Texture2D SaveTex(string name, Texture2D tex, TextureWrapMode wrap = TextureWrapMode.Repeat)
         {
             string path = $"{TexDir}/{name}.png";
             File.WriteAllBytes(path, tex.EncodeToPNG());
@@ -475,7 +475,7 @@ namespace ProjectInk.EditorTools
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
-        static float Hash(int x, int y, int seed)
+        internal static float Hash(int x, int y, int seed)
         {
             unchecked
             {
@@ -486,7 +486,7 @@ namespace ProjectInk.EditorTools
         }
 
         /// <summary>Tileable value noise (period in cells).</summary>
-        static float Noise(float x, float y, int period, int seed)
+        internal static float Noise(float x, float y, int period, int seed)
         {
             int x0 = Mathf.FloorToInt(x), y0 = Mathf.FloorToInt(y);
             float fx = x - x0, fy = y - y0;
@@ -498,7 +498,7 @@ namespace ProjectInk.EditorTools
             return Mathf.Lerp(Mathf.Lerp(a, b, fx), Mathf.Lerp(c, d, fx), fy);
         }
 
-        static float Fbm(float u, float v, int seed)
+        internal static float Fbm(float u, float v, int seed)
         {
             float sum = 0f, amp = 0.5f;
             int period = 4;
@@ -513,7 +513,7 @@ namespace ProjectInk.EditorTools
 
         /// <summary>Architectural concrete: soft mottling, formwork panel seams, tie holes,
         /// drip stains running down, darker grime near the floor line.</summary>
-        static Texture2D ConcreteTexture(int size, Color baseColor, int seed)
+        internal static Texture2D ConcreteTexture(int size, Color baseColor, int seed)
         {
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
             var px = new Color[size * size];
@@ -546,7 +546,7 @@ namespace ProjectInk.EditorTools
 
         /// <summary>A night city seen through the windows: deep sky, moon with a halo, three
         /// layers of tower silhouettes with lit windows, haze at the horizon.</summary>
-        static Texture2D SkylineTexture(int w, int h, int seed)
+        internal static Texture2D SkylineTexture(int w, int h, int seed)
         {
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, true);
             var px = new Color[w * h];
@@ -601,7 +601,7 @@ namespace ProjectInk.EditorTools
         }
 
         /// <summary>A downward cone of light: narrow and bright at the top, wide and faint below.</summary>
-        static Texture2D ConeTexture(int w, int h)
+        internal static Texture2D ConeTexture(int w, int h)
         {
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, true);
             var px = new Color[w * h];
@@ -620,7 +620,7 @@ namespace ProjectInk.EditorTools
             return tex;
         }
 
-        static Texture2D GlowTexture(int size)
+        internal static Texture2D GlowTexture(int size)
         {
             var tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
             var px = new Color[size * size];

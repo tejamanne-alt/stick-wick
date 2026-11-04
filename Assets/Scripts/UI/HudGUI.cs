@@ -313,21 +313,36 @@ namespace ProjectInk
                     else EdgeGlow(new Rect(w - 40, ey - 50, 40, 100), oc, 180f);
                 }
 
-            // incoming enemies: a soft red glow breathing on the edge they will come through
-            foreach (var inc in director.Upcoming)
-            {
-                if (Time.time < inc.time) continue;
-                float pulse = 0.55f + 0.45f * Mathf.Sin(Time.unscaledTime * 8f);
-                var c = Enemy.TelegraphColor; c.a = 0.55f * pulse;
-                switch (inc.kind)
+            // incoming enemies: a soft red glow breathing where they will come in: round the doorway
+            // if it is in shot, otherwise on the screen edge nearest it
+            if (cam != null)
+                foreach (var inc in director.Upcoming)
                 {
-                    case SpawnKind.LeftDoor: EdgeGlow(new Rect(0, h * 0.45f, 70, h * 0.45f), c, 0f); break;
-                    case SpawnKind.RightDoor: EdgeGlow(new Rect(w - 70, h * 0.45f, 70, h * 0.45f), c, 180f); break;
-                    case SpawnKind.UpperDoor: EdgeGlow(new Rect(w * 0.38f, 0, w * 0.24f, 60), c, 90f); break;   // the deck doorway, top centre
-                    case SpawnKind.Ceiling: EdgeGlow(new Rect(w * 0.3f, 0, w * 0.4f, 70), c, 90f); break;
-                    default: EdgeGlow(new Rect(w * 0.3f, h - 70, w * 0.4f, 70), c, 270f); break;
+                    if (Time.time < inc.time) continue;
+                    float pulse = 0.55f + 0.45f * Mathf.Sin(Time.unscaledTime * 8f);
+                    var c = Enemy.TelegraphColor; c.a = 0.55f * pulse;
+                    var sp = director.spawnPoints[(int)inc.kind];
+                    if (sp == null) continue;
+                    Vector3 wp = sp.position + Vector3.up * 1.0f;
+                    if (inc.kind == SpawnKind.Ceiling && hero != null) wp = new Vector3(hero.transform.position.x, sp.position.y, 0f);
+                    var vp = cam.WorldToViewportPoint(wp);
+                    if (vp.z > 0f && vp.x > 0.06f && vp.x < 0.94f && vp.y > 0.08f && vp.y < 0.92f)
+                    {
+                        var old = GUI.color;
+                        GUI.color = c;
+                        float gx = vp.x * w, gy = (1f - vp.y) * h;
+                        GUI.DrawTexture(new Rect(gx - 70, gy - 90, 140, 180), glowTex);
+                        GUI.color = old;
+                    }
+                    else
+                    {
+                        float ex = Mathf.Clamp01(vp.x), ey = Mathf.Clamp(1f - vp.y, 0.1f, 0.9f) * h;
+                        if (vp.z <= 0f || ex <= 0.06f) EdgeGlow(new Rect(0, ey - 90, 70, 180), c, 0f);
+                        else if (ex >= 0.94f) EdgeGlow(new Rect(w - 70, ey - 90, 70, 180), c, 180f);
+                        else if (vp.y >= 0.92f) EdgeGlow(new Rect(ex * w - 120, 0, 240, 60), c, 90f);
+                        else EdgeGlow(new Rect(ex * w - 120, h - 60, 240, 60), c, 270f);
+                    }
                 }
-            }
 
             if (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f))
                 GUI.Label(new Rect(0, h - 56, w, 40), GestureInput.Instance != null && !GestureInput.Instance.Classic

@@ -64,7 +64,7 @@ namespace ProjectInk
                 dropAt = cutB + 0.35f;          // a beat of the empty floor, then the crash
                 cStart = float.MaxValue;        // decided by the landing
                 cLength = 2.5f;
-                hero.CineHold(new Vector3(home.x, 6.45f, 0f));
+                hero.CineHold(new Vector3(home.x, Fighter.RoofY - 0.35f, 0f));
             }
             else
             {
@@ -105,7 +105,7 @@ namespace ProjectInk
                 var fx = InkFx.Instance;
                 if (fx != null)
                 {
-                    fx.Burst(new Vector3(home.x, 6.6f, 0f), 1.1f);
+                    fx.Burst(new Vector3(home.x, Fighter.RoofY - 0.2f, 0f), 1.1f);
                     fx.Splash(new Vector3(home.x, 6.5f, 0f), Vector3.down, 10, new Color(0.75f, 0.75f, 0.75f));
                 }
                 Sound.Play(Sfx.Glass, 1f, new Vector3(home.x, 6.5f, 0f));     // through the skylight

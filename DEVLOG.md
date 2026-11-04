@@ -346,3 +346,44 @@ New layout: **one continuous walking surface**. Every x has exactly one floor he
 - `Fighter.GroundY` now never starts above y 6.5 (under the roof), and airborne fighters bump their heads at feet height 5.2.
 - The roof has no collider. `SceneVersion` → 13.
 - Anyone already up there falls back into the hall.
+
+## 2026-11-04: 0.7 the tower
+
+The hall still felt basic. The new main building is **the tower**, a three-level cut-away high-rise lobby built around movement. The single-path hall is kept as a backup: branch `backup/classic-hall`, plus the menu **Stick Wick → Build Classic Hall (backup)**, which builds `Assets/Scenes/ClassicHall.unity`.
+
+**Layout** (`TowerPlan`, shared by the builder and the AI, so they always agree):
+- Level 01: the lobby (ground).
+- Level 02: two mezzanines (x ≤ −4 and x ≥ 3, y 3.0), with an open atrium between them.
+- Level 03: a steel catwalk (x −7.5..7.5, y 6.0) across the atrium, with a **glass panel** in the middle. Roof at 9.4.
+- Ledges, marked with hazard stripes: the inner edge of each mezzanine and each end of the catwalk.
+
+**Movement:**
+- **Climb:** swipe up near a striped ledge. The hero runs to it, jumps, hangs by the hands and pulls up.
+- **Drop:** swipe down on a mezzanine or the catwalk to drop through it.
+- **Fall:** walk or get knocked off an edge. Falls of more than 2.3 m finish enemies (FLOOR DROP).
+- **Ropes:** hang from the catwalk truss into the atrium, to swing from one mezzanine to the other.
+- **Bars:** under and over each mezzanine, and high over the catwalk.
+- **Glass:** anyone landing hard on it (thrown, knocked down from above, the Brute, a long fall) smashes through, 6 m to the lobby ("THROUGH THE GLASS!"). It is repaired each floor.
+- **Flying kicks** leap up a level at enemies above, and dive through the floor at enemies below.
+- The opening cinematic drops the hero from the roof **through the glass catwalk** into the lobby.
+
+**Physics:**
+- One-way platforms: an airborne fighter only lands on surfaces below where their feet were, so you jump up through floors and land on them from above.
+- Ledges are per fighter (any ledge, either direction).
+- The roof height comes from `LevelLayout`.
+
+**Enemy AI** (`LevelNav`): breadth-first route-finding over platforms (walk, climb a ledge, drop through), tested on 10 cases including the broken-glass detour.
+- Fighters with an attack token **pounce** off a level onto the hero below.
+- Shooters and throwers fire across levels.
+
+**Look:**
+- concrete back wall with lobby clerestories and a **tall atrium window** with mullions onto the city skyline
+- **lit offices behind venetian blinds** on the mezzanines, with back doors and corridors
+- a **skylight band** and a **giant ventilation fan** turning in the top wall (it slows in slow motion)
+- **searchlights sweeping** through the skylight, moonlight shafts
+- I-beam columns, a steel truss under the catwalk with hangers, slabs with bright lips and dark beams, handrails
+- big stencilled level numbers 01/02/03, pendant lamps, haze on every level, drifting dust
+
+**HUD:** incoming-enemy glows now sit around the actual doorway when it's in shot, or on the nearest screen edge.
+
+`SceneVersion` → 14. Diagram: `docs/previews/tower_layout.png`.

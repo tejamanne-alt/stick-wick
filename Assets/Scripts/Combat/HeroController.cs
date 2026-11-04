@@ -354,12 +354,18 @@ namespace ProjectInk
         /// <summary>The floor the hero is fighting on (0 ground, 1 upper). Changes only when he
         /// lands, so a jump or a rope swing does not send every enemy running for the stairs.</summary>
         public int Floor { get; private set; }
+        /// <summary>The tower platform the hero last stood on (-1 in the classic hall).</summary>
+        public int Platform { get; private set; } = -1;
 
         void Update()
         {
             float dt = Time.deltaTime;
             stateTime += dt;
-            if (Grounded && !OnLedge && !CinematicLock) Floor = Level;
+            if (Grounded && !OnLedge && !CinematicLock)
+            {
+                Floor = Level;
+                if (LevelNav.Active) { int pl = LevelNav.PlatformAt(transform.position); if (pl >= 0) Platform = pl; }
+            }
             ComboTimer -= dt;
             if (ComboTimer <= 0f) ComboCount = 0;
             if (CinematicLock)
@@ -568,7 +574,7 @@ namespace ProjectInk
                 case Command.JumpKick: Jump(); break;
                 case Command.DodgeLeft: Dodge(-1); break;
                 case Command.DodgeRight: Dodge(1); break;
-                case Command.ThrowWeapon: ThrowWeapon(); break;
+                case Command.ThrowWeapon: if (!TryDropThrough()) ThrowWeapon(); break;
                 case Command.Rampage: StartRampage(); break;
                 case Command.CycleStyle: SetStyle((FightStyle)(((int)Style + 1) % 5)); break;
                 case Command.StyleFists: SetStyle(FightStyle.Fists); break;
@@ -831,6 +837,13 @@ namespace ProjectInk
             if (!Grounded) return;
             var p = transform.position;
 
+            // the tower: a ledge in reach above, climb it (jump, hang by the hands, pull up)
+            if (LevelNav.Active && Swingable.Reachable(p, HandReach + 1.5f, 1.8f) == null)
+            {
+                int k = LevelNav.LedgeFor(p, LevelNav.PlatformAt(p));
+                if (k >= 0) { GoToLedge(k); return; }
+            }
+
             // a rope or bar overhead: jump for it
             var sw = Swingable.Reachable(p, HandReach + 1.5f, 1.8f);
             if (sw != null)
@@ -1079,8 +1092,11 @@ namespace ProjectInk
 
         // ------------------------------------------------------------------ ledge
 
-        void GoToLedge()
+        int navLedge = -1;      // the tower ledge being run at (-1: the classic hall's ledge)
+
+        void GoToLedge(int towerLedge = -1)
         {
+            navLedge = towerLedge;
             state = State.ToLedge;
             stateTime = 0f;
             body.Play("run", 0.06f, false, 1.6f);
@@ -1089,15 +1105,45 @@ namespace ProjectInk
         void UpdateToLedge(float dt)
         {
             var p = transform.position;
-            float fx = LedgeFootX;
+            float fx = navLedge >= 0 ? LevelNav.Ledges[navLedge].FootX : LedgeFootX;
             FaceTowards(fx);
             p.x = Mathf.MoveTowards(p.x, fx, 11f * dt);
             transform.position = p;
             if (Mathf.Abs(p.x - fx) < 0.05f || stateTime > 1.2f)
             {
-                BeginLedgeClimb(0.1f);
+                if (navLedge >= 0)
+                {
+                    var L = LevelNav.Ledges[navLedge];
+                    BeginLedgeClimb(0.08f, L.x, L.y, L.dir);
+                }
+                else BeginLedgeClimb(0.1f);
+                Sound.Play(Sfx.Cloth, 1f, transform.position);
+                Sound.Play(Sfx.HeroEffort, 0.8f, transform.position);
                 if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(40, "CLIMB");
             }
+        }
+
+        /// <summary>Swipe down on a one-way floor (a mezzanine or the catwalk): drop through it
+        /// to the level below. Returns false where there is nothing to drop through.</summary>
+        bool TryDropThrough()
+        {
+            if (!LevelNav.Active || !Grounded || state != State.Idle) return false;
+            int pl = LevelNav.PlatformAt(transform.position);
+            if (pl < 0 || !LevelNav.Platforms[pl].oneWay) return false;
+            dropThroughUntil = Time.time + 0.3f;
+            Grounded = false;
+            velocity = new Vector3(velocity.x, 0.5f, 0f);
+            state = State.Air;
+            stateTime = 0f;
+            body.Play("jump", 0.06f);
+            Sound.Play(Sfx.Cloth, 1f, transform.position);
+            return true;
+        }
+
+        protected override void OnLanded(float fallHeight)
+        {
+            // a long fall onto the catwalk's glass goes straight through it
+            if (LevelNav.Active && GlassPanel.Land(transform.position, fallHeight - 0.9f, false)) Grounded = false;
         }
 
         protected override void OnLedgeClimbed() { EnterIdle(); }
@@ -1244,8 +1290,9 @@ namespace ProjectInk
                     }
                     else if (dy < -1.4f)
                     {
-                        velocity.y = 3f;                                         // hop off the deck down onto them
+                        velocity.y = 3f;                                         // hop off, down onto them
                         Grounded = false;
+                        if (LevelNav.Active) dropThroughUntil = Time.time + 0.35f;   // the tower: straight through the floor
                     }
                 }
             }

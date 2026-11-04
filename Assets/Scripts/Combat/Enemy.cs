@@ -119,12 +119,19 @@ namespace ProjectInk
             // hero always gets there, so everyone is always on "the same level" for the brain.
             // (The old stair-lane / ledge travel code below is no longer reached.)
             bool sameLevel = !onStairs && !onStairsDown;
+            if (LevelNav.Active)
+            {
+                // the tower: the same level means the same walkable region (catwalk + glass count as one)
+                if (Grounded) navPlatform = LevelNav.PlatformAt(transform.position);
+                int hp = hero.Platform;
+                sameLevel = navPlatform >= 0 && hp >= 0 && LevelNav.Region(navPlatform) == LevelNav.Region(hp);
+            }
 
             switch (state)
             {
                 case State.Enter: UpdateEnter(dx); break;
                 case State.Approach:
-                    if (!sameLevel || onStairs) { Travel(dt); break; }
+                    if (!sameLevel || onStairs) { if (LevelNav.Active) NavTravel(dt, dx); else Travel(dt); break; }
                     LeaveStairsLane(dt);
                     FaceTowards(hero.transform.position.x);
                     if (dist > ringDistance + 0.3f) Walk(Mathf.Sign(dx));
@@ -273,6 +280,77 @@ namespace ProjectInk
             }
         }
 
+        // ------------------------------------------------------------------ the tower: route-finding
+
+        int navPlatform = -1;
+
+        /// <summary>Get to the hero's level: walk, climb the next ledge on the route, or drop
+        /// through the floor (fighters with an attack token pounce straight onto the hero instead).
+        /// Shooters and throwers just fire across levels when the hero is in range.</summary>
+        void NavTravel(float dt, float dx)
+        {
+            if (!Grounded) return;
+            LeaveStairsLane(dt);
+            var p = transform.position;
+            float dy = hero.transform.position.y - p.y;
+            if (Ranged && Mathf.Abs(dx) < 9f && Mathf.Abs(dy) < 6.5f) { FireAcrossLevels(); return; }
+
+            int me = LevelNav.PlatformAt(p);
+            if (me < 0) { Walk(Mathf.Sign(dx)); return; }
+            var step = LevelNav.Next(me, p.x, hero.Platform, hero.transform.position.x);
+            if (step.kind == LevelNav.StepKind.None)
+            {
+                // no route right now (the glass is gone, say): wait by the hero's side of the platform
+                var pl = LevelNav.Platforms[me];
+                float wx = Mathf.Clamp(hero.transform.position.x, pl.x0 + 0.4f, pl.x1 - 0.4f);
+                if (Mathf.Abs(wx - p.x) > 0.2f) Walk(Mathf.Sign(wx - p.x)); else { velocity.x = 0f; FaceTowards(hero.transform.position.x); }
+                return;
+            }
+            float d = step.x - p.x;
+            if (step.kind == LevelNav.StepKind.Walk) { Walk(Mathf.Sign(d)); return; }
+            if (Mathf.Abs(d) > 0.15f) { Walk(Mathf.Sign(d) * (Mathf.Abs(d) < 0.6f ? 0.6f : 1f)); return; }
+            velocity.x = 0f;
+
+            if (step.kind == LevelNav.StepKind.Climb)
+            {
+                var L = LevelNav.Ledges[step.ledge];
+                BeginLedgeClimb(Random.Range(0.2f, 0.5f), L.x, L.y, L.dir);
+                return;
+            }
+            // drop. A fighter whose turn it is leaps down at the hero; the rest step off.
+            bool heroBelowClose = hero.Grounded && Mathf.Abs(hero.transform.position.x - p.x) < 6.5f && dy < -1f;
+            if (!Ranged && leapDown && heroBelowClose && !hero.IsDead && AttackTokens.TryTake(this))
+            {
+                HasToken = true;
+                state = State.Pounce;
+                stateTime = 0f;
+                pounceLaunched = false;
+                body.Play(body.Has("duck") ? "duck" : IdleClip, 0.1f);
+                return;
+            }
+            dropThroughUntil = Time.time + 0.3f;
+            Grounded = false;
+            velocity.y = 0.5f;
+            body.Play("jump", 0.08f);
+            Sound.Play(Sfx.Cloth, 0.8f, p);
+        }
+
+        /// <summary>A shooter or thrower with the hero on another level: stand and fire.</summary>
+        void FireAcrossLevels()
+        {
+            velocity.x = 0f;
+            FaceTowards(hero.transform.position.x);
+            if (body.CurrentName == "run") body.Play(IdleClip, 0.15f);
+            if (Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
+            {
+                HasToken = true;
+                state = State.Windup;
+                stateTime = 0f;
+                BeginWindup();
+            }
+            else if (Time.time > waitUntil + 3f) waitUntil = Time.time + Random.Range(0.5f, 1.5f);
+        }
+
         // ------------------------------------------------------------------ the upper floor
 
         bool leapDown, onStairsDown, pounceLaunched;
@@ -355,7 +433,8 @@ namespace ProjectInk
             var p = transform.position;
             float hx = hero.transform.position.x;
             int side = hx >= p.x ? 1 : -1;
-            float tx = Mathf.Max(LedgeX + 0.5f, hx - side * 0.75f);
+            float tx = LevelNav.Active ? hx - side * 0.75f : Mathf.Max(LedgeX + 0.5f, hx - side * 0.75f);
+            if (LevelNav.Active) dropThroughUntil = Time.time + 0.25f;       // off a one-way platform, not back onto it
             float ty = GroundY(new Vector3(tx, 0.5f, 0f), 0.4f);
             float T = Mathf.Clamp(Mathf.Abs(tx - p.x) / 6.5f, 0.5f, 0.85f);
             velocity.x = (tx - p.x) / T;
@@ -419,6 +498,13 @@ namespace ProjectInk
 
         protected override void OnLanded(float fallHeight)
         {
+            // the catwalk's glass gives way under a hard landing
+            if (LevelNav.Active && GlassPanel.Land(transform.position, fallHeight, (IsDown || Type == EnemyType.Brute) && fallHeight > 0.4f))
+            {
+                Grounded = false;
+                if (IsDown || !Alive) Sound.Play(Sfx.FallScream, 0.8f, transform.position);
+                return;
+            }
             projectile = false;
             if (state == State.Enter && kind == SpawnKind.Ceiling && CameraDirector.Instance != null)
                 CameraDirector.Instance.Shake(0.08f, 0.12f);
@@ -556,7 +642,7 @@ namespace ProjectInk
             {
                 var from = Chest + Vector3.up * 0.1f + Vector3.right * Facing * 0.55f;
                 bool fromAbove = transform.position.y - hero.transform.position.y > 2f;   // shooting down from the balcony
-                bool hit = dx > 0f && (dy < 3.2f || fromAbove) && !hero.Invulnerable;   // fires up or down the stairs too
+                bool hit = dx > 0f && (dy < (LevelNav.Active ? 6.5f : 3.2f) || fromAbove) && !hero.Invulnerable;   // fires up or down levels too
                 if (InkFx.Instance != null) InkFx.Instance.Shot(from, hit ? hero.Chest : from + Vector3.right * Facing * 16f);
                 hit &= !hero.Ducking;
                 if (hit) hero.TakeHit(new HitInfo { damage = attack.damage, direction = Facing, knockback = attack.knockback, attacker = this });
