@@ -29,6 +29,14 @@ namespace ProjectInk
         public static Sound Instance { get; private set; }
         public static float Master = 1f;
 
+        /// <summary>Sound on or off (saved).</summary>
+        public static void SetMuted(bool muted)
+        {
+            Master = muted ? 0f : 1f;
+            PlayerPrefs.SetInt("sound_muted", muted ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
         const int Voices = 24;
 
         class Bank { public AudioClip[] clips; public int last = -1; public float lastTime = -9f; }
@@ -56,6 +64,7 @@ namespace ProjectInk
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+            Master = PlayerPrefs.GetInt("sound_muted", 0) == 1 ? 0f : 1f;
             foreach (Sfx s in System.Enum.GetValues(typeof(Sfx)))
             {
                 var clips = Resources.LoadAll<AudioClip>("Audio/" + Folder(s));

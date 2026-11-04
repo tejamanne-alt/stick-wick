@@ -499,8 +499,22 @@ namespace ProjectInk
 
         GUIStyle gTitle, gLine, gNice, gChalk, gBtn;
         Texture2D finger, gRing;
-        bool helpOpen;
-        Rect helpBtn, skipBtn, replayBtn, closeBtn;
+        bool helpOpen, pauseOpen;
+        Rect helpBtn, skipBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, restartBtn;
+
+        /// <summary>Open or close the pause screen (and stop the world, and its sound).</summary>
+        void SetPause(bool on)
+        {
+            pauseOpen = on;
+            if (!on) helpOpen = false;
+            TimeController.Paused = pauseOpen || helpOpen;
+            AudioListener.pause = TimeController.Paused;
+        }
+
+        // on a phone, leaving the app (a call, a notification) pauses the fight
+        void OnApplicationPause(bool paused) { if (paused && Application.isMobilePlatform && !TimeController.Paused) SetPause(true); }
+        void OnApplicationFocus(bool focus) { if (!focus && Application.isMobilePlatform && !TimeController.Paused) SetPause(true); }
+        void OnDestroy() { TimeController.Paused = false; AudioListener.pause = false; }
 
         void GuideStyles()
         {
@@ -538,10 +552,14 @@ namespace ProjectInk
             ChalkMarks(w, h);
             if (training) TrainingCard(tut, w, h);
 
-            // the ? button (top centre), and SKIP during training
-            helpBtn = new Rect(w * 0.5f - 26, 10, 52, 40);
+            // the pause and ? buttons (top centre), and SKIP during training
+            pauseBtn = new Rect(w * 0.5f - 60, 10, 52, 40);
+            helpBtn = new Rect(w * 0.5f + 8, 10, 52, 40);
+            DrawButton(pauseBtn, "", 26);
+            Fill(new Rect(pauseBtn.center.x - 8, pauseBtn.y + 11, 5, 18), new Color(1f, 1f, 1f, 0.92f));    // the II icon
+            Fill(new Rect(pauseBtn.center.x + 3, pauseBtn.y + 11, 5, 18), new Color(1f, 1f, 1f, 0.92f));
             DrawButton(helpBtn, "?", 26);
-            if (repaint) GestureInput.Blocked.Add(ToScreen(helpBtn));
+            if (repaint) { GestureInput.Blocked.Add(ToScreen(pauseBtn)); GestureInput.Blocked.Add(ToScreen(helpBtn)); }
             if (training && !tut.Finale)
             {
                 skipBtn = new Rect(w - 210, 196, 190, 38);
@@ -549,15 +567,33 @@ namespace ProjectInk
                 if (repaint) GestureInput.Blocked.Add(ToScreen(skipBtn));
                 if (repaint && Pressed(skipBtn)) tut.End(false);
             }
-            bool hKey = false;
+            bool hKey = false, pKey = false;
 #if ENABLE_INPUT_SYSTEM
             var kb = UnityEngine.InputSystem.Keyboard.current;
-            if (repaint && kb != null) hKey = kb.hKey.wasPressedThisFrame || (helpOpen && kb.escapeKey.wasPressedThisFrame);
+            if (repaint && kb != null)
+            {
+                hKey = kb.hKey.wasPressedThisFrame || (helpOpen && kb.escapeKey.wasPressedThisFrame);
+                pKey = kb.pKey.wasPressedThisFrame || (!helpOpen && kb.escapeKey.wasPressedThisFrame);
+            }
 #else
-            if (repaint) hKey = Input.GetKeyDown(KeyCode.H) || (helpOpen && Input.GetKeyDown(KeyCode.Escape));
+            if (repaint)
+            {
+                hKey = Input.GetKeyDown(KeyCode.H) || (helpOpen && Input.GetKeyDown(KeyCode.Escape));
+                pKey = Input.GetKeyDown(KeyCode.P) || (!helpOpen && Input.GetKeyDown(KeyCode.Escape));
+            }
 #endif
-            if (repaint && (Pressed(helpBtn) || hKey)) { helpOpen = !helpOpen; TimeController.Paused = helpOpen; }
+            if (repaint)
+            {
+                if (Pressed(pauseBtn) || pKey) SetPause(!pauseOpen);
+                else if (Pressed(helpBtn) || hKey)
+                {
+                    helpOpen = !helpOpen;
+                    TimeController.Paused = pauseOpen || helpOpen;
+                    AudioListener.pause = TimeController.Paused;
+                }
+            }
             if (helpOpen) HelpCard(w, h, repaint);
+            else if (pauseOpen) PauseCard(w, h, repaint);
         }
 
         void DrawButton(Rect r, string text, int size)
@@ -759,6 +795,32 @@ namespace ProjectInk
             }
         }
 
+        /// <summary>The pause screen: RESUME, MOVES (the help card), SOUND on/off, RESTART.</summary>
+        void PauseCard(float w, float h, bool repaint)
+        {
+            Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.7f));
+            Label(new Rect(0, h * 0.18f, w, 100), Spaced("PAUSED"), new GUIStyle(gTitle) { fontSize = 84 });
+            Fill(new Rect(w * 0.5f - 150, h * 0.18f + 104, 300, 1), new Color(1f, 1f, 1f, 0.5f));
+            if (director != null)
+                Label(new Rect(0, h * 0.18f + 112, w, 30), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}   ·   {director.Score:N0}", new GUIStyle(gLine) { fontSize = 18 });
+            float bw = 300, bh = 50, x = w * 0.5f - bw * 0.5f, y = h * 0.18f + 170;
+            resumeBtn = new Rect(x, y, bw, bh);
+            movesBtn = new Rect(x, y + 62, bw, bh);
+            soundBtn = new Rect(x, y + 124, bw, bh);
+            restartBtn = new Rect(x, y + 186, bw, bh);
+            DrawButton(resumeBtn, "RESUME", 24);
+            DrawButton(movesBtn, "MOVES", 20);
+            DrawButton(soundBtn, Sound.Master > 0f ? "SOUND  ON" : "SOUND  OFF", 20);
+            DrawButton(restartBtn, "RESTART", 20);
+            if (!repaint) return;
+            GestureInput.Blocked.Add(ToScreen(new Rect(0, 0, w, h)));         // the screen belongs to the pause card
+            if (Pressed(resumeBtn)) SetPause(false);
+            else if (Pressed(movesBtn)) { helpOpen = true; TimeController.Paused = true; }
+            else if (Pressed(soundBtn)) Sound.SetMuted(Sound.Master > 0f);
+            else if (Pressed(restartBtn)) { SetPause(false); if (director != null) director.Restart(); }
+            else GestureInput.LastButtonTap = null;
+        }
+
         /// <summary>The help card (game paused): every move with its gesture, and REPLAY TRAINING.</summary>
         void HelpCard(float w, float h, bool repaint)
         {
@@ -798,11 +860,13 @@ namespace ProjectInk
                 GestureInput.Blocked.Add(ToScreen(replayBtn));
                 GestureInput.Blocked.Add(ToScreen(closeBtn));
                 GestureInput.Blocked.Add(ToScreen(new Rect(0, 0, w, h)));     // the whole screen is the card's while open
-                if (Pressed(closeBtn)) { helpOpen = false; TimeController.Paused = false; }
+                if (Pressed(closeBtn)) { helpOpen = false; TimeController.Paused = pauseOpen; AudioListener.pause = pauseOpen; }
                 else if (Pressed(replayBtn))
                 {
                     helpOpen = false;
+                    pauseOpen = false;
                     TimeController.Paused = false;
+                    AudioListener.pause = false;
                     TutorialDirector.ResetDone();
                     HintDirector.ResetAll();
                     if (director != null) director.Restart();

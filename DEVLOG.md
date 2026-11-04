@@ -561,3 +561,11 @@ At most two show at once, most urgent first. Each retires for good after the mov
 On-screen buttons own their touches (`GestureInput.Blocked`), so pressing them never throws a punch, and a paused game ignores fight input. The old one-line hint is hidden during training.
 
 Mock-ups: `docs/previews/guide_mockups.png`.
+
+## 2026-11-04: 1.0.1 pause
+
+- A **pause button** (II) beside the ? at the top centre; on the keyboard, **P** or **Esc**.
+- The **PAUSED** screen: floor, wave and score, then RESUME, MOVES (opens the help card; closing it returns here), SOUND ON/OFF (saved) and RESTART.
+- The world stops (`TimeController.Paused`) and so does all sound (`AudioListener.pause`).
+- On phones the game pauses by itself when the app loses focus (a call, a notification, the home button).
+- Touches on the pause screen never reach the fight.
