@@ -299,19 +299,36 @@ namespace ProjectInk
                 Label(new Rect(0, h * 0.32f, w, 50), Brush != null ? director.StyleText : Spaced(director.StyleText), st);
             }
 
-            // anyone the shot could not hold: a small red glow on the edge, at their height
+            // anyone the shot could not hold: an arrow in their colour on the screen edge, pointing at them
             var cam = Camera.main;
             if (cam != null)
+            {
+                if (chevron == null) chevron = ChevronTexture(64);
                 foreach (var e in Enemy.All)
                 {
                     if (!e.Alive) continue;
                     var vp = cam.WorldToViewportPoint(e.Chest);
-                    if (vp.z > 0f && vp.x > -0.02f && vp.x < 1.02f && vp.y > -0.02f && vp.y < 1.02f) continue;
-                    float ey = Mathf.Clamp(1f - vp.y, 0.12f, 0.88f) * h;
-                    var oc = Enemy.TelegraphColor; oc.a = 0.5f;
-                    if (vp.z <= 0f || vp.x < 0.5f) EdgeGlow(new Rect(0, ey - 50, 40, 100), oc, 0f);
-                    else EdgeGlow(new Rect(w - 40, ey - 50, 40, 100), oc, 180f);
+                    if (vp.z > 0f && vp.x > -0.01f && vp.x < 1.01f && vp.y > -0.01f && vp.y < 1.01f) continue;
+                    if (vp.z <= 0f) { vp.x = 1f - vp.x; vp.y = 1f - vp.y; }
+                    // the point on a slightly inset screen rectangle in their direction
+                    Vector2 d = new Vector2(vp.x - 0.5f, vp.y - 0.5f);
+                    float m = Mathf.Max(Mathf.Abs(d.x) / 0.46f, Mathf.Abs(d.y) / 0.40f);
+                    Vector2 q = new Vector2(0.5f, 0.5f) + d / Mathf.Max(m, 1e-3f);
+                    float px = q.x * w, py = (1f - q.y) * h;
+                    float ang = Mathf.Atan2(-d.y, d.x) * Mathf.Rad2Deg;          // GUI y points down
+                    float pulse = 0.8f + 0.2f * Mathf.Sin(Time.unscaledTime * 6f + e.transform.position.x);
+                    var oldC = GUI.color; var oldM = GUI.matrix;
+                    GUI.color = new Color(1f, 1f, 1f, 0.35f * pulse);
+                    GUI.DrawTexture(new Rect(px - 34, py - 34, 68, 68), glowTex);
+                    GUIUtility.RotateAroundPivot(ang, new Vector2(px, py) * scale);
+                    GUI.color = new Color(1f, 1f, 1f, 0.9f);
+                    GUI.DrawTexture(new Rect(px - 17, py - 17, 34, 34), chevron);      // white rim
+                    var ec = e.InkColor; ec.a = pulse;
+                    GUI.color = ec;
+                    GUI.DrawTexture(new Rect(px - 13, py - 13, 26, 26), chevron);      // their colour
+                    GUI.matrix = oldM; GUI.color = oldC;
                 }
+            }
 
             // incoming enemies: a soft red glow breathing where they will come in: round the doorway
             // if it is in shot, otherwise on the screen edge nearest it
@@ -409,7 +426,25 @@ namespace ProjectInk
             Fill(new Rect(center.x - 50, center.y + 56, 100 * director.RankProgress, 1), new Color(1f, 1f, 1f, 0.8f * rankAlpha));
         }
 
-        Texture2D glowTex, edgeTex;
+        Texture2D glowTex, edgeTex, chevron;
+
+        /// <summary>A soft-edged arrow pointing right (rotated into place when drawn).</summary>
+        static Texture2D ChevronTexture(int n)
+        {
+            var t = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float u = x / (float)(n - 1), v = y / (float)(n - 1) - 0.5f;
+                    // a solid triangle: tip at the right, base at u = 0.15
+                    float halfH = (0.92f - u) * 0.62f;
+                    float a = Mathf.Clamp01(Mathf.Min((u - 0.12f) * 30f, (halfH - Mathf.Abs(v)) * 30f));
+                    px[y * n + x] = new Color32(255, 255, 255, (byte)(a * 255));
+                }
+            t.SetPixels32(px); t.Apply();
+            return t;
+        }
 
         /// <summary>A soft glow on a screen edge; `angle` turns the gradient (0 = fades rightwards from the left edge).</summary>
         void EdgeGlow(Rect r, Color c, float angle)

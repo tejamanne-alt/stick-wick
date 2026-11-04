@@ -426,3 +426,17 @@ Feedback: the hero and enemies still left the screen; the camera should zoom out
 - New last-word pass `KeepEveryoneInShot`: after every camera move (follow, close-ups, orbits), if any fighter's feet or head would fall outside the safe frame, the camera pulls straight back along its view until they're all inside. It pulls back instantly and eases in gently.
 - Zooms out fast (0.16 s) and in slowly (0.5 s); the follow is a little quicker (0.14 s).
 - Simulated six tower fights on 19.5:9, 16:9 and a 1.5 Game view: everyone visible in all 18. The hero is ~237 px tall on 1080p in close fights and ~80–100 px in full-tower spreads.
+
+## 2026-11-04: 0.7.4 a calmer camera that stays in the building
+
+Feedback: zoomed out, enemies were too small; the camera showed past the building; transitions were rough.
+
+- **The building is the frame.** The shot never shows past the side walls. At most it shows a strip of floor below and roof above, and it can pull back at most to the full building, wall to wall. That caps fighter size at ≈135–155 px tall on a 1080p phone (≈240 px in close fights), against ≈80 px before.
+- **Who's framed:** the hero always (he's clamped inside the safe area), then enemies nearest first, with other levels counting 1.8× further, while they fit within that limit. Simulated six tower fights on a 19.5:9 phone: everyone in shot in four; one or two left out only in extreme spreads (opposite lobby corners while the hero is on the catwalk).
+- **Off-screen enemies** get an arrow in their own colour with a white rim and a soft glow. It slides along the screen edge pointing at them (it replaces the red edge glow).
+- **Transitions:**
+    - zoom hysteresis (the target only changes when the spread grows more than 0.4 m or shrinks more than 1.2 m), so no breathing
+    - smoother follow (0.22 s); zoom out 0.45 s, in 0.9 s, with speed caps
+    - the instant pull-back pass is removed; the hero slide is only an emergency net at the screen edge
+- **Close-ups** (the boss entrance, the iai) now ease in over 0.35 s as well as out.
+- **Kill-cam orbits** are clamped to ±38°: big swings showed the cut-away building's open side.
