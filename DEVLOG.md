@@ -699,3 +699,7 @@ The victory was one camera arc with a text fade. `VictoryCinematic` is now an ed
 - The boss finale now hands the camera over when the walk starts.
 - The floor-clear timeout went from 12 s to 16 s.
 - Storyboard of the card: `docs/previews/victory_card.png`.
+
+## 2026-11-04: No controls line along the bottom
+
+The one-line controls cheat-sheet at the bottom of the screen during the start of floor 1 has been removed. It repeated the training reel and the ? card.

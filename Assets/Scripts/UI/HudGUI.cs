@@ -706,12 +706,7 @@ namespace ProjectInk
                     }
                 }
 
-            bool trainingNow = TutorialDirector.Instance != null && TutorialDirector.Instance.Active;
-            if (!trainingNow && (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f)))
-                GUI.Label(new Rect(0, h - 56, w, 40), GestureInput.Instance != null && !GestureInput.Instance.Classic
-                    ? "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE"
-                    : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", new GUIStyle(small) { fontSize = 18 });
-
+            // (the controls are taught by the training reel and listed on the ? card, not along the bottom)
             if (director.CurrentPhase == WaveDirector.Phase.Dead) Results(w, h);
         }
 
