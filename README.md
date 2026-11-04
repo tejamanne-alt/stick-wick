@@ -47,6 +47,10 @@ Take it from a red swordsman (or press **2** to test).
 - **Iai draw-cut:** when enemies stand in a line, when you counter, or for the kill, the hero blurs through them leaving afterimages. Time nearly stops, and a beat later they all fall.
 - **Slow motion** is saved for the big cuts.
 
+### Fonts
+
+Bebas Neue (titles and big numbers), Barlow Condensed (HUD text) and Permanent Marker (combo shouts). All are free for commercial use; licences are in `Assets/Resources/Fonts/FONT_LICENSES.txt`.
+
 ### Controls
 
 **Classic** (the default, as in the first prototypes). Press **C** to switch to two-thumb; your choice is saved.

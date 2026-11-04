@@ -304,3 +304,12 @@ Scene version 7.
     - **Shooters and knife throwers** take a spot by the rail and fire down at him.
     - **Fighters** queue along the rail, taunting, and take turns (attack tokens) to **pounce**: a red-flashing crouch at the edge (counterable), then a diving kick that lands beside him. It hits only if he's still there.
     - The rest, and anyone when the hero is under the upper floor or far away, **walk down the stairs**.
+
+## 2026-11-04: 0.5.4 type
+
+- Three open-licence faces in `Assets/Resources/Fonts/` (licences in `FONT_LICENSES.txt`):
+    - **Bebas Neue** (OFL): tall condensed capitals, the film-poster face. Used for the title, banners, chapter card, score, rank letter, hit counter and results grade.
+    - **Barlow Condensed SemiBold** (OFL): small HUD text, tagline, labels, hints.
+    - **Permanent Marker** (Apache 2.0): ink-brush shouts for the style callouts (DOUBLE CUT!, KICK COMBO!, IAI!), matching the ink theme.
+- Sizes retuned for the new faces; the chapter card is re-laid out so its two lines no longer overlap.
+- Mock-ups: `docs/previews/hud_fonts.png`, `docs/previews/title_fonts.png`.

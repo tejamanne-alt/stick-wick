@@ -20,13 +20,29 @@ namespace ProjectInk
         {
             white = Texture2D.whiteTexture;
             // white type with a soft shadow, the way film titles sit over a black-and-white picture
-            big = new GUIStyle { fontSize = 64, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            LoadFonts();
+            big = new GUIStyle { font = Display, fontSize = 64, fontStyle = Display != null ? FontStyle.Normal : FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             big.normal.textColor = Color.white;
-            mid = new GUIStyle(big) { fontSize = 30 };
-            small = new GUIStyle(big) { fontSize = 18, fontStyle = FontStyle.Normal };
+            mid = new GUIStyle(big) { fontSize = 34 };
+            small = new GUIStyle(big) { font = Body, fontSize = 18, fontStyle = FontStyle.Normal };
             small.normal.textColor = new Color(0.86f, 0.86f, 0.86f);
             glowTex = RadialTexture(64);
             edgeTex = EdgeTexture(64);
+        }
+
+        // ------------------------------------------------------------------ type
+        // Display: Bebas Neue, tall condensed capitals, the film-poster face, for titles, banners,
+        //          the score, the rank letter and the hit counter.
+        // Body:    Barlow Condensed SemiBold, a clean sporty condensed face for small HUD text.
+        // Brush:   Permanent Marker, an ink-brush hand, for the shouted callouts (DOUBLE CUT!).
+        public static Font Display, Body, Brush;
+
+        static void LoadFonts()
+        {
+            if (Display != null) return;
+            Display = Resources.Load<Font>("Fonts/BebasNeue-Regular");
+            Body = Resources.Load<Font>("Fonts/BarlowCondensed-SemiBold");
+            Brush = Resources.Load<Font>("Fonts/PermanentMarker-Regular");
         }
 
         void Update()
@@ -85,10 +101,11 @@ namespace ProjectInk
         {
             if (cineTitle == null)
             {
-                cineTitle = new GUIStyle { fontSize = 78, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-                cineTag = new GUIStyle(cineTitle) { fontSize = 20, fontStyle = FontStyle.Normal };
-                cineCap = new GUIStyle(cineTitle) { fontSize = 40, alignment = TextAnchor.MiddleLeft };
-                cineSkip = new GUIStyle(cineTag) { fontSize = 15, alignment = TextAnchor.MiddleRight };
+                LoadFonts();
+                cineTitle = new GUIStyle { font = Display, fontSize = 104, fontStyle = Display != null ? FontStyle.Normal : FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+                cineTag = new GUIStyle(cineTitle) { font = Body, fontSize = 22, fontStyle = FontStyle.Normal };
+                cineCap = new GUIStyle(cineTitle) { fontSize = 42, alignment = TextAnchor.MiddleLeft };
+                cineSkip = new GUIStyle(cineTag) { fontSize = 16, alignment = TextAnchor.MiddleRight };
             }
             var white = Color.white;
             if (c.TitleAlpha > 0.001f)
@@ -107,11 +124,11 @@ namespace ProjectInk
                 float slide = (1f - c.CaptionAlpha) * 30f;
                 float y = h - 92f;
                 cineCap.normal.textColor = new Color(1f, 1f, 1f, c.CaptionAlpha);
-                GUI.Label(new Rect(70 - slide, y + 6, w, 46), c.chapter, cineCap);
-                Fill(new Rect(70 - slide, y + 52, 50, 2), new Color(1f, 1f, 1f, 0.8f * c.CaptionAlpha));
+                GUI.Label(new Rect(70 - slide, y + 2, w, 46), c.chapter, cineCap);
+                Fill(new Rect(72 - slide, y + 50, 50, 2), new Color(1f, 1f, 1f, 0.8f * c.CaptionAlpha));
                 cineTag.alignment = TextAnchor.MiddleLeft;
                 cineTag.normal.textColor = new Color(1f, 1f, 1f, 0.75f * c.CaptionAlpha);
-                GUI.Label(new Rect(130 - slide, y + 40, w, 26), c.chapterName, cineTag);
+                GUI.Label(new Rect(72 - slide, y + 56, w, 26), Spaced(c.chapterName), cineTag);
                 cineTag.alignment = TextAnchor.MiddleCenter;
             }
             if (c.SkipAlpha > 0.001f)
@@ -129,7 +146,7 @@ namespace ProjectInk
         {
             var gi = GestureInput.Instance;
             if (gi == null) return;
-            if (zoneStyle == null) zoneStyle = new GUIStyle { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            if (zoneStyle == null) zoneStyle = new GUIStyle { font = Body, fontSize = 17, alignment = TextAnchor.MiddleCenter };
             float y = h * (1f - gi.kickLine);
             // stronger for the first floor, then barely there
             // only while learning: the first wave of the first floor, fading out
@@ -235,7 +252,7 @@ namespace ProjectInk
                 bool ready = director.FlowReady;
                 float pulse = ready ? 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 10f) : 1f;
                 Fill(new Rect(fb.x, fb.y, fb.width * director.Flow / 100f, fb.height), new Color(1f, 1f, 1f, pulse));
-                var lbl = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 15 };
+                var lbl = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 18 };
                 if (hero.InRampage) { lbl.normal.textColor = Color.white; Label(new Rect(24, 46, 400, 22), $"RAMPAGE  {hero.RampageLeft:0.0}", lbl); }
                 else if (ready) { lbl.normal.textColor = new Color(1f, 1f, 1f, pulse); Label(new Rect(24, 46, 400, 22), "RAMPAGE READY   ·   two-finger tap", lbl); }
             }
@@ -250,36 +267,36 @@ namespace ProjectInk
             };
             if (hero.IsGrabbed)
             {
-                var g = new GUIStyle(big) { fontSize = 46 };
+                var g = new GUIStyle(big) { fontSize = 62 };
                 g.normal.textColor = new Color(0.9f, 0.1f, 0.1f, 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 18f));
                 GUI.Label(new Rect(0, 200, w, 60), $"TAP TAP TAP!  {hero.GrabTaps}/4", g);
             }
-            Label(new Rect(24, 70, 300, 30), Spaced(weapon), new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 16, fontStyle = FontStyle.Bold });
+            Label(new Rect(24, 70, 300, 30), Spaced(weapon), new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 20 });
             if (hero.ComboCount >= 2)
             {
-                var cs = new GUIStyle(mid) { alignment = TextAnchor.UpperLeft, fontSize = 34 };
-                Label(new Rect(24, 96, 300, 44), hero.ComboCount.ToString(), cs);
-                var hs = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 13 };
-                Label(new Rect(28 + 22 * hero.ComboCount.ToString().Length, 114, 200, 20), "H I T S", hs);
+                var cs = new GUIStyle(mid) { alignment = TextAnchor.UpperLeft, fontSize = 52 };
+                Label(new Rect(24, 92, 300, 56), hero.ComboCount.ToString(), cs);
+                var hs = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 16 };
+                Label(new Rect(30 + 21 * hero.ComboCount.ToString().Length, 120, 200, 22), "H I T S", hs);
             }
         }
 
         void DirectorPanel(float w, float h)
         {
-            Label(new Rect(w - 324, 14, 300, 40), director.Score.ToString("N0"), new GUIStyle(mid) { alignment = TextAnchor.UpperRight, fontSize = 28 });
-            Label(new Rect(w - 324, 48, 300, 20), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}",
-                  new GUIStyle(small) { alignment = TextAnchor.UpperRight, fontSize = 13 });
+            Label(new Rect(w - 324, 8, 300, 48), director.Score.ToString("N0"), new GUIStyle(mid) { alignment = TextAnchor.UpperRight, fontSize = 44 });
+            Label(new Rect(w - 324, 54, 300, 22), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}",
+                  new GUIStyle(small) { alignment = TextAnchor.UpperRight, fontSize = 16 });
 
             StyleRank(w);
 
             if (Time.unscaledTime < director.BannerUntil && !string.IsNullOrEmpty(director.Banner))
-                Label(new Rect(0, h * 0.2f, w, 90), Spaced(director.Banner), new GUIStyle(big) { fontSize = 54 });
+                Label(new Rect(0, h * 0.2f, w, 90), Spaced(director.Banner), new GUIStyle(big) { fontSize = 72 });
             if (Time.unscaledTime < director.StyleUntil && !string.IsNullOrEmpty(director.StyleText))
             {
                 float k = Mathf.Clamp01((director.StyleUntil - Time.unscaledTime) / 0.3f);
-                var st = new GUIStyle(mid) { fontSize = 26 };
+                var st = new GUIStyle(mid) { font = Brush != null ? Brush : Display, fontSize = Brush != null ? 30 : 34 };
                 st.normal.textColor = new Color(1f, 1f, 1f, k);
-                Label(new Rect(0, h * 0.32f, w, 44), Spaced(director.StyleText), st);
+                Label(new Rect(0, h * 0.32f, w, 50), Brush != null ? director.StyleText : Spaced(director.StyleText), st);
             }
 
             // anyone the shot could not hold: a small red glow on the edge, at their height
@@ -315,7 +332,7 @@ namespace ProjectInk
             if (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f))
                 GUI.Label(new Rect(0, h - 56, w, 40), GestureInput.Instance != null && !GestureInput.Instance.Classic
                     ? "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE   ·   C: classic controls"
-                    : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", new GUIStyle(small) { fontSize = 14 });
+                    : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", new GUIStyle(small) { fontSize = 17 });
 
             if (director.CurrentPhase == WaveDirector.Phase.Dead) Results(w, h);
         }
@@ -327,14 +344,14 @@ namespace ProjectInk
             Fill(new Rect(panel.x, panel.y, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
             Fill(new Rect(panel.x, panel.yMax - 1, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
             int best = Mathf.Clamp(director.BestRankIndex, 0, RankWords.Length - 1);
-            Label(new Rect(panel.x, panel.y + 18, panel.width, 20), "B E S T   S T Y L E", new GUIStyle(small) { fontSize = 12 });
-            Label(new Rect(panel.x, panel.y + 36, panel.width, 100), director.Grade(), new GUIStyle(big) { fontSize = 92 });
-            Label(new Rect(panel.x, panel.y + 132, panel.width, 22), Spaced(RankWords[best]), new GUIStyle(small) { fontSize = 14 });
+            Label(new Rect(panel.x, panel.y + 18, panel.width, 20), "B E S T   S T Y L E", new GUIStyle(small) { fontSize = 15 });
+            Label(new Rect(panel.x, panel.y + 36, panel.width, 100), director.Grade(), new GUIStyle(big) { fontSize = 124 });
+            Label(new Rect(panel.x, panel.y + 132, panel.width, 22), Spaced(RankWords[best]), new GUIStyle(small) { fontSize = 17 });
             Fill(new Rect(w * 0.5f - 40, panel.y + 164, 80, 1), new Color(1f, 1f, 1f, 0.4f));
             Label(new Rect(panel.x, panel.y + 176, panel.width, 40), director.Score.ToString("N0") + (director.NewBest ? "   ·   NEW BEST" : ""), mid);
             Label(new Rect(panel.x, panel.y + 220, panel.width, 26),
-                $"Floor {director.Floor}   ·   {director.Kills} kills   ·   best {director.BestScore:N0} (floor {director.BestFloor})", new GUIStyle(small) { fontSize = 15 });
-            var tap = new GUIStyle(small) { fontSize = 14 };
+                $"Floor {director.Floor}   ·   {director.Kills} kills   ·   best {director.BestScore:N0} (floor {director.BestFloor})", new GUIStyle(small) { fontSize = 18 });
+            var tap = new GUIStyle(small) { fontSize = 17 };
             tap.normal.textColor = new Color(1f, 1f, 1f, 0.5f + 0.4f * Mathf.Sin(Time.unscaledTime * 3f));
             GUI.Label(new Rect(panel.x, panel.y + 276, panel.width, 26), "T A P   T O   F I G H T   A G A I N", tap);
         }
@@ -357,7 +374,7 @@ namespace ProjectInk
             float since = Time.unscaledTime - rankChangedAt;
             float pop = since < 0.25f ? Mathf.Lerp(1.6f, 1f, Mathf.SmoothStep(0f, 1f, since / 0.25f)) : 1f;
             var center = new Vector2(w - 84, 120);
-            float size = 62 + ri * 3;
+            float size = 84 + ri * 4;
             // glow behind the letter, brighter at the top ranks
             var old = GUI.color;
             GUI.color = new Color(1f, 1f, 1f, rankAlpha * (0.08f + 0.05f * ri) * pop);
@@ -370,7 +387,7 @@ namespace ProjectInk
             ls.normal.textColor = new Color(1f, 1f, 1f, rankAlpha);
             Label(new Rect(center.x - 100, center.y - 44, 200, 80), director.Rank, ls);
             GUI.matrix = m;
-            var ws = new GUIStyle(small) { fontSize = 11, alignment = TextAnchor.MiddleCenter };
+            var ws = new GUIStyle(small) { fontSize = 14, alignment = TextAnchor.MiddleCenter };
             ws.normal.textColor = new Color(1f, 1f, 1f, 0.75f * rankAlpha);
             Label(new Rect(center.x - 100, center.y + 36, 200, 16), Spaced(RankWords[ri]), ws);
             Fill(new Rect(center.x - 50, center.y + 56, 100, 1), new Color(1f, 1f, 1f, 0.15f * rankAlpha));
