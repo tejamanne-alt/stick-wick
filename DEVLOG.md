@@ -579,3 +579,15 @@ Mock-ups: `docs/previews/guide_mockups.png`.
 - New chalk mark **THROW IT** (weapon in hand, an enemy 3–10 m away on your level). It retires after three throws. "TAKE IT" by dropped weapons was already there.
 - **Fix:** on a mezzanine or the catwalk, swipe down used to always drop you through the floor, so you couldn't throw from up there. Now, with a weapon in hand and an enemy on your level, swipe down throws; otherwise it drops.
 - The MOVES card wording is updated for both.
+
+## 2026-11-04: 1.0.3 bigger text and buttons
+
+- The whole interface is drawn larger than the 720-line design: **×1.35 on phones**, ×1.2 on desktop (`HudGUI.UiBoost`). Layouts now use the real height instead of a fixed 720, and letterbox bars keep their share of the screen.
+- Buttons:
+    - pause and ? are 62×48 (II icon 7×24, ? at 32 pt)
+    - SKIP TRAINING is 230×48 at 21 pt
+    - the pause screen is a 2×2 grid of 300×58 buttons at 24–28 pt
+    - the MOVES card buttons are 270×52 at 21 pt
+- Small text raised: weapon, floor/wave, hits, rank word, lesson header, chalk marks (27 pt), training lines (22 pt), punch/kick guides.
+- The MOVES card is re-fitted to the shorter layout space (rows size to fit).
+- Checked at 2340×1080 (19.5:9): HUD, pause screen and MOVES card all fit with no overlap (`docs/previews/ui_sizes_phone.png`).

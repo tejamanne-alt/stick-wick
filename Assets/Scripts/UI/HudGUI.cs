@@ -13,6 +13,8 @@ namespace ProjectInk
         public bool showDiagnostics = false;   // F1 toggles
 
         GUIStyle big, mid, small;
+        /// <summary>How much larger than the 720-line design the interface is drawn.</summary>
+        static float UiBoost => Application.isMobilePlatform ? 1.35f : 1.2f;
         Texture2D white;
         float scale, bars;
 
@@ -61,9 +63,12 @@ namespace ProjectInk
         void OnGUI()
         {
             if (big == null) Build();
-            scale = Screen.height / 720f;
+            // the whole interface is drawn larger than the 720-line design (phones most of all), so
+            // text and buttons are comfortable to read and press; layouts use w and h, not 720
+            scale = Screen.height / 720f * UiBoost;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-            float w = Screen.width / scale, h = 720f;
+            float w = Screen.width / scale, h = Screen.height / scale;
+            float barK = h / 720f;            // letterbox bars keep their share of the screen
 
             // film look: vignette and moving grain over everything
             if (vignette == null) BuildFilmTextures();
@@ -77,8 +82,8 @@ namespace ProjectInk
             // cinematic bars: slow-mo letterbox, or the opening's (which starts as a black screen)
             var cine = OpeningCinematic.Instance;
             bool cutscene = cine != null && cine.Active;
-            float bh = bars > 0.001f ? 70f * Mathf.SmoothStep(0f, 1f, bars) : 0f;
-            if (cutscene) bh = Mathf.Max(bh, cine.BarsPixels);
+            float bh = bars > 0.001f ? 70f * barK * Mathf.SmoothStep(0f, 1f, bars) : 0f;
+            if (cutscene) bh = Mathf.Max(bh, cine.BarsPixels * barK);
             if (bh > 0.01f)
             {
                 Fill(new Rect(0, 0, w, bh), Color.black);
@@ -88,7 +93,7 @@ namespace ProjectInk
             var win = VictoryCinematic.Instance;
             if (win != null && win.Active)
             {
-                float vb = win.BarsPixels;
+                float vb = win.BarsPixels * barK;
                 if (vb > 0.01f)
                 {
                     Fill(new Rect(0, 0, w, vb), Color.black);
@@ -160,7 +165,7 @@ namespace ProjectInk
         {
             var gi = GestureInput.Instance;
             if (gi == null) return;
-            if (zoneStyle == null) zoneStyle = new GUIStyle { font = Body, fontSize = 17, alignment = TextAnchor.MiddleCenter };
+            if (zoneStyle == null) zoneStyle = new GUIStyle { font = Body, fontSize = 20, alignment = TextAnchor.MiddleCenter };
             float y = h * (1f - gi.kickLine);
             // stronger for the first floor, then barely there
             // only while learning: the first wave of the first floor, fading out
@@ -202,8 +207,9 @@ namespace ProjectInk
             {
                 // a faint resting stick in the corner, so players know the left side moves
                 GUI.color = new Color(1f, 1f, 1f, 0.12f);
-                GUI.DrawTexture(new Rect(70, 720 - 230, 160, 160), ring);
-                GUI.DrawTexture(new Rect(114, 720 - 186, 72, 72), knob);
+                float hh = Screen.height / scale;
+                GUI.DrawTexture(new Rect(70, hh - 230, 160, 160), ring);
+                GUI.DrawTexture(new Rect(114, hh - 186, 72, 72), knob);
             }
             GUI.color = old;
         }
@@ -266,7 +272,7 @@ namespace ProjectInk
                 bool ready = director.FlowReady;
                 float pulse = ready ? 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 10f) : 1f;
                 Fill(new Rect(fb.x, fb.y, fb.width * director.Flow / 100f, fb.height), new Color(1f, 1f, 1f, pulse));
-                var lbl = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 18 };
+                var lbl = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 20 };
                 if (hero.InRampage) { lbl.normal.textColor = Color.white; Label(new Rect(24, 46, 400, 22), $"RAMPAGE  {hero.RampageLeft:0.0}", lbl); }
                 else if (ready) { lbl.normal.textColor = new Color(1f, 1f, 1f, pulse); Label(new Rect(24, 46, 400, 22), "RAMPAGE READY   ·   two-finger tap", lbl); }
             }
@@ -290,7 +296,7 @@ namespace ProjectInk
             {
                 var cs = new GUIStyle(mid) { alignment = TextAnchor.UpperLeft, fontSize = 52 };
                 Label(new Rect(24, 92, 300, 56), hero.ComboCount.ToString(), cs);
-                var hs = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 16 };
+                var hs = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 18 };
                 Label(new Rect(30 + 21 * hero.ComboCount.ToString().Length, 120, 200, 22), "H I T S", hs);
             }
         }
@@ -299,7 +305,7 @@ namespace ProjectInk
         {
             Label(new Rect(w - 324, 8, 300, 48), director.Score.ToString("N0"), new GUIStyle(mid) { alignment = TextAnchor.UpperRight, fontSize = 44 });
             Label(new Rect(w - 324, 54, 300, 22), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}",
-                  new GUIStyle(small) { alignment = TextAnchor.UpperRight, fontSize = 16 });
+                  new GUIStyle(small) { alignment = TextAnchor.UpperRight, fontSize = 18 });
 
             StyleRank(w);
 
@@ -379,7 +385,7 @@ namespace ProjectInk
             if (!trainingNow && (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f)))
                 GUI.Label(new Rect(0, h - 56, w, 40), GestureInput.Instance != null && !GestureInput.Instance.Classic
                     ? "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE"
-                    : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", new GUIStyle(small) { fontSize = 17 });
+                    : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", new GUIStyle(small) { fontSize = 18 });
 
             if (director.CurrentPhase == WaveDirector.Phase.Dead) Results(w, h);
         }
@@ -434,7 +440,7 @@ namespace ProjectInk
             ls.normal.textColor = new Color(1f, 1f, 1f, rankAlpha);
             Label(new Rect(center.x - 100, center.y - 44, 200, 80), director.Rank, ls);
             GUI.matrix = m;
-            var ws = new GUIStyle(small) { fontSize = 14, alignment = TextAnchor.MiddleCenter };
+            var ws = new GUIStyle(small) { fontSize = 16, alignment = TextAnchor.MiddleCenter };
             ws.normal.textColor = new Color(1f, 1f, 1f, 0.75f * rankAlpha);
             Label(new Rect(center.x - 100, center.y + 36, 200, 16), Spaced(RankWords[ri]), ws);
             Fill(new Rect(center.x - 50, center.y + 56, 100, 1), new Color(1f, 1f, 1f, 0.15f * rankAlpha));
@@ -522,9 +528,9 @@ namespace ProjectInk
             LoadFonts();
             gTitle = new GUIStyle { font = Display, fontSize = 40, alignment = TextAnchor.MiddleCenter };
             gTitle.normal.textColor = Color.white;
-            gLine = new GUIStyle(gTitle) { font = Body, fontSize = 20 };
+            gLine = new GUIStyle(gTitle) { font = Body, fontSize = 22 };
             gNice = new GUIStyle(gTitle) { font = Brush != null ? Brush : Display, fontSize = 46 };
-            gChalk = new GUIStyle(gTitle) { font = Brush != null ? Brush : Body, fontSize = 22 };
+            gChalk = new GUIStyle(gTitle) { font = Brush != null ? Brush : Body, fontSize = 24 };
             gBtn = new GUIStyle(gTitle) { font = Body, fontSize = 17 };
             finger = Disc(64, false);
             gRing = Disc(96, true);
@@ -553,17 +559,17 @@ namespace ProjectInk
             if (training) TrainingCard(tut, w, h);
 
             // the pause and ? buttons (top centre), and SKIP during training
-            pauseBtn = new Rect(w * 0.5f - 60, 10, 52, 40);
-            helpBtn = new Rect(w * 0.5f + 8, 10, 52, 40);
+            pauseBtn = new Rect(w * 0.5f - 70, 8, 62, 48);
+            helpBtn = new Rect(w * 0.5f + 8, 8, 62, 48);
             DrawButton(pauseBtn, "", 26);
-            Fill(new Rect(pauseBtn.center.x - 8, pauseBtn.y + 11, 5, 18), new Color(1f, 1f, 1f, 0.92f));    // the II icon
-            Fill(new Rect(pauseBtn.center.x + 3, pauseBtn.y + 11, 5, 18), new Color(1f, 1f, 1f, 0.92f));
-            DrawButton(helpBtn, "?", 26);
+            Fill(new Rect(pauseBtn.center.x - 10, pauseBtn.y + 12, 7, 24), new Color(1f, 1f, 1f, 0.92f));    // the II icon
+            Fill(new Rect(pauseBtn.center.x + 3, pauseBtn.y + 12, 7, 24), new Color(1f, 1f, 1f, 0.92f));
+            DrawButton(helpBtn, "?", 32);
             if (repaint) { GestureInput.Blocked.Add(ToScreen(pauseBtn)); GestureInput.Blocked.Add(ToScreen(helpBtn)); }
             if (training && !tut.Finale)
             {
-                skipBtn = new Rect(w - 210, 196, 190, 38);
-                DrawButton(skipBtn, "SKIP TRAINING  >", 17);
+                skipBtn = new Rect(w - 250, 200, 230, 48);
+                DrawButton(skipBtn, "SKIP TRAINING  >", 21);
                 if (repaint) GestureInput.Blocked.Add(ToScreen(skipBtn));
                 if (repaint && Pressed(skipBtn)) tut.End(false);
             }
@@ -622,7 +628,7 @@ namespace ProjectInk
             var card = new Rect(w * 0.5f - 330, h - 150, 660, 112);
             Fill(card, new Color(0f, 0f, 0f, 0.62f));
             Fill(new Rect(card.x, card.y, card.width, 1), new Color(1f, 1f, 1f, 0.4f));
-            var head = new GUIStyle(gLine) { fontSize = 15 };
+            var head = new GUIStyle(gLine) { fontSize = 17 };
             head.normal.textColor = new Color(1f, 1f, 1f, 0.6f);
             GUI.Label(new Rect(card.x, card.y + 6, card.width, 20), $"T R A I N I N G   ·   {tut.Index + 1} / {tut.Count}", head);
             Label(new Rect(card.x, card.y + 22, card.width, 48), L.title, gTitle);
@@ -756,7 +762,7 @@ namespace ProjectInk
                 {
                     Gesture.TapAgain or Gesture.TapHigh or Gesture.TapLow => "TAP - ", Gesture.Hold => "HOLD - ", _ => "",
                 };
-                var st = new GUIStyle(gChalk) { fontSize = 24 };
+                var st = new GUIStyle(gChalk) { fontSize = 27 };
                 st.normal.textColor = new Color(0.97f, 0.97f, 0.95f, pulse);
                 // a soft dark smudge behind for legibility on light walls
                 var old = GUI.color;
@@ -799,19 +805,21 @@ namespace ProjectInk
         void PauseCard(float w, float h, bool repaint)
         {
             Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.7f));
-            Label(new Rect(0, h * 0.18f, w, 100), Spaced("PAUSED"), new GUIStyle(gTitle) { fontSize = 84 });
-            Fill(new Rect(w * 0.5f - 150, h * 0.18f + 104, 300, 1), new Color(1f, 1f, 1f, 0.5f));
+            Label(new Rect(0, h * 0.12f, w, 100), Spaced("PAUSED"), new GUIStyle(gTitle) { fontSize = 84 });
+            Fill(new Rect(w * 0.5f - 150, h * 0.12f + 104, 300, 1), new Color(1f, 1f, 1f, 0.5f));
             if (director != null)
-                Label(new Rect(0, h * 0.18f + 112, w, 30), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}   ·   {director.Score:N0}", new GUIStyle(gLine) { fontSize = 18 });
-            float bw = 300, bh = 50, x = w * 0.5f - bw * 0.5f, y = h * 0.18f + 170;
-            resumeBtn = new Rect(x, y, bw, bh);
-            movesBtn = new Rect(x, y + 62, bw, bh);
-            soundBtn = new Rect(x, y + 124, bw, bh);
-            restartBtn = new Rect(x, y + 186, bw, bh);
-            DrawButton(resumeBtn, "RESUME", 24);
-            DrawButton(movesBtn, "MOVES", 20);
-            DrawButton(soundBtn, Sound.Master > 0f ? "SOUND  ON" : "SOUND  OFF", 20);
-            DrawButton(restartBtn, "RESTART", 20);
+                Label(new Rect(0, h * 0.12f + 112, w, 30), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}   ·   {director.Score:N0}", new GUIStyle(gLine) { fontSize = 18 });
+            // two rows of big buttons, sized to fit whatever height is left
+            float bw = 300, bh = 58, gap = 16;
+            float y = h * 0.12f + 160;
+            resumeBtn = new Rect(w * 0.5f - bw - gap * 0.5f, y, bw, bh);
+            movesBtn = new Rect(w * 0.5f + gap * 0.5f, y, bw, bh);
+            soundBtn = new Rect(w * 0.5f - bw - gap * 0.5f, y + bh + gap, bw, bh);
+            restartBtn = new Rect(w * 0.5f + gap * 0.5f, y + bh + gap, bw, bh);
+            DrawButton(resumeBtn, "RESUME", 28);
+            DrawButton(movesBtn, "MOVES", 24);
+            DrawButton(soundBtn, Sound.Master > 0f ? "SOUND  ON" : "SOUND  OFF", 24);
+            DrawButton(restartBtn, "RESTART", 24);
             if (!repaint) return;
             GestureInput.Blocked.Add(ToScreen(new Rect(0, 0, w, h)));         // the screen belongs to the pause card
             if (Pressed(resumeBtn)) SetPause(false);
@@ -825,10 +833,10 @@ namespace ProjectInk
         void HelpCard(float w, float h, bool repaint)
         {
             Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.72f));
-            var panel = new Rect(w * 0.5f - 470, 64, 940, h - 128);
+            var panel = new Rect(w * 0.5f - Mathf.Min(520f, w * 0.5f - 20f), 24, Mathf.Min(1040f, w - 40f), h - 48);
             Fill(new Rect(panel.x, panel.y, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
             Fill(new Rect(panel.x, panel.yMax - 1, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
-            Label(new Rect(panel.x, panel.y + 10, panel.width, 60), Spaced("MOVES"), new GUIStyle(gTitle) { fontSize = 52 });
+            Label(new Rect(panel.x, panel.y + 4, panel.width, 56), Spaced("MOVES"), new GUIStyle(gTitle) { fontSize = 50 });
             string[,] rows =
             {
                 { "TAP HIGH", "Punch combo  (left / right side = that way)" },
@@ -840,21 +848,22 @@ namespace ProjectInk
                 { "TWO FINGERS", "Rampage, when the white bar is full" },
                 { "WALK OVER", "Pick up a dropped weapon (sword, pipe, gun, knives): your taps use it" },
             };
-            var k1 = new GUIStyle(gTitle) { fontSize = 26, alignment = TextAnchor.MiddleRight };
-            var k2 = new GUIStyle(gLine) { fontSize = 19, alignment = TextAnchor.MiddleLeft };
-            float y = panel.y + 84;
+            var k1 = new GUIStyle(gTitle) { fontSize = 28, alignment = TextAnchor.MiddleRight };
+            var k2 = new GUIStyle(gLine) { fontSize = 21, alignment = TextAnchor.MiddleLeft };
+            float rowH = Mathf.Min(42f, (panel.height - 190f) / 8f);
+            float y = panel.y + 66;
             for (int i = 0; i < rows.GetLength(0); i++)
             {
                 Label(new Rect(panel.x + 20, y, 250, 34), rows[i, 0], k1);
                 Label(new Rect(panel.x + 300, y, panel.width - 320, 34), rows[i, 1], k2);
-                y += 40;
+                y += rowH;
             }
-            var hint = new GUIStyle(gChalk) { fontSize = 20 };
-            Label(new Rect(panel.x, y + 6, panel.width, 34), "Some moves happen by themselves: dive from above, over the edge, head scissors, hand stomp, springboard", hint);
-            replayBtn = new Rect(w * 0.5f - 250, panel.yMax - 60, 230, 42);
-            closeBtn = new Rect(w * 0.5f + 20, panel.yMax - 60, 230, 42);
-            DrawButton(replayBtn, "REPLAY TRAINING", 18);
-            DrawButton(closeBtn, "BACK TO THE FIGHT", 18);
+            var hint = new GUIStyle(gChalk) { fontSize = 19, wordWrap = true };
+            Label(new Rect(panel.x + 20, y + 4, panel.width - 40, 50), "Some moves happen by themselves: dive from above, over the edge, head scissors, hand stomp, springboard", hint);
+            replayBtn = new Rect(w * 0.5f - 290, panel.yMax - 62, 270, 52);
+            closeBtn = new Rect(w * 0.5f + 20, panel.yMax - 62, 270, 52);
+            DrawButton(replayBtn, "REPLAY TRAINING", 21);
+            DrawButton(closeBtn, "BACK TO THE FIGHT", 21);
             if (repaint)
             {
                 GestureInput.Blocked.Add(ToScreen(replayBtn));
