@@ -656,7 +656,7 @@ namespace ProjectInk
         void UpdateDone()
         {
             var vc = VictoryCinematic.Instance;
-            bool handed = vc == null || !vc.Active || vc.HeroShotStarted;
+            bool handed = vc == null || !vc.Active || vc.CameraTaken;
             if (!handed && CameraDirector.Instance != null && lastFov > 0f) CameraDirector.Instance.Scripted(lastPos, lastLook, 1f, lastFov);
             if (vc == null || !vc.Active || vc.BarsPixels > Bars - 2f) BarsPixels = Mathf.MoveTowards(BarsPixels, 0f, Time.unscaledDeltaTime * Bars * 2f);
             DefeatAlpha = Mathf.MoveTowards(DefeatAlpha, 0f, Time.unscaledDeltaTime * (handed ? 3f : 0.4f));

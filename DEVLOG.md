@@ -682,3 +682,20 @@ The STICK WICK title used to fade in over the crane shot. It is now its own beat
 - Sound design on every beat: glint whoosh, sword swing, a massive hit on STICK, a hit on WICK, three soft hits for the tagline, and sword swing plus hit for the cut.
 - The establishing shot is now 6.0 s, so the crane still plays after the title. Skip still works. Restarts play the short opening without the title.
 - Storyboard: `docs/previews/title_sequence.png`.
+
+## 2026-11-04: A cinematic floor-clear victory
+
+The victory was one camera arc with a text fade. `VictoryCinematic` is now an edited sequence of about 8 s, played after the kill-cam or the boss finale:
+1. **The walk.** The victory sting starts. The hero turns his back on the bodies and walks away at a slow, heavy stride (the run cycle slowed right down), easing to a stop. The camera stays low in front of him, dollying back at his pace and pulling away from walls if it has to. He walks towards the side of his floor with more room. In the classic hall, whose floor is not flat, he does not walk.
+2. **Hard cut to the hero shot.** He turns and beckons as the low camera arcs round him.
+3. **The card,** drawn by `HudGUI.VictoryCards` and timed from `CardT`:
+    - FLOOR n, then CLEAR slamming in letter by letter over the red ink stroke, with the same trail, red split and shake as the title
+    - **the tally** along the bottom: kills, score and time count up one after another, with a thud as each lands and ticks while it counts (this floor's kills and time)
+    - the style grade **stamped** in brush lettering on a red ink splat, landing big and tilted with a heavy thud and a shake
+    - **NEW HIGH SCORE** in a red tag, if it is one
+4. **The crane** up and back over the floor while the card fades.
+5. The bars slide away. Tap to skip once the card is up.
+- The floor-clear sting moved from a fixed delay to the start of the walk.
+- The boss finale now hands the camera over when the walk starts.
+- The floor-clear timeout went from 12 s to 16 s.
+- Storyboard of the card: `docs/previews/victory_card.png`.

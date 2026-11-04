@@ -203,20 +203,7 @@ namespace ProjectInk
         void Logo(OpeningCinematic c, float w, float h)
         {
             float t = c.LogoT;
-            if (logoSt == null)
-            {
-                LoadFonts();
-                logoSt = new GUIStyle { font = Display, fontSize = 150, fontStyle = Display != null ? FontStyle.Normal : FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-                logoTag = new GUIStyle(logoSt) { font = Body, fontSize = 22, fontStyle = FontStyle.Normal };
-                logoW = new float[LogoText.Length];
-                logoTotal = 0f;
-                for (int i = 0; i < LogoText.Length; i++)
-                {
-                    logoW[i] = LogoText[i] == ' ' ? LogoSpace : logoSt.CalcSize(new GUIContent(LogoText[i].ToString())).x;
-                    logoTotal += logoW[i] + (i > 0 ? LogoGap : 0f);
-                }
-                inkStroke = InkStrokeTexture(512, 128);
-            }
+            EnsureLogo();
             float cx = w * 0.5f, cy = h * 0.5f;             // the cut runs exactly through the middle
             float slice = OpeningCinematic.LogoSlice;
             float sliceK = E(slice, slice + 0.45f, t);       // the halves part
@@ -274,6 +261,22 @@ namespace ProjectInk
             // flashes on each slam and on the cut
             float flash = Mathf.Max(Pulse(t, 0.72f, 0.16f) * 0.55f, Mathf.Max(Pulse(t, 1.02f, 0.12f) * 0.3f, Pulse(t, slice, 0.14f) * 0.45f));
             if (flash > 0.01f) Fill(new Rect(0, 0, w, h), new Color(1f, 1f, 1f, flash));
+        }
+
+        void EnsureLogo()
+        {
+            if (logoSt != null) return;
+            LoadFonts();
+            logoSt = new GUIStyle { font = Display, fontSize = 150, fontStyle = Display != null ? FontStyle.Normal : FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            logoTag = new GUIStyle(logoSt) { font = Body, fontSize = 22, fontStyle = FontStyle.Normal };
+            logoW = new float[LogoText.Length];
+            logoTotal = 0f;
+            for (int i = 0; i < LogoText.Length; i++)
+            {
+                logoW[i] = LogoText[i] == ' ' ? LogoSpace : logoSt.CalcSize(new GUIContent(LogoText[i].ToString())).x;
+                logoTotal += logoW[i] + (i > 0 ? LogoGap : 0f);
+            }
+            inkStroke = InkStrokeTexture(512, 128);
         }
 
         static float Pulse(float t, float at, float len) => t < at || t > at + len ? 0f : 1f - (t - at) / len;
@@ -1350,31 +1353,171 @@ namespace ProjectInk
             if (flash > 0f) Fill(new Rect(x - 2, y - 2, bw + 4, bh + 4), new Color(1f, 1f, 1f, 0.8f * flash * a));
         }
 
-        GUIStyle winTitle, winStats;
+        GUIStyle winSmall, winNum, winStamp, winTag;
+        Texture2D inkSplat;
+        static readonly Color InkRed = new Color(0.72f, 0.05f, 0.06f);
 
-        /// <summary>The victory card: FLOOR n CLEAR in big spaced capitals with a hairline, the
-        /// grade, score and kills beneath, sliding up a little as they fade in.</summary>
+        /// <summary>The victory card, timed from CardT: FLOOR n over CLEAR, which slams in letter
+        /// by letter over a red ink stroke; then the tally along the bottom (kills, score and time
+        /// counting up, one after another) and the style grade stamped in red ink; NEW HIGH SCORE
+        /// if it is.</summary>
         void VictoryCards(VictoryCinematic v, float w, float h)
         {
-            LoadFonts();
-            if (winTitle == null)
+            float t = v.CardT, A = v.CardAlpha;
+            if (t < 0f || A < 0.01f) return;
+            EnsureLogo();
+            if (winSmall == null)
             {
-                winTitle = new GUIStyle { font = Display, fontSize = 96, fontStyle = Display != null ? FontStyle.Normal : FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-                winStats = new GUIStyle(winTitle) { font = Body, fontSize = 22, fontStyle = FontStyle.Normal };
+                winSmall = new GUIStyle { font = Body, fontSize = 20, alignment = TextAnchor.MiddleCenter };
+                winNum = new GUIStyle { font = Display, fontSize = 54, alignment = TextAnchor.MiddleCenter, fontStyle = Display != null ? FontStyle.Normal : FontStyle.Bold };
+                winStamp = new GUIStyle { font = Brush != null ? Brush : Display, fontSize = 76, alignment = TextAnchor.MiddleCenter };
+                winTag = new GUIStyle(winSmall) { fontSize = 18 };
+                inkSplat = InkSplatTexture(128);
             }
-            if (v.TitleAlpha > 0.001f)
+            float barK = h / 720f;
+            float top = 92f * barK, bottom = h - 92f * barK;
+            float cx = w * 0.5f;
+
+            // FLOOR n
+            float fk = Mathf.Clamp01((t - 0.1f) / 0.3f);
+            winSmall.normal.textColor = new Color(1f, 1f, 1f, 0.8f * fk * A);
+            Label(new Rect(0, top + 4f + (1f - fk) * 6f, w, 26), Spaced($"FLOOR {v.FloorNo}"), winSmall);
+
+            // CLEAR, slammed over the ink
+            const string word = "CLEAR";
+            float cy = top + 124f;
+            float ww = 0f;
+            var lw = new float[word.Length];
+            for (int i = 0; i < word.Length; i++) { lw[i] = logoSt.CalcSize(new GUIContent(word[i].ToString())).x; ww += lw[i] + (i > 0 ? LogoGap : 0f); }
+            float shake = 6f * Mathf.Exp(-t * 14f);
+            float sx = Mathf.Sin(t * 90f) * shake, sy = Mathf.Cos(t * 77f) * shake * 0.6f;
+            float reveal = E(0f, 0.2f, t);
+            if (reveal > 0f)
             {
-                float rise = (1f - v.TitleAlpha) * 18f;
-                winTitle.normal.textColor = new Color(1f, 1f, 1f, v.TitleAlpha);
-                Label(new Rect(0, h * 0.30f + rise, w, 110), Spaced(v.Title), winTitle);
-                float lw = 380f * v.TitleAlpha;
-                Fill(new Rect(w * 0.5f - lw * 0.5f, h * 0.30f + 112 + rise, lw, 2), new Color(1f, 1f, 1f, 0.75f * v.TitleAlpha));
+                float sw = ww + 170f, shh = 150f;
+                var o = GUI.color;
+                GUI.color = new Color(InkRed.r, InkRed.g, InkRed.b, 0.95f * A);
+                GUI.DrawTextureWithTexCoords(new Rect(cx - sw * 0.5f + sx, cy - shh * 0.5f + 6f + sy, sw * reveal, shh), inkStroke, new Rect(0f, 0f, reveal, 1f));
+                GUI.color = o;
             }
-            if (v.StatsAlpha > 0.001f)
+            float x = cx - ww * 0.5f + sx;
+            float split = Mathf.Exp(-t * 7f);
+            for (int i = 0; i < word.Length; i++)
             {
-                winStats.normal.textColor = new Color(1f, 1f, 1f, 0.85f * v.StatsAlpha);
-                Label(new Rect(0, h * 0.30f + 124 + (1f - v.StatsAlpha) * 10f, w, 34), v.Stats, winStats);
+                float lc = x + lw[i] * 0.5f;
+                x += lw[i] + LogoGap;
+                float k = Mathf.Clamp01((t - i * 0.05f) / 0.12f);
+                if (k <= 0f) continue;
+                float e = 1f - (1f - k) * (1f - k) * (1f - k);
+                float sc = Mathf.Lerp(2.4f, 1f, e);
+                string ch = word[i].ToString();
+                if (k < 1f)
+                    for (int g = 1; g <= 3; g++) Letter(ch, lc, cy + sy, sc * (1f + g * 0.18f), new Color(1f, 1f, 1f, 0.12f * k * A));
+                if (split * 9f > 0.3f) Letter(ch, lc + split * 9f, cy + sy, sc, new Color(1f, 0.15f, 0.1f, 0.7f * k * A));
+                Letter(ch, lc + 3f, cy + sy + 4f, sc, new Color(0f, 0f, 0f, 0.6f * k * A));
+                Letter(ch, lc, cy + sy, sc, new Color(0.95f, 0.95f, 0.93f, k * A));
             }
+
+            // the tally along the bottom: three columns and the grade stamp
+            float rowY = bottom - 96f;
+            float colW = Mathf.Min(190f, w * 0.18f);
+            float[] at = { VictoryCinematic.KillsAt, VictoryCinematic.ScoreAt, VictoryCinematic.TimeAt };
+            string[] labels = { "KILLS", "SCORE", "TIME" };
+            float startX = cx - colW * 2f;
+            for (int i = 0; i < 3; i++)
+            {
+                float k = E(at[i], at[i] + 0.2f, t);
+                if (k <= 0f) continue;
+                float count = E(at[i], at[i] + VictoryCinematic.CountLen, t);
+                string val = i == 0 ? Mathf.RoundToInt(v.Kills * count).ToString()
+                           : i == 1 ? Mathf.RoundToInt(v.Score * count).ToString("N0")
+                           : Clock(v.Seconds * count);
+                float colX = startX + colW * i;
+                float rise = (1f - k) * 12f;
+                winTag.normal.textColor = new Color(0.8f, 0.8f, 0.8f, 0.9f * k * A);
+                Label(new Rect(colX, rowY + rise, colW, 22), Spaced(labels[i]), winTag);
+                bool counting = count < 1f;
+                winNum.normal.textColor = counting ? new Color(1f, 1f, 1f, 0.85f * k * A) : new Color(1f, 1f, 1f, k * A);
+                Label(new Rect(colX, rowY + 20f + rise, colW, 60), val, winNum);
+                if (i > 0) Fill(new Rect(colX, rowY + 8f, 1f, 64f), new Color(1f, 1f, 1f, 0.3f * k * A));
+            }
+            // a hairline under the row, drawn out as the first column lands
+            float hl = E(VictoryCinematic.KillsAt, VictoryCinematic.KillsAt + 0.5f, t);
+            if (hl > 0f) Fill(new Rect(cx - colW * 2f, rowY + 84f, colW * 4f * hl, 2f), new Color(1f, 1f, 1f, 0.5f * A));
+
+            // the grade, stamped in red ink at the end of the row
+            float gk = Mathf.Clamp01((t - VictoryCinematic.GradeAt) / 0.1f);
+            if (gk > 0f)
+            {
+                float stampX = startX + colW * 3f + colW * 0.5f, stampY = rowY + 40f;
+                float sc = gk < 1f ? Mathf.Lerp(2.6f, 1f, gk * gk) : 1f + 0.06f * Mathf.Exp(-(t - VictoryCinematic.GradeAt - 0.1f) * 9f) * Mathf.Sin((t - VictoryCinematic.GradeAt) * 40f);
+                var m = GUI.matrix;
+                GUIUtility.RotateAroundPivot(-8f, new Vector2(stampX, stampY) * scale);
+                GUIUtility.ScaleAroundPivot(new Vector2(sc, sc), new Vector2(stampX, stampY) * scale);
+                var o = GUI.color;
+                GUI.color = new Color(InkRed.r, InkRed.g, InkRed.b, 0.95f * gk * A);
+                GUI.DrawTexture(new Rect(stampX - 88f, stampY - 88f, 176f, 176f), inkSplat);
+                GUI.color = o;
+                winStamp.normal.textColor = new Color(0f, 0f, 0f, 0.5f * gk * A);
+                GUI.Label(new Rect(stampX - 100f + 3f, stampY - 60f + 4f, 200f, 120f), v.Grade, winStamp);
+                winStamp.normal.textColor = new Color(1f, 1f, 1f, gk * A);
+                GUI.Label(new Rect(stampX - 100f, stampY - 60f, 200f, 120f), v.Grade, winStamp);
+                GUI.matrix = m;
+                winTag.normal.textColor = new Color(0.8f, 0.8f, 0.8f, 0.9f * gk * A);
+                Label(new Rect(stampX - colW * 0.5f, rowY - 46f, colW, 22), Spaced("STYLE"), winTag);
+            }
+
+            // NEW HIGH SCORE: a red tag above the score
+            if (v.NewBest && t > VictoryCinematic.BestAt)
+            {
+                float k = Mathf.Clamp01((t - VictoryCinematic.BestAt) / 0.15f);
+                float pulse = 0.85f + 0.15f * Mathf.Sin(t * 7f);
+                float tw = 190f * (0.6f + 0.4f * k), th = 28f;
+                var r = new Rect(startX + colW * 1.5f - tw * 0.5f, rowY - 36f, tw, th);
+                Fill(r, new Color(InkRed.r, InkRed.g, InkRed.b, 0.95f * k * A));
+                winTag.normal.textColor = new Color(1f, 1f, 1f, k * A * pulse);
+                GUI.Label(r, Spaced("NEW HIGH SCORE"), winTag);
+            }
+        }
+
+        static string Clock(float seconds)
+        {
+            int s = Mathf.Max(0, Mathf.FloorToInt(seconds));
+            return $"{s / 60}:{s % 60:00}";
+        }
+
+        /// <summary>A red ink splat for the grade stamp: a ragged blob with flung droplets.</summary>
+        static Texture2D InkSplatTexture(int n)
+        {
+            var r = new System.Random(9);
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            float c = (n - 1) * 0.5f;
+            var ph = new float[4];
+            for (int i = 0; i < 4; i++) ph[i] = (float)r.NextDouble() * 6.28f;
+            var drops = new Vector3[9];
+            for (int i = 0; i < drops.Length; i++)
+            {
+                float a = (float)r.NextDouble() * 6.28f, d = 0.72f + 0.22f * (float)r.NextDouble();
+                drops[i] = new Vector3(Mathf.Cos(a) * d, Mathf.Sin(a) * d, 0.03f + 0.05f * (float)r.NextDouble());
+            }
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float u = (x - c) / c, v = (y - c) / c;
+                    float rad = Mathf.Sqrt(u * u + v * v), ang = Mathf.Atan2(v, u);
+                    float edge = 0.6f + 0.06f * Mathf.Sin(5f * ang + ph[0]) + 0.04f * Mathf.Sin(9f * ang + ph[1]) + 0.03f * Mathf.Sin(17f * ang + ph[2]);
+                    float a = Mathf.Clamp01((edge - rad) * n * 0.5f);
+                    foreach (var d in drops)
+                    {
+                        float dd = Mathf.Sqrt((u - d.x) * (u - d.x) + (v - d.y) * (v - d.y));
+                        a = Mathf.Max(a, Mathf.Clamp01((d.z - dd) * n * 0.5f));
+                    }
+                    px[y * n + x] = new Color32(255, 255, 255, (byte)(a * 255));
+                }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return tex;
         }
 
         static Texture2D RadialTexture(int n)

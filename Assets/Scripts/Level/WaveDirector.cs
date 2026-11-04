@@ -44,6 +44,11 @@ namespace ProjectInk
         public int Kills { get; private set; }
         public float DamageTaken { get; private set; }
         public float ElapsedTime { get; private set; }
+        float floorStartTime;
+        int floorStartKills;
+        /// <summary>This floor alone: its kills and its time (for the victory tally).</summary>
+        public int FloorKills => Kills - floorStartKills;
+        public float FloorSeconds => ElapsedTime - floorStartTime;
         public string Banner { get; private set; }
         public float BannerUntil { get; private set; }
         public string StyleText { get; private set; }
@@ -129,7 +134,6 @@ namespace ProjectInk
                             CurrentPhase = Phase.FloorClear;
                             phaseTime = 0f;
                             Sound.Tension(false);
-                            Sound.PlayLater(Sfx.FloorClear, 1.6f);           // the sting lands with the hero shot
                             AddScore(1000 * Floor, null);
                             var vc = VictoryCinematic.Instance;
                             if (vc != null) vc.Begin(hero, Floor, Grade(), Score, Kills, BossDirector.Instance != null && BossDirector.Instance.Current == BossDirector.Stage.Done);
@@ -143,7 +147,7 @@ namespace ProjectInk
                     break;
                 case Phase.FloorClear:
                     // the victory cinematic plays out first (with a safety timeout)
-                    if ((VictoryCinematic.Instance == null || VictoryCinematic.Instance.Done) && phaseTime > 1f || phaseTime > 12f) NextFloor();
+                    if ((VictoryCinematic.Instance == null || VictoryCinematic.Instance.Done) && phaseTime > 1f || phaseTime > 16f) NextFloor();
                     break;
                 case Phase.Dead:
                     if (phaseTime > 1.5f && input != null && input.AnyPressThisFrame) Restart();
@@ -308,6 +312,8 @@ namespace ProjectInk
         void NextFloor()
         {
             Floor++;
+            floorStartTime = ElapsedTime;
+            floorStartKills = Kills;
             if (BossDirector.Instance != null) BossDirector.Instance.ResetFloor();
             foreach (var c in Enemy.Corpses) if (c != null) Destroy(c);
             Enemy.Corpses.Clear();
