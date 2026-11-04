@@ -387,3 +387,12 @@ The hall still felt basic. The new main building is **the tower**, a three-level
 **HUD:** incoming-enemy glows now sit around the actual doorway when it's in shot, or on the nearest screen edge.
 
 `SceneVersion` → 14. Diagram: `docs/previews/tower_layout.png`.
+
+## 2026-11-04: 0.7.1 the hero never leaves the shot
+
+- `CameraDirector.KeepHeroInShot`: after every camera move (follow, boss close-up, kill-cam orbit, shake excluded), the hero's feet and head are measured on screen.
+    - If either is outside a safe frame (14% from the sides, clear of the HUD at the top), the camera slides in its own right/up axes to bring him back.
+    - If he is too tall for the frame, or behind the camera, it backs away instead.
+    - Simulated on six cases (far side, high on the catwalk, mid-orbit, behind the camera, very close, below the frame): all end in frame.
+- The boss close-up and the last-kill orbit now frame the subject **and** the hero together (centred between them, pulled back by their separation) whenever he is within ~8 m.
+- The opening cinematic is exempt: it frames the hero itself.

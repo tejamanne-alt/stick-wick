@@ -159,6 +159,49 @@ namespace ProjectInk
             return Mathf.Max(halfW / tanH, halfH / tanV);
         }
 
+        /// <summary>Slide the camera (and its aim, together) so the hero's feet and head sit inside
+        /// a safe frame: clear of the screen sides, and below the HUD at the top. Works for any
+        /// shot, including orbits, in the camera's own right/up directions.</summary>
+        void KeepHeroInShot(ref Vector3 pos, ref Vector3 look)
+        {
+            if (hero == null) return;
+            float tanV = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float tanH = tanV * Mathf.Max(0.5f, cam.aspect);
+            const float limX = 0.86f, limTop = 0.74f, limBottom = -0.88f;
+            for (int pass = 0; pass < 6; pass++)
+            {
+                var rot = Quaternion.LookRotation(look - pos, Vector3.up);
+                var inv = Quaternion.Inverse(rot);
+                Vector3 shift = Vector3.zero;
+                var cf = inv * (hero.position + Vector3.up * 0.05f - pos);
+                var ch = inv * (hero.position + Vector3.up * BodyHeight - pos);
+                if (cf.z < 0.5f || ch.z < 0.5f)
+                    shift.z = Mathf.Min(cf.z, ch.z) - 3f;                         // he is behind us: back right off
+                else
+                {
+                    float fy = cf.y / (cf.z * tanV), hy = ch.y / (ch.z * tanV);
+                    float band = limTop - limBottom;
+                    if (hy - fy > band * 0.95f)
+                        shift.z = -(ch.z * ((hy - fy) / (band * 0.9f) - 1f) + 0.5f);   // too close to fit him: back away
+                    else
+                    {
+                        foreach (var c in new[] { cf, ch })
+                        {
+                            float hx = c.x / (c.z * tanH);
+                            if (hx > limX) shift.x = Mathf.Max(shift.x, (hx - limX) * c.z * tanH);
+                            if (hx < -limX) shift.x = Mathf.Min(shift.x, (hx + limX) * c.z * tanH);
+                        }
+                        if (hy > limTop) shift.y = (hy - limTop) * ch.z * tanV;
+                        else if (fy < limBottom) shift.y = (fy - limBottom) * cf.z * tanV;
+                    }
+                }
+                if (shift == Vector3.zero) break;
+                var world = rot * shift;
+                pos += world;
+                if (shift.z == 0f) look += world;
+            }
+        }
+
         void Snap()
         {
             focus += Vector3.up * BodyHeight * 0.5f;
@@ -184,8 +227,15 @@ namespace ProjectInk
             {
                 float k = Mathf.Clamp01((focusUntil - UnityEngine.Time.unscaledTime) / 0.4f);
                 var fp = focusTarget.position + Vector3.up * 1.1f;
-                pos = Vector3.Lerp(pos, fp + new Vector3(-1.0f, 0.25f, -3.6f), 0.85f * k);
-                look = Vector3.Lerp(look, fp, 0.85f * k);
+                // a close shot of the subject that still holds the hero: centre between them,
+                // pulled back as far as their separation needs
+                var hp = hero.position + Vector3.up * 0.8f;
+                float tanH = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * Mathf.Max(0.5f, cam.aspect);
+                bool both = focusTarget != hero && Vector3.Distance(hp, fp) < 9f;
+                var c = both ? (fp + hp) * 0.5f : fp;
+                float back = both ? Mathf.Max(3.6f, (Mathf.Abs(fp.x - hp.x) * 0.5f + 1.4f) / tanH) : 3.6f;
+                pos = Vector3.Lerp(pos, c + new Vector3(-1.0f, 0.25f, -back), 0.85f * k);
+                look = Vector3.Lerp(look, c, 0.85f * k);
             }
 
             if (scriptWeight > 0.0001f)
@@ -204,11 +254,19 @@ namespace ProjectInk
                     float w = Mathf.Sin(Mathf.Clamp01(u) * Mathf.PI);
                     float ang = orbitAngle * Mathf.SmoothStep(0f, 1f, w);
                     var rot = Quaternion.Euler(-8f * w, ang, 0f);
-                    var close = orbitPivot + rot * new Vector3(0, 0.4f, -2.9f);
+                    // orbit the middle of the kill and the hero, wide enough to keep him in it
+                    var hp = hero.position + Vector3.up * 0.8f;
+                    bool both = Vector3.Distance(hp, orbitPivot) < 8f;
+                    var mid = both ? (orbitPivot + hp) * 0.5f : orbitPivot;
+                    float radius = both ? Mathf.Max(2.9f, Vector3.Distance(hp, orbitPivot) * 1.15f + 1.6f) : 2.9f;
+                    var close = mid + rot * new Vector3(0, 0.4f, -radius);
                     pos = Vector3.Lerp(pos, close, w);
-                    look = Vector3.Lerp(look, orbitPivot + Vector3.up * 0.2f, w);
+                    look = Vector3.Lerp(look, mid + Vector3.up * 0.2f, w);
                 }
             }
+
+            // the guarantee: whatever the shot, the hero stays in it
+            if (scriptWeight < 0.01f) KeepHeroInShot(ref pos, ref look);
 
             if (UnityEngine.Time.unscaledTime < shakeUntil)
             {
