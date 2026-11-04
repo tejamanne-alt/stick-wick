@@ -313,3 +313,8 @@ Scene version 7.
     - **Permanent Marker** (Apache 2.0): ink-brush shouts for the style callouts (DOUBLE CUT!, KICK COMBO!, IAI!), matching the ink theme.
 - Sizes retuned for the new faces; the chapter card is re-laid out so its two lines no longer overlap.
 - Mock-ups: `docs/previews/hud_fonts.png`, `docs/previews/title_fonts.png`.
+
+## 2026-11-04: 0.5.5 classic controls locked in
+
+- Removed the C-key scheme toggle. It sat next to the new Z/X kick keys, so a stray press switched to the two-thumb stick and saved that choice.
+- The game now always starts in classic controls and deletes any saved `controls` preference.

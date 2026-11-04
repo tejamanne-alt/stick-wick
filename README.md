@@ -53,7 +53,7 @@ Bebas Neue (titles and big numbers), Barlow Condensed (HUD text) and Permanent M
 
 ### Controls
 
-**Classic** (the default, as in the first prototypes). Press **C** to switch to two-thumb; your choice is saved.
+**Classic** controls (as in the first prototypes).
 
 | Touch | Keys | Action |
 | --- | --- | --- |
@@ -68,7 +68,7 @@ Bebas Neue (titles and big numbers), Barlow Condensed (HUD text) and Permanent M
 | Tap fast when grabbed | | Break free with a reversal throw |
 | | Tab, 1/2/3 | Testing: give a weapon |
 
-**Two-thumb** (C): a floating stick on the left 40% of the screen runs (flick up to jump); on the right, tap = strike, swipes as above. Keys: A/D run, J strike, Space/W jump, L/Shift dodge, E Rampage.
+**Two-thumb** (kept in code for a future settings menu; not reachable in play): a floating stick on the left 40% of the screen runs (flick up to jump); on the right, tap = strike, swipes as above. Keys: A/D run, J strike, Space/W jump, L/Shift dodge, E Rampage.
 
 ### Things to use
 

@@ -75,7 +75,11 @@ namespace ProjectInk
         void Awake()
         {
             Instance = this;
-            scheme = (ControlScheme)PlayerPrefs.GetInt("controls", (int)ControlScheme.Classic);
+            // classic controls, always. (A C-key toggle used to switch and save this; a stray press
+            // next to the Z/X kick keys could leave a player on the stick, so it is gone, and any
+            // saved choice from it is cleared.)
+            scheme = ControlScheme.Classic;
+            if (PlayerPrefs.HasKey("controls")) { PlayerPrefs.DeleteKey("controls"); PlayerPrefs.Save(); }
 #if !ENABLE_INPUT_SYSTEM
             Input.simulateMouseWithTouches = false; // touches are read directly; avoid double taps
 #endif
@@ -125,12 +129,10 @@ namespace ProjectInk
             return screen.x < hx ? -1 : 1;
         }
 
-        /// <summary>Switch between Classic and Two-thumb (saved).</summary>
+        /// <summary>Switch scheme (for a future settings menu; no key is bound to it).</summary>
         public void ToggleScheme()
         {
             scheme = Classic ? ControlScheme.TwoThumb : ControlScheme.Classic;
-            PlayerPrefs.SetInt("controls", (int)scheme);
-            PlayerPrefs.Save();
             stickId = int.MinValue;
             holding.Clear();
         }
@@ -248,7 +250,6 @@ namespace ProjectInk
                 bool left = kb.aKey.isPressed || kb.leftArrowKey.isPressed, right = kb.dKey.isPressed || kb.rightArrowKey.isPressed;
                 bool leftDown = kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
                 bool rightDown = kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame;
-                if (kb.cKey.wasPressedThisFrame) ToggleScheme();
                 if (Classic)
                 {
                     ClassicKeys(left, right, leftDown, rightDown);
@@ -301,7 +302,6 @@ namespace ProjectInk
             bool left = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow), right = Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
             bool leftDown = Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow);
             bool rightDown = Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow);
-            if (Input.GetKeyDown(KeyCode.C)) ToggleScheme();
             if (Classic)
             {
                 ClassicKeys(left, right, leftDown, rightDown);

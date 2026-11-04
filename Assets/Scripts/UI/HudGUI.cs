@@ -331,7 +331,7 @@ namespace ProjectInk
 
             if (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f))
                 GUI.Label(new Rect(0, h - 56, w, 40), GestureInput.Instance != null && !GestureInput.Instance.Classic
-                    ? "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE   ·   C: classic controls"
+                    ? "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE"
                     : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", new GUIStyle(small) { fontSize = 17 });
 
             if (director.CurrentPhase == WaveDirector.Phase.Dead) Results(w, h);
