@@ -275,3 +275,18 @@ Scene version 7.
 - Jab, cross and hook play at 1.15× with tighter blends, for fast chains.
 - New hand-keyed clips `hook` and `uppercut`. `SceneVersion` → 11.
 
+
+## 2026-11-04: 0.5.2 premium HUD, no more text marks
+
+- **Hero:** the white "v" over the head is gone. `HeroSpot` puts a soft pool of light on the floor under him, like a following spotlight: it breathes gently, brightens when enemies crowd in, shrinks while he's airborne and fades when he dies.
+- **Incoming enemies:** the text arrows (<, >, v, o) are gone. A soft red glow breathes on the edge they'll come through (left, right, upper left, top, bottom).
+- **Style rank:**
+    - hidden at D
+    - from C up: a white letter with a soft glow, its word in spaced capitals (CLEAN, BRUTAL, ARTFUL, SAVAGE, SUPREME, STICK WICK) and a hairline progress bar
+    - a new rank scales in
+- **Type:** all HUD text is white with a soft drop shadow; the dark text was unreadable on the noir building.
+    - hairline health bar (red pulse when low) and Flow line
+    - letter-spaced weapon label, banners and style callouts
+    - combo count shown as a big number with "H I T S"
+- **Results:** a black panel with hairline rules, the best grade and its word, and a pulsing "tap to fight again".
+- **PUNCH / KICK guides:** only during the first wave of the first floor; they fade out after 10 s.

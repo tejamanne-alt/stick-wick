@@ -90,6 +90,7 @@ namespace ProjectInk
             swordFx = SwordFx.Attach(sword, trailMaterial, trailMaterial, true);
             if (swordTrail != null) swordTrail.enabled = false;           // replaced by the swept ribbon
             bodyMesh = GetComponentInChildren<SkinnedMeshRenderer>(true);
+            HeroSpot.Attach(this);                                          // the spotlight pool that marks the hero
             SetTrails(false);
             ApplyStyleVisuals();
         }

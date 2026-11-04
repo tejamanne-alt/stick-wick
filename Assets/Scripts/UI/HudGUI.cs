@@ -12,27 +12,21 @@ namespace ProjectInk
         public WaveDirector director;
         public bool showDiagnostics = false;   // F1 toggles
 
-        GUIStyle big, mid, small, arrow;
+        GUIStyle big, mid, small;
         Texture2D white;
         float scale, bars;
-
-        static readonly Color Ink = new Color(0.06f, 0.06f, 0.06f);
-        static readonly Color[] RankColors =
-        {
-            new Color(0.35f, 0.35f, 0.35f), new Color(0.25f, 0.45f, 0.6f), new Color(0.2f, 0.55f, 0.3f),
-            new Color(0.85f, 0.6f, 0.1f), new Color(0.9f, 0.35f, 0.1f), new Color(0.9f, 0.15f, 0.15f), new Color(0.95f, 0.1f, 0.4f),
-        };
 
         void Build()
         {
             white = Texture2D.whiteTexture;
+            // white type with a soft shadow, the way film titles sit over a black-and-white picture
             big = new GUIStyle { fontSize = 64, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-            big.normal.textColor = Ink;
+            big.normal.textColor = Color.white;
             mid = new GUIStyle(big) { fontSize = 30 };
             small = new GUIStyle(big) { fontSize = 18, fontStyle = FontStyle.Normal };
-            small.normal.textColor = new Color(0.2f, 0.2f, 0.2f);
-            arrow = new GUIStyle(big) { fontSize = 54 };
-            arrow.normal.textColor = Enemy.TelegraphColor;
+            small.normal.textColor = new Color(0.86f, 0.86f, 0.86f);
+            glowTex = RadialTexture(64);
+            edgeTex = EdgeTexture(64);
         }
 
         void Update()
@@ -80,7 +74,6 @@ namespace ProjectInk
             PunchKickZones(w, h);
             if (hero != null) HeroPanel(w);
             if (director != null) DirectorPanel(w, h);
-            HeroMarker();
             if (showDiagnostics) Diagnostics();
             GUI.matrix = Matrix4x4.identity;
         }
@@ -128,8 +121,6 @@ namespace ProjectInk
             }
         }
 
-        /// <summary>Letter-spaced title text.</summary>
-        static string Spaced(string s) => string.Join(" ", s.ToCharArray());
 
         GUIStyle zoneStyle;
 
@@ -141,7 +132,10 @@ namespace ProjectInk
             if (zoneStyle == null) zoneStyle = new GUIStyle { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             float y = h * (1f - gi.kickLine);
             // stronger for the first floor, then barely there
-            float a = director != null && director.Floor == 1 && director.WaveIndex == 0 ? 0.32f : 0.12f;
+            // only while learning: the first wave of the first floor, fading out
+            float a = director != null && director.Floor == 1 && director.WaveIndex == 0
+                ? 0.3f * Mathf.Clamp01(1f - (director.ElapsedTime - 10f) / 3f) : 0f;
+            if (a <= 0.01f) return;
             float left = gi.Classic ? 0f : w * gi.stickZone;
             foreach (float x in new[] { left + 8f, w - 72f })
             {
@@ -226,20 +220,24 @@ namespace ProjectInk
         void HeroPanel(float w)
         {
             // health
-            Rect bar = new Rect(24, 20, 300, 16);
-            Fill(bar, new Color(0, 0, 0, 0.15f));
-            Fill(new Rect(bar.x, bar.y, bar.width * Mathf.Clamp01(hero.Health / hero.maxHealth), bar.height), Ink);
+            // a hairline health bar: white, turning red and pulsing when low
+            float hp = Mathf.Clamp01(hero.Health / hero.maxHealth);
+            Rect bar = new Rect(24, 24, 300, 6);
+            Fill(new Rect(bar.x - 1, bar.y - 1, bar.width + 2, bar.height + 2), new Color(0f, 0f, 0f, 0.45f));
+            Fill(bar, new Color(1f, 1f, 1f, 0.12f));
+            Color hc = hp > 0.3f ? new Color(0.95f, 0.95f, 0.95f) : Color.Lerp(new Color(0.85f, 0.1f, 0.12f), Color.white, 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 9f));
+            Fill(new Rect(bar.x, bar.y, bar.width * hp, bar.height), hc);
             // flow
             if (director != null)
             {
-                Rect fb = new Rect(24, 42, 300, 9);
-                Fill(fb, new Color(0, 0, 0, 0.12f));
+                Rect fb = new Rect(24, 36, 300, 3);
+                Fill(fb, new Color(1f, 1f, 1f, 0.08f));
                 bool ready = director.FlowReady;
                 float pulse = ready ? 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 10f) : 1f;
                 Fill(new Rect(fb.x, fb.y, fb.width * director.Flow / 100f, fb.height), new Color(1f, 1f, 1f, pulse));
                 var lbl = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 15 };
-                if (hero.InRampage) { lbl.normal.textColor = Color.white; GUI.Label(new Rect(24, 54, 400, 22), $"RAMPAGE  {hero.RampageLeft:0.0}", lbl); }
-                else if (ready) { lbl.normal.textColor = new Color(1f, 1f, 1f, pulse); GUI.Label(new Rect(24, 54, 400, 22), "RAMPAGE READY: two-finger tap", lbl); }
+                if (hero.InRampage) { lbl.normal.textColor = Color.white; Label(new Rect(24, 46, 400, 22), $"RAMPAGE  {hero.RampageLeft:0.0}", lbl); }
+                else if (ready) { lbl.normal.textColor = new Color(1f, 1f, 1f, pulse); Label(new Rect(24, 46, 400, 22), "RAMPAGE READY   ·   two-finger tap", lbl); }
             }
             // weapon in hand
             string weapon = hero.Style switch
@@ -256,78 +254,179 @@ namespace ProjectInk
                 g.normal.textColor = new Color(0.9f, 0.1f, 0.1f, 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 18f));
                 GUI.Label(new Rect(0, 200, w, 60), $"TAP TAP TAP!  {hero.GrabTaps}/4", g);
             }
-            GUI.Label(new Rect(24, 76, 300, 30), weapon, new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 20, fontStyle = FontStyle.Bold });
+            Label(new Rect(24, 70, 300, 30), Spaced(weapon), new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 16, fontStyle = FontStyle.Bold });
             if (hero.ComboCount >= 2)
-                GUI.Label(new Rect(24, 104, 300, 50), $"{hero.ComboCount} HITS", new GUIStyle(mid) { alignment = TextAnchor.UpperLeft });
+            {
+                var cs = new GUIStyle(mid) { alignment = TextAnchor.UpperLeft, fontSize = 34 };
+                Label(new Rect(24, 96, 300, 44), hero.ComboCount.ToString(), cs);
+                var hs = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 13 };
+                Label(new Rect(28 + 22 * hero.ComboCount.ToString().Length, 114, 200, 20), "H I T S", hs);
+            }
         }
 
         void DirectorPanel(float w, float h)
         {
-            GUI.Label(new Rect(w - 324, 14, 300, 40), director.Score.ToString("N0"), new GUIStyle(mid) { alignment = TextAnchor.UpperRight });
-            GUI.Label(new Rect(w - 324, 50, 300, 24), $"Floor {director.Floor}   Wave {Mathf.Min(director.WaveIndex + 1, director.WaveCount)}/{director.WaveCount}",
-                      new GUIStyle(small) { alignment = TextAnchor.UpperRight });
+            Label(new Rect(w - 324, 14, 300, 40), director.Score.ToString("N0"), new GUIStyle(mid) { alignment = TextAnchor.UpperRight, fontSize = 28 });
+            Label(new Rect(w - 324, 48, 300, 20), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}",
+                  new GUIStyle(small) { alignment = TextAnchor.UpperRight, fontSize = 13 });
 
-            // style rank
-            int ri = director.RankIndex;
-            var rankStyle = new GUIStyle(big) { fontSize = 70 + ri * 6, alignment = TextAnchor.MiddleRight };
-            rankStyle.normal.textColor = RankColors[ri];
-            GUI.Label(new Rect(w - 224, 90, 200, 90), director.Rank, rankStyle);
-            Fill(new Rect(w - 144, 182, 120, 5), new Color(0, 0, 0, 0.12f));
-            Fill(new Rect(w - 144, 182, 120 * director.RankProgress, 5), RankColors[ri]);
+            StyleRank(w);
 
             if (Time.unscaledTime < director.BannerUntil && !string.IsNullOrEmpty(director.Banner))
-                GUI.Label(new Rect(0, h * 0.2f, w, 90), director.Banner, big);
+                Label(new Rect(0, h * 0.2f, w, 90), Spaced(director.Banner), new GUIStyle(big) { fontSize = 54 });
             if (Time.unscaledTime < director.StyleUntil && !string.IsNullOrEmpty(director.StyleText))
-                GUI.Label(new Rect(0, h * 0.32f, w, 50), director.StyleText, mid);
+            {
+                float k = Mathf.Clamp01((director.StyleUntil - Time.unscaledTime) / 0.3f);
+                var st = new GUIStyle(mid) { fontSize = 26 };
+                st.normal.textColor = new Color(1f, 1f, 1f, k);
+                Label(new Rect(0, h * 0.32f, w, 44), Spaced(director.StyleText), st);
+            }
 
-            // spawn warnings: an arrow at the edge the enemy will come from
+            // incoming enemies: a soft red glow breathing on the edge they will come through
             foreach (var inc in director.Upcoming)
             {
                 if (Time.time < inc.time) continue;
-                string glyph; Rect r;
+                float pulse = 0.55f + 0.45f * Mathf.Sin(Time.unscaledTime * 8f);
+                var c = Enemy.TelegraphColor; c.a = 0.55f * pulse;
                 switch (inc.kind)
                 {
-                    case SpawnKind.LeftDoor: glyph = "<"; r = new Rect(10, h * 0.62f, 80, 80); break;
-                    case SpawnKind.RightDoor: glyph = ">"; r = new Rect(w - 90, h * 0.62f, 80, 80); break;
-                    case SpawnKind.UpperDoor: glyph = "<"; r = new Rect(10, h * 0.28f, 80, 80); break;
-                    case SpawnKind.Ceiling: glyph = "v"; r = new Rect(w * 0.5f - 40, 80, 80, 80); break;
-                    default: glyph = "o"; r = new Rect(w * 0.5f - 40, h - 130, 80, 80); break;
+                    case SpawnKind.LeftDoor: EdgeGlow(new Rect(0, h * 0.45f, 70, h * 0.45f), c, 0f); break;
+                    case SpawnKind.RightDoor: EdgeGlow(new Rect(w - 70, h * 0.45f, 70, h * 0.45f), c, 180f); break;
+                    case SpawnKind.UpperDoor: EdgeGlow(new Rect(0, h * 0.08f, 70, h * 0.4f), c, 0f); break;
+                    case SpawnKind.Ceiling: EdgeGlow(new Rect(w * 0.3f, 0, w * 0.4f, 70), c, 90f); break;
+                    default: EdgeGlow(new Rect(w * 0.3f, h - 70, w * 0.4f, 70), c, 270f); break;
                 }
-                GUI.Label(r, glyph, arrow);
             }
 
             if (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f))
                 GUI.Label(new Rect(0, h - 56, w, 40), GestureInput.Instance != null && !GestureInput.Instance.Classic
                     ? "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE   ·   C: classic controls"
-                    : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", small);
+                    : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", new GUIStyle(small) { fontSize = 14 });
 
             if (director.CurrentPhase == WaveDirector.Phase.Dead) Results(w, h);
         }
 
         void Results(float w, float h)
         {
-            Rect panel = new Rect(w * 0.5f - 260, h * 0.3f, 520, 290);
-            Fill(panel, new Color(1f, 1f, 1f, 0.88f));
-            var rankStyle = new GUIStyle(big) { fontSize = 96 };
-            rankStyle.normal.textColor = RankColors[Mathf.Clamp(director.BestRankIndex, 0, RankColors.Length - 1)];
-            GUI.Label(new Rect(panel.x, panel.y + 10, panel.width, 110), director.Grade(), rankStyle);
-            GUI.Label(new Rect(panel.x, panel.y + 120, panel.width, 40), director.Score.ToString("N0") + (director.NewBest ? "   NEW BEST!" : ""), mid);
-            GUI.Label(new Rect(panel.x, panel.y + 165, panel.width, 30),
-                $"Floor {director.Floor}  ·  {director.Kills} kills  ·  Best {director.BestScore:N0} (floor {director.BestFloor})", small);
-            GUI.Label(new Rect(panel.x, panel.y + 240, panel.width, 30), "Tap to play again", small);
+            Rect panel = new Rect(w * 0.5f - 280, h * 0.26f, 560, 320);
+            Fill(panel, new Color(0f, 0f, 0f, 0.82f));
+            Fill(new Rect(panel.x, panel.y, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
+            Fill(new Rect(panel.x, panel.yMax - 1, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
+            int best = Mathf.Clamp(director.BestRankIndex, 0, RankWords.Length - 1);
+            Label(new Rect(panel.x, panel.y + 18, panel.width, 20), "B E S T   S T Y L E", new GUIStyle(small) { fontSize = 12 });
+            Label(new Rect(panel.x, panel.y + 36, panel.width, 100), director.Grade(), new GUIStyle(big) { fontSize = 92 });
+            Label(new Rect(panel.x, panel.y + 132, panel.width, 22), Spaced(RankWords[best]), new GUIStyle(small) { fontSize = 14 });
+            Fill(new Rect(w * 0.5f - 40, panel.y + 164, 80, 1), new Color(1f, 1f, 1f, 0.4f));
+            Label(new Rect(panel.x, panel.y + 176, panel.width, 40), director.Score.ToString("N0") + (director.NewBest ? "   ·   NEW BEST" : ""), mid);
+            Label(new Rect(panel.x, panel.y + 220, panel.width, 26),
+                $"Floor {director.Floor}   ·   {director.Kills} kills   ·   best {director.BestScore:N0} (floor {director.BestFloor})", new GUIStyle(small) { fontSize = 15 });
+            var tap = new GUIStyle(small) { fontSize = 14 };
+            tap.normal.textColor = new Color(1f, 1f, 1f, 0.5f + 0.4f * Mathf.Sin(Time.unscaledTime * 3f));
+            GUI.Label(new Rect(panel.x, panel.y + 276, panel.width, 26), "T A P   T O   F I G H T   A G A I N", tap);
         }
 
-        /// <summary>A small white marker over the hero's head (every fighter is dark).</summary>
-        void HeroMarker()
+        // ------------------------------------------------------------------ the premium bits
+
+        static readonly string[] RankWords = { "", "CLEAN", "BRUTAL", "ARTFUL", "SAVAGE", "SUPREME", "STICK WICK" };
+        int shownRank = -1;
+        float rankChangedAt, rankAlpha;
+
+        /// <summary>The style rank: hidden at D; from C up, a white letter with a soft glow,
+        /// its word in spaced capitals, and a hairline that fills towards the next rank.
+        /// A new rank arrives with a quick scale-in.</summary>
+        void StyleRank(float w)
         {
-            var cam = Camera.main;
-            if (hero == null || cam == null || hero.IsDead) return;
-            Vector3 sp = cam.WorldToScreenPoint(hero.transform.position + Vector3.up * 1.75f);
-            if (sp.z <= 0f) return;
-            float x = sp.x / scale, y = (Screen.height - sp.y) / scale;
-            var st = new GUIStyle(small) { fontSize = 26, fontStyle = FontStyle.Bold };
-            st.normal.textColor = Color.white;
-            GUI.Label(new Rect(x - 20, y - 20, 40, 30), "v", st);
+            int ri = director.RankIndex;
+            if (ri != shownRank) { if (ri > shownRank) rankChangedAt = Time.unscaledTime; shownRank = ri; }
+            rankAlpha = Mathf.MoveTowards(rankAlpha, ri >= 1 ? 1f : 0f, Time.unscaledDeltaTime * 3f);
+            if (rankAlpha <= 0.01f) return;
+            float since = Time.unscaledTime - rankChangedAt;
+            float pop = since < 0.25f ? Mathf.Lerp(1.6f, 1f, Mathf.SmoothStep(0f, 1f, since / 0.25f)) : 1f;
+            var center = new Vector2(w - 84, 120);
+            float size = 62 + ri * 3;
+            // glow behind the letter, brighter at the top ranks
+            var old = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, rankAlpha * (0.08f + 0.05f * ri) * pop);
+            float gs = 150 * pop;
+            GUI.DrawTexture(new Rect(center.x - gs * 0.5f, center.y - gs * 0.5f, gs, gs), glowTex);
+            GUI.color = old;
+            var m = GUI.matrix;
+            GUIUtility.ScaleAroundPivot(new Vector2(pop, pop), center * scale);
+            var ls = new GUIStyle(big) { fontSize = (int)size, alignment = TextAnchor.MiddleCenter };
+            ls.normal.textColor = new Color(1f, 1f, 1f, rankAlpha);
+            Label(new Rect(center.x - 100, center.y - 44, 200, 80), director.Rank, ls);
+            GUI.matrix = m;
+            var ws = new GUIStyle(small) { fontSize = 11, alignment = TextAnchor.MiddleCenter };
+            ws.normal.textColor = new Color(1f, 1f, 1f, 0.75f * rankAlpha);
+            Label(new Rect(center.x - 100, center.y + 36, 200, 16), Spaced(RankWords[ri]), ws);
+            Fill(new Rect(center.x - 50, center.y + 56, 100, 1), new Color(1f, 1f, 1f, 0.15f * rankAlpha));
+            Fill(new Rect(center.x - 50, center.y + 56, 100 * director.RankProgress, 1), new Color(1f, 1f, 1f, 0.8f * rankAlpha));
+        }
+
+        Texture2D glowTex, edgeTex;
+
+        /// <summary>A soft glow on a screen edge; `angle` turns the gradient (0 = fades rightwards from the left edge).</summary>
+        void EdgeGlow(Rect r, Color c, float angle)
+        {
+            var old = GUI.color;
+            var m = GUI.matrix;
+            GUI.color = c;
+            if (angle == 0f) GUI.DrawTexture(r, edgeTex);
+            else
+            {
+                // draw the left-edge gradient rotated into place
+                Vector2 pivot = r.center;
+                bool sideways = Mathf.Abs(Mathf.DeltaAngle(angle, 90f)) < 1f || Mathf.Abs(Mathf.DeltaAngle(angle, 270f)) < 1f;
+                Rect rr = sideways ? new Rect(pivot.x - r.height * 0.5f, pivot.y - r.width * 0.5f, r.height, r.width) : r;
+                GUIUtility.RotateAroundPivot(angle, pivot * scale);
+                GUI.DrawTexture(rr, edgeTex);
+            }
+            GUI.matrix = m;
+            GUI.color = old;
+        }
+
+        /// <summary>Text with a soft drop shadow.</summary>
+        static void Label(Rect r, string text, GUIStyle st)
+        {
+            var col = st.normal.textColor;
+            st.normal.textColor = new Color(0f, 0f, 0f, 0.6f * col.a);
+            GUI.Label(new Rect(r.x + 2, r.y + 2, r.width, r.height), text, st);
+            st.normal.textColor = col;
+            GUI.Label(r, text, st);
+        }
+
+        static string Spaced(string s) => string.IsNullOrEmpty(s) ? s : string.Join(" ", s.ToCharArray());
+
+        static Texture2D RadialTexture(int n)
+        {
+            var t = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            float c = (n - 1) * 0.5f;
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float d = Mathf.Sqrt((x - c) * (x - c) + (y - c) * (y - c)) / c;
+                    float a = Mathf.Clamp01(1f - d);
+                    px[y * n + x] = new Color32(255, 255, 255, (byte)(a * a * 255));
+                }
+            t.SetPixels32(px); t.Apply();
+            return t;
+        }
+
+        /// <summary>Bright at the left edge fading right, soft at the top and bottom ends.</summary>
+        static Texture2D EdgeTexture(int n)
+        {
+            var t = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float u = x / (float)(n - 1), v = y / (float)(n - 1);
+                    float a = Mathf.Pow(1f - u, 2.2f) * Mathf.Sin(v * Mathf.PI);
+                    px[y * n + x] = new Color32(255, 255, 255, (byte)(a * 255));
+                }
+            t.SetPixels32(px); t.Apply();
+            return t;
         }
 
         void Diagnostics()
