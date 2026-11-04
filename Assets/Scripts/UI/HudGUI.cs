@@ -826,7 +826,7 @@ namespace ProjectInk
         GUIStyle gTitle, gLine, gNice, gChalk, gBtn;
         Texture2D finger, gRing;
         bool helpOpen, pauseOpen;
-        Rect helpBtn, skipBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, restartBtn;
+        Rect helpBtn, skipBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, restartBtn, hintsBtn;
 
         /// <summary>Open or close the pause screen (and stop the world, and its sound).</summary>
         void SetPause(bool on)
@@ -1193,9 +1193,10 @@ namespace ProjectInk
             Fill(new Rect(w * 0.5f - 150, h * 0.12f + 104, 300, 1), new Color(1f, 1f, 1f, 0.5f));
             if (director != null)
                 Label(new Rect(0, h * 0.12f + 112, w, 30), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}   ·   {director.Score:N0}", new GUIStyle(gLine) { fontSize = 18 });
-            // two rows of big buttons, sized to fit whatever height is left
-            float bw = 300, bh = 58, gap = 16;
-            float y = h * 0.12f + 160;
+            // three rows of big buttons, sized to fit whatever height is left
+            float bw = 300, gap = 16;
+            float y = h * 0.12f + 150;
+            float bh = Mathf.Clamp((h - 16f - y - gap * 2f) / 3f, 44f, 58f);
             resumeBtn = new Rect(w * 0.5f - bw - gap * 0.5f, y, bw, bh);
             movesBtn = new Rect(w * 0.5f + gap * 0.5f, y, bw, bh);
             soundBtn = new Rect(w * 0.5f - bw - gap * 0.5f, y + bh + gap, bw, bh);
@@ -1204,12 +1205,16 @@ namespace ProjectInk
             DrawButton(movesBtn, "MOVES", 24);
             DrawButton(soundBtn, Sound.Master > 0f ? "SOUND  ON" : "SOUND  OFF", 24);
             DrawButton(restartBtn, "RESTART", 24);
+            // chalk-mark hints: AUTO retires each one once learned; ALWAYS keeps them all on
+            hintsBtn = new Rect(w * 0.5f - bw * 0.5f, y + (bh + gap) * 2f, bw, bh);
+            DrawButton(hintsBtn, HintDirector.AlwaysShow ? "HINTS  ALWAYS" : "HINTS  AUTO", 24);
             if (!repaint) return;
             GestureInput.Blocked.Add(ToScreen(new Rect(0, 0, w, h)));         // the screen belongs to the pause card
             if (Pressed(resumeBtn)) SetPause(false);
             else if (Pressed(movesBtn)) { helpOpen = true; TimeController.Paused = true; }
             else if (Pressed(soundBtn)) Sound.SetMuted(Sound.Master > 0f);
             else if (Pressed(restartBtn)) { SetPause(false); if (director != null) director.Restart(); }
+            else if (Pressed(hintsBtn)) HintDirector.AlwaysShow = !HintDirector.AlwaysShow;
             else GestureInput.LastButtonTap = null;
         }
 

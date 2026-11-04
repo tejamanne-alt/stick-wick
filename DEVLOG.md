@@ -703,3 +703,11 @@ The victory was one camera arc with a text fade. `VictoryCinematic` is now an ed
 ## 2026-11-04: No controls line along the bottom
 
 The one-line controls cheat-sheet at the bottom of the screen during the start of floor 1 has been removed. It repeated the training reel and the ? card.
+
+## 2026-11-04: HINTS option (AUTO / ALWAYS)
+
+The pause menu has a third row: **HINTS AUTO / HINTS ALWAYS** (saved).
+- **AUTO** (the default) is the existing behaviour: each chalk mark retires once its move has been done three times.
+- **ALWAYS** shows every chalk mark whenever it applies and never retires them.
+
+Switching back to AUTO resumes the counts where they were. Set in `HintDirector.AlwaysShow`, which uses the PlayerPrefs key `hints_always`. The pause buttons shrink a little on short screens so all three rows fit.

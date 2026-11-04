@@ -11,7 +11,8 @@ namespace ProjectInk
     ///   standing above an enemy: "DIVE ON HIM" (swipe down)
     ///   an enemy flashing red beside you: "DODGE" (swipe sideways)
     ///   a weapon on the floor: "TAKE IT" (walk over it)
-    /// Each mark retires for good once the move has been done three times (saved).</summary>
+    /// Each mark retires for good once the move has been done three times (saved), unless HINTS is
+    /// set to ALWAYS in the pause menu.</summary>
     public class HintDirector : MonoBehaviour
     {
         public static HintDirector Instance { get; private set; }
@@ -35,7 +36,15 @@ namespace ProjectInk
         }
 
         static string Key(string id) => "hint_" + id;
-        static bool Retired(string id) => PlayerPrefs.GetInt(Key(id), 0) >= RetireAfter;
+        static bool Retired(string id) => !AlwaysShow && PlayerPrefs.GetInt(Key(id), 0) >= RetireAfter;
+
+        /// <summary>The pause menu's HINTS option. Off (the default): each mark retires once its
+        /// move has been done three times. On: every mark shows whenever it applies, for good.</summary>
+        public static bool AlwaysShow
+        {
+            get => PlayerPrefs.GetInt("hints_always", 0) == 1;
+            set { PlayerPrefs.SetInt("hints_always", value ? 1 : 0); PlayerPrefs.Save(); }
+        }
 
         void OnDid(string what)
         {
