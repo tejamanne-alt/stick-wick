@@ -469,3 +469,15 @@ Feedback: instead of climbing on both sides, use steps on one side.
     - a long trapeze from the roof over the **left mezzanine** (x −10.4, rod 2.1 m above the floor; replaces the bar there; swings −28°…+80°)
     - a short one over the **catwalk** (x 4.6, rod 1.35 m above the grating)
 - `SceneVersion` → 18.
+
+## 2026-11-04: 0.7.8 crates where they matter
+
+Feedback: keep the boxes in useful places. A kicked crate flies on until it hits someone or lands, so a crate kicked off an edge drops onto whoever is below. The six tower crates are now:
+- **lobby, by the left door** (x −10.6) and **by the right door** (x 10.8): bowl them into enemies walking in
+- **left mezzanine, by its door** (x −8.0) and **right mezzanine, by its door** (x 8.4): into enemies stepping out
+- **left mezzanine, at the climbing edge** (x −4.9): kick it off onto climbers or the crowd below
+- **catwalk, near its left end** (x −6.3): kick it off to drop 3 m onto the left mezzanine
+
+The two corner crates that did nothing are gone. All positions were checked against the bars' giant circles, the trapeze's swing and the ledge climb landings.
+
+Walking fighters can **step up onto crates** again in the tower (a crate-only step-up on top of the 0.35 m stair step), so they stand on them instead of walking through them. `SceneVersion` → 19.

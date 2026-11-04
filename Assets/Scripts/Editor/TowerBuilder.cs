@@ -217,10 +217,14 @@ namespace ProjectInk.EditorTools
             EnvironmentBuilder.Bar(props, new Vector3(10.8f, mezz + 1.5f, 0f), roof, steel, rim);
             EnvironmentBuilder.Bar(props, new Vector3(-4.6f, cat + 1.5f, 0f), roof, steel, rim);
             // crates to kick
-            EnvironmentBuilder.Crate(props, new Vector3(-6.4f, 0f, 0f), 0.7f, crateMat, crateEdge);
-            EnvironmentBuilder.Crate(props, new Vector3(6.2f, 0f, 0f), 0.7f, crateMat, crateEdge);
-            EnvironmentBuilder.Crate(props, new Vector3(-12.0f, mezz, 0f), 0.7f, crateMat, crateEdge);
-            EnvironmentBuilder.Crate(props, new Vector3(12.4f, mezz, 0f), 0.7f, crateMat, crateEdge);
+            // crates where a kick does something (a kicked crate flies on until it hits someone or lands,
+            // so one kicked off an edge drops onto whoever is below):
+            EnvironmentBuilder.Crate(props, new Vector3(-10.6f, 0f, 0f), 0.7f, crateMat, crateEdge);    // lobby, by the left door: bowl it into arrivals
+            EnvironmentBuilder.Crate(props, new Vector3(10.8f, 0f, 0f), 0.7f, crateMat, crateEdge);     // lobby, by the right door
+            EnvironmentBuilder.Crate(props, new Vector3(-8.0f, mezz, 0f), 0.7f, crateMat, crateEdge);   // left mezzanine, by its door
+            EnvironmentBuilder.Crate(props, new Vector3(-4.9f, mezz, 0f), 0.7f, crateMat, crateEdge);   // left mezzanine, at the climbing edge: kick it onto climbers below
+            EnvironmentBuilder.Crate(props, new Vector3(8.4f, mezz, 0f), 0.7f, crateMat, crateEdge);    // right mezzanine, by its door
+            EnvironmentBuilder.Crate(props, new Vector3(-6.3f, cat, 0f), 0.7f, crateMat, crateEdge);    // catwalk, near its left end: drop it onto the mezzanine
 
             // ------------------------------------------------------------ light
             EnvironmentBuilder.Lamp(env, new Vector3(-8.0f, mezz - SlabThick, 1.6f), 0.35f, shade, bulb, coneMat, lampGlow);

@@ -146,8 +146,14 @@ namespace ProjectInk
                 below.y = Mathf.Min(below.y, ProbeCeiling);
                 return Physics.Raycast(below, Vector3.down, out var hit, 40f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
             }
-            // walking: step up at most a stair's worth, so you pass under open stairs and slabs
-            return GroundY(p, LevelNav.Active ? 0.35f : 0.9f);
+            // walking: step up at most a stair's worth, so you pass under open stairs and slabs ...
+            if (!LevelNav.Active) return GroundY(p);
+            float g = GroundY(p, 0.35f);
+            // ... except onto a crate, which anyone can step up on (and stand on to fight)
+            if (Physics.Raycast(p + Vector3.up * 0.9f, Vector3.down, out var crateHit, 1.3f, ~0, QueryTriggerInteraction.Ignore) &&
+                crateHit.point.y > g && crateHit.collider.GetComponentInParent<Crate>() != null)
+                g = crateHit.point.y;
+            return g;
         }
 
         /// <summary>Move by velocity, apply gravity, land on the ground and follow stairs.
