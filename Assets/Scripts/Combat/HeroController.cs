@@ -846,6 +846,14 @@ namespace ProjectInk
                 UpdateTint();
                 return;
             }
+            if (RampageIntro) { UpdateTint(); return; }     // the activation cinematic owns him
+            // rampage ready: white sparks rise off him
+            var wdr = WaveDirector.Instance;
+            if (wdr != null && wdr.FlowReady && !InRampage && Time.unscaledTime > sparkAt)
+            {
+                sparkAt = Time.unscaledTime + 0.16f;
+                StreakFx.Sparks(transform.position + new Vector3(Random.Range(-0.3f, 0.3f), Random.Range(0.1f, 1.0f), 0f), Vector3.up, 2, 3.2f);
+            }
             if (UpdateLedge(dt)) { UpdateTint(); return; }
 
             switch (state)
@@ -1108,17 +1116,97 @@ namespace ProjectInk
 
         // ------------------------------------------------------------------ rampage
 
+        // ------------------------------------------------------------------ rampage
+        // Activation is a 1.1 s cinematic: time all but stops, the camera pushes in low and close,
+        // ink explodes round him with white speed lines, RAMPAGE slams onto the screen (the HUD),
+        // he crouches and rises, a shockwave throws everyone back, and the rampage begins.
+
+        public const float RampageIntroSeconds = 1.1f;
+        float rampageIntroUntil, sparkAt;
+        public bool RampageIntro => Time.unscaledTime < rampageIntroUntil;
+        public float RampageIntroT => 1f - Mathf.Clamp01((rampageIntroUntil - Time.unscaledTime) / RampageIntroSeconds);
+
+        /// <summary>For the on-screen RAMPAGE button.</summary>
+        public void TriggerRampage() => StartRampage();
+
         void StartRampage()
         {
             var wd = WaveDirector.Instance;
-            if (wd == null || !wd.FlowReady || InRampage) return;
+            if (wd == null || !wd.FlowReady || InRampage || CinematicLock || IsDead) return;
             wd.SpendFlow();
             Tell("rampage");
-            rampageUntil = Time.unscaledTime + rampageSeconds;
-            if (TimeController.Instance != null) TimeController.Instance.Rampage(0.4f, rampageSeconds);
-            if (InkFx.Instance != null) { InkFx.Instance.ImpactFlash(0.08f); InkFx.Instance.Burst(Chest, 6f); }
-            if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(8f, 0.25f);
-            wd.AddStyle(300, "RAMPAGE!");
+            float now = Time.unscaledTime;
+            rampageIntroUntil = now + RampageIntroSeconds;
+            rampageUntil = rampageIntroUntil + rampageSeconds;      // (invulnerable all through)
+            StartCoroutine(RampageIntroRoutine());
+        }
+
+        System.Collections.IEnumerator RampageIntroRoutine()
+        {
+            var tc = TimeController.Instance;
+            var cam = CameraDirector.Instance;
+            var fx = InkFx.Instance;
+            var chest = Chest;
+            // the freeze, the flash, the ink and the speed lines
+            if (tc != null) tc.SlowMo(0.04f, RampageIntroSeconds, 0.02f, 0.12f);
+            if (fx != null) { fx.ImpactFlash(0.08f); fx.Burst(chest, 8f); fx.Splash(chest, Vector3.up, 46, true); }
+            for (int i = 0; i < 20; i++)
+            {
+                float a = i / 20f * Mathf.PI * 2f + Random.Range(-0.08f, 0.08f);
+                var d = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f);
+                StreakFx.Slash(chest + d * 1.6f, d, Random.Range(2.2f, 3.6f), 0.035f, 0.55f);
+            }
+            Sound.Play(Sfx.SlowmoIn, 1f);
+            Sound.Play(Sfx.CineMassive, 1f);
+            Sound.Play(Sfx.Boom, 0.8f);
+            Sound.Play(Sfx.HeroEffort, 1f, transform.position, 0.85f);
+            body.Play(body.Has("duck") ? "duck" : IdleClip, 0.05f);
+            SetTrails(true);
+            bool risen = false, waved = false;
+            while (RampageIntro)
+            {
+                float t = RampageIntroT;
+                // the push-in: low, close, slightly to his front
+                if (cam != null)
+                {
+                    float wIn = Mathf.SmoothStep(0f, 1f, t / 0.12f), wOut = Mathf.SmoothStep(0f, 1f, (1f - t) / 0.2f);
+                    var c = transform.position + Vector3.up * 0.75f;
+                    var pos = c + new Vector3(Facing * 0.9f, -0.3f, -Mathf.Lerp(3.3f, 2.3f, Mathf.SmoothStep(0f, 1f, t)));
+                    cam.Scripted(pos, c + Vector3.up * 0.2f, Mathf.Min(wIn, wOut), Mathf.Lerp(32f, 26f, t));
+                }
+                if (!risen && t > 0.55f) { risen = true; body.Play(body.Has("uppercut") ? "uppercut" : IdleClip, 0.05f); }
+                if (!waved && t > 0.72f) { waved = true; RampageShockwave(); }
+                yield return null;
+            }
+            if (cam != null) cam.Scripted(Vector3.zero, Vector3.zero, 0f);
+            if (tc != null) tc.Rampage(0.4f, rampageSeconds);
+            SetTrails(false);
+            EnterIdle();
+            Sound.Play(Sfx.SlowmoOut, 0.8f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(300, "RAMPAGE!");
+        }
+
+        /// <summary>The blast at the end of the intro: everyone near is thrown back.</summary>
+        void RampageShockwave()
+        {
+            var p = transform.position;
+            foreach (var e in Enemy.All.ToArray())
+            {
+                if (!e.Targetable) continue;
+                var q = e.transform.position;
+                float d = Mathf.Abs(q.x - p.x);
+                if (d > 3.8f || Mathf.Abs(q.y - p.y) > 1.2f) continue;
+                int dir = q.x >= p.x ? 1 : -1;
+                e.Interrupt();
+                e.TakeHit(new HitInfo { damage = 6f, direction = dir, knockback = Mathf.Lerp(11f, 5f, d / 3.8f), knockdown = d < 2.2f, attacker = this });
+            }
+            StreakFx.Sparks(p + Vector3.up * 0.1f, Vector3.right, 22, 10f);
+            StreakFx.Sparks(p + Vector3.up * 0.1f, Vector3.left, 22, 10f);
+            if (InkFx.Instance != null) { InkFx.Instance.ImpactFlash(0.05f); InkFx.Instance.Burst(p + Vector3.up * 0.4f, 6f); }
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.4f, 0.35f);
+            Sound.Play(Sfx.Boom, 1f);
+            Sound.Play(Sfx.CineHit, 0.8f);
+            foreach (var lamp in FindObjectsByType<LampFlicker>()) lamp.Shake(1f);
         }
 
         /// <summary>During Rampage every tap blinks next to an enemy on that side (any floor)

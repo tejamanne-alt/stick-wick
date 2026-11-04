@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ProjectInk
 {
-    public enum Gesture { None, TapHigh, TapLow, TapAgain, Hold, SwipeUp, SwipeDown, SwipeSide, TwoFingers }
+    public enum Gesture { None, TapHigh, TapLow, TapAgain, Hold, SwipeUp, SwipeDown, SwipeSide, TwoFingers, TapRampage }
 
     /// <summary>THE TRAINING REEL. On the first launch, after the opening, the hero learns by
     /// doing, against grey stunt doubles who never hit back. Each lesson shows a ghost finger
@@ -37,7 +37,7 @@ namespace ProjectInk
             new Lesson { title = "SWIPE UP", line = "Jump. At a striped ledge: climb.", gesture = Gesture.SwipeUp, goal = 1, evt = "climb" },
             new Lesson { title = "SWIPE DOWN", line = "Drop through the floor.", gesture = Gesture.SwipeDown, goal = 1, evt = "drop" },
             new Lesson { title = "SWIPE SIDEWAYS", line = "Dodge. When anyone flashes red, get out of the way.", gesture = Gesture.SwipeSide, goal = 1, evt = "dodge" },
-            new Lesson { title = "TWO FINGERS", line = "Rampage. When the white bar is full, tap with two fingers.", gesture = Gesture.TwoFingers, goal = 1, evt = "rampage" },
+            new Lesson { title = "RAMPAGE", line = "When the bar burns red, tap the RAMPAGE button (or two fingers).", gesture = Gesture.TapRampage, goal = 1, evt = "rampage" },
         };
 
         public bool Active { get; private set; }

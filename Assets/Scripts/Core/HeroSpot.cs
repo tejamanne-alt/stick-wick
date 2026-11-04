@@ -71,6 +71,9 @@ namespace ProjectInk
             foreach (var e in Enemy.All)
                 if (e.Alive && Mathf.Abs(e.transform.position.x - p.x) < 1.6f && Mathf.Abs(e.transform.position.y - p.y) < 1f) crowd = 1f;
             float want = hero.IsDead ? 0f : Mathf.Lerp(0.16f, 0.3f, crowd) * Mathf.Clamp01(1f - height / 3f);
+            var wd = WaveDirector.Instance;
+            if (wd != null && wd.FlowReady && !hero.InRampage) want = Mathf.Max(want, 0.32f + 0.14f * Mathf.Sin(Time.unscaledTime * 6f));   // charged: the light pulses
+            if (hero.InRampage) want = 0.42f;
             alpha = Mathf.MoveTowards(alpha, want, Time.unscaledDeltaTime * 0.8f);
             float breathe = 1f + 0.04f * Mathf.Sin(Time.unscaledTime * 2.2f);
             float size = Mathf.Lerp(1.5f, 0.9f, Mathf.Clamp01(height / 2.5f)) * breathe;

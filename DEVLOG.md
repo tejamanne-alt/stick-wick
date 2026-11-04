@@ -591,3 +591,25 @@ Mock-ups: `docs/previews/guide_mockups.png`.
 - Small text raised: weapon, floor/wave, hits, rank word, lesson header, chalk marks (27 pt), training lines (22 pt), punch/kick guides.
 - The MOVES card is re-fitted to the shorter layout space (rows size to fit).
 - Checked at 2340×1080 (19.5:9): HUD, pause screen and MOVES card all fit with no overlap (`docs/previews/ui_sizes_phone.png`).
+
+## 2026-11-04: 1.1 Rampage, made special
+
+**Knowing it's ready:**
+- A big round **RAMPAGE button** in the upper left, under the Flow bar it belongs to: dark disc, white rim, blood-red title, two rings rippling out, a red glow. One tap triggers it; two fingers and Space still work. It sits clear of the hero (the camera keeps him mid-screen) and of the usual thumb area.
+- The **Flow bar burns** red-white with "R A M P A G E   R E A D Y" beneath it.
+- The moment it fills: a "RAMPAGE READY" call-out, a cinematic hit, and three low heartbeats.
+- **On the hero:** white sparks rise off him, and his light pool brightens and pulses.
+
+**Activation, a 1.1 s cinematic** (the hero is untouchable and holds still):
+- time drops to ×0.04
+- the screen flashes; ink explodes, red splash included; 20 white speed lines burst outward
+- the camera pushes in low and close (fov 32 → 26)
+- black bars snap in, and **RAMPAGE** slams onto the screen in blood-red brush letters (scale 2.2 → 1 with a shudder), a white swipe drawn under it
+- reverse whoosh, massive cinematic hit, boom, a shout
+- the hero crouches, then rises in an uppercut
+- at 72%, a **shockwave**: everyone within 3.8 m is interrupted and thrown back (those within 2.2 m off their feet), with a dust ring, a flash, a heavy shake, a boom, and every lamp swinging
+- then the camera hands back and the rampage runs (×0.4 time, 5 s)
+
+**While it runs:** a red frame breathes at the screen's edge, and a big draining RAMPAGE bar sits at the top centre.
+
+The training lesson is now "RAMPAGE: tap the RAMPAGE button", with the ghost finger on the button. The MOVES card is updated. Storyboard: `docs/previews/rampage_storyboard.png`.

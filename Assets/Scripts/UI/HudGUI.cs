@@ -90,6 +90,7 @@ namespace ProjectInk
                 Fill(new Rect(0, h - bh, w, bh), Color.black);
             }
             if (cutscene) { OpeningCards(cine, w, h); GUI.matrix = Matrix4x4.identity; return; }
+            if (hero != null && hero.RampageIntro) { RampageIntroOverlay(w, h, barK); GUI.matrix = Matrix4x4.identity; return; }
             var win = VictoryCinematic.Instance;
             if (win != null && win.Active)
             {
@@ -104,6 +105,7 @@ namespace ProjectInk
                 return;
             }
 
+            RampageFrame(w, h);
             DrawStick();
             PunchKickZones(w, h);
             if (hero != null) HeroPanel(w);
@@ -254,6 +256,52 @@ namespace ProjectInk
             grain.Apply();
         }
 
+        static readonly Color RampageRed = new Color(0.86f, 0.08f, 0.1f);
+        bool wasReady;
+
+        /// <summary>While the rampage runs: a red frame breathing at the screen's edge, and a big
+        /// draining RAMPAGE bar at the top.</summary>
+        void RampageFrame(float w, float h)
+        {
+            if (hero == null || !hero.InRampage || hero.RampageIntro) return;
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 7f);
+            var old = GUI.color;
+            GUI.color = new Color(RampageRed.r, RampageRed.g, RampageRed.b, 0.35f + 0.2f * pulse);
+            if (vignette != null) GUI.DrawTexture(new Rect(-40, -40, w + 80, h + 80), vignette);
+            GUI.color = old;
+            float frac = Mathf.Clamp01(hero.RampageLeft / Mathf.Max(0.1f, hero.rampageSeconds));
+            var bar = new Rect(w * 0.5f - 230, 66, 460, 10);
+            Fill(new Rect(bar.x - 2, bar.y - 2, bar.width + 4, bar.height + 4), new Color(0f, 0f, 0f, 0.6f));
+            Fill(new Rect(bar.center.x - bar.width * frac * 0.5f, bar.y, bar.width * frac, bar.height), Color.Lerp(RampageRed, Color.white, pulse * 0.4f));
+            var st = new GUIStyle(big) { fontSize = 30 };
+            st.normal.textColor = new Color(1f, 1f, 1f, 0.95f);
+            Label(new Rect(0, 78, w, 40), Spaced("RAMPAGE"), st);
+        }
+
+        /// <summary>The activation: bars snap in, RAMPAGE slams onto the screen in blood red brush
+        /// letters with a white swipe under it, and fades as the shockwave hits.</summary>
+        void RampageIntroOverlay(float w, float h, float barK)
+        {
+            float t = hero.RampageIntroT;
+            float bars = 96f * barK * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / 0.08f)) * (1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - 0.85f) / 0.15f)));
+            Fill(new Rect(0, 0, w, bars), Color.black);
+            Fill(new Rect(0, h - bars, w, bars), Color.black);
+            LoadFonts();
+            float slam = Mathf.Clamp01(t / 0.16f);
+            float size = Mathf.Lerp(2.2f, 1f, 1f - (1f - slam) * (1f - slam));
+            float alpha = t < 0.8f ? 1f : Mathf.Clamp01(1f - (t - 0.8f) / 0.2f);
+            var st = new GUIStyle { font = Brush != null ? Brush : Display, fontSize = Mathf.RoundToInt(118 * size), alignment = TextAnchor.MiddleCenter };
+            float shake = slam < 1f ? 0f : Mathf.Sin(Time.unscaledTime * 90f) * 3f * Mathf.Clamp01(1f - (t - 0.16f) / 0.3f);
+            var r = new Rect(shake, h * 0.30f, w, 160);
+            st.normal.textColor = new Color(0f, 0f, 0f, 0.7f * alpha);
+            GUI.Label(new Rect(r.x + 5, r.y + 6, r.width, r.height), "RAMPAGE", st);
+            st.normal.textColor = new Color(RampageRed.r, RampageRed.g, RampageRed.b, alpha);
+            GUI.Label(r, "RAMPAGE", st);
+            // the white swipe under it, drawn out left to right
+            float sw = Mathf.Clamp01((t - 0.1f) / 0.2f) * 560f;
+            Fill(new Rect(w * 0.5f - 280, h * 0.30f + 150, sw, 4), new Color(1f, 1f, 1f, 0.9f * alpha));
+        }
+
         void HeroPanel(float w)
         {
             // health
@@ -273,8 +321,13 @@ namespace ProjectInk
                 float pulse = ready ? 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 10f) : 1f;
                 Fill(new Rect(fb.x, fb.y, fb.width * director.Flow / 100f, fb.height), new Color(1f, 1f, 1f, pulse));
                 var lbl = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 20 };
-                if (hero.InRampage) { lbl.normal.textColor = Color.white; Label(new Rect(24, 46, 400, 22), $"RAMPAGE  {hero.RampageLeft:0.0}", lbl); }
-                else if (ready) { lbl.normal.textColor = new Color(1f, 1f, 1f, pulse); Label(new Rect(24, 46, 400, 22), "RAMPAGE READY   ·   two-finger tap", lbl); }
+                if (ready && !hero.InRampage)
+                {
+                    // the bar is charged: it burns red-white
+                    Fill(new Rect(fb.x, fb.y - 1, fb.width, fb.height + 2), Color.Lerp(RampageRed, Color.white, 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 10f)));
+                    lbl.normal.textColor = Color.Lerp(RampageRed, Color.white, 0.4f + 0.4f * Mathf.Sin(Time.unscaledTime * 10f));
+                    Label(new Rect(24, 44, 400, 26), "R A M P A G E   R E A D Y", lbl);
+                }
             }
             // weapon in hand
             string weapon = hero.Style switch
@@ -557,6 +610,7 @@ namespace ProjectInk
 
             ChalkMarks(w, h);
             if (training) TrainingCard(tut, w, h);
+            RampageButton(w, h, repaint);
 
             // the pause and ? buttons (top centre), and SKIP during training
             pauseBtn = new Rect(w * 0.5f - 70, 8, 62, 48);
@@ -600,6 +654,63 @@ namespace ProjectInk
             }
             if (helpOpen) HelpCard(w, h, repaint);
             else if (pauseOpen) PauseCard(w, h, repaint);
+        }
+
+        Rect rampageBtn;
+        float readySince;
+
+        /// <summary>Upper left, just under the Flow bar it belongs to: clear of the hero (the camera
+        /// keeps him mid-screen) and of the thumbs' usual fighting area.</summary>
+        Vector2 RampageButtonCentre(float w, float h) => new Vector2(96f, 236f);
+
+        /// <summary>When the Flow bar is full: a big round RAMPAGE button at the bottom centre,
+        /// pulsing, with rings rippling out; one tap and the rampage starts. The moment it becomes
+        /// ready there is a call-out, a hit, and a few heartbeats.</summary>
+        void RampageButton(float w, float h, bool repaint)
+        {
+            if (director == null || hero == null) return;
+            bool ready = director.FlowReady && !hero.InRampage && !hero.IsDead && !TimeController.Paused;
+            if (repaint && ready && !wasReady)
+            {
+                readySince = Time.unscaledTime;
+                director.AddStyle(0, "RAMPAGE READY");
+                Sound.Play(Sfx.CineHit, 0.6f);
+                for (int i = 0; i < 3; i++) Sound.PlayLater(Sfx.Boom, 0.6f + i * 0.9f, 0.3f);
+            }
+            if (repaint) wasReady = ready;
+            if (!ready) return;
+            float t = Time.unscaledTime;
+            float pop = Mathf.Clamp01((t - readySince) / 0.3f);
+            float pulse = 0.5f + 0.5f * Mathf.Sin(t * 6f);
+            float R = 58f * Mathf.Lerp(1.4f, 1f, pop) * (1f + 0.04f * pulse);
+            var c = RampageButtonCentre(w, h);
+            var old = GUI.color;
+            GUI.color = new Color(RampageRed.r, RampageRed.g, RampageRed.b, 0.45f + 0.25f * pulse);
+            GUI.DrawTexture(new Rect(c.x - R * 2.1f, c.y - R * 2.1f, R * 4.2f, R * 4.2f), glowTex);
+            for (int i = 0; i < 2; i++)
+            {
+                float u = Mathf.Repeat(t * 0.9f + i * 0.5f, 1f);
+                GUI.color = new Color(1f, 1f, 1f, 0.5f * (1f - u));
+                float rr = R * Mathf.Lerp(1f, 1.9f, u);
+                GUI.DrawTexture(new Rect(c.x - rr, c.y - rr, rr * 2, rr * 2), gRing);
+            }
+            GUI.color = new Color(0.06f, 0.06f, 0.06f, 0.92f);
+            GUI.DrawTexture(new Rect(c.x - R, c.y - R, R * 2, R * 2), finger);
+            GUI.color = new Color(1f, 1f, 1f, 0.95f);
+            GUI.DrawTexture(new Rect(c.x - R - 3, c.y - R - 3, R * 2 + 6, R * 2 + 6), gRing);
+            GUI.color = old;
+            var st = new GUIStyle(gTitle) { fontSize = 30 };
+            st.normal.textColor = Color.Lerp(RampageRed, Color.white, 0.35f + 0.35f * pulse);
+            GUI.Label(new Rect(c.x - R, c.y - 22, R * 2, 34), "RAMPAGE", st);
+            var sub = new GUIStyle(gLine) { fontSize = 15 };
+            sub.normal.textColor = new Color(1f, 1f, 1f, 0.7f);
+            GUI.Label(new Rect(c.x - R, c.y + 10, R * 2, 22), "TAP", sub);
+            rampageBtn = new Rect(c.x - R, c.y - R, R * 2, R * 2);
+            if (repaint)
+            {
+                GestureInput.Blocked.Add(ToScreen(rampageBtn));
+                if (Pressed(rampageBtn)) hero.TriggerRampage();
+            }
         }
 
         void DrawButton(Rect r, string text, int size)
@@ -680,6 +791,7 @@ namespace ProjectInk
                 case Gesture.SwipeUp: a = new Vector2(w * 0.78f, h * 0.66f); b = a + new Vector2(0f, -170f); break;
                 case Gesture.SwipeDown: a = new Vector2(w * 0.78f, h * 0.34f); b = a + new Vector2(0f, 170f); break;
                 case Gesture.SwipeSide: a = new Vector2(w * 0.64f, h * 0.5f); b = a + new Vector2(200f, 0f); break;
+                case Gesture.TapRampage: a = b = RampageButtonCentre(w, h); break;
                 default: a = new Vector2(w * 0.66f, h * 0.48f); b = new Vector2(w * 0.80f, h * 0.48f); break;   // two fingers
             }
             var old = GUI.color;
@@ -845,7 +957,7 @@ namespace ProjectInk
                 { "SWIPE UP", "Jump · climb a striped ledge · grab a rope, trapeze or bar" },
                 { "SWIPE DOWN", "Throw your weapon at someone ahead · or drop through the floor (onto anyone below)" },
                 { "SWIPE SIDEWAYS", "Dodge · vault · slide kick · wall flip" },
-                { "TWO FINGERS", "Rampage, when the white bar is full" },
+                { "RAMPAGE", "When the bar burns red: tap the round RAMPAGE button (or two fingers, or Space)" },
                 { "WALK OVER", "Pick up a dropped weapon (sword, pipe, gun, knives): your taps use it" },
             };
             var k1 = new GUIStyle(gTitle) { fontSize = 28, alignment = TextAnchor.MiddleRight };
