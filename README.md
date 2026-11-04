@@ -5,6 +5,14 @@ The design is in the plan doc; this repo is the build.
 
 ## Prototype 0.4: what's in it
 
+**Cinematic opening** (0.4.1): the game starts on a black screen and the letterbox bars part like curtains.
+1. A slow crane shot over the building, with the title card.
+2. A hard cut to floor level: the hero crashes through the skylight and lands in slow motion. The lamps swing.
+3. A push-in on the hero as he beckons, with the chapter card in the lower bar.
+4. The bars slide away, **FIGHT!**, and you have control.
+
+Tap anywhere to skip. A restart plays a short 1.5-second version. The code is in `Assets/Scripts/Level/OpeningCinematic.cs`; the title text is set there too.
+
 A **black-and-white film-noir building**:
 - grey architectural concrete and deep blacks
 - white lamplight that sways and flickers

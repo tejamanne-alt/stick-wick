@@ -81,6 +81,9 @@ namespace ProjectInk
             return Command.None;
         }
 
+        /// <summary>Forget every buffered command (taps made during a cutscene).</summary>
+        public void Flush() { queue.Clear(); }
+
         public Command Peek()
         {
             float now = UnityEngine.Time.unscaledTime;

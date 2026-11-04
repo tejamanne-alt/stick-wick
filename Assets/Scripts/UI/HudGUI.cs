@@ -64,13 +64,17 @@ namespace ProjectInk
             GUI.DrawTextureWithTexCoords(new Rect(0, 0, w, h), grain, new Rect(ox, oy, w / 256f, h / 256f));
             GUI.color = old;
 
-            // cinematic bars
-            if (bars > 0.001f)
+            // cinematic bars: slow-mo letterbox, or the opening's (which starts as a black screen)
+            var cine = OpeningCinematic.Instance;
+            bool cutscene = cine != null && cine.Active;
+            float bh = bars > 0.001f ? 70f * Mathf.SmoothStep(0f, 1f, bars) : 0f;
+            if (cutscene) bh = Mathf.Max(bh, cine.BarsPixels);
+            if (bh > 0.01f)
             {
-                float bh = 70f * Mathf.SmoothStep(0f, 1f, bars);
                 Fill(new Rect(0, 0, w, bh), Color.black);
                 Fill(new Rect(0, h - bh, w, bh), Color.black);
             }
+            if (cutscene) { OpeningCards(cine, w, h); GUI.matrix = Matrix4x4.identity; return; }
 
             DrawStick();
             if (hero != null) HeroPanel(w);
@@ -79,6 +83,52 @@ namespace ProjectInk
             if (showDiagnostics) Diagnostics();
             GUI.matrix = Matrix4x4.identity;
         }
+
+        GUIStyle cineTitle, cineTag, cineCap, cineSkip;
+
+        /// <summary>Title, tagline, chapter card and skip hint, white on the film.</summary>
+        void OpeningCards(OpeningCinematic c, float w, float h)
+        {
+            if (cineTitle == null)
+            {
+                cineTitle = new GUIStyle { fontSize = 78, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+                cineTag = new GUIStyle(cineTitle) { fontSize = 20, fontStyle = FontStyle.Normal };
+                cineCap = new GUIStyle(cineTitle) { fontSize = 40, alignment = TextAnchor.MiddleLeft };
+                cineSkip = new GUIStyle(cineTag) { fontSize = 15, alignment = TextAnchor.MiddleRight };
+            }
+            var white = Color.white;
+            if (c.TitleAlpha > 0.001f)
+            {
+                cineTitle.normal.textColor = new Color(0f, 0f, 0f, 0.55f * c.TitleAlpha);
+                GUI.Label(new Rect(3, h * 0.40f + 3, w, 100), Spaced(c.title), cineTitle);
+                cineTitle.normal.textColor = new Color(1f, 1f, 1f, c.TitleAlpha);
+                GUI.Label(new Rect(0, h * 0.40f, w, 100), Spaced(c.title), cineTitle);
+                Fill(new Rect(w * 0.5f - 160 * c.TitleAlpha, h * 0.40f + 104, 320 * c.TitleAlpha, 2), new Color(1f, 1f, 1f, 0.7f * c.TitleAlpha));
+                cineTag.normal.textColor = new Color(1f, 1f, 1f, 0.8f * c.TitleAlpha);
+                GUI.Label(new Rect(0, h * 0.40f + 112, w, 34), c.tagline, cineTag);
+            }
+            if (c.CaptionAlpha > 0.001f)
+            {
+                // the chapter card sits in the lower bar, left, like a lower third
+                float slide = (1f - c.CaptionAlpha) * 30f;
+                float y = h - 92f;
+                cineCap.normal.textColor = new Color(1f, 1f, 1f, c.CaptionAlpha);
+                GUI.Label(new Rect(70 - slide, y + 6, w, 46), c.chapter, cineCap);
+                Fill(new Rect(70 - slide, y + 52, 50, 2), new Color(1f, 1f, 1f, 0.8f * c.CaptionAlpha));
+                cineTag.alignment = TextAnchor.MiddleLeft;
+                cineTag.normal.textColor = new Color(1f, 1f, 1f, 0.75f * c.CaptionAlpha);
+                GUI.Label(new Rect(130 - slide, y + 40, w, 26), c.chapterName, cineTag);
+                cineTag.alignment = TextAnchor.MiddleCenter;
+            }
+            if (c.SkipAlpha > 0.001f)
+            {
+                cineSkip.normal.textColor = new Color(1f, 1f, 1f, c.SkipAlpha);
+                GUI.Label(new Rect(0, 24, w - 40, 30), "TAP TO SKIP", cineSkip);
+            }
+        }
+
+        /// <summary>Letter-spaced title text.</summary>
+        static string Spaced(string s) => string.Join(" ", s.ToCharArray());
 
         Texture2D ring, knob;
 

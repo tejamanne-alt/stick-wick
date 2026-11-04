@@ -188,3 +188,15 @@ Scene version 7.
     - 2 ropes (LineRenderer)
     - 3 crates in the fight lane; they reset each chapter
 - Scene version 9.
+
+## 2026-11-04: 0.4.1 cinematic opening
+
+- `OpeningCinematic` (added at runtime by WaveDirector, so the scene doesn't need rebuilding):
+    - a scripted three-shot opening timed in real seconds: establishing crane, skylight crash and slow-mo landing, push-in with the chapter card
+    - opening letterbox bars: from full black to 92 px, then away at the hand-off
+    - tap to skip; restarts get a short version
+- CameraDirector: `Scripted(pos, look, weight, fov)` blends cutscene shots over the gameplay camera, so the hand-off back to gameplay is a smooth move, not a cut.
+- HeroController: cinematic lock (`CineHold`, `CineDrop`, `CineLock`, `CineRelease`). Input is ignored and flushed on release.
+- HUD: bars take the larger of the slow-mo bars and the opening's bars. Title, tagline, lower-third chapter card and skip hint. The gameplay HUD is hidden until the opening ends.
+- The first wave's banner is now "FIGHT!".
+

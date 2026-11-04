@@ -99,12 +99,76 @@ namespace ProjectInk
 
         void CheckBody() { body.CheckVisible(); }
 
+        // ------------------------------------------------------------------ opening cinematic
+
+        /// <summary>While set, the opening cinematic drives the hero: no input, no state machine.</summary>
+        public bool CinematicLock { get; private set; }
+        bool cineFrozen;
+        Renderer[] cineHidden;
+
+        /// <summary>Hold the hero, hidden, at a point (above the skylight) until CineDrop.</summary>
+        public void CineHold(Vector3 at)
+        {
+            CinematicLock = true;
+            cineFrozen = true;
+            transform.position = at;
+            velocity = Vector3.zero;
+            Grounded = false;
+            var all = GetComponentsInChildren<Renderer>(true);
+            cineHidden = System.Array.FindAll(all, r => r.enabled && !(r is TrailRenderer));
+            foreach (var r in cineHidden) r.enabled = false;
+        }
+
+        /// <summary>Let go: the hero falls through the skylight, tucked.</summary>
+        public void CineDrop()
+        {
+            Unhide();
+            cineFrozen = false;
+            dropThroughUntil = Time.time + 0.45f;   // fall through the roof slab
+            velocity = new Vector3(0f, -1.5f, 0f);
+            body.Play(body.Has("front_flip") ? "front_flip" : "jump", 0.03f, true, 0.9f);
+        }
+
+        /// <summary>Lock a hero who is already standing (the short replay intro).</summary>
+        public void CineLock() { CinematicLock = true; cineFrozen = false; }
+
+        /// <summary>Hand control back. With `home`, a hero still in the air is put down there.</summary>
+        public void CineRelease(Vector3? home = null)
+        {
+            Unhide();
+            if (home.HasValue && (!Grounded || cineFrozen))
+            {
+                var p = home.Value;
+                p.y = GroundY(p);
+                transform.position = p;
+                velocity = Vector3.zero;
+                Grounded = true;
+            }
+            cineFrozen = false;
+            CinematicLock = false;
+            if (GestureInput.Instance != null) GestureInput.Instance.Flush();
+            EnterIdle();
+        }
+
+        void Unhide()
+        {
+            if (cineHidden == null) return;
+            foreach (var r in cineHidden) if (r != null) r.enabled = true;
+            cineHidden = null;
+        }
+
         void Update()
         {
             float dt = Time.deltaTime;
             stateTime += dt;
             ComboTimer -= dt;
             if (ComboTimer <= 0f) ComboCount = 0;
+            if (CinematicLock)
+            {
+                if (!cineFrozen) Integrate(dt);
+                UpdateTint();
+                return;
+            }
             if (UpdateLedge(dt)) { UpdateTint(); return; }
 
             switch (state)

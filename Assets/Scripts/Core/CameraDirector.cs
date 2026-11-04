@@ -46,6 +46,20 @@ namespace ProjectInk
             focusUntil = UnityEngine.Time.unscaledTime + realSeconds;
         }
 
+        // scripted shots (the opening cinematic): blended over the gameplay camera by weight
+        Vector3 scriptPos, scriptLook;
+        float scriptWeight, scriptFov;
+
+        /// <summary>Drive the camera from a cutscene this frame. weight 1 = fully scripted,
+        /// 0 = gameplay framing; fov 0 keeps the gameplay field of view.</summary>
+        public void Scripted(Vector3 pos, Vector3 look, float weight, float fov = 0f)
+        {
+            scriptPos = pos;
+            scriptLook = look;
+            scriptWeight = Mathf.Clamp01(weight);
+            scriptFov = fov;
+        }
+
         void Awake()
         {
             Instance = this;
@@ -135,6 +149,12 @@ namespace ProjectInk
                 look = Vector3.Lerp(look, fp, 0.85f * k);
             }
 
+            if (scriptWeight > 0.0001f)
+            {
+                pos = Vector3.Lerp(pos, scriptPos, scriptWeight);
+                look = Vector3.Lerp(look, scriptLook, scriptWeight);
+            }
+
             if (orbiting)
             {
                 float u = (UnityEngine.Time.unscaledTime - orbitStart) / orbitDuration;
@@ -162,6 +182,11 @@ namespace ProjectInk
 
             float fov = baseFov;
             if (UnityEngine.Time.unscaledTime < punchUntil) fov -= punchAmount;
+            if (scriptFov > 0f && scriptWeight > 0.0001f)
+            {
+                fov = Mathf.Lerp(fov, scriptFov, scriptWeight);
+                if (scriptWeight > 0.999f) cam.fieldOfView = fov;   // hard cuts between shots
+            }
             cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, fov, 1f - Mathf.Exp(-25f * dt));
 
             transform.position = pos;

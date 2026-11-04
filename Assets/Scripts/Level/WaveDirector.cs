@@ -82,11 +82,15 @@ namespace ProjectInk
             Enemy.Corpses.Clear();
             BestScore = PlayerPrefs.GetInt("best_score", 0);
             BestFloor = PlayerPrefs.GetInt("best_floor", 0);
+            if (GetComponent<OpeningCinematic>() == null) gameObject.AddComponent<OpeningCinematic>();
         }
+
+        static bool CinematicHolding => OpeningCinematic.Instance != null && !OpeningCinematic.Instance.ControlReleased;
+        static bool HadCinematic => OpeningCinematic.Instance != null;
 
         void Start()
         {
-            ShowBanner("CHAPTER 1", 1.6f);
+            if (!HadCinematic) ShowBanner("CHAPTER 1", 1.6f);   // the opening has its own chapter card
             phaseTime = 0f;
         }
 
@@ -106,7 +110,8 @@ namespace ProjectInk
             switch (CurrentPhase)
             {
                 case Phase.Intro:
-                    if (phaseTime > 1.4f) StartWave(0);
+                    if (Floor == 1 && CinematicHolding) { phaseTime = 0f; break; }
+                    if (phaseTime > (Floor == 1 && HadCinematic ? 0.2f : 1.4f)) StartWave(0);
                     break;
                 case Phase.Fighting:
                     SpawnDue();
@@ -148,7 +153,7 @@ namespace ProjectInk
             CurrentPhase = Phase.Fighting;
             phaseTime = 0f;
             bool boss = index == WavesPerFloor - 1;
-            ShowBanner(index == 0 ? $"CHAPTER {Floor}: THE LOBBY" : ChapterTitles[Mathf.Clamp(index, 0, ChapterTitles.Length - 1)], 1.6f);
+            ShowBanner(index == 0 ? (Floor == 1 && HadCinematic ? "FIGHT!" : $"CHAPTER {Floor}: THE LOBBY") : ChapterTitles[Mathf.Clamp(index, 0, ChapterTitles.Length - 1)], 1.6f);
 
             int count = Mathf.Min(3 + index + Floor, 11);
             var kinds = new[] { SpawnKind.LeftDoor, SpawnKind.RightDoor, SpawnKind.UpperDoor, SpawnKind.Background, SpawnKind.Ceiling };
