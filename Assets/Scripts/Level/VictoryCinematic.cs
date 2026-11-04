@@ -30,7 +30,7 @@ namespace ProjectInk
         const float Out = 1.0f;             // bars away, camera home
 
         HeroController hero;
-        float t, shotStart = -1f, craneStart, outStart;
+        float t, shotStart = -1f, outStart;
         bool locked, titled;
         Vector3 anchor;                     // the hero's feet when the shot starts
         int side;                           // which side the camera arcs from
