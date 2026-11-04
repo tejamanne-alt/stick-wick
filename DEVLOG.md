@@ -569,3 +569,13 @@ Mock-ups: `docs/previews/guide_mockups.png`.
 - The world stops (`TimeController.Paused`) and so does all sound (`AudioListener.pause`).
 - On phones the game pauses by itself when the app loses focus (a call, a notification, the home button).
 - Touches on the pause screen never reach the fight.
+
+## 2026-11-04: 1.0.2 weapons in the guide
+
+- The Training Reel has three new lessons after the combo (11 in all):
+    - **TAKE HIS WEAPON**: a sword lands on the floor, marked HERE; walk over it.
+    - **TAP TO SWING**: two swings.
+    - **SWIPE DOWN, THROW IT**: at the stunt double.
+- New chalk mark **THROW IT** (weapon in hand, an enemy 3–10 m away on your level). It retires after three throws. "TAKE IT" by dropped weapons was already there.
+- **Fix:** on a mezzanine or the catwalk, swipe down used to always drop you through the floor, so you couldn't throw from up there. Now, with a weapon in hand and an enemy on your level, swipe down throws; otherwise it drops.
+- The MOVES card wording is updated for both.

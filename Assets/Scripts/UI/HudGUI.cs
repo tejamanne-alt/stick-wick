@@ -835,10 +835,10 @@ namespace ProjectInk
                 { "TAP LOW", "Kick combo" },
                 { "HOLD", "Run that way" },
                 { "SWIPE UP", "Jump · climb a striped ledge · grab a rope, trapeze or bar" },
-                { "SWIPE DOWN", "Drop through the floor (onto anyone below) · throw your weapon" },
+                { "SWIPE DOWN", "Throw your weapon at someone ahead · or drop through the floor (onto anyone below)" },
                 { "SWIPE SIDEWAYS", "Dodge · vault · slide kick · wall flip" },
                 { "TWO FINGERS", "Rampage, when the white bar is full" },
-                { "WALK OVER", "Pick up a dropped weapon" },
+                { "WALK OVER", "Pick up a dropped weapon (sword, pipe, gun, knives): your taps use it" },
             };
             var k1 = new GUIStyle(gTitle) { fontSize = 26, alignment = TextAnchor.MiddleRight };
             var k2 = new GUIStyle(gLine) { fontSize = 19, alignment = TextAnchor.MiddleLeft };

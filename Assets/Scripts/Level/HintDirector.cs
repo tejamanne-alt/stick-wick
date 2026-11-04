@@ -42,7 +42,7 @@ namespace ProjectInk
             string id = what switch
             {
                 "climb" => "ledge", "grab" => "grab", "crate" => "crate", "dive" => "dive",
-                "dodge" => "dodge", "pickup" => "pickup", _ => null,
+                "dodge" => "dodge", "pickup" => "pickup", "throw" => "throw", _ => null,
             };
             if (id == null) return;
             PlayerPrefs.SetInt(Key(id), PlayerPrefs.GetInt(Key(id), 0) + 1);
@@ -52,7 +52,7 @@ namespace ProjectInk
         /// <summary>Bring every chalk mark back (the help card's REPLAY TRAINING).</summary>
         public static void ResetAll()
         {
-            foreach (var id in new[] { "ledge", "grab", "crate", "dive", "dodge", "pickup" }) PlayerPrefs.DeleteKey(Key(id));
+            foreach (var id in new[] { "ledge", "grab", "crate", "dive", "dodge", "pickup", "throw" }) PlayerPrefs.DeleteKey(Key(id));
             PlayerPrefs.Save();
         }
 
@@ -118,11 +118,20 @@ namespace ProjectInk
                     if (Mathf.Abs(w.transform.position.x - p.x) < 5f && Mathf.Abs(w.transform.position.y - p.y) < 1f)
                     { all.Add(new Hint { id = "pickup", text = "TAKE IT", gesture = Gesture.None, world = w.transform.position + Vector3.up * 0.8f }); break; }
 
+            // a weapon in hand and someone at range: throw it
+            if (!training && hero.Style != FightStyle.Fists && hero.Grounded && !Retired("throw"))
+                foreach (var e in Enemy.All)
+                {
+                    float d = Mathf.Abs(e.transform.position.x - p.x);
+                    if (e.Targetable && d > 3f && d < 10f && Mathf.Abs(e.transform.position.y - p.y) < 0.8f)
+                    { all.Add(new Hint { id = "throw", text = "THROW IT", gesture = Gesture.SwipeDown, world = p + Vector3.up * 1.9f }); break; }
+                }
+
             // at most two at a time, the most urgent first
             all.Sort((a, b) => Priority(a.id).CompareTo(Priority(b.id)));
             for (int i = 0; i < all.Count && i < 2; i++) Shown.Add(all[i]);
         }
 
-        static int Priority(string id) => id switch { "dodge" => 0, "dive" => 1, "crate" => 2, "ledge" => 3, "grab" => 4, _ => 5 };
+        static int Priority(string id) => id switch { "dodge" => 0, "dive" => 1, "throw" => 2, "crate" => 3, "ledge" => 4, "grab" => 5, _ => 6 };
     }
 }

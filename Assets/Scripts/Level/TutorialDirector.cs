@@ -21,7 +21,8 @@ namespace ProjectInk
             public string title, line;
             public Gesture gesture;
             public int goal;
-            public string evt;       // the hero event that counts (null: checked by Done())
+            public string evt;       // the hero event that counts (null: reach the marker)
+            public bool weapon;      // drop a sword in front of him for this lesson
         }
 
         static readonly Lesson[] Lessons =
@@ -29,6 +30,9 @@ namespace ProjectInk
             new Lesson { title = "TAP HIGH", line = "Punch. Tap the upper half, on his side of you.", gesture = Gesture.TapHigh, goal = 3, evt = "punch" },
             new Lesson { title = "TAP LOW", line = "Kick. Tap the lower half.", gesture = Gesture.TapLow, goal = 2, evt = "kick" },
             new Lesson { title = "KEEP TAPPING", line = "Chain them: a full punch or kick combo.", gesture = Gesture.TapAgain, goal = 1, evt = "combo" },
+            new Lesson { title = "TAKE HIS WEAPON", line = "Enemies drop their weapons. Walk over one to pick it up.", gesture = Gesture.Hold, goal = 1, evt = "pickup", weapon = true },
+            new Lesson { title = "TAP TO SWING", line = "A weapon changes your moves. Two swings.", gesture = Gesture.TapHigh, goal = 2, evt = "punch" },
+            new Lesson { title = "SWIPE DOWN", line = "Throw it! It spins across the room and takes him down.", gesture = Gesture.SwipeDown, goal = 1, evt = "throw" },
             new Lesson { title = "HOLD", line = "Run. Press and hold a side. Go to the striped ledge.", gesture = Gesture.Hold, goal = 1, evt = null },
             new Lesson { title = "SWIPE UP", line = "Jump. At a striped ledge: climb.", gesture = Gesture.SwipeUp, goal = 1, evt = "climb" },
             new Lesson { title = "SWIPE DOWN", line = "Drop through the floor.", gesture = Gesture.SwipeDown, goal = 1, evt = "drop" },
@@ -96,7 +100,7 @@ namespace ProjectInk
                 return;
             }
             // lessons checked by position
-            if (Index == 3 && Marker.HasValue && hero != null &&
+            if (Current.evt == null && Marker.HasValue && hero != null &&
                 Mathf.Abs(hero.transform.position.x - Marker.Value.x) < 0.7f && hero.Grounded)
                 Complete();
             // keep the stunt doubles in front of him
@@ -119,12 +123,22 @@ namespace ProjectInk
             Marker = null;
             var L = Lessons[Index];
             // stunt doubles for the fighting lessons
-            if (L.evt == "punch" || L.evt == "kick" || L.evt == "combo" || L.evt == "dodge") EnsureDoubles(1);
+            if (L.evt == "punch" || L.evt == "kick" || L.evt == "combo" || L.evt == "dodge" || L.evt == "throw") EnsureDoubles(1);
             if (L.evt == "rampage") { EnsureDoubles(3); var wd = WaveDirector.Instance; if (wd != null) wd.FillFlow(); }
-            if (Index == 3 && LevelNav.Active && LevelNav.Ledges.Count > 0)
+            if (L.evt == null && LevelNav.Active && LevelNav.Ledges.Count > 0)
             {
                 var ledge = LevelNav.Ledges[0];
                 Marker = new Vector3(ledge.FootX, 0f, 0f);
+            }
+            if (L.weapon && hero != null)
+            {
+                // a sword on the floor a few steps away (away from the stunt double), marked HERE
+                var wd = WaveDirector.Instance;
+                var p = hero.transform.position;
+                float x = Mathf.Clamp(p.x - 2.4f, -11f, 11f);
+                var at = new Vector3(x, Fighter.GroundY(new Vector3(x, p.y + 0.5f, 0f), 0.6f), 0f);
+                if (wd != null && hero.Style == FightStyle.Fists) WeaponPickup.Spawn(FightStyle.Sword, 10, at, wd.weaponMaterial);
+                Marker = at;
             }
             Sound.Play(Sfx.CineHit, 0.35f);
         }

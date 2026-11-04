@@ -1054,7 +1054,8 @@ namespace ProjectInk
                 case Command.JumpKick: Jump(); break;
                 case Command.DodgeLeft: Dodge(-1); break;
                 case Command.DodgeRight: Dodge(1); break;
-                case Command.ThrowWeapon: if (!TryDropThrough()) ThrowWeapon(); break;
+                // swipe down: throw the weapon at someone ahead on this level, otherwise drop through the floor
+                case Command.ThrowWeapon: if (WantsThrow() || !TryDropThrough()) ThrowWeapon(); break;
                 case Command.Rampage: StartRampage(); break;
                 case Command.CycleStyle: SetStyle((FightStyle)(((int)Style + 1) % 5)); break;
                 case Command.StyleFists: SetStyle(FightStyle.Fists); break;
@@ -1641,6 +1642,16 @@ namespace ProjectInk
                 Tell("climb");
                 if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(40, "CLIMB");
             }
+        }
+
+        /// <summary>Holding a weapon with an enemy ahead on this level: swipe down throws it.</summary>
+        bool WantsThrow()
+        {
+            if (Style == FightStyle.Fists) return false;
+            var p = transform.position;
+            foreach (var e in Enemy.All)
+                if (e.Targetable && Mathf.Abs(e.transform.position.y - p.y) < 0.8f && Mathf.Abs(e.transform.position.x - p.x) < 16f) return true;
+            return false;
         }
 
         /// <summary>Swipe down on a one-way floor (a mezzanine or the catwalk): drop through it
