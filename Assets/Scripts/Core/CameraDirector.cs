@@ -95,6 +95,9 @@ namespace ProjectInk
             punchUntil = UnityEngine.Time.unscaledTime + seconds;
         }
 
+        /// <summary>Drop any kill-cam orbit or focus (a cutscene takes the camera).</summary>
+        public void CancelOrbit() { orbiting = false; focusUntil = 0f; }
+
         /// <summary>Orbit around a point (the final blow) by `angle` degrees and back.</summary>
         public void KillCam(Vector3 pivot, float realSeconds = 1.3f, float angle = 110f)
         {

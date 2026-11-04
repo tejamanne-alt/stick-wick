@@ -86,6 +86,7 @@ namespace ProjectInk
             if (GetComponent<VictoryCinematic>() == null) gameObject.AddComponent<VictoryCinematic>();
             if (GetComponent<TutorialDirector>() == null) gameObject.AddComponent<TutorialDirector>();
             if (GetComponent<HintDirector>() == null) gameObject.AddComponent<HintDirector>();
+            if (GetComponent<BossDirector>() == null) gameObject.AddComponent<BossDirector>();
         }
 
         static bool CinematicHolding => OpeningCinematic.Instance != null && !OpeningCinematic.Instance.ControlReleased;
@@ -120,7 +121,7 @@ namespace ProjectInk
                 case Phase.Fighting:
                     SpawnDue();
                     if (hero != null && hero.IsDead) { EnterDead(); }
-                    else if (incoming.Count == 0 && AliveCount() == 0)
+                    else if (incoming.Count == 0 && AliveCount() == 0 && !BossHolding)
                     {
                         if (WaveIndex + 1 < WavesPerFloor) { CurrentPhase = Phase.BetweenWaves; phaseTime = 0f; }
                         else
@@ -131,7 +132,7 @@ namespace ProjectInk
                             Sound.PlayLater(Sfx.FloorClear, 1.6f);           // the sting lands with the hero shot
                             AddScore(1000 * Floor, null);
                             var vc = VictoryCinematic.Instance;
-                            if (vc != null) vc.Begin(hero, Floor, Grade(), Score, Kills);
+                            if (vc != null) vc.Begin(hero, Floor, Grade(), Score, Kills, BossDirector.Instance != null && BossDirector.Instance.Current == BossDirector.Stage.Done);
                             else ShowBanner($"FLOOR {Floor} CLEAR", 2.4f);
                         }
                     }
@@ -184,8 +185,10 @@ namespace ProjectInk
             }
             if (boss)
             {
-                incoming.Add(new Incoming { kind = SpawnKind.RightDoor, type = EnemyType.Brute, time = t + 2.5f });
-                count -= 2;
+                // the brute is not in the queue: he walks in once his men have had their go (BossDirector)
+                if (BossDirector.Instance != null) BossDirector.Instance.Arm();
+                else incoming.Add(new Incoming { kind = SpawnKind.RightDoor, type = EnemyType.Brute, time = t + 2.5f });
+                count -= 1;
             }
             for (int i = 0; i < count; i++)
             {
@@ -202,6 +205,33 @@ namespace ProjectInk
                 incoming.Add(new Incoming { kind = kind, type = type, time = t });
                 t += Random.Range(0.35f, 0.9f) / (1f + 0.1f * Floor);
             }
+            WaveSize = incoming.Count;
+            WaveKills = 0;
+        }
+
+        /// <summary>How many came in this wave, and how many of them are down (the boss's cue).</summary>
+        public int WaveSize { get; private set; }
+        public int WaveKills { get; private set; }
+        static bool BossHolding => BossDirector.Instance != null && BossDirector.Instance.Holding;
+
+        /// <summary>No more reinforcements (the boss has arrived).</summary>
+        public void CancelIncoming() { incoming.Clear(); }
+
+        /// <summary>The boss walks in through a ground-floor door.</summary>
+        public Enemy SpawnBoss(SpawnKind door)
+        {
+            return Spawn(new Incoming { kind = door, type = EnemyType.Brute, time = Time.time });
+        }
+
+        public void Announce(string text, float seconds) { ShowBanner(text, seconds); }
+
+        /// <summary>The finale is over: the boss is down.</summary>
+        public void OnBossFinished(Enemy e)
+        {
+            Kills++;
+            WaveKills++;
+            AddScore(1500, "BRUTE DEFEATED");
+            AddStylePoints(400f, "boss finale");
         }
 
         void SpawnDue()
@@ -214,10 +244,10 @@ namespace ProjectInk
             }
         }
 
-        void Spawn(Incoming inc)
+        Enemy Spawn(Incoming inc)
         {
             var point = spawnPoints[(int)inc.kind];
-            if (point == null || enemyModel == null) return;
+            if (point == null || enemyModel == null) return null;
             Vector3 pos = point.position + new Vector3(Random.Range(-0.4f, 0.4f), 0f, 0f);
             if (inc.kind == SpawnKind.Ceiling && hero != null)
                 pos.x = Mathf.Clamp(hero.transform.position.x + Random.Range(-2.5f, 2.5f), -11f, 11f);
@@ -235,7 +265,7 @@ namespace ProjectInk
             float scale = 1f + 0.12f * (Floor - 1);
             float hp = inc.type switch
             {
-                EnemyType.Brute => 220f * scale,
+                EnemyType.Brute => 300f * scale,
                 EnemyType.Swordsman => 40f * scale,
                 EnemyType.Gunner => 25f * scale,
                 EnemyType.Thrower => 25f * scale,
@@ -252,7 +282,8 @@ namespace ProjectInk
                 _ => BrawlerColors[Random.Range(0, BrawlerColors.Length)],
             };
             e.Init(hero, inc.kind, inc.type, hp, c, trailMaterial);
-            if (inc.type == EnemyType.Brute) BossIntro(e);
+            if (inc.type == EnemyType.Brute && BossDirector.Instance == null) BossIntro(e);
+            return e;
         }
 
         int AliveCount()
@@ -277,6 +308,7 @@ namespace ProjectInk
         void NextFloor()
         {
             Floor++;
+            if (BossDirector.Instance != null) BossDirector.Instance.ResetFloor();
             foreach (var c in Enemy.Corpses) if (c != null) Destroy(c);
             Enemy.Corpses.Clear();
             foreach (var p in WeaponPickup.All.ToArray()) Destroy(p.gameObject);
@@ -307,7 +339,7 @@ namespace ProjectInk
             framed.Clear();
             // everyone still in the fight: the camera keeps as many in shot as it can, nearest first
             foreach (var e in Enemy.All)
-                if (e.Alive) framed.Add(e.transform);
+                if (e.Alive && !e.Fleeing) framed.Add(e.transform);
             cam.SetFramed(framed);
         }
 
@@ -385,9 +417,12 @@ namespace ProjectInk
 
         void RegisterKill(Enemy e, int bonus)
         {
+            if (e != null && e.Boss) return;           // the boss's kill is the finale's (OnBossFinished)
             Kills++;
+            WaveKills++;
             if (bonus > 0) AddScore(bonus);
-            bool lastOfWave = incoming.Count == 0 && AliveCount() == 0; // the victim is already down
+            if (e != null && e.Fleeing) AddScore(150, "COWARD!");
+            bool lastOfWave = incoming.Count == 0 && AliveCount() == 0 && !BossHolding; // the victim is already down
             if (lastOfWave)
             {
                 // last-kill cam: the signature cinematic moment of every wave
@@ -407,7 +442,7 @@ namespace ProjectInk
             else if (e.Type == EnemyType.Gunner) WeaponPickup.Spawn(FightStyle.Gun, 8, e.transform.position, weaponMaterial);
             else if (e.Type == EnemyType.Thrower) WeaponPickup.Spawn(FightStyle.Knife, 3, e.transform.position, weaponMaterial);
             else if (e.Type == EnemyType.Piper) WeaponPickup.Spawn(FightStyle.Pipe, 14, e.transform.position, weaponMaterial);
-            else if (e.Type == EnemyType.Brute) AddScore(800, "BRUTE DOWN");
+            else if (e.Type == EnemyType.Brute) AddScore(800);
         }
 
         public void OnHeroDamaged(float amount)

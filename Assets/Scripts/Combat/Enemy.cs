@@ -21,7 +21,8 @@ namespace ProjectInk
         public static readonly Queue<GameObject> Corpses = new Queue<GameObject>();
         public static int MaxCorpses = 40;
 
-        enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, GetUp, Dead, Holding, Carried, Pounce }
+        enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, GetUp, Dead, Holding, Carried, Pounce,
+                     Flee, BossIntro, Charge, Slam, Stunned, Enrage, Stagger, Scripted }
 
         public float walkSpeed = 2.6f;
         public float windupSeconds = 0.45f;
@@ -43,9 +44,26 @@ namespace ProjectInk
         public EnemyType Type { get; private set; }
         public Color InkColor { get; private set; } = Color.black;
         public bool HasToken { get; private set; }
-        public bool Telegraphing => state == State.Windup || (state == State.Pounce && !pounceLaunched);
+        public bool Telegraphing => state == State.Windup || (state == State.Pounce && !pounceLaunched) ||
+                                    (state == State.Charge && !chargeRunning) || (state == State.Slam && !slamLeapt);
         public bool Targetable => Alive && state != State.Down && state != State.GetUp && state != State.Dead && state != State.Carried &&
-                                  !(state == State.Enter && kind == SpawnKind.Background);
+                                  !(state == State.Enter && kind == SpawnKind.Background) && !Untouchable;
+        /// <summary>Cutscene states: no one may hit him.</summary>
+        bool Untouchable => state == State.BossIntro || state == State.Enrage || state == State.Stagger || state == State.Scripted;
+
+        // ---- the boss (the brute): special moves, a second phase and a scripted finale
+        public bool Boss { get; private set; }
+        public bool Enraged { get; private set; }
+        public bool Stunned => state == State.Stunned;
+        public bool Charging => state == State.Charge;
+        /// <summary>A henchman running for the exit now the boss is here.</summary>
+        public bool Fleeing { get; private set; }
+        bool finaleTriggered, enragePending, chargeHit, chargePassed, chargeRunning, slamLeapt, introWalking;
+        float chargeLimit = float.NaN;
+        float chargeDir, slamTargetX, nextSpecialAt, stepAt, starAt, recoverFor = 0.5f;
+        int fleeDir, slamsLeft;
+        float ChargeWind => Enraged ? 0.6f : 0.8f;
+        static readonly Color EnragedColor = new Color(0.78f, 0.05f, 0.05f);
         public bool IsDown => state == State.Down || state == State.GetUp;
         public bool Engaged => state == State.Advance || state == State.Windup || state == State.Attack || state == State.Pounce;
         public bool Armed => Type == EnemyType.Swordsman;
@@ -78,7 +96,8 @@ namespace ProjectInk
             weaponMat = hero.weaponMaterial;
             if (type == EnemyType.Brute)
             {
-                transform.localScale = Vector3.one * 1.35f;
+                Boss = true;
+                transform.localScale = Vector3.one * 1.45f;
                 walkSpeed = 1.9f;
                 windupSeconds = 0.6f;
                 ringDistance = 2.4f;
@@ -113,7 +132,7 @@ namespace ProjectInk
             float dt = Time.deltaTime;
             stateTime += dt;
             if (hero == null) return;
-            if (state == State.Carried) { UpdateTint(); return; }          // the hero swings us around
+            if (state == State.Carried || state == State.Scripted) { UpdateTint(); return; }   // the hero swings us / a cutscene poses us
             if (UpdateLedge(dt)) { UpdateTint(); return; }
             float dx = hero.transform.position.x - transform.position.x;
             float dist = Mathf.Abs(dx);
@@ -128,6 +147,11 @@ namespace ProjectInk
                 int hp = hero.Platform;
                 sameLevel = navPlatform >= 0 && hp >= 0 && LevelNav.Region(navPlatform) == LevelNav.Region(hp);
             }
+            // the boss is here: whatever they were doing, the henchmen run
+            if (Fleeing && (state == State.Enter || state == State.Approach || state == State.Wait || state == State.Advance ||
+                            state == State.Windup || state == State.Attack || state == State.Recover || state == State.Holding))
+                BeginFlee(false);
+            if (Boss && enragePending && (state == State.Wait || state == State.Approach || state == State.Recover)) BeginEnrage();
 
             switch (state)
             {
@@ -136,6 +160,8 @@ namespace ProjectInk
                     if (!sameLevel || onStairs) { if (LevelNav.Active) NavTravel(dt, dx); else Travel(dt); break; }
                     LeaveStairsLane(dt);
                     FaceTowards(hero.transform.position.x);
+                    if (Boss && dist > 4f && dist < 13f && Time.time > nextSpecialAt && !hero.IsDead && Random.value < dt * 0.9f && AttackTokens.TryTake(this))
+                    { HasToken = true; BeginCharge(dx); break; }
                     if (dist > ringDistance + 0.3f) Walk(Mathf.Sign(dx));
                     else if (dist < ringDistance - 0.7f) Walk(-Mathf.Sign(dx) * 0.6f);
                     else GoWait();
@@ -147,6 +173,7 @@ namespace ProjectInk
                     else if (!Passive && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
                         HasToken = true;
+                        if (Boss && TryBossSpecial(dist, dx)) break;
                         state = Ranged ? State.Windup : State.Advance;
                         stateTime = 0f;
                         if (Ranged) BeginWindup(); else body.Play("run", 0.08f, false, 1.1f);
@@ -180,8 +207,9 @@ namespace ProjectInk
                     if (!hero.IsGrabbedBy(this)) { ReleaseToken(); GoWait(); }
                     break;
                 case State.Recover:
-                    if (dist < ringDistance && !Ranged) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
-                    if (stateTime > 0.5f) GoWait();
+                    if (Boss && recoverFor > 0.6f) velocity.x = Mathf.MoveTowards(velocity.x, 0f, 14f * dt);   // a slow get-up: the opening
+                    else if (dist < ringDistance && !Ranged) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
+                    if (stateTime > recoverFor) { recoverFor = 0.5f; GoWait(); }
                     break;
                 case State.Hurt:
                     velocity.x = Mathf.MoveTowards(velocity.x, 0f, 20f * dt);
@@ -200,6 +228,18 @@ namespace ProjectInk
                     if (body.Finished) { GoWait(); body.Play(IdleClip, 0.15f); }
                     break;
                 case State.Pounce: UpdatePounce(); break;
+                case State.Flee: UpdateFlee(dt); break;
+                case State.BossIntro: UpdateBossIntro(dx); break;
+                case State.Charge: UpdateCharge(dt); break;
+                case State.Slam: UpdateSlam(); break;
+                case State.Stunned: UpdateStunned(dt); break;
+                case State.Enrage:
+                    velocity.x = 0f;
+                    if (stateTime > 1.25f) GoWait();
+                    break;
+                case State.Stagger:
+                    velocity.x = Mathf.MoveTowards(velocity.x, 0f, 10f * dt);
+                    break;
                 case State.Dead:
                     velocity.x = 0f;
                     if (Grounded && stateTime > 0.3f) { Settle(); return; }
@@ -210,6 +250,7 @@ namespace ProjectInk
             if (projectile && !Grounded) BowlOthers();
             int wall = Integrate(dt);
             if (wall != 0 && IsDown && Mathf.Abs(velocity.x) > 4f && Mathf.Sign(velocity.x) == wall) WallSplat(wall);
+            if (wall != 0 && state == State.Charge && chargeRunning && wall == (int)chargeDir) BeginStun(true);
             UpdateTint();
         }
 
@@ -518,13 +559,22 @@ namespace ProjectInk
                 return;
             }
             projectile = false;
+            if (state == State.Slam && slamLeapt) { SlamImpact(); return; }
+            if (state == State.Charge && chargeRunning) { BeginStun(false); return; }      // ran clean off the edge
             if (state == State.Enter && kind == SpawnKind.Ceiling && CameraDirector.Instance != null)
                 CameraDirector.Instance.Shake(0.08f, 0.12f);
             if (IsDown || !Alive) Sound.Play(Sfx.BodyFall, Mathf.Clamp(0.6f + fallHeight * 0.15f, 0.6f, 1f), transform.position);
             else if (fallHeight > 0.8f) Sound.Play(Sfx.Land, 1f, transform.position);
             if (IsDown && fallHeight > 2.3f && Alive) Sound.Play(Sfx.Bone, 1f, transform.position);
-            // knocked off the upper floor: the fall finishes them
-            if (IsDown && fallHeight > 2.3f && Alive)
+            // knocked off the upper floor: the fall finishes them (the boss just takes a beating)
+            if (IsDown && fallHeight > 2.3f && Alive && Boss)
+            {
+                float d = maxHealth * 0.12f;
+                if (!FinalBlow(d, new HitInfo { direction = Facing })) Health = Mathf.Max(1f, Health - d);
+                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.2f, 0.25f);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(250, "FLOOR DROP");
+            }
+            else if (IsDown && fallHeight > 2.3f && Alive)
             {
                 Health = 0f;
                 if (InkFx.Instance != null)
@@ -540,8 +590,10 @@ namespace ProjectInk
 
         void WallSplat(int wall)
         {
+            if (Boss && finaleTriggered) return;
             velocity.x = -wall * 1.5f;
             float before = Health;
+            if (FinalBlow(18f, new HitInfo { direction = -wall })) return;
             Health = Mathf.Max(0f, Health - 18f);
             if (InkFx.Instance != null)
             {
@@ -566,7 +618,9 @@ namespace ProjectInk
             state = State.Wait;
             stateTime = 0f;
             tauntedThisWait = false;
-            waitUntil = Time.time + (Type == EnemyType.Brute ? Random.Range(0.6f, 1.4f) : Random.Range(0.3f, 1.2f));
+            waitUntil = Time.time + (Boss ? (Enraged ? Random.Range(0.3f, 0.8f) : Random.Range(0.6f, 1.3f)) : Random.Range(0.3f, 1.2f));
+            if (Fleeing) { BeginFlee(false); return; }
+            if (Boss && enragePending) { BeginEnrage(); return; }
             if (body.CurrentName != IdleClip) body.Play(IdleClip, 0.15f);
         }
 
@@ -588,7 +642,9 @@ namespace ProjectInk
                     body.Play("gun_aim", 0.08f);
                     break;
                 case EnemyType.Brute:
-                    attack = Random.value < 0.5f ? AttackData.BruteSmash : AttackData.BruteKick;
+                    // the bear hug now and then: tap to break it
+                    float r0 = Random.value;
+                    attack = r0 < 0.2f ? AttackData.EnemyGrab : r0 < 0.6f ? AttackData.BruteSmash : AttackData.BruteKick;
                     body.Play("windup", 0.08f);
                     break;
                 case EnemyType.Thrower:
@@ -677,6 +733,7 @@ namespace ProjectInk
         /// <summary>Cancel a windup or attack (the hero countered or vaulted).</summary>
         public void Interrupt()
         {
+            if (Boss && Enraged && Random.value < 0.5f) return;      // enraged, he powers through half the time
             if (state == State.Windup || state == State.Attack || state == State.Advance || (state == State.Pounce && !pounceLaunched))
             {
                 ReleaseToken();
@@ -693,16 +750,443 @@ namespace ProjectInk
             AttackTokens.Release(this);
         }
 
+        // ------------------------------------------------------------------ the boss
+
+        /// <summary>In the ring with a token: maybe a special instead of a plain swing.</summary>
+        bool TryBossSpecial(float dist, float dx)
+        {
+            if (Time.time < nextSpecialAt || hero.IsDead) return false;
+            float r = Random.value;
+            if (dist > 3.2f && r < (Enraged ? 0.6f : 0.4f)) { BeginCharge(dx); return true; }
+            if (dist < 6f && r < (Enraged ? 0.8f : 0.6f)) { BeginSlam(); return true; }
+            return false;
+        }
+
+        /// <summary>BULL CHARGE: he paws the floor glowing red, then thunders across the room.
+        /// Dodge through him (or jump over) and he runs on into the wall, dazed.</summary>
+        void BeginCharge(float dx)
+        {
+            state = State.Charge;
+            stateTime = 0f;
+            chargeDir = dx >= 0f ? 1f : -1f;
+            SetFacing((int)chargeDir);
+            chargeHit = chargePassed = chargeRunning = false;
+            velocity.x = 0f;
+            // where he must pull up: the end of solid floor that is not a wall (the foot of a stair).
+            // Off the end of a gallery he just keeps going, and comes down hard.
+            chargeLimit = float.NaN;
+            if (LevelNav.Active && navPlatform >= 0 && LevelNav.RegionBounds(navPlatform, out float ra, out float rb))
+            {
+                float lim = chargeDir > 0f ? rb : ra;
+                int pl = LevelNav.PlatformAt(new Vector3(lim - chargeDir * 0.2f, transform.position.y, 0f));
+                if (Mathf.Abs(lim) < 12.4f && (pl < 0 || !LevelNav.Platforms[pl].oneWay)) chargeLimit = lim - chargeDir * 0.3f;
+            }
+            body.Play("windup", 0.08f, true, 0.55f);
+            Sound.Play(Sfx.BruteHurt, 0.9f, transform.position, 0.7f);    // a bellow
+            nextSpecialAt = Time.time + (Enraged ? 2.6f : 4.2f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, "BULL CHARGE!");
+        }
+
+        void UpdateCharge(float dt)
+        {
+            if (!chargeRunning)
+            {
+                velocity.x = 0f;
+                Tint(TelegraphColor, 0.05f);
+                if (Time.time > stepAt)
+                {
+                    stepAt = Time.time + 0.22f;     // pawing the floor
+                    if (InkFx.Instance != null) InkFx.Instance.Splash(transform.position + Vector3.up * 0.05f, new Vector3(-chargeDir, 0.6f, 0f), 4, new Color(0.6f, 0.6f, 0.6f));
+                    Sound.Play(Sfx.Footstep, 1f, transform.position, 0.7f);
+                }
+                if (stateTime >= ChargeWind)
+                {
+                    chargeRunning = true;
+                    body.Play("run", 0.05f, false, 1.7f);
+                    Sound.Play(Sfx.WhooshBig, 1f, transform.position, 0.8f);
+                    if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(3f, 0.25f);
+                }
+                return;
+            }
+            velocity.x = chargeDir * (Enraged ? 11f : 9.5f);
+            if (body.CurrentName != "run") body.Play("run", 0.05f, false, 1.7f);
+            if (Time.time > stepAt)
+            {
+                stepAt = Time.time + 0.16f;
+                Sound.Play(Sfx.Footstep, 1f, transform.position, 0.75f);
+                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.04f, 0.08f);
+                StreakFx.Slash(Chest + new Vector3(-chargeDir * 1.2f, Random.Range(-0.5f, 0.5f), 0f), Vector3.right, 1.4f, 0.02f, 0.15f);
+            }
+            float rel = (hero.transform.position.x - transform.position.x) * chargeDir;
+            float dy = Mathf.Abs(hero.transform.position.y - transform.position.y);
+            if (!chargeHit && rel > -0.4f && rel < 0.9f && dy < 1.1f && !hero.IsDead)
+            {
+                if (hero.Invulnerable || (!hero.Grounded && dy > 0.6f))
+                {
+                    if (!chargePassed)
+                    {
+                        chargePassed = true;           // he went straight past: olé
+                        if (WaveDirector.Instance != null) WaveDirector.Instance.OnPerfectDodge("MATADOR!");
+                        if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.3f, 0.5f);
+                    }
+                }
+                else
+                {
+                    chargeHit = true;
+                    hero.TakeHit(new HitInfo { damage = Enraged ? 24f : 20f, direction = (int)chargeDir, knockback = 12f, knockdown = true, heavy = true, attacker = this });
+                    if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.25f, 0.25f);
+                    Sound.Play(Sfx.Boom, 0.6f, transform.position);
+                    StopCharge();
+                    return;
+                }
+            }
+            if (stateTime - ChargeWind > 1.9f) StopCharge();
+            else if (!float.IsNaN(chargeLimit) && (transform.position.x - chargeLimit) * chargeDir > 0f) StopCharge();   // skids to a stop
+        }
+
+        void StopCharge()
+        {
+            chargeRunning = false;
+            ReleaseToken();
+            state = State.Recover;
+            stateTime = 0f;
+            recoverFor = 0.5f;
+            velocity.x = chargeDir * 3f;
+            body.Play(IdleClip, 0.15f);
+        }
+
+        /// <summary>Head first into the wall (or off the edge onto the floor below): dazed, stars
+        /// round his head, and every hit lands full for a couple of seconds.</summary>
+        void BeginStun(bool wall)
+        {
+            chargeRunning = false;
+            ReleaseToken();
+            state = State.Stunned;
+            stateTime = 0f;
+            velocity.x = -chargeDir * (wall ? 3f : 0.5f);
+            body.Play("hit_front", 0.03f, true, 0.8f);
+            var at = Chest + Vector3.right * chargeDir * 0.5f;
+            if (wall)
+            {
+                if (InkFx.Instance != null) { InkFx.Instance.Burst(at, 1.2f); InkFx.Instance.ImpactFlash(0.04f); }
+                StreakFx.Sparks(at, new Vector3(-chargeDir, 0.5f, 0f), 18, 8f);
+                Sound.Play(Sfx.WallSplat, 1f, at);
+                Sound.Play(Sfx.MetalClang, 0.9f, at, 0.7f);
+                Sound.Play(Sfx.Boom, 0.8f, at);
+                if (TimeController.Instance != null) TimeController.Instance.HitStop(6);
+                foreach (var lamp in FindObjectsByType<LampFlicker>()) lamp.Shake(0.8f);
+            }
+            else Sound.Play(Sfx.Land, 1f, transform.position, 0.6f);
+            Sound.Play(Sfx.BruteHurt, 1f, Chest, 0.85f);
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(wall ? 0.3f : 0.18f, 0.35f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, "STUNNED!  HIT HIM!");
+        }
+
+        void UpdateStunned(float dt)
+        {
+            velocity.x = Mathf.MoveTowards(velocity.x, 0f, 12f * dt);
+            if (body.Finished && body.CurrentName != "idle") body.Play("idle", 0.2f, false, 0.35f);   // a slow, swaying daze
+            if (Time.time > starAt)
+            {
+                starAt = Time.time + 0.1f;          // stars circling his head
+                float a = Time.time * 7f;
+                var head = transform.position + Vector3.up * 1.42f * transform.localScale.y;
+                StreakFx.Sparks(head + new Vector3(Mathf.Cos(a) * 0.4f, 0.05f, Mathf.Sin(a) * 0.4f), Vector3.up, 1, 0.8f);
+            }
+            if (stateTime > (Enraged ? 1.8f : 2.4f)) { body.Play(IdleClip, 0.2f); GoWait(); }
+        }
+
+        /// <summary>GROUND SLAM: he crouches, leaps and comes down on the spot the hero stood,
+        /// with a red ring showing where. The shockwave runs along the floor: be in the air.</summary>
+        void BeginSlam()
+        {
+            state = State.Slam;
+            stateTime = 0f;
+            slamLeapt = false;
+            slamsLeft = Enraged ? 2 : 1;           // enraged, he does it twice
+            velocity.x = 0f;
+            body.Play(body.Has("duck") ? "duck" : "windup", 0.1f);
+            Sound.Play(Sfx.BruteHurt, 0.7f, transform.position, 0.9f);
+            nextSpecialAt = Time.time + (Enraged ? 2.6f : 4.2f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, "GROUND SLAM!  JUMP!");
+        }
+
+        void UpdateSlam()
+        {
+            if (!slamLeapt)
+            {
+                velocity.x = 0f;
+                Tint(TelegraphColor, 0.05f);
+                FaceTowards(hero.transform.position.x);
+                if (stateTime >= (Enraged ? 0.45f : 0.6f)) SlamLeap();
+                return;
+            }
+            if (stateTime > 3f) { slamLeapt = false; GoWait(); }    // safety
+        }
+
+        float SlamRadius => Enraged ? 3.8f : 3.2f;
+
+        void SlamLeap()
+        {
+            slamLeapt = true;
+            stateTime = 0f;
+            float tx = hero.transform.position.x;
+            if (LevelNav.Active && navPlatform >= 0 && LevelNav.RegionBounds(navPlatform, out float x0, out float x1))
+                tx = Mathf.Clamp(tx, x0 + 0.6f, x1 - 0.6f);
+            slamTargetX = tx;
+            const float up = 9.5f;
+            float air = 2f * up / gravity;
+            Grounded = false;
+            velocity.y = up;
+            velocity.x = Mathf.Clamp((tx - transform.position.x) / air, -7f, 7f);
+            body.Play("jump", 0.05f, true, 1f);
+            Sound.Play(Sfx.WhooshBig, 1f, transform.position, 0.75f);
+            // the warning: a red ring spreads where he will come down
+            StreakFx.Ring(new Vector3(tx, transform.position.y, 0f), SlamRadius, air * 0.9f, 0.05f, TelegraphColor);
+        }
+
+        void SlamImpact()
+        {
+            var p = transform.position;
+            float radius = SlamRadius;
+            var fx = InkFx.Instance;
+            if (fx != null)
+            {
+                fx.Burst(p + Vector3.up * 0.05f, 2.2f);
+                fx.Splash(p + Vector3.up * 0.1f, new Vector3(1f, 0.5f, 0f), 14, new Color(0.62f, 0.62f, 0.62f));
+                fx.Splash(p + Vector3.up * 0.1f, new Vector3(-1f, 0.5f, 0f), 14, new Color(0.62f, 0.62f, 0.62f));
+                fx.ImpactFlash(0.04f);
+            }
+            StreakFx.Ring(p, radius, 0.32f, 0.09f);
+            StreakFx.Sparks(p, Vector3.up, 14, 6f);
+            Sound.Play(Sfx.Boom, 1f, p);
+            Sound.Play(Sfx.Land, 1f, p, 0.6f);
+            Sound.Play(Sfx.MetalClang, 0.6f, p, 0.7f);
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.32f, 0.35f);
+            if (TimeController.Instance != null) TimeController.Instance.HitStop(5);
+            foreach (var lamp in FindObjectsByType<LampFlicker>()) lamp.Shake(1f);
+            float hx = hero.transform.position.x - p.x, hy = hero.transform.position.y - p.y;
+            if (Mathf.Abs(hx) < radius && Mathf.Abs(hy) < 0.6f && !hero.IsDead)
+            {
+                if (!hero.Grounded) { if (WaveDirector.Instance != null) WaveDirector.Instance.OnPerfectDodge("JUMPED IT!"); }
+                else if (!hero.Invulnerable)
+                    hero.TakeHit(new HitInfo { damage = Enraged ? 20f : 16f, direction = hx >= 0f ? 1 : -1, knockback = 9f, knockdown = true, heavy = true, attacker = this });
+            }
+            body.Play(body.Has("duck") ? "duck" : IdleClip, 0.04f);
+            if (--slamsLeft > 0 && !hero.IsDead)
+            {
+                state = State.Slam;           // and again
+                slamLeapt = false;
+                stateTime = 0.25f;
+                return;
+            }
+            slamLeapt = false;
+            ReleaseToken();
+            state = State.Recover;           // slow to rise: the opening
+            stateTime = 0f;
+            recoverFor = 1.0f;
+            velocity.x = 0f;
+        }
+
+        /// <summary>Phase two, at half health: a roar that blows the hero back, and he turns
+        /// blood red, faster, charging more and slamming twice.</summary>
+        void BeginEnrage()
+        {
+            enragePending = false;
+            Enraged = true;
+            ReleaseToken();
+            state = State.Enrage;
+            stateTime = 0f;
+            velocity.x = 0f;
+            walkSpeed = 2.7f;
+            windupSeconds = 0.42f;
+            InkColor = EnragedColor;
+            SetBaseColor(EnragedColor);
+            FaceTowards(hero.transform.position.x);
+            body.Play("windup", 0.1f, true, 0.4f);
+            Sound.Play(Sfx.BruteHurt, 1f, Chest, 0.55f);
+            Sound.PlayLater(Sfx.BruteLaugh, 0.7f, 1f, transform.position);
+            Sound.Play(Sfx.CineMassive, 0.7f);
+            Sound.Play(Sfx.Boom, 0.7f);
+            var fx = InkFx.Instance;
+            if (fx != null) { fx.ImpactFlash(0.05f); fx.Burst(Chest, 1.6f); }
+            for (int i = 0; i < 12; i++)
+            {
+                float a = i / 12f * Mathf.PI * 2f;
+                var d = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f);
+                StreakFx.Slash(Chest + d * 1.4f, d, 2.2f, 0.03f, 0.45f);
+            }
+            StreakFx.Ring(transform.position, 4f, 0.45f);
+            if (CameraDirector.Instance != null) { CameraDirector.Instance.Shake(0.25f, 0.9f); CameraDirector.Instance.Focus(transform, 1.3f); }
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.35f, 0.8f);
+            foreach (var lamp in FindObjectsByType<LampFlicker>()) lamp.Shake(1f);
+            // the roar blows him back
+            float hx = hero.transform.position.x - transform.position.x;
+            if (Mathf.Abs(hx) < 3.5f && Mathf.Abs(hero.transform.position.y - transform.position.y) < 1f && hero.Grounded && !hero.Invulnerable)
+                hero.TakeHit(new HitInfo { damage = 4f, direction = hx >= 0f ? 1 : -1, knockback = 10f, attacker = this });
+            if (WaveDirector.Instance != null) WaveDirector.Instance.Announce("ENRAGED", 1.4f);
+            nextSpecialAt = Time.time + 1.6f;
+        }
+
+        /// <summary>The blow that would kill the boss does not: he staggers at 1 health and the
+        /// finale cinematic takes over. Returns true if it caught the blow.</summary>
+        bool FinalBlow(float dmg, HitInfo hit)
+        {
+            if (!Boss || finaleTriggered || Health - dmg > 0f || BossDirector.Instance == null) return false;
+            finaleTriggered = true;
+            Health = 1f;
+            ReleaseToken();
+            if (OnLedge) DropFromLedge();
+            if (laser != null) laser.enabled = false;
+            chargeRunning = slamLeapt = false;
+            state = State.Stagger;
+            stateTime = 0f;
+            velocity.x = hit.direction * 2.5f;
+            if (velocity.y > 0f) velocity.y = 0f;
+            body.Play("hit_front", 0.03f, true, 0.6f);
+            Tint(Color.white, 0.1f);
+            Sound.Play(Sfx.BruteHurt, 1f, Chest, 0.75f);
+            BossDirector.Instance.BeginFinale(this);
+            return true;
+        }
+
+        // --- the entrance (driven by the BossDirector)
+        public void BeginBossIntro()
+        {
+            ReleaseToken();
+            state = State.BossIntro;
+            stateTime = 0f;
+            introWalking = true;
+            body.Play("run", 0.1f, false, 0.42f);
+        }
+
+        void UpdateBossIntro(float dx)
+        {
+            LeaveStairsLane(Time.deltaTime);
+            if (introWalking && Mathf.Abs(dx) > 4.2f)
+            {
+                FaceTowards(hero.transform.position.x);
+                velocity.x = Mathf.Sign(dx) * 1.35f;              // a slow, heavy walk
+                if (body.CurrentName != "run") body.Play("run", 0.1f, false, 0.42f);
+                if (Time.time > stepAt)
+                {
+                    stepAt = Time.time + 0.62f;
+                    Sound.Play(Sfx.Land, 1f, transform.position, 0.55f);
+                    Sound.Play(Sfx.Boom, 0.3f, transform.position);
+                    if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.05f, 0.1f);
+                    if (InkFx.Instance != null) InkFx.Instance.Splash(transform.position + Vector3.up * 0.05f, Vector3.up, 4, new Color(0.6f, 0.6f, 0.6f));
+                }
+            }
+            else
+            {
+                velocity.x = 0f;
+                if (introWalking) { introWalking = false; body.Play(IdleClip, 0.2f); }
+            }
+        }
+
+        /// <summary>The roar on his name card.</summary>
+        public void IntroRoar()
+        {
+            introWalking = false;
+            velocity.x = 0f;
+            FaceTowards(hero.transform.position.x);
+            body.Play("windup", 0.1f, true, 0.45f);
+            Sound.Play(Sfx.BruteHurt, 1f, Chest, 0.6f);
+            Sound.PlayLater(Sfx.BruteLaugh, 0.9f, 1f, transform.position);
+        }
+
+        public void IntroTaunt() { body.Play("taunt", 0.15f); }
+
+        /// <summary>Cutscene over: fight.</summary>
+        public void Engage()
+        {
+            if (state != State.BossIntro) return;
+            state = State.Approach;
+            stateTime = 0f;
+            nextSpecialAt = Time.time + 2f;
+            body.Play("run", 0.1f, false, 0.85f);
+        }
+
+        // --- the finale (posed frame by frame by the BossDirector)
+        public void Puppet()
+        {
+            ReleaseToken();
+            state = State.Scripted;
+            stateTime = 0f;
+            velocity = Vector3.zero;
+            if (laser != null) laser.enabled = false;
+        }
+        public void PuppetPose(Vector3 at) { transform.position = at; }
+        public void PuppetPlay(string clip, float fade = 0.05f, float speed = 1f) { if (body.Has(clip)) body.Play(clip, fade, true, speed); }
+        public void PuppetFlash() { Tint(Color.white, 0.07f); }
+        public void PuppetDie()
+        {
+            Health = 0f;
+            velocity = Vector3.zero;
+            Die();
+        }
+
+        // --- henchmen
+        float fleeFromX;
+
+        /// <summary>The boss is here: run for the exit. Hit one on the way out for COWARD!</summary>
+        public void Flee(Vector3 from)
+        {
+            if (Boss || !Alive || Fleeing || Passive || state == State.Dead) return;
+            Fleeing = true;
+            ReleaseToken();
+            if (laser != null) laser.enabled = false;
+            fleeFromX = from.x;
+            fleeDir = transform.position.x >= from.x ? 1 : -1;
+            if (state == State.Down || state == State.GetUp || state == State.Carried || state == State.Pounce || OnLedge) return;  // they go when they can
+            BeginFlee(true);
+        }
+
+        void BeginFlee(bool flinch)
+        {
+            ReleaseToken();
+            state = State.Flee;
+            stateTime = flinch ? 0f : 0.35f;
+            if (flinch)
+            {
+                body.Play("hit_front", 0.05f);        // a jolt of fear
+                Sound.Play(Random.value < 0.5f ? Sfx.EnemyHurt : Sfx.FallScream, 0.6f, Chest);
+            }
+        }
+
+        void UpdateFlee(float dt)
+        {
+            if (stateTime < 0.35f) { velocity.x = 0f; FaceTowards(fleeFromX); return; }
+            LeaveStairsLane(dt);
+            SetFacing(fleeDir);
+            velocity.x = fleeDir * walkSpeed * 1.7f;
+            if (body.CurrentName != "run") body.Play("run", 0.08f, false, 1.35f);
+            var x = transform.position.x;
+            if ((fleeDir > 0 ? x > arenaMaxX - 0.5f : x < arenaMinX + 0.5f) || stateTime > 7f) Vanish();
+        }
+
+        /// <summary>Gone (out of a door, or just out of the fight). Not a kill.</summary>
+        public void Vanish()
+        {
+            if (InkFx.Instance != null) InkFx.Instance.Burst(Chest, 0.5f);
+            Sound.Play(Sfx.Door, 0.6f, transform.position);
+            Destroy(gameObject);
+        }
+
         // ------------------------------------------------------------------ taking hits
 
         public override void TakeHit(HitInfo hit)
         {
+            if (Untouchable || state == State.Dead) return;
             if (!Targetable && !hit.hitsDowned && !OnLedge) return;
             if (OnLedge) { DropFromLedge(); }
-            ReleaseToken();
+            bool armored = Boss && ((state == State.Charge && chargeRunning) || state == State.Slam || state == State.Stunned);
+            if (!armored) ReleaseToken();
             float dmg = hit.damage;
             bool brute = Type == EnemyType.Brute;
-            if (brute && !hit.heavy) dmg *= 0.6f;          // the brute shrugs off light hits
+            if (Boss && state == State.Stunned) dmg *= 1.5f;           // dazed against the wall: everything lands full
+            else if (brute && !hit.heavy) dmg *= 0.6f;          // the brute shrugs off light hits
+            if (FinalBlow(dmg, hit)) return;                        // the killing blow becomes the finale
             bool wasAlive = Alive;
             Health = Mathf.Max(0f, Health - dmg);
             Tint(Color.white, 0.06f);
@@ -710,6 +1194,13 @@ namespace ProjectInk
             {
                 if (!Alive) Sound.Play(brute ? Sfx.BruteDeath : Sfx.EnemyDeath, 1f, Chest);
                 else Sound.Play(brute ? Sfx.BruteHurt : Sfx.EnemyHurt, 1f, Chest);
+            }
+            if (Boss && !Enraged && !enragePending && Health <= maxHealth * 0.5f) enragePending = true;
+            if (armored)
+            {
+                // charging, slamming or dazed: he takes it without flinching
+                if (state == State.Stunned) Tint(Color.white, 0.08f);
+                return;
             }
             FaceTowards(hit.attacker != null ? hit.attacker.transform.position.x : transform.position.x - hit.direction);
             velocity.x = hit.direction * hit.knockback * (brute ? 0.4f : 1f);
@@ -735,6 +1226,7 @@ namespace ProjectInk
         /// <summary>Thrown by the hero: flies, knocking down whoever it hits (human bowling).</summary>
         public void Launch(Vector3 vel, Fighter by)
         {
+            if (Untouchable || (Boss && ((state == State.Charge && chargeRunning) || state == State.Slam))) return;   // not mid-special or mid-cutscene
             ReleaseToken();
             state = State.Down;
             stateTime = 0f;
@@ -783,6 +1275,11 @@ namespace ProjectInk
         public void Execute(Fighter by)
         {
             if (!Alive) return;
+            if (Boss)
+            {
+                TakeHit(new HitInfo { damage = 35f, heavy = true, hitsDowned = true, direction = by != null && by.transform.position.x > transform.position.x ? -1 : 1, attacker = by });
+                return;
+            }
             ReleaseToken();
             Health = 0f;
             Tint(Color.white, 0.06f);
@@ -797,7 +1294,8 @@ namespace ProjectInk
         /// <summary>Instant kill (rampage finishers, thrown weapons).</summary>
         public void Kill(HitInfo hit)
         {
-            hit.damage = 9999f;
+            hit.damage = Boss ? maxHealth * 0.12f : 9999f;     // no one-shotting the boss
+            hit.heavy = true;
             hit.knockdown = true;
             hit.hitsDowned = true;
             TakeHit(hit);

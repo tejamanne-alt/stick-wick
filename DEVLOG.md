@@ -626,3 +626,45 @@ Feedback: the RAMPAGE prompt appeared too often and distracted. Redesigned:
     - **SECOND WIND:** used at ≤ 35% health, it restores a third of max health.
     - **Surrounded:** a 5.2 m shockwave (was 3.8) that knocks everyone down for 12 damage.
 - Training lesson and MOVES card text updated (the training lesson still always shows the button).
+
+## 2026-11-04: The boss fight, shot like the end of a film
+
+The Brute felt like a big enemy dropped into the middle of a wave. Now the last wave of every floor is his, and it plays as a duel with an entrance and a finale (`BossDirector`).
+
+- **Arrival:** the wave opens with his men. Once half are down (or the room is nearly empty, or 18 s pass), the lights stutter, the floor shakes and he walks in through the ground-floor door nearer the hero.
+- **His men flee:** they flinch and run for the exits, then vanish. This is not a kill. Hitting one on the way out scores **COWARD!** The fight is one on one.
+- **Entrance cinematic** (tap to skip):
+    - letterbox bars
+    - a low tracking shot as he walks in, each step shaking the room
+    - a hard cut to his face as he roars, and the name card slams in: THE BRUTE / HE OWNS THIS BUILDING
+    - an over-the-shoulder two-shot as the hero beckons and he beckons back
+    - FIGHT!
+- **Boss health bar,** top centre: a white "damage taken" segment that drains after a beat, a phase mark at half, and ENRAGED pulsing in phase two.
+- **Special moves,** all telegraphed in red:
+    - **Bull charge:** he paws the floor, then thunders across. Dodge through him (MATADOR!) and he hits the wall and is **stunned**: stars round his head, 1.5× damage, light-hit armour gone. If he charges off a gallery he lands hard and is stunned too. He skids to a stop at the foot of a stair.
+    - **Ground slam:** he crouches, leaps, and a red ring shows where he will land. The shockwave runs along the floor, so be in the air (JUMPED IT!). Afterwards he is slow to rise, which is your opening. He breaks the catwalk glass if he lands on it.
+    - **Bear hug:** he uses the grab; tap to break it.
+    - Super-armour while charging, slamming and stunned.
+- **Phase two** at half health: a roar that blows the hero back, blood red, faster, more charges, double slams, and he powers through half of all counters.
+- **No cheap kills:**
+    - Rampage strikes take 12% instead of killing.
+    - The gun-fu execution does 35.
+    - Falling off a floor takes 12%.
+- **Finale:** the killing blow is caught; he staggers at 1 HP in slow motion, and the scene takes both fighters:
+    1. a three-hit flurry, each hit a hard cut: over the shoulder, reverse angle, profile
+    2. an uppercut launch, shot from the floor looking up
+    3. the hero leaps after him, in slow motion, with the camera circling them in the air
+    4. a freeze-frame spinning kick, or a leaping cut if he has a blade
+    5. driven into the floor: a shockwave ring, his colour across the floor, the lamps swinging
+    6. the hero lands crouched beside him and rises, under the card BRUTE DEFEATED / FLOOR n IS YOURS
+    7. a hard cut into the floor-clear victory
+  The sequence keeps both fighters on their platform and under the floor above. It uses the hero's weapon: fists, sword or pipe.
+- Brute health 220 → 300 (×floor scale), size 1.35 → 1.45.
+- Verified:
+    - Compiles (input system and legacy).
+    - Finale framing checked numerically: both fighters stay in every shot, apart from the intended close-up crops.
+    - HUD cards mocked at screen size: `docs/previews/boss_cards.png`.
+- Not playtested in Unity yet. Timings to tune on device:
+    - charge speed
+    - slam radius
+    - the arrival threshold

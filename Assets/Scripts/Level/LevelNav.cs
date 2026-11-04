@@ -169,6 +169,18 @@ namespace ProjectInk
             return root;
         }
 
+        /// <summary>The left and right ends of the walkable region a platform belongs to.</summary>
+        public static bool RegionBounds(int platform, out float x0, out float x1)
+        {
+            x0 = x1 = 0f;
+            if (platforms == null || platform < 0 || platform >= platforms.Length) return false;
+            int r = Region(platform);
+            x0 = float.MaxValue; x1 = float.MinValue;
+            for (int i = 0; i < platforms.Length; i++)
+                if (!broken.Contains(i) && Region(i) == r) { x0 = Mathf.Min(x0, platforms[i].x0); x1 = Mathf.Max(x1, platforms[i].x1); }
+            return x1 > x0;
+        }
+
         static bool Touch(int a, int b)
         {
             if (broken.Contains(a) || broken.Contains(b)) return false;

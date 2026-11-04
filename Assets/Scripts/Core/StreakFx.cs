@@ -16,6 +16,7 @@ namespace ProjectInk
             public float length, width, born, life, grow, drag;
             public Color color;
             public bool real;   // real-time (keeps flashing through slow motion) or scaled
+            public bool flat;   // a ring segment: no gravity, keeps its direction
         }
         readonly List<Streak> live = new List<Streak>();
         Mesh mesh;
@@ -78,6 +79,28 @@ namespace ProjectInk
             }
         }
 
+        /// <summary>A shockwave: a ring of white streaks lying on the floor, racing outwards from
+        /// `center` to `radius` (seen in perspective it is a flat ellipse). Scaled time.</summary>
+        public static void Ring(Vector3 center, float radius, float life = 0.35f, float width = 0.07f, Color? color = null)
+        {
+            var s = Get(); if (s == null) return;
+            const int N = 40;
+            float r0 = 0.25f;
+            var col = color ?? Color.white;
+            for (int i = 0; i < N; i++)
+            {
+                float a = i * Mathf.PI * 2f / N;
+                var radial = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a) * 0.55f);   // the walking strip is shallow
+                var tangent = new Vector3(-Mathf.Sin(a), 0f, Mathf.Cos(a) * 0.55f).normalized;
+                s.live.Add(new Streak
+                {
+                    pos = center + radial * r0 + Vector3.up * 0.04f, vel = radial * (radius - r0) / life, dir = tangent,
+                    length = 2f * Mathf.PI * radius / N * 1.3f, width = width, born = Time.time, life = life,
+                    grow = life * 0.35f, color = col, real = false, flat = true
+                });
+            }
+        }
+
         void LateUpdate()
         {
             var cam = Camera.main;
@@ -95,8 +118,11 @@ namespace ProjectInk
                 {
                     s.pos += s.vel * dt;
                     s.vel *= Mathf.Exp(-s.drag * dt);
-                    s.vel.y -= 9f * dt;
-                    if (s.vel.sqrMagnitude > 0.01f) s.dir = s.vel.normalized;
+                    if (!s.flat)
+                    {
+                        s.vel.y -= 9f * dt;
+                        if (s.vel.sqrMagnitude > 0.01f) s.dir = s.vel.normalized;
+                    }
                     live[i] = s;
                 }
                 // slices shoot out to full length, then thin away; sparks just shrink

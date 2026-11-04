@@ -798,6 +798,24 @@ namespace ProjectInk
         /// <summary>Lock a hero who is already standing (the short replay intro).</summary>
         public void CineLock() { CinematicLock = true; cineFrozen = false; }
 
+        /// <summary>A cutscene moves him by hand: no input, no physics (the boss finale).</summary>
+        public void CinePuppet() { CinematicLock = true; cineFrozen = true; velocity = Vector3.zero; }
+        public void CinePose(Vector3 at) { transform.position = at; velocity = Vector3.zero; }
+        public void CineTrails(bool on) => SetTrails(on);
+
+        /// <summary>Standing, free and doing nothing special: a cutscene may take him now.</summary>
+        public bool Free => Grounded && !OnLedge && !CinematicLock && !InRampage && !RampageIntro &&
+                            (state == State.Idle || state == State.Dash || state == State.Duck);
+
+        /// <summary>Cut a rampage short (a cutscene takes over).</summary>
+        public void EndRampage()
+        {
+            if (!InRampage && !RampageIntro) return;
+            rampageUntil = 0f;
+            rampageIntroUntil = 0f;
+            SetTrails(false);
+        }
+
         /// <summary>Hand control back. With `home`, a hero still in the air is put down there.</summary>
         public void CineRelease(Vector3? home = null)
         {

@@ -90,17 +90,32 @@ namespace ProjectInk
                 Fill(new Rect(0, h - bh, w, bh), Color.black);
             }
             if (cutscene) { OpeningCards(cine, w, h); GUI.matrix = Matrix4x4.identity; return; }
+            var bd = BossDirector.Instance;
+            if (bd != null && bd.Cinematic)
+            {
+                // the boss's entrance and finale: bars, his cards, nothing else
+                float bb = Mathf.Max(bh, bd.BarsPixels * barK);
+                if (bb > 0.01f)
+                {
+                    Fill(new Rect(0, 0, w, bb), Color.black);
+                    Fill(new Rect(0, h - bb, w, bb), Color.black);
+                }
+                BossCards(bd, w, h);
+                GUI.matrix = Matrix4x4.identity;
+                return;
+            }
             if (hero != null && hero.RampageIntro) { RampageIntroOverlay(w, h, barK); GUI.matrix = Matrix4x4.identity; return; }
             var win = VictoryCinematic.Instance;
             if (win != null && win.Active)
             {
-                float vb = win.BarsPixels * barK;
+                float vb = Mathf.Max(win.BarsPixels, bd != null ? bd.BarsPixels : 0f) * barK;
                 if (vb > 0.01f)
                 {
                     Fill(new Rect(0, 0, w, vb), Color.black);
                     Fill(new Rect(0, h - vb, w, vb), Color.black);
                 }
-                VictoryCards(win, w, h);
+                if (bd != null && bd.DefeatAlpha > 0.001f) BossCards(bd, w, h);
+                else VictoryCards(win, w, h);
                 GUI.matrix = Matrix4x4.identity;
                 return;
             }
@@ -110,6 +125,7 @@ namespace ProjectInk
             PunchKickZones(w, h);
             if (hero != null) HeroPanel(w);
             if (director != null) DirectorPanel(w, h);
+            if (bd != null) BossBar(bd, w);
             GuideLayer(w, h);
             if (showDiagnostics) Diagnostics();
             GUI.matrix = Matrix4x4.identity;
@@ -382,7 +398,7 @@ namespace ProjectInk
                 if (chevron == null) chevron = ChevronTexture(64);
                 foreach (var e in Enemy.All)
                 {
-                    if (!e.Alive) continue;
+                    if (!e.Alive || e.Fleeing) continue;
                     var vp = cam.WorldToViewportPoint(e.Chest);
                     if (vp.z > 0f && vp.x > -0.01f && vp.x < 1.01f && vp.y > -0.01f && vp.y < 1.01f) continue;
                     if (vp.z <= 0f) { vp.x = 1f - vp.x; vp.y = 1f - vp.y; }
@@ -1002,6 +1018,86 @@ namespace ProjectInk
                 }
                 else GestureInput.LastButtonTap = null;     // a tap anywhere else on the card does nothing
             }
+        }
+
+        GUIStyle bossName, bossTag, bossSmall, bossDefeat;
+        static readonly Color BossRed = new Color(0.78f, 0.06f, 0.07f);
+
+        /// <summary>The boss's name card (a lower third, sliding in on his roar) and, at the end,
+        /// BRUTE DEFEATED.</summary>
+        void BossCards(BossDirector bd, float w, float h)
+        {
+            LoadFonts();
+            if (bossName == null)
+            {
+                bossName = new GUIStyle { font = Display, fontSize = 128, fontStyle = Display != null ? FontStyle.Normal : FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
+                bossTag = new GUIStyle(bossName) { font = Body, fontSize = 24, fontStyle = FontStyle.Normal };
+                bossSmall = new GUIStyle(bossTag) { fontSize = 18 };
+                bossDefeat = new GUIStyle(bossName) { fontSize = 88, alignment = TextAnchor.MiddleCenter };
+            }
+            if (bd.NameAlpha > 0.001f)
+            {
+                float a = bd.NameAlpha;
+                float x = w * 0.08f + bd.NameSlide * 160f;
+                float y = h * 0.47f;
+                bossSmall.normal.textColor = new Color(1f, 1f, 1f, 0.75f * a);
+                Label(new Rect(x + 4, y - 30, w, 26), Spaced($"FLOOR {(director != null ? director.Floor : 1)}") + "      " + Spaced("FINAL OPPONENT"), bossSmall);
+                bossName.normal.textColor = new Color(1f, 1f, 1f, a);
+                Label(new Rect(x, y, w, 132), Spaced(bd.bossName), bossName);
+                Fill(new Rect(x + 4, y + 132, 460f * a, 6), new Color(BossRed.r, BossRed.g, BossRed.b, a));
+                if (bd.TagAlpha > 0.001f)
+                {
+                    bossTag.normal.textColor = new Color(1f, 1f, 1f, 0.85f * bd.TagAlpha * a);
+                    Label(new Rect(x + 4 + (1f - bd.TagAlpha) * 20f, y + 146, w, 32), Spaced(bd.tagline), bossTag);
+                }
+            }
+            if (bd.DefeatAlpha > 0.001f)
+            {
+                float a = bd.DefeatAlpha;
+                float rise = (1f - a) * 18f;
+                bossDefeat.normal.textColor = new Color(1f, 1f, 1f, a);
+                Label(new Rect(0, h * 0.24f + rise, w, 100), Spaced("BRUTE DEFEATED"), bossDefeat);
+                float lw = 420f * a;
+                Fill(new Rect(w * 0.5f - lw * 0.5f, h * 0.24f + 104 + rise, lw, 4), new Color(BossRed.r, BossRed.g, BossRed.b, a));
+                if (!string.IsNullOrEmpty(bd.DefeatSub))
+                {
+                    bossTag.alignment = TextAnchor.MiddleCenter;
+                    bossTag.normal.textColor = new Color(1f, 1f, 1f, 0.8f * a);
+                    Label(new Rect(0, h * 0.24f + 116 + rise, w, 32), Spaced(bd.DefeatSub), bossTag);
+                    bossTag.alignment = TextAnchor.MiddleLeft;
+                }
+            }
+        }
+
+        /// <summary>The boss health bar, top centre under the pause button: his name, a white
+        /// "damage taken" segment that drains after a beat, the half-way phase mark, and
+        /// ENRAGED pulsing once he passes it.</summary>
+        void BossBar(BossDirector bd, float w)
+        {
+            float a = bd.HpAlpha;
+            if (a < 0.01f || bd.Current != BossDirector.Stage.Fight) return;
+            LoadFonts();
+            if (bossSmall == null) BossCards(bd, w, 720f);
+            float bw = Mathf.Min(560f, w * 0.48f), x = (w - bw) * 0.5f, y = 96f, bh = 14f;
+            var nameSt = new GUIStyle(mid) { fontSize = 28, alignment = TextAnchor.LowerLeft };
+            nameSt.normal.textColor = new Color(1f, 1f, 1f, a);
+            Label(new Rect(x, y - 34, bw, 32), Spaced(bd.bossName), nameSt);
+            if (bd.HpEnraged)
+            {
+                float pulse = 0.65f + 0.35f * Mathf.Sin(Time.unscaledTime * 8f);
+                var en = new GUIStyle(nameSt) { alignment = TextAnchor.LowerRight, fontSize = 24 };
+                en.normal.textColor = new Color(1f, 0.25f, 0.2f, a * pulse);
+                Label(new Rect(x, y - 33, bw, 30), Spaced("ENRAGED"), en);
+            }
+            Fill(new Rect(x - 2, y - 2, bw + 4, bh + 4), new Color(0f, 0f, 0f, 0.6f * a));
+            Fill(new Rect(x, y, bw, bh), new Color(0.2f, 0.02f, 0.03f, 0.75f * a));
+            Fill(new Rect(x, y, bw * bd.HpLag, bh), new Color(1f, 1f, 1f, 0.85f * a));
+            var red = bd.HpEnraged ? Color.Lerp(BossRed, new Color(1f, 0.2f, 0.1f), 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 8f)) : BossRed;
+            Fill(new Rect(x, y, bw * bd.Hp, bh), new Color(red.r, red.g, red.b, a));
+            Fill(new Rect(x, y, bw * bd.Hp, 3), new Color(1f, 1f, 1f, 0.25f * a));          // a sheen along the top
+            Fill(new Rect(x + bw * 0.5f - 1.5f, y - 4, 3, bh + 8), new Color(1f, 1f, 1f, 0.9f * a));   // phase two starts here
+            float flash = 1f - Mathf.Clamp01((Time.unscaledTime - bd.EnragedAt) / 0.6f);
+            if (flash > 0f) Fill(new Rect(x - 2, y - 2, bw + 4, bh + 4), new Color(1f, 1f, 1f, 0.8f * flash * a));
         }
 
         GUIStyle winTitle, winStats;

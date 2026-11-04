@@ -22,6 +22,8 @@ namespace ProjectInk
         public float StatsAlpha { get; private set; }
         public string Title { get; private set; }
         public string Stats { get; private set; }
+        /// <summary>The hero shot has begun (the boss finale hands the camera over then).</summary>
+        public bool HeroShotStarted => Active && shotStart >= 0f;
 
         const float Bars = 92f;
         const float WaitKill = 1.5f;        // let the kill-cam finish
@@ -31,7 +33,8 @@ namespace ProjectInk
 
         HeroController hero;
         float t, shotStart = -1f, outStart;
-        bool locked, titled;
+        bool locked, titled, cut;
+        float waitKill = WaitKill;
         Vector3 anchor;                     // the hero's feet when the shot starts
         int side;                           // which side the camera arcs from
         Vector3 lastPos, lastLook;
@@ -41,8 +44,12 @@ namespace ProjectInk
         void OnDestroy() { if (Instance == this) Instance = null; }
 
         /// <summary>Start the sequence (called by the wave director as the floor is cleared).</summary>
-        public void Begin(HeroController h, int floor, string grade, int score, int kills)
+        /// <summary>`afterBoss`: the boss finale has just played (no kill-cam to wait for), so cut
+        /// straight to the hero shot.</summary>
+        public void Begin(HeroController h, int floor, string grade, int score, int kills, bool afterBoss = false)
         {
+            cut = afterBoss;
+            waitKill = afterBoss ? 0.15f : WaitKill;
             hero = h;
             Active = true;
             Done = false;
@@ -64,14 +71,14 @@ namespace ProjectInk
 
             // bars in early, so the kill-cam already plays letterboxed
             BarsPixels = shotStart < 0f || t < outStart || outStart <= 0f
-                ? Mathf.Lerp(0f, Bars, Ease(0.4f, 1.2f, t))
+                ? (cut ? Bars : Mathf.Lerp(0f, Bars, Ease(0.4f, 1.2f, t)))
                 : Mathf.Lerp(Bars, 0f, Ease(outStart, outStart + Out * 0.9f, t));
 
             // 3. the hero shot starts once the kill-cam is over and he is on his feet
             if (shotStart < 0f)
             {
-                if (t < WaitKill) return;
-                if (!hero.Grounded && t < WaitKill + 1.5f) return;
+                if (t < waitKill) return;
+                if (!hero.Grounded && t < waitKill + 1.5f) return;
                 StartHeroShot();
             }
 
@@ -116,7 +123,7 @@ namespace ProjectInk
                 return;
             }
             lastPos = pos; lastLook = look; lastFov = fov;
-            if (cam != null) cam.Scripted(pos, look, Ease(0f, 0.35f, u), fov);
+            if (cam != null) cam.Scripted(pos, look, cut ? 1f : Ease(0f, 0.35f, u), fov);
 
             // the card fades in under the title, then holds
             TitleAlpha = titled ? Mathf.MoveTowards(TitleAlpha, 1f, Time.unscaledDeltaTime * 4f) : 0f;
