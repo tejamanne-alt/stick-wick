@@ -297,9 +297,9 @@ namespace ProjectInk
             var cam = CameraDirector.Instance;
             if (cam == null || hero == null) return;
             framed.Clear();
+            // everyone still in the fight: the camera keeps as many in shot as it can, nearest first
             foreach (var e in Enemy.All)
-                if (e.Alive && (e.Engaged || Mathf.Abs(e.transform.position.x - hero.transform.position.x) < 5f))
-                    framed.Add(e.transform);
+                if (e.Alive) framed.Add(e.transform);
             cam.SetFramed(framed);
         }
 

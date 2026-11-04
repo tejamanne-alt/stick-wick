@@ -69,6 +69,8 @@ namespace ProjectInk
 
         void Start()
         {
+            // wide enough to hold the whole hall (both walls, both floors) on a phone in landscape
+            maxDistance = Mathf.Max(maxDistance, 22f);
             if (hero != null) focus = hero.position;
             distance = minDistance;
             Snap();
@@ -103,10 +105,65 @@ namespace ProjectInk
             orbiting = true;
         }
 
+        [Tooltip("Inner faces of the side walls: the camera never shows past them if it can help it.")]
+        public float wallX = 13.0f;
+        const float BodyHeight = 1.35f;     // feet to the top of the head, chibi scale
+        readonly List<Transform> candidates = new List<Transform>();
+
+        /// <summary>The smallest shot that holds the hero and everyone fighting, with margins for
+        /// the HUD. The hero always fits; enemies are added nearest first while the shot stays
+        /// within maxDistance (any left out get an edge marker from the HUD). The shot slides
+        /// to stay inside the side walls, pulling back if that would cut anyone off.</summary>
+        void Frame(out Vector3 center, out float dist)
+        {
+            float tanV = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float tanH = tanV * Mathf.Max(0.5f, cam.aspect);
+            var h = hero.position;
+            float loX = h.x, hiX = h.x, loY = h.y, hiY = h.y + BodyHeight;
+
+            candidates.Clear();
+            foreach (var t in extras) if (t != null) candidates.Add(t);
+            candidates.Sort((a, b) => Mathf.Abs(a.position.x - h.x).CompareTo(Mathf.Abs(b.position.x - h.x)));
+            foreach (var t in candidates)
+            {
+                var p = t.position;
+                float nLoX = Mathf.Min(loX, p.x), nHiX = Mathf.Max(hiX, p.x);
+                float nLoY = Mathf.Min(loY, p.y), nHiY = Mathf.Max(hiY, p.y + BodyHeight);
+                bool close = Mathf.Abs(p.x - h.x) < 5f && Mathf.Abs(p.y - h.y) < 2f;
+                if (!close && Need(nLoX, nHiX, nLoY, nHiY, tanV, tanH) > maxDistance) continue;
+                loX = nLoX; hiX = nHiX; loY = nLoY; hiY = nHiY;
+            }
+
+            dist = Mathf.Max(minDistance, Need(loX, hiX, loY, hiY, tanV, tanH));
+            float cx = (loX + hiX) * 0.5f;
+            // keep the walls at the frame edges where possible, then make sure nobody was pushed out
+            for (int i = 0; i < 2; i++)
+            {
+                float half = dist * tanH;
+                if (half < wallX) cx = Mathf.Clamp(cx, -wallX + half, wallX - half);
+                float needHalf = Mathf.Max(cx - loX, hiX - cx) + MarginX;
+                dist = Mathf.Max(dist, needHalf / tanH);
+            }
+            dist = Mathf.Min(dist, maxDistance + 2f);
+            // vertical: centre on the group, a little low so the HUD at the top never covers a head
+            float cy = (loY + hiY) * 0.5f + 0.15f;
+            center = new Vector3(cx, cy, 0f);
+        }
+
+        const float MarginX = 1.3f;
+
+        static float Need(float loX, float hiX, float loY, float hiY, float tanV, float tanH)
+        {
+            float halfW = (hiX - loX) * 0.5f + MarginX;
+            float halfH = (hiY - loY) * 0.5f + 1.0f;      // room above heads for the HUD, below feet for the floor
+            return Mathf.Max(halfW / tanH, halfH / tanV);
+        }
+
         void Snap()
         {
-            transform.position = focus + new Vector3(0, height, -distance);
-            transform.LookAt(focus + Vector3.up * (lookHeight - 0.2f));
+            focus += Vector3.up * BodyHeight * 0.5f;
+            transform.position = focus + new Vector3(0f, distance * 0.1f, -distance);
+            transform.LookAt(focus);
         }
 
         void LateUpdate()
@@ -114,32 +171,14 @@ namespace ProjectInk
             if (hero == null) return;
             float dt = UnityEngine.Time.unscaledDeltaTime;
 
-            // frame hero + attackers
-            float lo = hero.position.x, hi = hero.position.x;
-            float yLo = hero.position.y, yHi = hero.position.y;
-            foreach (var t in extras)
-            {
-                if (t == null) continue;
-                if (Mathf.Abs(t.position.x - hero.position.x) > 9f) continue;
-                lo = Mathf.Min(lo, t.position.x);
-                hi = Mathf.Max(hi, t.position.x);
-                yLo = Mathf.Min(yLo, t.position.y);
-                yHi = Mathf.Max(yHi, t.position.y);
-            }
-            float cx = Mathf.Lerp(hero.position.x, (lo + hi) * 0.5f, 0.6f);
-            cx = Mathf.Clamp(cx, minX, maxX);
-            var target = new Vector3(cx, (yLo + yHi) * 0.5f, 0f);
-            float halfWidth = (hi - lo) * 0.5f + 2.2f;
-            float halfHeight = (yHi - yLo) * 0.5f + 1.6f;
-            float tanHalf = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
-            float want = Mathf.Max(halfWidth / (tanHalf * Mathf.Max(0.5f, cam.aspect)), halfHeight / tanHalf);
-            want = Mathf.Clamp(want, minDistance, maxDistance);
-
+            // frame the hero and everyone in the fight, on both floors (see Frame)
+            Frame(out Vector3 target, out float want);
             focus = Vector3.SmoothDamp(focus, target, ref focusVel, followSmooth, Mathf.Infinity, dt);
-            distance = Mathf.SmoothDamp(distance, want, ref distanceVel, 0.35f, Mathf.Infinity, dt);
+            distance = Mathf.SmoothDamp(distance, want, ref distanceVel, 0.3f, Mathf.Infinity, dt);
 
-            Vector3 pos = focus + new Vector3(0, height, -distance);
-            Vector3 look = focus + Vector3.up * lookHeight;
+            // a slight downward look, so both floors and the floor itself read
+            Vector3 pos = focus + new Vector3(0f, distance * 0.1f, -distance);
+            Vector3 look = focus;
 
             if (focusTarget != null && UnityEngine.Time.unscaledTime < focusUntil)
             {

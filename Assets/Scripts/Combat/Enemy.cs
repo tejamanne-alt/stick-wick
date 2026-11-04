@@ -21,7 +21,7 @@ namespace ProjectInk
         public static readonly Queue<GameObject> Corpses = new Queue<GameObject>();
         public static int MaxCorpses = 40;
 
-        enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, GetUp, Dead, Holding, Carried }
+        enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, GetUp, Dead, Holding, Carried, Pounce }
 
         public float walkSpeed = 2.6f;
         public float windupSeconds = 0.45f;
@@ -43,11 +43,11 @@ namespace ProjectInk
         public EnemyType Type { get; private set; }
         public Color InkColor { get; private set; } = Color.black;
         public bool HasToken { get; private set; }
-        public bool Telegraphing => state == State.Windup;
+        public bool Telegraphing => state == State.Windup || (state == State.Pounce && !pounceLaunched);
         public bool Targetable => Alive && state != State.Down && state != State.GetUp && state != State.Dead && state != State.Carried &&
                                   !(state == State.Enter && kind == SpawnKind.Background);
         public bool IsDown => state == State.Down || state == State.GetUp;
-        public bool Engaged => state == State.Advance || state == State.Windup || state == State.Attack;
+        public bool Engaged => state == State.Advance || state == State.Windup || state == State.Attack || state == State.Pounce;
         public bool Armed => Type == EnemyType.Swordsman;
         public bool Gunner => Type == EnemyType.Gunner;
         public bool Ranged => Type == EnemyType.Gunner || Type == EnemyType.Thrower;
@@ -71,6 +71,8 @@ namespace ProjectInk
             Sound.Play(spawnKind == SpawnKind.Ceiling ? Sfx.MetalClang : Sfx.Door, 1f, transform.position);
             ringDistance = Gunner ? Random.Range(4.5f, 7f) : Type == EnemyType.Thrower ? Random.Range(4f, 6f) : Random.Range(2.2f, 3.4f);
             useLedge = Random.value < 0.55f;
+            leapDown = type != EnemyType.Brute && Random.value < 0.7f;
+            perchX = Random.Range(-2.8f, -0.6f);
             weaponMat = hero.weaponMaterial;
             if (type == EnemyType.Brute)
             {
@@ -113,7 +115,8 @@ namespace ProjectInk
             if (UpdateLedge(dt)) { UpdateTint(); return; }
             float dx = hero.transform.position.x - transform.position.x;
             float dist = Mathf.Abs(dx);
-            bool sameLevel = Mathf.Abs(hero.transform.position.y - transform.position.y) < 1.4f && !onStairs;
+            // same floor as the hero's (stable) floor; mid-stairs counts as neither
+            bool sameLevel = Level == hero.Floor && !onStairs && !onStairsDown && Mathf.Abs(hero.transform.position.y - transform.position.y) < 2.4f;
 
             switch (state)
             {
@@ -185,6 +188,7 @@ namespace ProjectInk
                     velocity.x = 0f;
                     if (body.Finished) { GoWait(); body.Play(IdleClip, 0.15f); }
                     break;
+                case State.Pounce: UpdatePounce(); break;
                 case State.Dead:
                     velocity.x = 0f;
                     if (Grounded && stateTime > 0.3f) { Settle(); return; }
@@ -257,17 +261,140 @@ namespace ProjectInk
             }
             else
             {
-                // hero below: run off the open edge of the upper floor (with a little hop)
-                LeaveStairsLane(dt);
-                Walk(Mathf.Sign(LedgeX + 0.6f - p.x) * 1.2f);
-                if (p.x > LedgeX - 0.25f && Grounded && p.y > 1.9f)
-                {
-                    velocity.y = 3.5f;
-                    velocity.x = 3f;
-                    Grounded = false;
-                    body.Play("front_flip", 0.05f);
-                }
+                // hero below. Shooters hold the balcony and fire down; fighters take a turn to
+                // pounce off the edge onto him; the rest (and anyone with no clear drop) take the stairs
+                bool heroInOpen = hero.transform.position.x > LedgeX - 0.2f;     // not under the upper floor
+                if (Ranged && heroInOpen && !onStairsDown) { HoldBalcony(dt); return; }
+                if (leapDown && heroInOpen && hero.transform.position.x < 7f && !onStairsDown) { ToTheEdge(dt); return; }
+                StairsDown(dt);
             }
+        }
+
+        // ------------------------------------------------------------------ the upper floor
+
+        bool leapDown, onStairsDown, pounceLaunched;
+        float perchX;
+        int lastPerchStep;
+
+        /// <summary>Shooters and knife throwers take a spot by the rail and attack from above.</summary>
+        void HoldBalcony(float dt)
+        {
+            LeaveStairsLane(dt);
+            var p = transform.position;
+            if (Mathf.Abs(perchX - p.x) > 0.15f) { Walk(Mathf.Sign(perchX - p.x)); return; }
+            velocity.x = 0f;
+            FaceTowards(hero.transform.position.x);
+            if (body.CurrentName == "run") body.Play(IdleClip, 0.15f);
+            if (Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
+            {
+                HasToken = true;
+                state = State.Windup;
+                stateTime = 0f;
+                BeginWindup();
+            }
+            else if (Time.time > waitUntil + 3f) waitUntil = Time.time + Random.Range(0.5f, 1.5f);
+        }
+
+        /// <summary>Fighters go to the open edge and wait their turn there, taunting, then pounce.</summary>
+        void ToTheEdge(float dt)
+        {
+            LeaveStairsLane(dt);
+            var p = transform.position;
+            // stagger along the rail so they do not stand inside each other
+            float spot = LedgeX - 0.35f - 0.7f * (lastPerchStep = RailSlot());
+            if (Mathf.Abs(spot - p.x) > 0.15f) { Walk(Mathf.Sign(spot - p.x) * 1.2f); return; }
+            velocity.x = 0f;
+            FaceTowards(hero.transform.position.x);
+            if (lastPerchStep == 0 && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
+            {
+                HasToken = true;
+                state = State.Pounce;
+                stateTime = 0f;
+                pounceLaunched = false;
+                body.Play(body.Has("duck") ? "duck" : IdleClip, 0.1f);       // crouch at the edge: about to jump
+                return;
+            }
+            if (body.CurrentName == "run") body.Play(IdleClip, 0.15f);
+            if (stateTime > 1.2f && Random.value < 0.01f) { body.Play("taunt", 0.15f); stateTime = 0f; }
+        }
+
+        /// <summary>This enemy's place in the queue at the rail (0 = at the edge).</summary>
+        int RailSlot()
+        {
+            int ahead = 0;
+            foreach (var e in All)
+            {
+                if (e == this || !e.Alive || e.Level != 1 || e.Ranged || !e.leapDown) continue;
+                if (e.transform.position.x > transform.position.x + 0.05f) ahead++;
+            }
+            return Mathf.Min(ahead, 3);
+        }
+
+        /// <summary>The pounce: a red-flashing crouch at the edge, then a diving kick that lands
+        /// beside the hero. It hits if he is still there; a dodge leaves them sprawling.</summary>
+        void UpdatePounce()
+        {
+            if (!pounceLaunched)
+            {
+                velocity.x = 0f;
+                FaceTowards(hero.transform.position.x);
+                Tint(TelegraphColor, 0.05f);
+                if (stateTime >= 0.55f) LaunchPounce();
+                return;
+            }
+            if (Grounded && stateTime > 0.12f) LandPounce();
+        }
+
+        void LaunchPounce()
+        {
+            pounceLaunched = true;
+            stateTime = 0f;
+            var p = transform.position;
+            float hx = hero.transform.position.x;
+            int side = hx >= p.x ? 1 : -1;
+            float tx = Mathf.Max(LedgeX + 0.5f, hx - side * 0.75f);
+            float ty = GroundY(new Vector3(tx, 0.5f, 0f), 0.4f);
+            float T = Mathf.Clamp(Mathf.Abs(tx - p.x) / 6.5f, 0.5f, 0.85f);
+            velocity.x = (tx - p.x) / T;
+            velocity.y = (ty - p.y + 0.5f * gravity * T * T) / T;
+            Grounded = false;
+            body.Play("flying_kick", 0.05f, true, 0.9f);
+            Sound.Play(Sfx.WhooshBig, 1f, transform.position);
+            Sound.Play(Sfx.EnemyEffort, 1f, transform.position);
+        }
+
+        void LandPounce()
+        {
+            float dx = hero.transform.position.x - transform.position.x;
+            float dy = Mathf.Abs(hero.transform.position.y - transform.position.y);
+            velocity.x = 0f;
+            if (Mathf.Abs(dx) < 1.2f && dy < 1f && !hero.Invulnerable && !hero.IsDead)
+            {
+                hero.TakeHit(new HitInfo { damage = 14f, direction = dx >= 0 ? 1 : -1, knockback = 6f, heavy = true, attacker = this });
+                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.12f, 0.15f);
+            }
+            ReleaseToken();
+            state = State.Recover;
+            stateTime = 0f;
+            body.Play(IdleClip, 0.12f);
+        }
+
+        /// <summary>Walk down: to the top of the stairs, into the stairs lane, down, and out.</summary>
+        void StairsDown(float dt)
+        {
+            var p = transform.position;
+            if (!onStairsDown)
+            {
+                LeaveStairsLane(dt);
+                float tx = StairsTopX;
+                if (Mathf.Abs(tx - p.x) > 0.3f) { Walk(Mathf.Sign(tx - p.x)); return; }
+                onStairsDown = true;
+            }
+            p.z = Mathf.MoveTowards(p.z, StairsLaneZ, 3f * dt);
+            transform.position = p;
+            if (Mathf.Abs(p.z - StairsLaneZ) > 0.05f && p.y > 2.8f) { velocity.x = 0f; return; }
+            Walk(Mathf.Sign(StairsBottomX - p.x));
+            if (p.x >= StairsBottomX - 0.25f && p.y < 0.3f) onStairsDown = false;
         }
 
         void LeaveStairsLane(float dt)
@@ -425,7 +552,8 @@ namespace ProjectInk
             if (Gunner)
             {
                 var from = Chest + Vector3.up * 0.1f + Vector3.right * Facing * 0.55f;
-                bool hit = dx > 0f && dy < 1.2f && !hero.Invulnerable;
+                bool fromAbove = transform.position.y - hero.transform.position.y > 2f;   // shooting down from the balcony
+                bool hit = dx > 0f && (dy < 1.2f || fromAbove) && !hero.Invulnerable;
                 if (InkFx.Instance != null) InkFx.Instance.Shot(from, hit ? hero.Chest : from + Vector3.right * Facing * 16f);
                 hit &= !hero.Ducking;
                 if (hit) hero.TakeHit(new HitInfo { damage = attack.damage, direction = Facing, knockback = attack.knockback, attacker = this });
@@ -448,7 +576,7 @@ namespace ProjectInk
         /// <summary>Cancel a windup or attack (the hero countered or vaulted).</summary>
         public void Interrupt()
         {
-            if (state == State.Windup || state == State.Attack || state == State.Advance)
+            if (state == State.Windup || state == State.Attack || state == State.Advance || (state == State.Pounce && !pounceLaunched))
             {
                 ReleaseToken();
                 state = State.Hurt;

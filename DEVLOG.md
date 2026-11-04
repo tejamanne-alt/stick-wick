@@ -290,3 +290,17 @@ Scene version 7.
     - combo count shown as a big number with "H I T S"
 - **Results:** a black panel with hairline rules, the best grade and its word, and a pulsing "tap to fight again".
 - **PUNCH / KICK guides:** only during the first wave of the first floor; they fade out after 10 s.
+
+## 2026-11-04: 0.5.3 everyone in frame; upper-floor enemies with a plan
+
+- **Camera** (`CameraDirector.Frame`):
+    - Builds the smallest shot holding the hero, always, plus every living enemy on both floors, nearest first, with margins for heads, feet and the HUD.
+    - Slides to keep the side walls at the frame edge, then pulls back if that would cut anyone off.
+    - `maxDistance` raised to 22, enough for the whole hall on a 19.5:9 phone.
+    - Checked numerically on five layouts (both corners, both floors, a full-room spread, a close fight): everyone fits.
+    - Anyone still out of shot gets a small red glow on that screen edge at their height.
+- **Enemies track the hero's floor, not his height:** `HeroController.Floor` changes only when he lands. Jumps, ropes and bars no longer send everyone running for the stairs and flipping back down.
+- **Upper floor, hero below** (replaces the "run off the edge and flip" loop):
+    - **Shooters and knife throwers** take a spot by the rail and fire down at him.
+    - **Fighters** queue along the rail, taunting, and take turns (attack tokens) to **pounce**: a red-flashing crouch at the edge (counterable), then a diving kick that lands beside him. It hits only if he's still there.
+    - The rest, and anyone when the hero is under the upper floor or far away, **walk down the stairs**.

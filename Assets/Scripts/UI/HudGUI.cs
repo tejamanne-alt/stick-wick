@@ -282,6 +282,20 @@ namespace ProjectInk
                 Label(new Rect(0, h * 0.32f, w, 44), Spaced(director.StyleText), st);
             }
 
+            // anyone the shot could not hold: a small red glow on the edge, at their height
+            var cam = Camera.main;
+            if (cam != null)
+                foreach (var e in Enemy.All)
+                {
+                    if (!e.Alive) continue;
+                    var vp = cam.WorldToViewportPoint(e.Chest);
+                    if (vp.z > 0f && vp.x > -0.02f && vp.x < 1.02f && vp.y > -0.02f && vp.y < 1.02f) continue;
+                    float ey = Mathf.Clamp(1f - vp.y, 0.12f, 0.88f) * h;
+                    var oc = Enemy.TelegraphColor; oc.a = 0.5f;
+                    if (vp.z <= 0f || vp.x < 0.5f) EdgeGlow(new Rect(0, ey - 50, 40, 100), oc, 0f);
+                    else EdgeGlow(new Rect(w - 40, ey - 50, 40, 100), oc, 180f);
+                }
+
             // incoming enemies: a soft red glow breathing on the edge they will come through
             foreach (var inc in director.Upcoming)
             {

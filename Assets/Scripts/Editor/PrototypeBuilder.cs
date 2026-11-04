@@ -137,7 +137,7 @@ namespace ProjectInk.EditorTools
             var dirCam = camGo.AddComponent<CameraDirector>();
             dirCam.hero = heroGo.transform;
             dirCam.minDistance = 9.5f;
-            dirCam.maxDistance = 17f;
+            dirCam.maxDistance = 22f;
             dirCam.height = 1.35f;
             dirCam.lookHeight = 1.1f;
             dirCam.minX = -7f;

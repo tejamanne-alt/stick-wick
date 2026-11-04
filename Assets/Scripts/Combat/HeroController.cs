@@ -351,10 +351,15 @@ namespace ProjectInk
             cineHidden = null;
         }
 
+        /// <summary>The floor the hero is fighting on (0 ground, 1 upper). Changes only when he
+        /// lands, so a jump or a rope swing does not send every enemy running for the stairs.</summary>
+        public int Floor { get; private set; }
+
         void Update()
         {
             float dt = Time.deltaTime;
             stateTime += dt;
+            if (Grounded && !OnLedge && !CinematicLock) Floor = Level;
             ComboTimer -= dt;
             if (ComboTimer <= 0f) ComboCount = 0;
             if (CinematicLock)
