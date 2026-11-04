@@ -103,9 +103,17 @@ namespace ProjectInk
         }
 
         /// <summary>Height of the walkable surface under a point (floors, stairs, landings).</summary>
+        /// <summary>Highest point a floor probe starts from: just under the roof slab, so its top
+        /// is never mistaken for a floor (nobody can end up standing on the roof).</summary>
+        public const float ProbeCeiling = 6.5f;
+        /// <summary>Highest a fighter's feet may go: their head meets the roof.</summary>
+        public const float HeadRoom = 5.2f;
+
         public static float GroundY(Vector3 p, float probeUp = 0.9f)
         {
-            if (Physics.Raycast(p + Vector3.up * probeUp, Vector3.down, out var hit, 40f, ~0, QueryTriggerInteraction.Ignore))
+            var origin = p + Vector3.up * probeUp;
+            origin.y = Mathf.Min(origin.y, ProbeCeiling);
+            if (Physics.Raycast(origin, Vector3.down, out var hit, 40f, ~0, QueryTriggerInteraction.Ignore))
                 return hit.point.y;
             return 0f;
         }
@@ -123,6 +131,7 @@ namespace ProjectInk
             if (Time.time < dropThroughUntil)
             {
                 var below = p + Vector3.down * 0.35f;
+                below.y = Mathf.Min(below.y, ProbeCeiling);
                 return Physics.Raycast(below, Vector3.down, out var hit, 40f, ~0, QueryTriggerInteraction.Ignore) ? hit.point.y : 0f;
             }
             return GroundY(p);
@@ -152,6 +161,8 @@ namespace ProjectInk
             {
                 velocity.y -= gravity * dt;
                 p.y += velocity.y * dt;
+                // the roof: a flying fighter bumps their head and falls back into the hall
+                if (p.y > HeadRoom && velocity.y > 0f) { p.y = HeadRoom; velocity.y = 0f; }
                 fallStartY = Mathf.Max(fallStartY, p.y);
                 if (p.y <= ground && velocity.y <= 0f)
                 {

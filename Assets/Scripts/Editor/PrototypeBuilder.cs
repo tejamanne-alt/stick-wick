@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 12;
+        public const int SceneVersion = 13;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Stick Wick/Build Prototype Scene")]
@@ -73,7 +73,8 @@ namespace ProjectInk.EditorTools
                 halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f,
                 deckY = deckY, deckHalf = deckHalf, stairRun = stairRun
             }, trail);
-            Box(room, "Roof", new Vector3(0, roofY + 0.1f, (laneFront + wallZ) * 0.5f), new Vector3(halfW * 2f + 0.4f, 0.2f, wallZ - laneFront), ground);
+            // the roof is scenery only: no collider, so nothing can ever stand on top of it
+            Object.DestroyImmediate(Box(room, "Roof", new Vector3(0, roofY + 0.1f, (laneFront + wallZ) * 0.5f), new Vector3(halfW * 2f + 0.4f, 0.2f, wallZ - laneFront), ground).GetComponent<Collider>());
             Box(room, "WallLeft", new Vector3(-halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
             Box(room, "WallRight", new Vector3(halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
             BuildDeckAndStairs(room, deckY, deckHalf, stairRun, laneFront, wallZ, arch);

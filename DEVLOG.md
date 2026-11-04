@@ -339,3 +339,10 @@ New layout: **one continuous walking surface**. Every x has exactly one floor he
 - Enemy brain: always "same level", just walk to the hero. Gunners fire up and down the stairs.
 - The hero starts at x 9. `SceneVersion` → 12, so the scene rebuilds on pull.
 - Layout diagram: `docs/previews/hall_layout.png`.
+
+## 2026-11-04: 0.6.1 nobody on the roof
+
+- The floor probe started above high-flying fighters and found the roof slab's top, so a big launch (a rope or bar dismount, the wall corkscrew) or a ceiling spawn could leave someone standing on the roof with no way down.
+- `Fighter.GroundY` now never starts above y 6.5 (under the roof), and airborne fighters bump their heads at feet height 5.2.
+- The roof has no collider. `SceneVersion` → 13.
+- Anyone already up there falls back into the hall.
