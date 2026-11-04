@@ -481,3 +481,12 @@ Feedback: keep the boxes in useful places. A kicked crate flies on until it hits
 The two corner crates that did nothing are gone. All positions were checked against the bars' giant circles, the trapeze's swing and the ledge climb landings.
 
 Walking fighters can **step up onto crates** again in the tower (a crate-only step-up on top of the 0.35 m stair step), so they stand on them instead of walking through them. `SceneVersion` → 19.
+
+## 2026-11-04: 0.7.9 victory cinematic
+
+Clearing a floor (the fifth wave, after the Brute) now plays `VictoryCinematic` (real-time, ~6 s):
+1. The final blow's slow-motion kill-cam plays out while letterbox bars slide in; the gameplay HUD steps aside.
+2. **Hero shot:** once he's on his feet, the hero is locked and gives his beckoning taunt. A low, close camera looks up at him and arcs ~30° round him, rising slightly (2.6 s), from the side with more room in the building.
+3. **Title card:** FLOOR n CLEAR in Bebas Neue with a hairline, landing with a white flash, a small shake and a cinematic hit. Beneath it: style grade, score and kills. The victory sting is timed to the shot.
+4. **Crane:** the camera rises and pulls back over the floor (1.5 s).
+5. The bars slide away, the camera blends back to gameplay (1 s), control returns and the next chapter starts. The director waits for it, with a 12 s safety timeout.

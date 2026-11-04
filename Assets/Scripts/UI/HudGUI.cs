@@ -85,6 +85,19 @@ namespace ProjectInk
                 Fill(new Rect(0, h - bh, w, bh), Color.black);
             }
             if (cutscene) { OpeningCards(cine, w, h); GUI.matrix = Matrix4x4.identity; return; }
+            var win = VictoryCinematic.Instance;
+            if (win != null && win.Active)
+            {
+                float vb = win.BarsPixels;
+                if (vb > 0.01f)
+                {
+                    Fill(new Rect(0, 0, w, vb), Color.black);
+                    Fill(new Rect(0, h - vb, w, vb), Color.black);
+                }
+                VictoryCards(win, w, h);
+                GUI.matrix = Matrix4x4.identity;
+                return;
+            }
 
             DrawStick();
             PunchKickZones(w, h);
@@ -477,6 +490,33 @@ namespace ProjectInk
         }
 
         static string Spaced(string s) => string.IsNullOrEmpty(s) ? s : string.Join(" ", s.ToCharArray());
+
+        GUIStyle winTitle, winStats;
+
+        /// <summary>The victory card: FLOOR n CLEAR in big spaced capitals with a hairline, the
+        /// grade, score and kills beneath, sliding up a little as they fade in.</summary>
+        void VictoryCards(VictoryCinematic v, float w, float h)
+        {
+            LoadFonts();
+            if (winTitle == null)
+            {
+                winTitle = new GUIStyle { font = Display, fontSize = 96, fontStyle = Display != null ? FontStyle.Normal : FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+                winStats = new GUIStyle(winTitle) { font = Body, fontSize = 22, fontStyle = FontStyle.Normal };
+            }
+            if (v.TitleAlpha > 0.001f)
+            {
+                float rise = (1f - v.TitleAlpha) * 18f;
+                winTitle.normal.textColor = new Color(1f, 1f, 1f, v.TitleAlpha);
+                Label(new Rect(0, h * 0.30f + rise, w, 110), Spaced(v.Title), winTitle);
+                float lw = 380f * v.TitleAlpha;
+                Fill(new Rect(w * 0.5f - lw * 0.5f, h * 0.30f + 112 + rise, lw, 2), new Color(1f, 1f, 1f, 0.75f * v.TitleAlpha));
+            }
+            if (v.StatsAlpha > 0.001f)
+            {
+                winStats.normal.textColor = new Color(1f, 1f, 1f, 0.85f * v.StatsAlpha);
+                Label(new Rect(0, h * 0.30f + 124 + (1f - v.StatsAlpha) * 10f, w, 34), v.Stats, winStats);
+            }
+        }
 
         static Texture2D RadialTexture(int n)
         {

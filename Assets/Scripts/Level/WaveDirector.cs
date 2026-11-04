@@ -83,6 +83,7 @@ namespace ProjectInk
             BestScore = PlayerPrefs.GetInt("best_score", 0);
             BestFloor = PlayerPrefs.GetInt("best_floor", 0);
             if (GetComponent<OpeningCinematic>() == null) gameObject.AddComponent<OpeningCinematic>();
+            if (GetComponent<VictoryCinematic>() == null) gameObject.AddComponent<VictoryCinematic>();
         }
 
         static bool CinematicHolding => OpeningCinematic.Instance != null && !OpeningCinematic.Instance.ControlReleased;
@@ -123,10 +124,12 @@ namespace ProjectInk
                         {
                             CurrentPhase = Phase.FloorClear;
                             phaseTime = 0f;
-                            ShowBanner($"FLOOR {Floor} CLEAR", 2.4f);
                             Sound.Tension(false);
-                            Sound.PlayLater(Sfx.FloorClear, 0.6f);
-                            AddScore(1000 * Floor, "FLOOR BONUS");
+                            Sound.PlayLater(Sfx.FloorClear, 1.6f);           // the sting lands with the hero shot
+                            AddScore(1000 * Floor, null);
+                            var vc = VictoryCinematic.Instance;
+                            if (vc != null) vc.Begin(hero, Floor, Grade(), Score, Kills);
+                            else ShowBanner($"FLOOR {Floor} CLEAR", 2.4f);
                         }
                     }
                     break;
@@ -135,7 +138,8 @@ namespace ProjectInk
                     if (phaseTime > 1.4f) StartWave(WaveIndex + 1);
                     break;
                 case Phase.FloorClear:
-                    if (phaseTime > 2.8f) NextFloor();
+                    // the victory cinematic plays out first (with a safety timeout)
+                    if ((VictoryCinematic.Instance == null || VictoryCinematic.Instance.Done) && phaseTime > 1f || phaseTime > 12f) NextFloor();
                     break;
                 case Phase.Dead:
                     if (phaseTime > 1.5f && input != null && input.AnyPressThisFrame) Restart();
