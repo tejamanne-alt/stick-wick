@@ -668,3 +668,17 @@ The Brute felt like a big enemy dropped into the middle of a wave. Now the last 
     - charge speed
     - slam radius
     - the arrival threshold
+
+## 2026-11-04: A cinematic title sequence
+
+The STICK WICK title used to fade in over the crane shot. It is now its own beat on black, about 3.4 s long, drawn by `HudGUI.Logo` and cued by `OpeningCinematic`:
+1. **0.2 s:** a blade's glint, a hairline drawn across the middle of the black.
+2. **0.58 s:** a slash of light. A dry-brush red ink stroke is painted left to right. The stroke is a procedural texture: ragged edges and bristle streaks that run out of ink.
+3. **0.72 s:** STICK slams in letter by letter, each letter dropping from 2.4× with a motion trail. A white flash, a red chromatic split that settles, and an impact shake.
+4. **1.02 s:** WICK lands the same way, a beat later.
+5. Ash drifts up behind the title. A light sweep passes across the letters (1.45 s). The title leans in slowly.
+6. **1.7 s:** the tagline lands in three beats: ONE MAN. / ONE BUILDING. / NO WAY DOWN.
+7. **3.0 s:** a sword cut flashes along the same middle line. The title is sliced in two and the halves slide apart and fade. The black splits open from that line into the letterbox, onto the crane shot over the building.
+- Sound design on every beat: glint whoosh, sword swing, a massive hit on STICK, a hit on WICK, three soft hits for the tagline, and sword swing plus hit for the cut.
+- The establishing shot is now 6.0 s, so the crane still plays after the title. Skip still works. Restarts play the short opening without the title.
+- Storyboard: `docs/previews/title_sequence.png`.

@@ -27,6 +27,12 @@ namespace ProjectInk
         public bool ControlReleased { get; private set; }
         public float BarsPixels { get; private set; } = 360f;   // 360 = the screen is fully black
         public float TitleAlpha { get; private set; }
+        /// <summary>The title sequence's clock (real seconds), or -1 when it is not on screen.
+        /// The HUD draws the logo from it: a blade glint, the letters slamming in over a red ink
+        /// stroke, a light sweep, the tagline, then a sword cut that slices the title in two and
+        /// splits the black open onto the building.</summary>
+        public float LogoT { get; private set; } = -1f;
+        public const float LogoSlice = 3.0f, LogoOpen = 3.9f;
         public float CaptionAlpha { get; private set; }
         public float SkipAlpha { get; private set; }
 
@@ -40,6 +46,8 @@ namespace ProjectInk
         float cutB, dropAt, cStart, cLength, outStart = -1f;
         bool dropped, landed;
         bool cueTitle, cueRiser, cueCard;
+        int logoCue;
+        static readonly float[] LogoCueAt = { 0.2f, 0.58f, 0.72f, 1.02f, 1.7f, 1.95f, 2.2f, 2.95f };
         float barsAtOut;
         Vector3 lastPos, lastLook;
         float lastFov;
@@ -60,7 +68,7 @@ namespace ProjectInk
             playedFull = true;
             if (full)
             {
-                cutB = 3.4f;                    // establishing shot length
+                cutB = 6.0f;                    // the title on black, then the establishing shot
                 dropAt = cutB + 0.35f;          // a beat of the empty floor, then the crash
                 cStart = float.MaxValue;        // decided by the landing
                 cLength = 2.5f;
@@ -92,7 +100,8 @@ namespace ProjectInk
             // the score of the edit: a slam under the title, a riser into the crash, a hit on the chapter card
             if (outStart < 0f)
             {
-                if (full && !cueTitle && t >= 1.0f) { cueTitle = true; Sound.Play(Sfx.CineMassive, 0.9f); }
+                if (full && !cueTitle) { cueTitle = true; logoCue = 0; }
+                while (full && logoCue < LogoCueAt.Length && t >= LogoCueAt[logoCue]) LogoSound(logoCue++);
                 if (full && !cueRiser && t >= dropAt - 2.0f) { cueRiser = true; Sound.Play(Sfx.Riser, 0.8f); }
                 if (!cueCard && t >= cStart + 0.25f) { cueCard = true; Sound.Play(Sfx.CineHit, full ? 0.6f : 0.5f); }
             }
@@ -125,14 +134,15 @@ namespace ProjectInk
                 BarsPixels = Mathf.Lerp(barsAtOut, 0f, Ease(outStart, outStart + OutSeconds * 0.9f, t));
                 if (t >= outStart + OutSeconds) Finish();
             }
-            else if (full) BarsPixels = Mathf.Lerp(360f, LetterboxBar, Ease(0.5f, 2.3f, t));
+            else if (full) BarsPixels = Mathf.Lerp(360f, LetterboxBar, Ease(LogoSlice, LogoOpen, t));   // the cut splits the black open
             else BarsPixels = Mathf.Lerp(360f, LetterboxBar, Ease(0f, 0.6f, t));
 
             bool going = outStart >= 0f;
-            TitleAlpha = full && !going ? Fade(t, 1.0f, 1.7f, 2.8f, 3.3f) : 0f;
+            TitleAlpha = 0f;
+            LogoT = full && !going && t < LogoSlice + 0.6f ? t : -1f;
             CaptionAlpha = going ? Mathf.Max(0f, CaptionAlpha - Time.unscaledDeltaTime * 4f)
                                  : (t > cStart ? Fade(t, cStart + 0.25f, cStart + 0.8f, cStart + cLength - 0.2f, cStart + cLength + 0.4f) : 0f);
-            SkipAlpha = full && !going ? Ease(0.8f, 1.4f, t) * 0.45f : 0f;
+            SkipAlpha = full && !going ? Ease(1.4f, 2.0f, t) * 0.45f : 0f;
         }
 
         /// <summary>Camera for the current shot, blended back to gameplay on the way out.</summary>
@@ -153,7 +163,7 @@ namespace ProjectInk
             if (full && t < cutB)
             {
                 // A: establishing. A slow crane down and in across the whole black-and-white building.
-                float u = Ease(0f, cutB, t);
+                float u = Ease(LogoSlice - 0.4f, cutB, t);
                 pos = Vector3.Lerp(new Vector3(-10.5f, 9.2f, -25f), new Vector3(-3.5f, 4.6f, -17.5f), u);
                 look = Vector3.Lerp(new Vector3(0.5f, 4.4f, 1.5f), new Vector3(3.5f, 2.6f, 0.5f), u);
                 fov = Mathf.Lerp(44f, 38f, u);
@@ -178,6 +188,20 @@ namespace ProjectInk
             }
             lastPos = pos; lastLook = look; lastFov = fov;
             cam.Scripted(pos, look, 1f, fov);
+        }
+
+        /// <summary>The title's sound design: glint, draw, slam, slam, three beats, the cut.</summary>
+        static void LogoSound(int i)
+        {
+            switch (i)
+            {
+                case 0: Sound.Play(Sfx.Whoosh, 0.5f, null, 1.3f); break;                       // the blade's glint
+                case 1: Sound.Play(Sfx.SwordSwing, 1f); break;                                 // the stroke
+                case 2: Sound.Play(Sfx.CineMassive, 1f); Sound.Play(Sfx.Boom, 0.6f); break;    // STICK
+                case 3: Sound.Play(Sfx.CineHit, 0.8f); Sound.Play(Sfx.PunchHeavy, 0.6f, null, 0.8f); break;   // WICK
+                case 4: case 5: case 6: Sound.Play(Sfx.CineHit, 0.28f, null, 1.1f); break;    // ONE MAN. ONE BUILDING. NO WAY DOWN.
+                case 7: Sound.Play(Sfx.SwordSwing, 1f, null, 0.85f); Sound.Play(Sfx.SwordHit, 0.8f); Sound.PlayLater(Sfx.WhooshBig, 0.08f, 0.7f); break;   // the cut
+            }
         }
 
         void Land()

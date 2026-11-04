@@ -145,16 +145,7 @@ namespace ProjectInk
                 cineSkip = new GUIStyle(cineTag) { fontSize = 16, alignment = TextAnchor.MiddleRight };
             }
             var white = Color.white;
-            if (c.TitleAlpha > 0.001f)
-            {
-                cineTitle.normal.textColor = new Color(0f, 0f, 0f, 0.55f * c.TitleAlpha);
-                GUI.Label(new Rect(3, h * 0.40f + 3, w, 100), Spaced(c.title), cineTitle);
-                cineTitle.normal.textColor = new Color(1f, 1f, 1f, c.TitleAlpha);
-                GUI.Label(new Rect(0, h * 0.40f, w, 100), Spaced(c.title), cineTitle);
-                Fill(new Rect(w * 0.5f - 160 * c.TitleAlpha, h * 0.40f + 104, 320 * c.TitleAlpha, 2), new Color(1f, 1f, 1f, 0.7f * c.TitleAlpha));
-                cineTag.normal.textColor = new Color(1f, 1f, 1f, 0.8f * c.TitleAlpha);
-                GUI.Label(new Rect(0, h * 0.40f + 112, w, 34), c.tagline, cineTag);
-            }
+            if (c.LogoT >= 0f) Logo(c, w, h);
             if (c.CaptionAlpha > 0.001f)
             {
                 // the chapter card sits in the lower bar, left, like a lower third
@@ -175,6 +166,265 @@ namespace ProjectInk
             }
         }
 
+
+        // ================================================================== the title sequence
+        // On black: a blade's glint runs across the middle of the screen; a sword stroke paints a
+        // red ink smear; STICK slams in letter by letter (each dropping from large, with a flash, a
+        // red split that settles and a shake), then WICK; ash drifts up; a light sweeps the letters;
+        // the tagline lands in three beats. Then a cut along the same line slices the title in two,
+        // the halves slide apart, and the black splits open onto the building.
+
+        GUIStyle logoSt, logoTag;
+        Texture2D inkStroke;
+        float[] logoW;
+        float logoTotal;
+        const string LogoText = "STICK WICK";
+        const float LogoGap = 10f, LogoSpace = 46f;
+        static readonly float[] Ash = BuildAsh(40);
+
+        static float[] BuildAsh(int n)
+        {
+            var r = new System.Random(11);
+            var a = new float[n * 4];
+            for (int i = 0; i < n; i++)
+            {
+                a[i * 4] = (float)r.NextDouble();               // x
+                a[i * 4 + 1] = (float)r.NextDouble();           // phase
+                a[i * 4 + 2] = 0.04f + 0.08f * (float)r.NextDouble();   // rise speed (screens/s)
+                a[i * 4 + 3] = 1.5f + 2.5f * (float)r.NextDouble();     // size
+            }
+            return a;
+        }
+
+        static float E(float a, float b, float x) => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(a, b, x));
+        /// <summary>When each letter lands (the space never does).</summary>
+        static float LandAt(int i) => i < 5 ? 0.72f + i * 0.04f : 1.02f + (i - 6) * 0.04f;
+
+        void Logo(OpeningCinematic c, float w, float h)
+        {
+            float t = c.LogoT;
+            if (logoSt == null)
+            {
+                LoadFonts();
+                logoSt = new GUIStyle { font = Display, fontSize = 150, fontStyle = Display != null ? FontStyle.Normal : FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+                logoTag = new GUIStyle(logoSt) { font = Body, fontSize = 22, fontStyle = FontStyle.Normal };
+                logoW = new float[LogoText.Length];
+                logoTotal = 0f;
+                for (int i = 0; i < LogoText.Length; i++)
+                {
+                    logoW[i] = LogoText[i] == ' ' ? LogoSpace : logoSt.CalcSize(new GUIContent(LogoText[i].ToString())).x;
+                    logoTotal += logoW[i] + (i > 0 ? LogoGap : 0f);
+                }
+                inkStroke = InkStrokeTexture(512, 128);
+            }
+            float cx = w * 0.5f, cy = h * 0.5f;             // the cut runs exactly through the middle
+            float slice = OpeningCinematic.LogoSlice;
+            float sliceK = E(slice, slice + 0.45f, t);       // the halves part
+            float fade = 1f - sliceK;
+
+            // ash rising behind it all
+            float ashA = E(0.7f, 1.4f, t) * fade;
+            if (ashA > 0.01f)
+                for (int i = 0; i < Ash.Length / 4; i++)
+                {
+                    float y = h + 20f - Mathf.Repeat(Ash[i * 4 + 1] * (h + 40f) + t * Ash[i * 4 + 2] * h, h + 40f);
+                    float x = Ash[i * 4] * w + Mathf.Sin(t * 1.3f + i) * 12f;
+                    float sz = Ash[i * 4 + 3];
+                    float tw = 0.45f + 0.55f * Mathf.Sin(t * 3f + i * 1.7f);
+                    var col = i % 5 == 0 ? new Color(0.9f, 0.25f, 0.18f) : new Color(0.85f, 0.85f, 0.82f);
+                    col.a = ashA * 0.55f * tw;
+                    Fill(new Rect(x, y, sz, sz), col);
+                }
+
+            // 1. the glint: a hairline drawn across the middle of the black
+            if (t < 1.1f)
+            {
+                float k = E(0.2f, 0.6f, t), a = 1f - E(0.75f, 1.1f, t);
+                Fill(new Rect(cx - w * 0.5f * k, cy - 1f, w * k, 2f), new Color(1f, 1f, 1f, 0.9f * a));
+                if (glowTex != null) { var o = GUI.color; GUI.color = new Color(1f, 1f, 1f, 0.35f * a * k); GUI.DrawTexture(new Rect(cx - 160, cy - 30, 320, 60), glowTex); GUI.color = o; }
+            }
+
+            // the whole title leans in very slowly
+            float push = 1f + 0.05f * E(0.9f, slice, t);
+            var m0 = GUI.matrix;
+            GUIUtility.ScaleAroundPivot(new Vector2(push, push), new Vector2(cx, cy) * scale);
+            if (sliceK <= 0f) LogoBody(t, w, cx, cy, 0f, 1f);
+            else
+            {
+                // sliced: the top half slides one way, the bottom the other, both fading
+                float dx = 70f * sliceK, dy = 26f * sliceK;
+                GUI.BeginGroup(new Rect(-200f, -200f, w + 400f, cy + 200f));
+                LogoBody(t, w, cx + 200f - dx, cy + 200f - dy, 0f, fade);
+                GUI.EndGroup();
+                GUI.BeginGroup(new Rect(-200f, cy, w + 400f, h - cy + 200f));
+                LogoBody(t, w, cx + 200f + dx, 0f + dy, 0f, fade);
+                GUI.EndGroup();
+            }
+            GUI.matrix = m0;
+
+            // the stroke that paints the ink: a diagonal slash of light
+            SlashLight(t, 0.58f, 0.8f, new Vector2(cx, cy), -14f, w * 1.1f);
+            // the cut: a flash along the middle, full width
+            if (t > slice - 0.06f && t < slice + 0.35f)
+            {
+                float k = E(slice - 0.06f, slice + 0.02f, t), a = 1f - E(slice + 0.05f, slice + 0.35f, t);
+                Fill(new Rect(cx - w * 0.5f * k, cy - 1.5f, w * k, 3f), new Color(1f, 1f, 1f, a));
+                Fill(new Rect(cx - w * 0.5f * k, cy - 6f, w * k, 12f), new Color(1f, 0.3f, 0.2f, 0.25f * a));
+            }
+            // flashes on each slam and on the cut
+            float flash = Mathf.Max(Pulse(t, 0.72f, 0.16f) * 0.55f, Mathf.Max(Pulse(t, 1.02f, 0.12f) * 0.3f, Pulse(t, slice, 0.14f) * 0.45f));
+            if (flash > 0.01f) Fill(new Rect(0, 0, w, h), new Color(1f, 1f, 1f, flash));
+        }
+
+        static float Pulse(float t, float at, float len) => t < at || t > at + len ? 0f : 1f - (t - at) / len;
+
+        /// <summary>The stroke, the letters, the light sweep and the tagline, at (cx, cy).</summary>
+        void LogoBody(float t, float w, float cx, float cy, float unused, float alpha)
+        {
+            // impact shake after each slam
+            float shake = 7f * Mathf.Exp(-Mathf.Max(0f, t - 0.72f) * 14f) * (t > 0.72f ? 1f : 0f)
+                        + 4f * Mathf.Exp(-Mathf.Max(0f, t - 1.02f) * 14f) * (t > 1.02f ? 1f : 0f);
+            float sx = Mathf.Sin(t * 90f) * shake, sy = Mathf.Cos(t * 77f) * shake * 0.6f;
+            cx += sx; cy += sy;
+
+            // the red ink stroke, painted left to right behind the letters
+            float reveal = E(0.62f, 0.84f, t);
+            if (reveal > 0f && inkStroke != null)
+            {
+                float sw = logoTotal + 150f, shh = 150f;
+                var r = new Rect(cx - sw * 0.5f, cy - shh * 0.5f + 6f, sw * reveal, shh);
+                var o = GUI.color;
+                GUI.color = new Color(0.72f, 0.05f, 0.06f, 0.95f * alpha);
+                GUI.DrawTextureWithTexCoords(r, inkStroke, new Rect(0f, 0f, reveal, 1f));
+                GUI.color = o;
+            }
+
+            // the letters
+            float x = cx - logoTotal * 0.5f;
+            float split = Mathf.Exp(-Mathf.Max(0f, t - 0.72f) * 7f) * (t > 0.7f ? 1f : 0f);
+            for (int i = 0; i < LogoText.Length; i++)
+            {
+                float lw = logoW[i];
+                float lc = x + lw * 0.5f;
+                x += lw + LogoGap;
+                if (LogoText[i] == ' ') continue;
+                float land = LandAt(i);
+                float k = Mathf.Clamp01((t - (land - 0.12f)) / 0.12f);
+                if (k <= 0f) continue;
+                float e = 1f - (1f - k) * (1f - k) * (1f - k);
+                float sc = Mathf.Lerp(2.4f, 1f, e);
+                string ch = LogoText[i].ToString();
+                // a motion trail while it drops in
+                if (k < 1f)
+                    for (int g = 1; g <= 3; g++)
+                        Letter(ch, lc, cy, sc * (1f + g * 0.18f), new Color(1f, 1f, 1f, 0.12f * k * alpha));
+                // the red split, settling
+                float sp = split * 9f;
+                if (sp > 0.3f) Letter(ch, lc + sp, cy, sc, new Color(1f, 0.15f, 0.1f, 0.7f * alpha * k));
+                logoSt.normal.textColor = new Color(0f, 0f, 0f, 0.6f * k * alpha);
+                Letter(ch, lc + 3f, cy + 4f, sc, logoSt.normal.textColor);           // shadow
+                Letter(ch, lc, cy, sc, new Color(0.93f, 0.93f, 0.91f, k * alpha));
+            }
+
+            // the light sweep: the letters, pure white, seen through a moving slit
+            float gk = Mathf.InverseLerp(1.45f, 1.95f, t);
+            if (gk > 0f && gk < 1f)
+            {
+                float left = cx - logoTotal * 0.5f - 60f;
+                float stripX = left + (logoTotal + 120f) * gk;
+                if (glowTex != null)
+                {
+                    var o = GUI.color; GUI.color = new Color(1f, 1f, 1f, 0.35f * alpha);
+                    GUI.DrawTexture(new Rect(stripX - 70f, cy - 90f, 140f, 180f), glowTex); GUI.color = o;
+                }
+                GUI.BeginGroup(new Rect(stripX - 16f, cy - 120f, 32f, 240f));
+                float xx = cx - logoTotal * 0.5f - (stripX - 16f);
+                for (int i = 0; i < LogoText.Length; i++)
+                {
+                    float lw = logoW[i];
+                    if (LogoText[i] != ' ') Letter(LogoText[i].ToString(), xx + lw * 0.5f, 120f, 1f, new Color(1f, 1f, 1f, alpha), false);
+                    xx += lw + LogoGap;
+                }
+                GUI.EndGroup();
+            }
+
+            // the tagline, in three beats
+            string[] parts = { "ONE MAN.", "ONE BUILDING.", "NO WAY DOWN." };
+            float[] at = { 1.7f, 1.95f, 2.2f };
+            float total = 0f;
+            var pw = new float[3];
+            for (int i = 0; i < 3; i++) { pw[i] = logoTag.CalcSize(new GUIContent(Spaced(parts[i]))).x; total += pw[i] + (i > 0 ? 42f : 0f); }
+            float tx = cx - total * 0.5f;
+            for (int i = 0; i < 3; i++)
+            {
+                float k = E(at[i], at[i] + 0.25f, t);
+                if (k > 0f)
+                {
+                    logoTag.normal.textColor = new Color(1f, 1f, 1f, 0.82f * k * alpha);
+                    Label(new Rect(tx, cy + 92f + (1f - k) * 8f, pw[i], 30f), Spaced(parts[i]), logoTag);
+                }
+                tx += pw[i] + 42f;
+            }
+        }
+
+        /// <summary>One letter, centred at (x, y), scaled about its centre.</summary>
+        void Letter(string ch, float x, float y, float s, Color col, bool scaled = true)
+        {
+            var m = GUI.matrix;
+            if (scaled && Mathf.Abs(s - 1f) > 0.001f) GUIUtility.ScaleAroundPivot(new Vector2(s, s), new Vector2(x, y) * scale);
+            logoSt.normal.textColor = col;
+            GUI.Label(new Rect(x - 80f, y - 100f, 160f, 200f), ch, logoSt);
+            GUI.matrix = m;
+        }
+
+        /// <summary>A bright slash of light across the screen that shoots out and thins away.</summary>
+        void SlashLight(float t, float a, float b, Vector2 c, float angle, float length)
+        {
+            if (t < a || t > b) return;
+            float u = (t - a) / (b - a);
+            float len = length * Mathf.Clamp01(u / 0.35f), th = 6f * (1f - u);
+            var m = GUI.matrix;
+            GUIUtility.RotateAroundPivot(angle, c * scale);
+            Fill(new Rect(c.x - len * 0.5f, c.y - th * 0.5f, len, th), new Color(1f, 1f, 1f, 1f - u * u));
+            Fill(new Rect(c.x - len * 0.5f, c.y - th * 2f, len, th * 4f), new Color(1f, 1f, 1f, 0.2f * (1f - u)));
+            GUI.matrix = m;
+        }
+
+        /// <summary>A dry-brush ink smear: a ragged-edged horizontal stroke, streaked by the
+        /// bristles, heavy at the start and breaking up towards the end.</summary>
+        static Texture2D InkStrokeTexture(int W, int H)
+        {
+            var r = new System.Random(5);
+            var tex = new Texture2D(W, H, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[W * H];
+            var bristle = new float[H];
+            for (int y = 0; y < H; y++) bristle[y] = 0.55f + 0.45f * (float)r.NextDouble();
+            var gapStart = new float[H];
+            for (int y = 0; y < H; y++) gapStart[y] = 0.55f + 0.45f * (float)r.NextDouble();
+            float n1 = (float)r.NextDouble() * 10f, n2 = (float)r.NextDouble() * 10f;
+            for (int x = 0; x < W; x++)
+            {
+                float u = x / (float)(W - 1);
+                // the stroke's body: fat after the touch-down, tapering to the lift-off
+                float half = 0.40f * Mathf.Sqrt(Mathf.Clamp01(u / 0.06f)) * Mathf.Lerp(1f, 0.55f, u * u);
+                float wob = 0.05f * (Mathf.PerlinNoise(u * 6f, n1) - 0.5f);
+                float top = 0.5f - half + wob + 0.05f * (Mathf.PerlinNoise(u * 22f, n2) - 0.5f);
+                float bot = 0.5f + half + wob + 0.05f * (Mathf.PerlinNoise(u * 22f, n2 + 3f) - 0.5f);
+                for (int y = 0; y < H; y++)
+                {
+                    float v = y / (float)(H - 1);
+                    float a = Mathf.Clamp01(Mathf.Min(v - top, bot - v) * 60f);
+                    // dry brush: bristles run out of ink towards the end
+                    if (u > gapStart[y]) a *= Mathf.Clamp01(1f - (u - gapStart[y]) * 5f);
+                    a *= bristle[y];
+                    a *= 0.85f + 0.15f * Mathf.PerlinNoise(u * 40f, v * 40f);
+                    px[y * W + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(a) * 255));
+                }
+            }
+            tex.SetPixels32(px);
+            tex.Apply();
+            return tex;
+        }
 
         GUIStyle zoneStyle;
 
