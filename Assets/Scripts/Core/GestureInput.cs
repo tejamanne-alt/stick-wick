@@ -14,8 +14,15 @@ namespace ProjectInk
         StyleFists, StyleSword, StyleGun, ThrowWeapon, Rampage, StrikeForward, DodgeForward
     }
 
-    /// <summary>Two-thumb controls.
-    /// LEFT side (left 40% of the screen): a floating stick. Touch anywhere, drag left or right
+    public enum ControlScheme { Classic, TwoThumb }
+
+    /// <summary>Two control schemes (C toggles; the choice is saved).
+    /// CLASSIC (default): tap the left or right half of the screen = strike that way (the hero
+    /// dashes in); swipe up = jump kick; swipe left/right = dodge that way; swipe down = throw;
+    /// two-finger tap = Rampage; press and HOLD a half = run that way (ropes, bars, walls).
+    /// Keys: A/D or arrows strike (hold to run) · W/Up jump · Q/E dodge · S/Down/F throw ·
+    /// Space rampage · R restart.
+    /// TWO-THUMB: LEFT side (left 40% of the screen): a floating stick. Touch anywhere, drag left or right
     /// to run; flick up to jump.
     /// RIGHT side: tap = strike (towards the side of the hero you tapped, or the way you run);
     /// swipe up = jump / leap / climb; swipe left or right = dodge that way (vault, slide, wall
@@ -28,6 +35,10 @@ namespace ProjectInk
         public static GestureInput Instance { get; private set; }
 
         public Transform hero;
+        public ControlScheme scheme = ControlScheme.Classic;
+        [Tooltip("Classic: how long a still press must be held before it becomes a run, real seconds.")]
+        public float holdToRun = 0.22f;
+        public bool Classic => scheme == ControlScheme.Classic;
         [Tooltip("Width of the movement zone, as a fraction of the screen width.")]
         public float stickZone = 0.4f;
         [Tooltip("Stick travel for full speed, as a fraction of screen height.")]
@@ -44,6 +55,8 @@ namespace ProjectInk
         readonly Dictionary<int, Vector2> touchStart = new Dictionary<int, Vector2>();
         readonly Dictionary<int, float> touchTime = new Dictionary<int, float>();
         readonly HashSet<int> consumed = new HashSet<int>();
+        readonly Dictionary<int, int> holding = new Dictionary<int, int>();   // classic: touch id -> run direction
+        float keyDownAt = -1f;
         int stickId = int.MinValue;
         Vector2 stickOrigin, stickNow;
         bool stickFlicked;
@@ -59,6 +72,7 @@ namespace ProjectInk
         void Awake()
         {
             Instance = this;
+            scheme = (ControlScheme)PlayerPrefs.GetInt("controls", (int)ControlScheme.Classic);
 #if !ENABLE_INPUT_SYSTEM
             Input.simulateMouseWithTouches = false; // touches are read directly; avoid double taps
 #endif
@@ -108,16 +122,30 @@ namespace ProjectInk
             return screen.x < hx ? -1 : 1;
         }
 
+        /// <summary>Switch between Classic and Two-thumb (saved).</summary>
+        public void ToggleScheme()
+        {
+            scheme = Classic ? ControlScheme.TwoThumb : ControlScheme.Classic;
+            PlayerPrefs.SetInt("controls", (int)scheme);
+            PlayerPrefs.Save();
+            stickId = int.MinValue;
+            holding.Clear();
+        }
+
         Command Classify(Vector2 start, Vector2 end)
         {
             Vector2 d = end - start;
             float min = Screen.height * swipeFraction;
-            if (d.magnitude < min) return SideOf(start) < 0 ? Command.StrikeLeft : Command.StrikeRight;
+            if (d.magnitude < min)
+            {
+                if (Classic) return start.x < Screen.width * 0.5f ? Command.StrikeLeft : Command.StrikeRight;
+                return SideOf(start) < 0 ? Command.StrikeLeft : Command.StrikeRight;
+            }
             if (Mathf.Abs(d.y) > Mathf.Abs(d.x)) return d.y > 0 ? Command.JumpKick : Command.ThrowWeapon;
             return d.x < 0 ? Command.DodgeLeft : Command.DodgeRight;
         }
 
-        bool InStickZone(Vector2 p) => p.x < Screen.width * stickZone;
+        bool InStickZone(Vector2 p) => !Classic && p.x < Screen.width * stickZone;
 
         void TouchBegan(int id, Vector2 pos)
         {
@@ -146,6 +174,15 @@ namespace ProjectInk
 
         void TouchMoved(int id, Vector2 pos)
         {
+            if (Classic)
+            {
+                // a still press held a moment becomes a run towards that half of the screen
+                if (holding.ContainsKey(id) || consumed.Contains(id)) return;
+                if (!touchStart.TryGetValue(id, out var s0) || !touchTime.TryGetValue(id, out var t0)) return;
+                if (UnityEngine.Time.unscaledTime - t0 > holdToRun && (pos - s0).magnitude < Screen.height * swipeFraction)
+                    holding[id] = s0.x < Screen.width * 0.5f ? -1 : 1;
+                return;
+            }
             if (id != stickId) return;
             stickNow = pos;
             // flick up on the stick = jump (once per flick)
@@ -157,9 +194,21 @@ namespace ProjectInk
         void TouchEnded(int id, Vector2 pos)
         {
             if (id == stickId) { stickId = int.MinValue; return; }
+            if (holding.Remove(id)) { consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
             if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s)) Push(Classify(s, pos));
             touchStart.Remove(id);
             touchTime.Remove(id);
+        }
+
+        /// <summary>Classic keys: a press of A/D strikes that way at once; keep holding to run.</summary>
+        void ClassicKeys(bool left, bool right, bool leftDown, bool rightDown)
+        {
+            float now = UnityEngine.Time.unscaledTime;
+            if (leftDown) { Push(Command.StrikeLeft); keyDownAt = now; }
+            if (rightDown) { Push(Command.StrikeRight); keyDownAt = now; }
+            if (!left && !right) { keyDownAt = -1f; return; }
+            if (keyDownAt >= 0f && now - keyDownAt > holdToRun)
+                keyAxis = (right ? 1f : 0f) - (left ? 1f : 0f);
         }
 
         void Update()
@@ -190,13 +239,29 @@ namespace ProjectInk
             var kb = Keyboard.current;
             if (kb != null)
             {
-                if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) keyAxis -= 1f;
-                if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) keyAxis += 1f;
-                if (kb.jKey.wasPressedThisFrame) Push(Command.StrikeForward);
-                if (kb.spaceKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame) Push(Command.JumpKick);
-                if (kb.lKey.wasPressedThisFrame || kb.leftShiftKey.wasPressedThisFrame) Push(Command.DodgeForward);
-                if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame || kb.fKey.wasPressedThisFrame) Push(Command.ThrowWeapon);
-                if (kb.eKey.wasPressedThisFrame) Push(Command.Rampage);
+                bool left = kb.aKey.isPressed || kb.leftArrowKey.isPressed, right = kb.dKey.isPressed || kb.rightArrowKey.isPressed;
+                bool leftDown = kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
+                bool rightDown = kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame;
+                if (kb.cKey.wasPressedThisFrame) ToggleScheme();
+                if (Classic)
+                {
+                    ClassicKeys(left, right, leftDown, rightDown);
+                    if (kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame) Push(Command.JumpKick);
+                    if (kb.qKey.wasPressedThisFrame) Push(Command.DodgeLeft);
+                    if (kb.eKey.wasPressedThisFrame) Push(Command.DodgeRight);
+                    if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame || kb.fKey.wasPressedThisFrame) Push(Command.ThrowWeapon);
+                    if (kb.spaceKey.wasPressedThisFrame) Push(Command.Rampage);
+                }
+                else
+                {
+                    if (left) keyAxis -= 1f;
+                    if (right) keyAxis += 1f;
+                    if (kb.jKey.wasPressedThisFrame) Push(Command.StrikeForward);
+                    if (kb.spaceKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame) Push(Command.JumpKick);
+                    if (kb.lKey.wasPressedThisFrame || kb.leftShiftKey.wasPressedThisFrame) Push(Command.DodgeForward);
+                    if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame || kb.fKey.wasPressedThisFrame) Push(Command.ThrowWeapon);
+                    if (kb.eKey.wasPressedThisFrame) Push(Command.Rampage);
+                }
                 if (kb.rKey.wasPressedThisFrame) Push(Command.Restart);
                 if (kb.tabKey.wasPressedThisFrame) Push(Command.CycleStyle);
                 if (kb.digit1Key.wasPressedThisFrame) Push(Command.StyleFists);
@@ -224,13 +289,29 @@ namespace ProjectInk
                 else if (Input.GetMouseButton(0)) TouchMoved(-1, mp);
                 if (Input.GetMouseButtonUp(0)) TouchEnded(-1, mp);
             }
-            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) keyAxis -= 1f;
-            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) keyAxis += 1f;
-            if (Input.GetKeyDown(KeyCode.J)) Push(Command.StrikeForward);
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) Push(Command.JumpKick);
-            if (Input.GetKeyDown(KeyCode.L) || Input.GetKeyDown(KeyCode.LeftShift)) Push(Command.DodgeForward);
-            if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.F)) Push(Command.ThrowWeapon);
-            if (Input.GetKeyDown(KeyCode.E)) Push(Command.Rampage);
+            bool left = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow), right = Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
+            bool leftDown = Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow);
+            bool rightDown = Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow);
+            if (Input.GetKeyDown(KeyCode.C)) ToggleScheme();
+            if (Classic)
+            {
+                ClassicKeys(left, right, leftDown, rightDown);
+                if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) Push(Command.JumpKick);
+                if (Input.GetKeyDown(KeyCode.Q)) Push(Command.DodgeLeft);
+                if (Input.GetKeyDown(KeyCode.E)) Push(Command.DodgeRight);
+                if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.F)) Push(Command.ThrowWeapon);
+                if (Input.GetKeyDown(KeyCode.Space)) Push(Command.Rampage);
+            }
+            else
+            {
+                if (left) keyAxis -= 1f;
+                if (right) keyAxis += 1f;
+                if (Input.GetKeyDown(KeyCode.J)) Push(Command.StrikeForward);
+                if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) Push(Command.JumpKick);
+                if (Input.GetKeyDown(KeyCode.L) || Input.GetKeyDown(KeyCode.LeftShift)) Push(Command.DodgeForward);
+                if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.F)) Push(Command.ThrowWeapon);
+                if (Input.GetKeyDown(KeyCode.E)) Push(Command.Rampage);
+            }
             if (Input.GetKeyDown(KeyCode.R)) Push(Command.Restart);
             if (Input.GetKeyDown(KeyCode.Tab)) Push(Command.CycleStyle);
             if (Input.GetKeyDown(KeyCode.Alpha1)) Push(Command.StyleFists);
@@ -240,6 +321,7 @@ namespace ProjectInk
 #endif
             // the stick: horizontal travel → run speed (with a small dead zone)
             float axis = keyAxis;
+            foreach (var kv in holding) axis = kv.Value;   // classic: a held press runs
             if (stickId != int.MinValue)
             {
                 float dx = (stickNow.x - stickOrigin.x) / (Screen.height * stickRange);

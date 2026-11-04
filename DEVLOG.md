@@ -200,3 +200,14 @@ Scene version 7.
 - HUD: bars take the larger of the slow-mo bars and the opening's bars. Title, tagline, lower-third chapter card and skip hint. The gameplay HUD is hidden until the opening ends.
 - The first wave's banner is now "FIGHT!".
 
+## 2026-11-04: 0.4.2 classic controls back as default
+
+- `GestureInput.scheme`: **Classic** (default) or **TwoThumb**. C toggles; the choice is saved in PlayerPrefs (`controls`).
+- Classic is the 0.1–0.3 scheme:
+    - tap a screen half = strike that way
+    - swipe up = jump kick, sideways = dodge, down = throw
+    - two fingers = Rampage
+    - keys A/D strike, W jump, Q/E dodge, Space Rampage
+- New in Classic: a still press held for 0.22 s (or holding A/D) runs that way, so ropes, bars and walls are still reachable.
+- HUD: the movement stick is drawn only in two-thumb mode; the hint line shows the active scheme.
+

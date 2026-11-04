@@ -136,7 +136,7 @@ namespace ProjectInk
         void DrawStick()
         {
             var gi = GestureInput.Instance;
-            if (gi == null) return;
+            if (gi == null || gi.Classic) return;
             if (ring == null) { ring = Disc(96, true); knob = Disc(64, false); }
             var old = GUI.color;
             if (gi.StickActive)
@@ -274,8 +274,9 @@ namespace ProjectInk
             }
 
             if (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f))
-                GUI.Label(new Rect(0, h - 56, w, 40),
-                    "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE   ·   Jump at ropes, bars and walls", small);
+                GUI.Label(new Rect(0, h - 56, w, 40), GestureInput.Instance != null && !GestureInput.Instance.Classic
+                    ? "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE   ·   C: classic controls"
+                    : "TAP left / right = strike that way   ·   HOLD = run   ·   Swipe up = jump kick, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE   ·   C: two-thumb controls", small);
 
             if (director.CurrentPhase == WaveDirector.Phase.Dead) Results(w, h);
         }

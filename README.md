@@ -26,18 +26,21 @@ Each floor is a **chapter**. Each wave brings in a new armed opponent, whose wea
 
 ### Controls
 
+**Classic** (the default, as in the first prototypes). Press **C** to switch to two-thumb; your choice is saved.
+
 | Touch | Keys | Action |
 | --- | --- | --- |
-| **Left thumb:** drag (a floating stick appears) | A / D, ← / → | Run left and right |
-| Left thumb: flick up | Space / W / ↑ | Jump |
-| **Right thumb:** tap | J | Strike, toward the side of the hero you tapped (or the way you're running) |
-| Right: swipe up | Space | Jump. Context: grab a rope or bar, run up a wall into a corkscrew, climb the ledge |
-| Right: swipe left / right | L / Shift | Dodge. Into a red flash: vault. Toward an enemy: slide kick. Toward a wall: wall flip |
-| Right: swipe down | S / F | Duck, or throw the weapon in hand |
-| Two-finger tap | E | Rampage (when Flow is full) |
+| Tap the left / right half | A / D, ← / → | Strike that way; the hero dashes in to the nearest enemy |
+| Press and **hold** a half | Hold A / D | Run that way (to reach ropes, bars, walls and pickups) |
+| Swipe up | W / ↑ | Jump kick. Context: grab a rope or bar, run up a wall into a corkscrew, climb the ledge |
+| Swipe left / right | Q / E | Dodge that way. Into a red flash: vault. Toward an enemy: slide kick. Toward a wall: wall flip |
+| Swipe down | S / F | Duck, or throw the weapon in hand |
+| Two-finger tap | Space | Rampage (when Flow is full) |
 | Tap as a knife flies in | | Catch it and throw it back |
 | Tap fast when grabbed | | Break free with a reversal throw |
 | | Tab, 1/2/3 | Testing: give a weapon |
+
+**Two-thumb** (C): a floating stick on the left 40% of the screen runs (flick up to jump); on the right, tap = strike, swipes as above. Keys: A/D run, J strike, Space/W jump, L/Shift dodge, E Rampage.
 
 ### Things to use
 
