@@ -7,7 +7,7 @@ namespace ProjectInk
     public class LampFlicker : MonoBehaviour
     {
         public Renderer[] lights;            // additive glow and cone (legacy particle shaders: _TintColor)
-        public Color baseTint = new Color(0.5f, 0.38f, 0.22f, 0.5f);
+        public Color baseTint = new Color(0.42f, 0.42f, 0.42f, 0.5f);
         public float swayDegrees = 2.5f;
         public float swaySpeed = 0.7f;
 

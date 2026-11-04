@@ -264,6 +264,7 @@ namespace ProjectInk
             Enemy.Corpses.Clear();
             foreach (var p in WeaponPickup.All.ToArray()) Destroy(p.gameObject);
             if (InkFx.Instance != null) InkFx.Instance.ClearStains();
+            Crate.ResetAll();
             ShowBanner($"CHAPTER {Floor}", 1.6f);
             CurrentPhase = Phase.Intro;
             phaseTime = 0f;

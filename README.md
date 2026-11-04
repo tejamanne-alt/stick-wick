@@ -3,55 +3,50 @@
 A cinematic stickman fighting game for Android and iOS, built with Unity 6.6 and Blender.
 The design is in the plan doc; this repo is the build.
 
-## Prototype 0.3: what's in it
+## Prototype 0.4: what's in it
 
-A film-noir cut-away of a two-floor building:
-- architectural concrete walls
-- high windows onto a night skyline
-- hanging lamps casting warm cones of light that sway and flicker
-- pipes, an exit sign, haze and drifting dust
-- vignette and film grain over the picture
+A **black-and-white film-noir building**:
+- grey architectural concrete and deep blacks
+- white lamplight that sways and flickers
+- moonlight shafts through the tall window
+- a silver night skyline
+- white edge highlights, haze, dust, vignette and grain
 
-Each floor is a **chapter**. Each wave brings in a new armed opponent, whose weapon you take and use: brawlers → knife throwers → pipe fighters → swordsmen → gunners and the **Brute** (with a boss entrance).
+Only the fighters and their ink are in colour.
 
-| Input (touch) | Key | Action |
+Each floor is a **chapter**. Each wave brings in a new armed opponent, whose weapon you take: brawlers → knife throwers → pipe fighters → swordsmen → gunners → the **Brute**.
+
+### Controls
+
+| Touch | Keys | Action |
 | --- | --- | --- |
-| Tap left / right | A / D | Strike that side: dash, combo, and context moves (below) |
-| Tap as a knife flies in | | **Catch it** and throw it back |
-| Swipe up | W | Leap; **climb** the ledge (jump, hang by the hands, pull up) |
-| Swipe sideways | Q / E | Dodge. Into a red flash: **vault** over the attacker. Towards an enemy: **slide kick**. Towards a wall: **wall flip**. Otherwise a backflip |
-| Swipe down | S / F | Empty-handed: **duck** (knives and shots pass over). Armed: **throw** the weapon |
-| Two-finger tap | Space | **Rampage** (when Flow is full) |
-| Tap fast when grabbed | | **Break free**, ending in a reversal throw |
-| | Tab | Testing: cycle weapons |
+| **Left thumb:** drag (a floating stick appears) | A / D, ← / → | Run left and right |
+| Left thumb: flick up | Space / W / ↑ | Jump |
+| **Right thumb:** tap | J | Strike, toward the side of the hero you tapped (or the way you're running) |
+| Right: swipe up | Space | Jump. Context: grab a rope or bar, run up a wall into a corkscrew, climb the ledge |
+| Right: swipe left / right | L / Shift | Dodge. Into a red flash: vault. Toward an enemy: slide kick. Toward a wall: wall flip |
+| Right: swipe down | S / F | Duck, or throw the weapon in hand |
+| Two-finger tap | E | Rampage (when Flow is full) |
+| Tap as a knife flies in | | Catch it and throw it back |
+| Tap fast when grabbed | | Break free with a reversal throw |
+| | Tab, 1/2/3 | Testing: give a weapon |
 
-Context moves:
-- An enemy on the floor next to you: **stomp** it, or **giant-swing** it by the legs into the others.
-- Up close with fists: **grab and throw**. A thrown enemy knocks down whoever it hits (human bowling).
-- An enemy on the upper floor: run to the ledge and **climb**, or leap.
-- An enemy below: **dive** down.
+### Things to use
 
-Weapons:
-- **Knives:** stab up close, throw at range; catch more.
-- **Pipe:** heavy staff swings.
-- **Sword:** cleaving cuts, back slash, leaping slam.
-- **Gun:** shots, a shot behind without turning, pistol-whip, throw, finishing shot.
+- **Ropes** (one over the hall, one over the upper floor): jump to grab. Hold the stick to pump the swing; your feet knock down whoever they pass. Tap or swipe to let go into a flying kick.
+- **Steel bars** (three): grab one and do giant circles round it, kicking everyone in reach. You dismount into a flying kick.
+- **Walls:** run at one and jump. The hero runs up it and spins off in a corkscrew flip.
+- **Crates:** stand on them, or strike one to kick it into enemies like a bowling ball.
 
-All of them wear out, and are then thrown as a spinning kill.
-
-Enemies:
-- Brawlers punch, kick and **grab**.
-- Throwers hurl knives; pipers swing pipes.
-- Swordsmen cut; gunners aim with a laser sight.
-- The Brute shrugs off light hits.
-
-Enemies climb the stairs, **hang from the ledge and pull up**, flip off the ledge, and get up after knockdowns.
+Also:
+- **In the air:** air control, air kicks.
+- **Ledge:** hang and climb.
+- **Enemies:** grab-and-throw (human bowling), stomp and giant swing on the floor.
+- **Weapons:** knives, pipe, sword, gun. All wear out and are then thrown as spinning kills.
 
 The loop:
-- Wall splats and drops off the ledge are kills.
-- Every kill leaves the enemy's colour on the building.
-- A **style rank** (D → SSS) multiplies your score.
-- Endless chapters; best score and floor are saved.
+- Style rank (D → SSS) multiplies your score.
+- Endless chapters; saved bests.
 
 ## Layout
 

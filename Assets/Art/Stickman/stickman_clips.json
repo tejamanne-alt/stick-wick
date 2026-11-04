@@ -211,6 +211,20 @@
       "hitFrame": -1
     },
     {
+      "name": "jump",
+      "frames": 20,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "pike",
+      "frames": 12,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
       "name": "idle",
       "frames": 35,
       "fps": 30,

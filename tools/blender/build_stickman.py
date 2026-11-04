@@ -441,6 +441,24 @@ WEAPON_CLIPS = {
                  thigh_L=10, thigh_R=-10)),
         (16, pose(spine=166, chest=160, head=150, upperarm_L=120, forearm_L=170, upperarm_R=-30, forearm_R=20,
                   thigh_L=30, thigh_R=-30))]),
+
+    # ---- free movement
+    "jump": dict(frames=20, loop=False, hit=None, keys=[         # crouch, spring up arms high, tuck, open for landing
+        (0, STANCE),
+        (3, pose(spine=168, chest=162, thigh_L=62, shin_L=-10, thigh_R=50, shin_R=-30,
+                 upperarm_L=-40, forearm_L=-20, upperarm_R=-45, forearm_R=-25, dz=-0.2)),
+        (6, pose(STRAIGHT, spine=178, chest=182, upperarm_L=165, forearm_L=172, upperarm_R=160, forearm_R=168,
+                 thigh_L=10, shin_L=-20, thigh_R=-5, shin_R=-30, dz=0.0)),
+        (10, pose(spine=176, chest=178, thigh_L=100, shin_L=-30, thigh_R=95, shin_R=-40,
+                  upperarm_L=120, forearm_L=160, upperarm_R=110, forearm_R=150, dz=0.0)),
+        (16, pose(spine=176, chest=176, thigh_L=40, shin_L=0, thigh_R=20, shin_R=-20,
+                  upperarm_L=80, forearm_L=110, upperarm_R=70, forearm_R=100, dz=0.0)),
+        (20, pose(spine=176, chest=176, thigh_L=40, shin_L=0, thigh_R=20, shin_R=-20,
+                  upperarm_L=80, forearm_L=110, upperarm_R=70, forearm_R=100, dz=0.0))]),
+    "pike": dict(frames=12, loop=True, hit=None, keys=[         # hanging with straight legs kicked forward (bar circles)
+        (0, pose(HANG, thigh_L=40, shin_L=40, thigh_R=34, shin_R=34, dz=0.0)),
+        (6, pose(HANG, thigh_L=30, shin_L=30, thigh_R=24, shin_R=24, dz=0.0)),
+        (12, pose(HANG, thigh_L=40, shin_L=40, thigh_R=34, shin_R=34, dz=0.0))]),
 }
 CLIPS.update(WEAPON_CLIPS)
 

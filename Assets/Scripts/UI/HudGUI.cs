@@ -72,11 +72,59 @@ namespace ProjectInk
                 Fill(new Rect(0, h - bh, w, bh), Color.black);
             }
 
+            DrawStick();
             if (hero != null) HeroPanel(w);
             if (director != null) DirectorPanel(w, h);
             HeroMarker();
             if (showDiagnostics) Diagnostics();
             GUI.matrix = Matrix4x4.identity;
+        }
+
+        Texture2D ring, knob;
+
+        /// <summary>The floating movement stick, drawn where the left thumb is.</summary>
+        void DrawStick()
+        {
+            var gi = GestureInput.Instance;
+            if (gi == null) return;
+            if (ring == null) { ring = Disc(96, true); knob = Disc(64, false); }
+            var old = GUI.color;
+            if (gi.StickActive)
+            {
+                Vector2 o = new Vector2(gi.StickOrigin.x / scale, (Screen.height - gi.StickOrigin.y) / scale);
+                Vector2 n = new Vector2(gi.StickNow.x / scale, (Screen.height - gi.StickNow.y) / scale);
+                Vector2 d = n - o;
+                if (d.magnitude > 70f) d = d.normalized * 70f;
+                GUI.color = new Color(1f, 1f, 1f, 0.35f);
+                GUI.DrawTexture(new Rect(o.x - 80, o.y - 80, 160, 160), ring);
+                GUI.color = new Color(1f, 1f, 1f, 0.6f);
+                GUI.DrawTexture(new Rect(o.x + d.x - 36, o.y + d.y - 36, 72, 72), knob);
+            }
+            else
+            {
+                // a faint resting stick in the corner, so players know the left side moves
+                GUI.color = new Color(1f, 1f, 1f, 0.12f);
+                GUI.DrawTexture(new Rect(70, 720 - 230, 160, 160), ring);
+                GUI.DrawTexture(new Rect(114, 720 - 186, 72, 72), knob);
+            }
+            GUI.color = old;
+        }
+
+        static Texture2D Disc(int size, bool hollow)
+        {
+            var t = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[size * size];
+            float c = (size - 1) * 0.5f;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float d = Mathf.Sqrt((x - c) * (x - c) + (y - c) * (y - c)) / c;
+                    float a = hollow ? Mathf.Clamp01(1f - Mathf.Abs(d - 0.9f) * 18f) : Mathf.Clamp01((1f - d) * 12f);
+                    px[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255));
+                }
+            t.SetPixels32(px);
+            t.Apply();
+            return t;
         }
 
         Texture2D vignette, grain;
@@ -177,7 +225,7 @@ namespace ProjectInk
 
             if (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f))
                 GUI.Label(new Rect(0, h - 56, w, 40),
-                    "Tap: strike (or catch a flying knife)  ·  Up: leap / climb  ·  Sideways: dodge, slide, vault, wall flip  ·  Down: duck / throw weapon  ·  Two fingers: RAMPAGE", small);
+                    "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE   ·   Jump at ropes, bars and walls", small);
 
             if (director.CurrentPhase == WaveDirector.Phase.Dead) Results(w, h);
         }

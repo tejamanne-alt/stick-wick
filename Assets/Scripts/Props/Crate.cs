@@ -1,0 +1,90 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace ProjectInk
+{
+    /// <summary>A wooden crate in the fight lane. Fighters can stand on it; the hero kicks it
+    /// into enemies like a bowling ball, and it smashes into splinters. Crates come back on
+    /// every new chapter.</summary>
+    public class Crate : MonoBehaviour
+    {
+        public static readonly List<Crate> All = new List<Crate>();
+
+        public Color splinters = new Color(0.32f, 0.3f, 0.28f);
+        Vector3 home;
+        Quaternion homeRot;
+        Vector3 vel;
+        bool flying;
+        float flightTime;
+        Fighter kicker;
+        Collider col;
+
+        public bool Available => gameObject.activeSelf && !flying;
+
+        void Awake()
+        {
+            home = transform.position;
+            homeRot = transform.rotation;
+            col = GetComponent<Collider>();
+            All.Add(this);
+        }
+
+        void OnDestroy() { All.Remove(this); }
+
+        public void Kick(int dir, Fighter by)
+        {
+            flying = true;
+            flightTime = 0f;
+            kicker = by;
+            vel = new Vector3(dir * 12f, 3.5f, 0f);
+            if (col != null) col.enabled = false;
+            if (InkFx.Instance != null) InkFx.Instance.PlayHit(true);
+        }
+
+        void Update()
+        {
+            if (!flying) return;
+            float dt = Time.deltaTime;
+            flightTime += dt;
+            vel.y -= 22f * dt;
+            transform.position += vel * dt;
+            transform.Rotate(0f, 0f, -Mathf.Sign(vel.x) * 540f * dt, Space.World);
+            foreach (var e in Enemy.All.ToArray())
+            {
+                if (!e.Targetable) continue;
+                if (Vector3.Distance(e.Chest, transform.position) < 0.85f)
+                {
+                    e.TakeHit(new HitInfo { damage = 26f, direction = vel.x >= 0 ? 1 : -1, knockback = 8f, knockdown = true, heavy = true, attacker = kicker });
+                    if (WaveDirector.Instance != null) WaveDirector.Instance.OnEnvironmentKill(e, "CRATE STRIKE!", 160);
+                    Smash();
+                    return;
+                }
+            }
+            float ground = Fighter.GroundY(transform.position);
+            if ((flightTime > 0.15f && transform.position.y - 0.3f <= ground) || Mathf.Abs(transform.position.x) > 12.6f) Smash();
+        }
+
+        void Smash()
+        {
+            flying = false;
+            if (InkFx.Instance != null)
+            {
+                InkFx.Instance.Splash(transform.position, Vector3.up, 30, splinters);
+                InkFx.Instance.PlayHit(true);
+            }
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.12f, 0.15f);
+            gameObject.SetActive(false);
+        }
+
+        public static void ResetAll()
+        {
+            foreach (var c in All)
+            {
+                c.flying = false;
+                c.transform.SetPositionAndRotation(c.home, c.homeRot);
+                if (c.col != null) c.col.enabled = true;
+                c.gameObject.SetActive(true);
+            }
+        }
+    }
+}

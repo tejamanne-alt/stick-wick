@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/ProjectInk.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 8;
+        public const int SceneVersion = 9;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         [MenuItem("Project INK/Build Prototype Scene")]
@@ -65,6 +65,10 @@ namespace ProjectInk.EditorTools
             {
                 halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f
             }, ground);
+            EnvironmentBuilder.Props(room, new EnvironmentBuilder.Layout
+            {
+                halfW = halfW, floorY = floorY, roofY = roofY, wallZ = wallZ, laneFront = laneFront, ledgeX = 0f
+            }, trail);
             Box(room, "Roof", new Vector3(0, roofY + 0.1f, (laneFront + wallZ) * 0.5f), new Vector3(halfW * 2f + 0.4f, 0.2f, wallZ - laneFront), ground);
             Box(room, "WallLeft", new Vector3(-halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
             Box(room, "WallRight", new Vector3(halfW, roofY * 0.5f, (laneFront + wallZ) * 0.5f), new Vector3(0.4f, roofY, wallZ - laneFront), ground);
@@ -102,12 +106,13 @@ namespace ProjectInk.EditorTools
 
             var systems = new GameObject("Systems");
             systems.AddComponent<TimeController>();
-            systems.AddComponent<GestureInput>();
+            var gesture = systems.AddComponent<GestureInput>();
             var fx = systems.AddComponent<InkFx>();
             fx.particleMaterial = particle;
             fx.glowMaterial = glow;
             fx.lineMaterial = trail;
             fx.wallZ = 2.24f;
+            gesture.hero = heroGo.transform;
             var director = systems.AddComponent<WaveDirector>();
             director.hero = hero;
             director.enemyModel = model;
@@ -124,7 +129,7 @@ namespace ProjectInk.EditorTools
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.03f, 0.04f, 0.08f);
+            cam.backgroundColor = new Color(0.03f, 0.03f, 0.035f);
             cam.fieldOfView = 32f;
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 120f;
@@ -210,7 +215,7 @@ namespace ProjectInk.EditorTools
                     verts.Add(new Vector3((u - 0.5f) * w, (v - 0.5f) * h, 0f));
                     float dx = (u - 0.5f) * 2f, dy = (v - 0.55f) * 2.2f;
                     float light = Mathf.Exp(-(dx * dx * 2.2f + dy * dy * 1.6f));   // soft city glow low in the middle
-                    cols.Add(Color.Lerp(new Color(0.02f, 0.025f, 0.05f), new Color(0.12f, 0.10f, 0.17f), light * (1f - v * 0.6f)));
+                    cols.Add(Color.Lerp(new Color(0.02f, 0.02f, 0.025f), new Color(0.13f, 0.13f, 0.14f), light * (1f - v * 0.6f)));
                 }
             for (int y = 0; y < ny; y++)
                 for (int x = 0; x < nx; x++)

@@ -24,7 +24,7 @@ namespace ProjectInk
     /// grabbed = tap to break free with a reversal throw. Full Flow = Rampage.</summary>
     public class HeroController : Fighter
     {
-        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge }
+        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun }
 
         public float targetRange = 9f;
         public float gunRange = 14f;
@@ -32,6 +32,9 @@ namespace ProjectInk
         public float dashSpeed = 20f;
         public float comboWindow = 0.9f;
         public float rampageSeconds = 5f;
+        public float runSpeed = 5.2f;
+        public float jumpSpeed = 8.2f;
+        const float HandReach = 1.43f;            // hands above the feet, arms up
 
         [Header("Weapons (set by FighterFactory)")]
         public GameObject sword;
@@ -53,6 +56,11 @@ namespace ProjectInk
         int comboStep, closeStep;
         TrailRenderer[] limbTrails;
         readonly HashSet<Enemy> swingHit = new HashSet<Enemy>();
+        Swingable holding;
+        Crate pendingCrate;
+        float swingAng, swingVel, swingTurned;
+        int wallDir;
+        bool running;
 
         public FightStyle Style { get; private set; } = FightStyle.Fists;
         public int Ammo { get; private set; }
@@ -68,7 +76,8 @@ namespace ProjectInk
         public bool Ducking => state == State.Duck || (state == State.Attack && currentAttack.clip == "slide_kick");
         public bool IsGrabbed => state == State.Grabbed;
         public int GrabTaps => grabTaps;
-        public bool Invulnerable => Time.time < invulnerableUntil || state == State.Dead || InRampage || OnLedge || state == State.Swing;
+        public bool Invulnerable => Time.time < invulnerableUntil || state == State.Dead || InRampage || OnLedge || state == State.Swing ||
+                                    state == State.Rope || state == State.Bar || state == State.WallRun;
         public bool IsGrabbedBy(Enemy e) => state == State.Grabbed && grabber == e;
 
         string IdleClip => Style == FightStyle.Sword || Style == FightStyle.Pipe ? "sword_idle" : Style == FightStyle.Gun ? "gun_idle" : "idle";
@@ -109,13 +118,20 @@ namespace ProjectInk
                 case State.Grabbed: UpdateGrabbed(dt); break;
                 case State.Duck: UpdateDuck(); break;
                 case State.ToLedge: UpdateToLedge(dt); break;
+                case State.Air: UpdateAir(dt); break;
+                case State.Rope: UpdateRope(dt); break;
+                case State.Bar: UpdateBar(dt); break;
+                case State.WallRun: UpdateWallRun(dt); break;
                 case State.Dead: break;
             }
             if (state != State.Dead) TryPickup();
 
-            if (state != State.Dash && state != State.Dodge && state != State.ToLedge && !(state == State.Attack && currentAttack.clip == "slide_kick") && Grounded)
+            if (state != State.Dash && state != State.Dodge && state != State.ToLedge && state != State.Air && !running &&
+                !(state == State.Attack && currentAttack.clip == "slide_kick") && Grounded)
                 velocity.x = Mathf.MoveTowards(velocity.x, 0f, 30f * dt);
-            if (state != State.Swing && state != State.Grabbed) Integrate(dt);
+            bool scripted = state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar ||
+                            (state == State.WallRun && stateTime < 0.25f);
+            if (!scripted) Integrate(dt);
             UpdateTint();
         }
 
@@ -232,9 +248,29 @@ namespace ProjectInk
             ApplyStyleVisuals();
         }
 
+        float Axis => GestureInput.Instance != null ? GestureInput.Instance.MoveAxis : 0f;
+        int AxisDir => Mathf.Abs(Axis) > 0.3f ? (Axis > 0 ? 1 : -1) : 0;
+
         void UpdateIdle()
         {
             HandleCommand(GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None);
+            if (state != State.Idle) { running = false; return; }
+            float a = Axis;
+            if (Mathf.Abs(a) > 0.01f && Grounded)
+            {
+                // run: the stick sets the speed; the run cycle speeds up with it
+                SetFacing(a > 0 ? 1 : -1);
+                velocity.x = a * runSpeed;
+                if (!running || body.CurrentName != "run") body.Play("run", 0.12f, false, Mathf.Lerp(0.8f, 1.5f, Mathf.Abs(a)));
+                else body.SetSpeed(Mathf.Lerp(0.8f, 1.5f, Mathf.Abs(a)));
+                running = true;
+            }
+            else if (running)
+            {
+                running = false;
+                velocity.x = 0f;
+                body.Play(IdleClip, 0.15f);
+            }
         }
 
         bool CanCancel()
@@ -253,11 +289,14 @@ namespace ProjectInk
                     StruggleTap();
                 return;
             }
+            running = false;
             switch (cmd)
             {
                 case Command.StrikeLeft: Strike(-1); break;
                 case Command.StrikeRight: Strike(1); break;
-                case Command.JumpKick: JumpAttack(); break;
+                case Command.StrikeForward: Strike(AxisDir != 0 ? AxisDir : Facing); break;
+                case Command.DodgeForward: Dodge(AxisDir != 0 ? AxisDir : Facing); break;
+                case Command.JumpKick: Jump(); break;
                 case Command.DodgeLeft: Dodge(-1); break;
                 case Command.DodgeRight: Dodge(1); break;
                 case Command.ThrowWeapon: ThrowWeapon(); break;
@@ -369,6 +408,16 @@ namespace ProjectInk
 
             var t = PickTarget(side, Style == FightStyle.Knife ? 16f : targetRange);
 
+            // a crate right there and no enemy in its way: kick it like a bowling ball
+            var crate = NearCrate(side);
+            if (crate != null && (t == null || Mathf.Abs(t.transform.position.x - transform.position.x) > 1.4f) && Grounded)
+            {
+                SetFacing(side);
+                pendingCrate = crate;
+                StartAttack(AttackData.FrontKick, null, side, false);
+                return;
+            }
+
             // an enemy on the floor right there, nobody else in reach: stomp it or swing it
             var downed = PickDowned(side);
             bool someoneClose = t != null && Mathf.Abs(t.transform.position.x - transform.position.x) < 1.3f &&
@@ -479,6 +528,272 @@ namespace ProjectInk
                 (t == null || t.transform.position.y - transform.position.y > 1.4f)) { GoToLedge(); return; }
             if (t != null) SetFacing(t.transform.position.x > transform.position.x ? 1 : -1);
             StartAttack(Style == FightStyle.Sword ? AttackData.SwordLeap : AttackData.FlyingKick, t, Facing, false);
+        }
+
+        // ------------------------------------------------------------------ jumping, ropes, bars, walls
+
+        Crate NearCrate(int side)
+        {
+            foreach (var c in Crate.All)
+            {
+                if (!c.Available) continue;
+                float dx = (c.transform.position.x - transform.position.x) * side;
+                if (dx > 0f && dx < 1.3f && Mathf.Abs(c.transform.position.y - 0.4f - transform.position.y) < 0.7f) return c;
+            }
+            return null;
+        }
+
+        /// <summary>Swipe up: grab a rope or bar in reach, run up a wall into a corkscrew,
+        /// climb the ledge, or simply jump (with air control and air strikes).</summary>
+        void Jump()
+        {
+            if (InRampage) { RampageStrike(Facing); return; }
+            if (!Grounded) return;
+            var p = transform.position;
+
+            // a rope or bar overhead: jump for it
+            var sw = Swingable.Reachable(p, HandReach + 1.5f, 1.8f);
+            if (sw != null)
+            {
+                float rise = Mathf.Max(0.4f, sw.Grip.y - (p.y + HandReach) + 0.25f);
+                state = State.Air;
+                stateTime = 0f;
+                holding = null;
+                velocity.y = Mathf.Sqrt(2f * gravity * rise);
+                float t = velocity.y / gravity;
+                velocity.x = (sw.Grip.x - p.x) / Mathf.Max(0.2f, t);
+                Grounded = false;
+                body.Play("jump", 0.05f);
+                return;
+            }
+
+            // running into a wall: up it and off in a corkscrew
+            int towards = AxisDir != 0 ? AxisDir : Facing;
+            float wallX = towards > 0 ? arenaMaxX : arenaMinX;
+            if (Mathf.Abs(wallX - p.x) < 1.4f)
+            {
+                wallDir = towards;
+                SetFacing(towards);
+                state = State.WallRun;
+                stateTime = 0f;
+                swingHit.Clear();
+                body.Play("run", 0.04f, true, 2f);
+                if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+                return;
+            }
+
+            // near the ledge with someone above, or nothing to do: climb
+            var above = PickTarget(Facing, 9f) ?? PickTarget(-Facing, 9f);
+            if (Level == 0 && Mathf.Abs(p.x - LedgeFootX) < 2.5f && (above == null || above.transform.position.y - p.y > 1.4f))
+            { GoToLedge(); return; }
+
+            // a plain jump
+            state = State.Air;
+            stateTime = 0f;
+            velocity.y = jumpSpeed;
+            Grounded = false;
+            body.Play("jump", 0.05f);
+            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+        }
+
+        void UpdateAir(float dt)
+        {
+            // air control, a little softer than on the ground
+            float a = Axis;
+            if (Mathf.Abs(a) > 0.1f) { velocity.x = Mathf.MoveTowards(velocity.x, a * runSpeed, 18f * dt); SetFacing(a > 0 ? 1 : -1); }
+            // catch a rope or bar as the hands pass it
+            var hands = transform.position + Vector3.up * HandReach;
+            foreach (var sw in Swingable.All)
+            {
+                if (sw.Held) continue;
+                if (Vector3.Distance(new Vector3(hands.x, hands.y, 0f), new Vector3(sw.Grip.x, sw.Grip.y, 0f)) < 0.5f)
+                {
+                    if (sw.kind == SwingKind.Rope) GrabRope(sw); else GrabBar(sw);
+                    return;
+                }
+            }
+            // strike in the air: a flying kick at whoever is near
+            var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
+            if (cmd == Command.StrikeLeft || cmd == Command.StrikeRight || cmd == Command.StrikeForward)
+            {
+                int side = cmd == Command.StrikeLeft ? -1 : cmd == Command.StrikeRight ? 1 : (AxisDir != 0 ? AxisDir : Facing);
+                var t = PickTarget(side, 5f);
+                SetFacing(side);
+                currentAttack = AttackData.FlyingKick;
+                target = t;
+                attackDir = side;
+                hitDone = false;
+                state = State.Attack;
+                stateTime = 0f;
+                body.Play("flying_kick", 0.04f, true, 1.3f);
+                SetTrails(true);
+                return;
+            }
+            if (cmd == Command.ThrowWeapon && Style != FightStyle.Fists) { ThrowWeapon(); return; }
+            if (Grounded && stateTime > 0.1f) EnterIdle();
+        }
+
+        // ---- rope: a pendulum the hero pumps; feet sweep enemies; let go into a flying kick
+        void GrabRope(Swingable sw)
+        {
+            holding = sw;
+            sw.Held = true;
+            var hands = transform.position + Vector3.up * HandReach;
+            var d = hands - sw.anchor;
+            swingAng = Mathf.Atan2(d.x, -d.y);
+            swingVel = velocity.x * Mathf.Cos(swingAng) / sw.length;
+            swingHit.Clear();
+            state = State.Rope;
+            stateTime = 0f;
+            velocity = Vector3.zero;
+            body.Play("pike", 0.08f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(30, "ROPE!");
+        }
+
+        void UpdateRope(float dt)
+        {
+            var sw = holding;
+            if (sw == null) { EnterIdle(); return; }
+            float L = sw.length;
+            // gravity, plus pumping in the stick's direction (strongest at the bottom of the arc)
+            swingVel += (-(gravity / L) * Mathf.Sin(swingAng) + Axis * 3.2f * Mathf.Cos(swingAng)) * dt;
+            swingVel *= 1f - 0.12f * dt;
+            swingAng = Mathf.Clamp(swingAng + swingVel * dt, -1.4f, 1.4f);
+            sw.SetAngle(swingAng);
+            PlaceHanging(sw.Grip, swingAng, swingVel);
+            SweepWithFeet(Mathf.Abs(swingVel) * L, "ROPE KICK!");
+
+            var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
+            bool letGo = cmd == Command.JumpKick || cmd == Command.StrikeLeft || cmd == Command.StrikeRight ||
+                         cmd == Command.StrikeForward || cmd == Command.DodgeLeft || cmd == Command.DodgeRight || stateTime > 6f;
+            if (letGo)
+            {
+                sw.LetGo(swingVel);
+                var tangent = new Vector3(Mathf.Cos(swingAng), Mathf.Sin(swingAng), 0f) * (swingVel * L);
+                LaunchKick(tangent + Vector3.up * 2.5f);
+            }
+        }
+
+        // ---- bar: giant circles round the rod, then a dismount into a flying kick
+        void GrabBar(Swingable sw)
+        {
+            holding = sw;
+            sw.Held = true;
+            int dir = Mathf.Abs(velocity.x) > 0.5f ? (velocity.x > 0 ? 1 : -1) : Facing;
+            SetFacing(dir);
+            swingAng = 0f;
+            swingVel = dir * 5f;
+            swingTurned = 0f;
+            swingHit.Clear();
+            state = State.Bar;
+            stateTime = 0f;
+            velocity = Vector3.zero;
+            body.Play("pike", 0.06f);
+            if (InkFx.Instance != null) InkFx.Instance.PlayWhoosh();
+        }
+
+        void UpdateBar(float dt)
+        {
+            var sw = holding;
+            if (sw == null) { EnterIdle(); return; }
+            int dir = swingVel >= 0 ? 1 : -1;
+            swingVel = Mathf.MoveTowards(swingVel, dir * 10f, 9f * dt);       // building speed
+            float step = swingVel * dt;
+            swingAng += step;
+            swingTurned += Mathf.Abs(step);
+            PlaceHanging(sw.Grip, swingAng, swingVel);
+            SweepWithFeet(Mathf.Abs(swingVel) * HandReach, "BAR SPIN!");
+
+            var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
+            bool asked = cmd != Command.None && cmd != Command.Restart;
+            // dismount just past the bottom of a turn, so the flight goes forwards and up
+            float phase = Mathf.Repeat(swingAng * dir, Mathf.PI * 2f);
+            bool goodPhase = phase > 0.6f && phase < 1.0f;
+            if ((asked || swingTurned > Mathf.PI * 2.2f) && goodPhase || stateTime > 4f)
+            {
+                sw.Held = false;
+                var tangent = new Vector3(Mathf.Cos(swingAng), Mathf.Sin(swingAng), 0f) * (swingVel * HandReach);
+                LaunchKick(tangent * 0.9f + Vector3.up * 2f);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.OnPerfectDodge("DISMOUNT!");
+            }
+        }
+
+        /// <summary>Hang from a grip point with the body along the line to it, rotated by angle.</summary>
+        void PlaceHanging(Vector3 grip, float ang, float angVel)
+        {
+            if (Mathf.Abs(angVel) > 0.4f && state == State.Rope) { int f = angVel > 0 ? 1 : -1; if (f != Facing) SetFacing(f); }
+            var up = new Vector3(-Mathf.Sin(ang), Mathf.Cos(ang), 0f);
+            transform.position = new Vector3(grip.x, grip.y, 0f) - up * HandReach;
+            transform.rotation = Quaternion.AngleAxis(ang * Mathf.Rad2Deg, Vector3.forward) * Quaternion.Euler(0f, Facing > 0 ? 0f : 180f, 0f);
+        }
+
+        /// <summary>The feet hit whoever they sweep through while moving fast.</summary>
+        void SweepWithFeet(float speed, string label)
+        {
+            if (speed < 3f) return;
+            var feet = transform.position;
+            foreach (var e in Enemy.All.ToArray())
+            {
+                if (!e.Targetable || swingHit.Contains(e)) continue;
+                if (Vector3.Distance(e.Chest, feet) < 0.9f || Vector3.Distance(e.transform.position + Vector3.up * 0.4f, feet) < 0.7f)
+                {
+                    swingHit.Add(e);
+                    int d = e.transform.position.x > feet.x ? 1 : -1;
+                    e.TakeHit(new HitInfo { damage = 24f, direction = d, knockback = 9f, knockdown = true, heavy = true, attacker = this });
+                    if (InkFx.Instance != null) { InkFx.Instance.Splash(e.Chest, new Vector3(d, 0.4f, 0f), 26, e.InkColor); InkFx.Instance.PlayHit(true); }
+                    if (TimeController.Instance != null) TimeController.Instance.HitStop(4);
+                    if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.12f, 0.12f);
+                    if (WaveDirector.Instance != null) WaveDirector.Instance.OnEnvironmentKill(e, label, 170);
+                }
+            }
+        }
+
+        /// <summary>Let go of a rope or bar and fly into a kick.</summary>
+        void LaunchKick(Vector3 vel)
+        {
+            holding = null;
+            int dir = vel.x >= 0 ? 1 : -1;
+            SetFacing(dir);                                  // also clears the swing's roll
+            currentAttack = AttackData.FlyingKick;
+            target = PickTarget(dir, 8f);
+            attackDir = dir;
+            hitDone = false;
+            state = State.Attack;
+            stateTime = 0f;
+            velocity = vel;
+            Grounded = false;
+            body.Play("flying_kick", 0.05f, true, 1.2f);
+            SetTrails(true);
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.4f, 0.4f);
+        }
+
+        // ---- wall: run two steps up it, then a corkscrew flip off it
+        void UpdateWallRun(float dt)
+        {
+            if (stateTime < 0.25f)
+            {
+                var p = transform.position;
+                p.y += 6.5f * dt;
+                transform.position = p;
+                return;
+            }
+            if (body.CurrentName != "dodge")
+            {
+                velocity = new Vector3(-wallDir * 9.5f, 7f, 0f);
+                Grounded = false;
+                body.Play("dodge", 0.04f);       // the backflip carries us away from the wall
+                if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.45f, 0.5f);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.OnPerfectDodge("CORKSCREW!");
+            }
+            // the corkscrew: a full twist while flipping
+            float spin = Mathf.Clamp01((stateTime - 0.25f) / 0.6f) * 360f;
+            transform.rotation = Quaternion.Euler(0f, (Facing > 0 ? 0f : 180f) + spin, 0f);
+            SweepWithFeet(9f, "CORKSCREW!");
+            if (Grounded && stateTime > 0.45f)
+            {
+                SetFacing(-wallDir);
+                EnterIdle();
+            }
         }
 
         // ------------------------------------------------------------------ ledge
@@ -708,6 +1023,14 @@ namespace ProjectInk
         void ResolveHit()
         {
             hitDone = true;
+            if (pendingCrate != null)
+            {
+                pendingCrate.Kick(attackDir, this);
+                pendingCrate = null;
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(40, "KICK!");
+                Impact();
+                return;
+            }
             var hit = new HitInfo
             {
                 damage = currentAttack.damage,

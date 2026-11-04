@@ -8,18 +8,30 @@ using ETouch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 namespace ProjectInk
 {
-    public enum Command { None, StrikeLeft, StrikeRight, JumpKick, DodgeLeft, DodgeRight, Restart, CycleStyle, StyleFists, StyleSword, StyleGun, ThrowWeapon, Rampage }
+    public enum Command
+    {
+        None, StrikeLeft, StrikeRight, JumpKick, DodgeLeft, DodgeRight, Restart, CycleStyle,
+        StyleFists, StyleSword, StyleGun, ThrowWeapon, Rampage, StrikeForward, DodgeForward
+    }
 
-    /// <summary>Turns touches (or keys in the editor) into fight commands.
-    /// Tap left/right half = strike that side · swipe up = flying kick ·
-    /// swipe left/right = dodge that way · swipe down = throw the weapon in hand ·
-    /// two-finger tap = Rampage (when the Flow meter is full).
-    /// Keys: A/D or arrows strike, W/Up jump attack, Q/E dodge, S/Down/F throw, Space rampage,
-    /// Tab or 1/2/3 give a weapon (testing), R restart. Commands queue briefly so fast taps are never lost.</summary>
+    /// <summary>Two-thumb controls.
+    /// LEFT side (left 40% of the screen): a floating stick. Touch anywhere, drag left or right
+    /// to run; flick up to jump.
+    /// RIGHT side: tap = strike (towards the side of the hero you tapped, or the way you run);
+    /// swipe up = jump / leap / climb; swipe left or right = dodge that way (vault, slide, wall
+    /// flip by context); swipe down = duck, or throw the weapon in hand; two-finger tap = Rampage.
+    /// Keys: A/D or arrows run · J strike · Space/W/Up jump · L or Shift dodge · S/Down duck or
+    /// throw · F throw · E rampage · R restart · Tab or 1/2/3 give a weapon (testing).
+    /// Commands queue briefly so fast taps are never lost.</summary>
     public class GestureInput : MonoBehaviour
     {
         public static GestureInput Instance { get; private set; }
 
+        public Transform hero;
+        [Tooltip("Width of the movement zone, as a fraction of the screen width.")]
+        public float stickZone = 0.4f;
+        [Tooltip("Stick travel for full speed, as a fraction of screen height.")]
+        public float stickRange = 0.09f;
         [Tooltip("Swipe length as a fraction of screen height.")]
         public float swipeFraction = 0.08f;
         [Tooltip("How long a queued command stays valid (input buffer), real seconds.")]
@@ -27,38 +39,22 @@ namespace ProjectInk
 
         struct Pending { public Command cmd; public float time; }
         readonly Queue<Pending> queue = new Queue<Pending>();
+
+        // touches
         readonly Dictionary<int, Vector2> touchStart = new Dictionary<int, Vector2>();
         readonly Dictionary<int, float> touchTime = new Dictionary<int, float>();
         readonly HashSet<int> consumed = new HashSet<int>();
-
-        /// <summary>A new touch while another began moments ago = two-finger tap.</summary>
-        void TouchBegan(int id, Vector2 pos)
-        {
-            float now = UnityEngine.Time.unscaledTime;
-            foreach (var kv in touchTime)
-            {
-                if (kv.Key != id && now - kv.Value < 0.15f && !consumed.Contains(kv.Key))
-                {
-                    consumed.Add(kv.Key);
-                    consumed.Add(id);
-                    Push(Command.Rampage);
-                    break;
-                }
-            }
-            touchStart[id] = pos;
-            touchTime[id] = now;
-        }
-
-        void TouchEnded(int id, Vector2 pos)
-        {
-            if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s)) Push(Classify(s, pos));
-            touchStart.Remove(id);
-            touchTime.Remove(id);
-        }
-        Vector2 mouseStart;
-        bool mouseDown;
+        int stickId = int.MinValue;
+        Vector2 stickOrigin, stickNow;
+        bool stickFlicked;
+        float keyAxis;
 
         public bool AnyPressThisFrame { get; private set; }
+        /// <summary>Run input, -1 (left) .. +1 (right).</summary>
+        public float MoveAxis { get; private set; }
+        public bool StickActive => stickId != int.MinValue;
+        public Vector2 StickOrigin => stickOrigin;
+        public Vector2 StickNow => stickNow;
 
         void Awake()
         {
@@ -99,84 +95,154 @@ namespace ProjectInk
             queue.Enqueue(new Pending { cmd = c, time = UnityEngine.Time.unscaledTime });
         }
 
+        /// <summary>Which side of the hero a screen point is on.</summary>
+        int SideOf(Vector2 screen)
+        {
+            if (Mathf.Abs(MoveAxis) > 0.3f) return MoveAxis > 0 ? 1 : -1;     // running: strike that way
+            var cam = Camera.main;
+            if (hero == null || cam == null) return screen.x < Screen.width * 0.5f ? -1 : 1;
+            float hx = cam.WorldToScreenPoint(hero.position + Vector3.up * 0.8f).x;
+            return screen.x < hx ? -1 : 1;
+        }
+
         Command Classify(Vector2 start, Vector2 end)
         {
             Vector2 d = end - start;
             float min = Screen.height * swipeFraction;
-            if (d.magnitude < min) return start.x < Screen.width * 0.5f ? Command.StrikeLeft : Command.StrikeRight;
+            if (d.magnitude < min) return SideOf(start) < 0 ? Command.StrikeLeft : Command.StrikeRight;
             if (Mathf.Abs(d.y) > Mathf.Abs(d.x)) return d.y > 0 ? Command.JumpKick : Command.ThrowWeapon;
             return d.x < 0 ? Command.DodgeLeft : Command.DodgeRight;
+        }
+
+        bool InStickZone(Vector2 p) => p.x < Screen.width * stickZone;
+
+        void TouchBegan(int id, Vector2 pos)
+        {
+            AnyPressThisFrame = true;
+            if (InStickZone(pos) && stickId == int.MinValue)
+            {
+                stickId = id;
+                stickOrigin = stickNow = pos;
+                stickFlicked = false;
+                return;
+            }
+            float now = UnityEngine.Time.unscaledTime;
+            foreach (var kv in touchTime)
+            {
+                if (kv.Key != id && kv.Key != stickId && now - kv.Value < 0.15f && !consumed.Contains(kv.Key))
+                {
+                    consumed.Add(kv.Key);
+                    consumed.Add(id);
+                    Push(Command.Rampage);
+                    break;
+                }
+            }
+            touchStart[id] = pos;
+            touchTime[id] = now;
+        }
+
+        void TouchMoved(int id, Vector2 pos)
+        {
+            if (id != stickId) return;
+            stickNow = pos;
+            // flick up on the stick = jump (once per flick)
+            float up = (stickNow.y - stickOrigin.y) / Screen.height;
+            if (!stickFlicked && up > swipeFraction) { stickFlicked = true; Push(Command.JumpKick); }
+            if (up < swipeFraction * 0.4f) stickFlicked = false;
+        }
+
+        void TouchEnded(int id, Vector2 pos)
+        {
+            if (id == stickId) { stickId = int.MinValue; return; }
+            if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s)) Push(Classify(s, pos));
+            touchStart.Remove(id);
+            touchTime.Remove(id);
         }
 
         void Update()
         {
             AnyPressThisFrame = false;
+            keyAxis = 0f;
 #if ENABLE_INPUT_SYSTEM
             foreach (var t in ETouch.activeTouches)
             {
                 int id = t.touchId;
-                if (t.phase == UnityEngine.InputSystem.TouchPhase.Began)
+                switch (t.phase)
                 {
-                    TouchBegan(id, t.screenPosition);
-                    AnyPressThisFrame = true;
+                    case UnityEngine.InputSystem.TouchPhase.Began: TouchBegan(id, t.screenPosition); break;
+                    case UnityEngine.InputSystem.TouchPhase.Moved:
+                    case UnityEngine.InputSystem.TouchPhase.Stationary: TouchMoved(id, t.screenPosition); break;
+                    case UnityEngine.InputSystem.TouchPhase.Ended:
+                    case UnityEngine.InputSystem.TouchPhase.Canceled: TouchEnded(id, t.screenPosition); break;
                 }
-                else if (t.phase == UnityEngine.InputSystem.TouchPhase.Ended || t.phase == UnityEngine.InputSystem.TouchPhase.Canceled)
-                    TouchEnded(id, t.screenPosition);
+            }
+            var mouse = Mouse.current;
+            if (mouse != null && ETouch.activeTouches.Count == 0)
+            {
+                var mp = mouse.position.ReadValue();
+                if (mouse.leftButton.wasPressedThisFrame) TouchBegan(-1, mp);
+                else if (mouse.leftButton.isPressed) TouchMoved(-1, mp);
+                if (mouse.leftButton.wasReleasedThisFrame) TouchEnded(-1, mp);
             }
             var kb = Keyboard.current;
             if (kb != null)
             {
-                if (kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame) Push(Command.StrikeLeft);
-                if (kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame) Push(Command.StrikeRight);
-                if (kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame) Push(Command.JumpKick);
-                if (kb.qKey.wasPressedThisFrame) Push(Command.DodgeLeft);
-                if (kb.eKey.wasPressedThisFrame) Push(Command.DodgeRight);
-                if (kb.rKey.wasPressedThisFrame) Push(Command.Restart);
+                if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) keyAxis -= 1f;
+                if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) keyAxis += 1f;
+                if (kb.jKey.wasPressedThisFrame) Push(Command.StrikeForward);
+                if (kb.spaceKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame) Push(Command.JumpKick);
+                if (kb.lKey.wasPressedThisFrame || kb.leftShiftKey.wasPressedThisFrame) Push(Command.DodgeForward);
                 if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame || kb.fKey.wasPressedThisFrame) Push(Command.ThrowWeapon);
-                if (kb.spaceKey.wasPressedThisFrame) Push(Command.Rampage);
+                if (kb.eKey.wasPressedThisFrame) Push(Command.Rampage);
+                if (kb.rKey.wasPressedThisFrame) Push(Command.Restart);
                 if (kb.tabKey.wasPressedThisFrame) Push(Command.CycleStyle);
                 if (kb.digit1Key.wasPressedThisFrame) Push(Command.StyleFists);
                 if (kb.digit2Key.wasPressedThisFrame) Push(Command.StyleSword);
                 if (kb.digit3Key.wasPressedThisFrame) Push(Command.StyleGun);
                 if (kb.anyKey.wasPressedThisFrame) AnyPressThisFrame = true;
             }
-            var mouse = Mouse.current;
-            if (mouse != null && ETouch.activeTouches.Count == 0)
-            {
-                if (mouse.leftButton.wasPressedThisFrame) { mouseStart = mouse.position.ReadValue(); mouseDown = true; AnyPressThisFrame = true; }
-                if (mouse.leftButton.wasReleasedThisFrame && mouseDown) { mouseDown = false; Push(Classify(mouseStart, mouse.position.ReadValue())); }
-            }
 #else
             for (int i = 0; i < Input.touchCount; i++)
             {
                 var t = Input.GetTouch(i);
-                if (t.phase == UnityEngine.TouchPhase.Began)
+                switch (t.phase)
                 {
-                    TouchBegan(t.fingerId, t.position);
-                    AnyPressThisFrame = true;
+                    case UnityEngine.TouchPhase.Began: TouchBegan(t.fingerId, t.position); break;
+                    case UnityEngine.TouchPhase.Moved:
+                    case UnityEngine.TouchPhase.Stationary: TouchMoved(t.fingerId, t.position); break;
+                    case UnityEngine.TouchPhase.Ended:
+                    case UnityEngine.TouchPhase.Canceled: TouchEnded(t.fingerId, t.position); break;
                 }
-                else if (t.phase == UnityEngine.TouchPhase.Ended || t.phase == UnityEngine.TouchPhase.Canceled)
-                    TouchEnded(t.fingerId, t.position);
             }
             if (Input.touchCount == 0)
             {
-                if (Input.GetMouseButtonDown(0)) { mouseStart = Input.mousePosition; mouseDown = true; AnyPressThisFrame = true; }
-                if (Input.GetMouseButtonUp(0) && mouseDown) { mouseDown = false; Push(Classify(mouseStart, Input.mousePosition)); }
+                Vector2 mp = Input.mousePosition;
+                if (Input.GetMouseButtonDown(0)) TouchBegan(-1, mp);
+                else if (Input.GetMouseButton(0)) TouchMoved(-1, mp);
+                if (Input.GetMouseButtonUp(0)) TouchEnded(-1, mp);
             }
-            if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow)) Push(Command.StrikeLeft);
-            if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) Push(Command.StrikeRight);
-            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) Push(Command.JumpKick);
-            if (Input.GetKeyDown(KeyCode.Q)) Push(Command.DodgeLeft);
-            if (Input.GetKeyDown(KeyCode.E)) Push(Command.DodgeRight);
-            if (Input.GetKeyDown(KeyCode.R)) Push(Command.Restart);
+            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) keyAxis -= 1f;
+            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) keyAxis += 1f;
+            if (Input.GetKeyDown(KeyCode.J)) Push(Command.StrikeForward);
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) Push(Command.JumpKick);
+            if (Input.GetKeyDown(KeyCode.L) || Input.GetKeyDown(KeyCode.LeftShift)) Push(Command.DodgeForward);
             if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.F)) Push(Command.ThrowWeapon);
-            if (Input.GetKeyDown(KeyCode.Space)) Push(Command.Rampage);
+            if (Input.GetKeyDown(KeyCode.E)) Push(Command.Rampage);
+            if (Input.GetKeyDown(KeyCode.R)) Push(Command.Restart);
             if (Input.GetKeyDown(KeyCode.Tab)) Push(Command.CycleStyle);
             if (Input.GetKeyDown(KeyCode.Alpha1)) Push(Command.StyleFists);
             if (Input.GetKeyDown(KeyCode.Alpha2)) Push(Command.StyleSword);
             if (Input.GetKeyDown(KeyCode.Alpha3)) Push(Command.StyleGun);
             if (Input.anyKeyDown) AnyPressThisFrame = true;
 #endif
+            // the stick: horizontal travel → run speed (with a small dead zone)
+            float axis = keyAxis;
+            if (stickId != int.MinValue)
+            {
+                float dx = (stickNow.x - stickOrigin.x) / (Screen.height * stickRange);
+                axis = Mathf.Abs(dx) < 0.15f ? 0f : Mathf.Clamp(dx, -1f, 1f);
+            }
+            MoveAxis = axis;
         }
     }
 }

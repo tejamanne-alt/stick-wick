@@ -160,3 +160,31 @@ Scene version 7.
     - Turning around eases through the motion instead of snapping.
     - Motion capture gets a light 1-2-1 temporal filter to remove capture jitter.
 - Scene version 8.
+
+## 2026-11-04: Black-and-white premium look, free movement, ropes, bars, wall corkscrew, crates (0.4)
+
+- **Look:** every environment colour is now monochrome:
+    - neutral grey concrete and a silver skyline (white windows and moon)
+    - white lamplight, glow, dust, haze and exit sign
+    - brighter white edge trims and pipe rim-lights
+    - moonlight shafts through the tall window
+
+    Fighters and their ink keep their colour, so they pop.
+- **Controls** (GestureInput rewritten):
+    - the left 40% of the screen is a floating run stick; flick up to jump
+    - right side: tap to strike toward the tapped side of the hero, swipes for jump, dodge and duck/throw, two fingers for Rampage
+    - keyboard: A/D run, J strike, Space jump, L dodge, F/S throw or duck, E rampage
+
+    The HUD draws the stick.
+- **Hero:**
+    - running with speed set by the stick
+    - a plain jump (new clip) with air control and air kicks
+    - **ropes:** a pendulum you pump; your feet sweep enemies; let go into a flying kick
+    - **bars:** giant circles (new pike clip); feet sweep enemies; timed dismount into a flying kick
+    - **wall corkscrew:** run up the wall, then a backflip with a full twist
+    - **crate kicks:** crates fly, bowl enemies over and smash
+- **Props** (`EnvironmentBuilder.Props`):
+    - 3 bars hung from the ceiling, end-on to the camera
+    - 2 ropes (LineRenderer)
+    - 3 crates in the fight lane; they reset each chapter
+- Scene version 9.
