@@ -894,10 +894,11 @@ namespace ProjectInk
             if (repaint) { GestureInput.Blocked.Add(ToScreen(pauseBtn)); GestureInput.Blocked.Add(ToScreen(helpBtn)); }
             if (training && !tut.Finale)
             {
-                skipBtn = new Rect(w - 250, 200, 230, 48);
-                skipMoveBtn = new Rect(w - 250, 256, 230, 48);
-                DrawButton(skipBtn, "SKIP TRAINING  >", 21);
-                DrawButton(skipMoveBtn, "SKIP THIS MOVE  >", 21);
+                // top middle, under pause and ?, clear of the tap zones at the sides
+                skipMoveBtn = new Rect(w * 0.5f - 212, 64, 202, 42);
+                skipBtn = new Rect(w * 0.5f + 10, 64, 202, 42);
+                DrawButton(skipMoveBtn, "SKIP THIS MOVE  >", 19);
+                DrawButton(skipBtn, "SKIP TRAINING  >>", 19);
                 if (tut.Stuck)
                 {
                     // taking a while: the way on lights up
@@ -1071,11 +1072,26 @@ namespace ProjectInk
             float t = Time.unscaledTime;
             float cyc = Mathf.Repeat(t, 1.4f) / 1.4f;            // one demonstration every 1.4 s
             Vector2 a, b;
+            // taps are shown on the side the stunt double is on: in the classic scheme the half of
+            // the screen picks the direction; with the stick, the side of the hero does
+            var tutor = TutorialDirector.Instance;
+            int tside = tutor != null ? tutor.TargetSide : 1;
+            float tapX = w * 0.76f;
+            var gi = GestureInput.Instance;
+            if (tside < 0)
+            {
+                tapX = w * 0.24f;
+                if (gi != null && !gi.Classic && hero != null && Camera.main != null)
+                {
+                    float hx = Camera.main.WorldToScreenPoint(hero.Chest).x / scale;
+                    tapX = Mathf.Max(w * gi.stickZone + 40f, hx - 90f);
+                }
+            }
             switch (g)
             {
-                case Gesture.TapHigh: a = b = new Vector2(w * 0.76f, h * 0.30f); break;
-                case Gesture.TapLow: a = b = new Vector2(w * 0.76f, h * 0.70f); break;
-                case Gesture.TapAgain: a = b = new Vector2(w * 0.76f, Mathf.Repeat(t, 0.7f) < 0.35f ? h * 0.30f : h * 0.70f); cyc = Mathf.Repeat(t, 0.35f) / 0.35f; break;
+                case Gesture.TapHigh: a = b = new Vector2(tapX, h * 0.30f); break;
+                case Gesture.TapLow: a = b = new Vector2(tapX, h * 0.70f); break;
+                case Gesture.TapAgain: a = b = new Vector2(tapX, Mathf.Repeat(t, 0.7f) < 0.35f ? h * 0.30f : h * 0.70f); cyc = Mathf.Repeat(t, 0.35f) / 0.35f; break;
                 case Gesture.Hold: a = b = new Vector2(w * 0.22f, h * 0.55f); break;
                 case Gesture.SwipeUp: a = new Vector2(w * 0.78f, h * 0.66f); b = a + new Vector2(0f, -170f); break;
                 case Gesture.SwipeDown: a = new Vector2(w * 0.78f, h * 0.34f); b = a + new Vector2(0f, 170f); break;

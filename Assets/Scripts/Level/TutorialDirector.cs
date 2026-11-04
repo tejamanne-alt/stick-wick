@@ -27,8 +27,8 @@ namespace ProjectInk
 
         static readonly Lesson[] Lessons =
         {
-            new Lesson { title = "TAP HIGH", line = "Punch. Tap the upper half, on his side of you.", gesture = Gesture.TapHigh, goal = 3, evt = "punch" },
-            new Lesson { title = "TAP LOW", line = "Kick. Tap the lower half.", gesture = Gesture.TapLow, goal = 2, evt = "kick" },
+            new Lesson { title = "TAP HIGH", line = "Punch. Tap high, on the side of the screen he is on.", gesture = Gesture.TapHigh, goal = 3, evt = "punch" },
+            new Lesson { title = "TAP LOW", line = "Kick. Tap low, on his side.", gesture = Gesture.TapLow, goal = 2, evt = "kick" },
             new Lesson { title = "KEEP TAPPING", line = "Chain them: a full punch or kick combo.", gesture = Gesture.TapAgain, goal = 1, evt = "combo" },
             new Lesson { title = "TAKE HIS WEAPON", line = "Enemies drop their weapons. Walk over one to pick it up.", gesture = Gesture.Hold, goal = 1, evt = "pickup", weapon = true },
             new Lesson { title = "TAP TO SWING", line = "A weapon changes your moves. Two swings.", gesture = Gesture.TapHigh, goal = 2, evt = "punch" },
@@ -156,7 +156,28 @@ namespace ProjectInk
                 if (InkFx.Instance != null) InkFx.Instance.Burst(hero.Chest, 1.2f);
                 Sound.Play(Sfx.SwordClash, 0.5f, hero.transform.position);
             }
+            // face the stunt double, so the first tap goes his way
+            if (doubles.Count > 0 && doubles[0] != null && hero != null) hero.FaceTowards(doubles[0].transform.position.x);
             Sound.Play(Sfx.CineHit, 0.35f);
+        }
+
+        /// <summary>Which side of the hero the nearest stunt double stands (+1 right, -1 left):
+        /// the ghost finger taps on that side.</summary>
+        public int TargetSide
+        {
+            get
+            {
+                if (hero == null) return 1;
+                Enemy best = null;
+                float bd = float.MaxValue;
+                foreach (var d in doubles)
+                {
+                    if (d == null) continue;
+                    float dd = Mathf.Abs(d.transform.position.x - hero.transform.position.x);
+                    if (dd < bd) { bd = dd; best = d; }
+                }
+                return best == null || best.transform.position.x >= hero.transform.position.x ? 1 : -1;
+            }
         }
 
         /// <summary>Skip just this lesson (the SKIP MOVE button).</summary>
@@ -188,7 +209,7 @@ namespace ProjectInk
         /// <summary>Where each stunt double stands for this lesson, relative to the hero.</summary>
         float[] Marks(Lesson L)
         {
-            int f = hero.Facing;
+            int f = 1;          // to his right if there is room (Spot flips it otherwise): the taps the demo shows land on the right
             switch (L.evt)
             {
                 case "punch": case "kick": case "combo": case "pickup": case "dodge": return new[] { f * 2.3f };

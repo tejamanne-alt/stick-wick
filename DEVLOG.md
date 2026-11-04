@@ -740,3 +740,12 @@ Reported: after three stunt doubles died, the training gave no way forward. Each
 - **Climb lesson:** now also shows the marker at the ledge.
 - **Classic hall:** the run, climb and drop lessons are skipped.
 - **SKIP THIS MOVE** button under SKIP TRAINING skips just the current lesson. If a lesson runs past 20 s, its outline pulses.
+
+## 2026-11-04: Training: taps on the right side, skip buttons at the top
+
+- **Bug:** in the first lesson the stunt double stood on the hero's left, but the ghost finger showed a tap on the upper right. In the classic scheme the screen half picks the direction, so the hero struck the empty air.
+    - The ghost finger now taps on the side the nearest double is on (classic: that half of the screen; stick scheme: just beside the hero, clear of the stick zone).
+    - Doubles are placed to the hero's right when there is room.
+    - The hero turns to face the double at the start of each lesson.
+    - The lesson lines now say "on the side of the screen he is on".
+- **SKIP THIS MOVE** and **SKIP TRAINING** moved from the right edge, where they covered the tap zone, to the top middle under the pause and ? buttons.
