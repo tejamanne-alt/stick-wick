@@ -237,3 +237,8 @@ Scene version 7.
     - cues for the opening cinematic
 - `AudioImport` postprocessor: one-shots are Vorbis, decompressed on load, mono; loops stream.
 
+
+## 2026-11-04: renamed to Stick Wick
+
+- The title card, the app name on the phone, the Unity menu (**Stick Wick → …**), the APK file (`StickWick.apk`) and the Android package id (`com.stickwick.game`) all use the new name.
+- The code namespace stays `ProjectInk` (internal only).

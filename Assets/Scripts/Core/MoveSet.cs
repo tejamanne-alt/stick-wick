@@ -6,7 +6,7 @@ namespace ProjectInk
 {
     /// <summary>Every animation clip of the stickman rig plus its timing data.
     /// Created by the PrototypeBuilder from Stickman.fbx and stickman_clips.json.</summary>
-    [CreateAssetMenu(menuName = "Project INK/Move Set")]
+    [CreateAssetMenu(menuName = "Stick Wick/Move Set")]
     public class MoveSet : ScriptableObject
     {
         [Serializable]

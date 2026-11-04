@@ -43,13 +43,13 @@ namespace ProjectInk.EditorTools
             {
                 if (AssetDatabase.LoadAssetAtPath<GameObject>(StickmanImport.ModelPath) == null)
                 {
-                    Debug.LogWarning("[Project INK] Stickman.fbx not imported yet; use Project INK → Build Prototype Scene once it is.");
+                    Debug.LogWarning("[Stick Wick] Stickman.fbx not imported yet; use Stick Wick → Build Prototype Scene once it is.");
                     return;
                 }
                 try { PrototypeBuilder.BuildScene(); }
                 catch (System.Exception e)
                 {
-                    Debug.LogError("[Project INK] Could not build the prototype scene: " + e);
+                    Debug.LogError("[Stick Wick] Could not build the prototype scene: " + e);
                     return;
                 }
             }

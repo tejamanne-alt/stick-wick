@@ -15,7 +15,7 @@ namespace ProjectInk
         /// <summary>Survives scene reloads: the full opening plays once per launch.</summary>
         static bool playedFull;
 
-        public string title = "LAST MAN STANDING";
+        public string title = "STICK WICK";
         public string tagline = "ONE MAN.   ONE BUILDING.   NO WAY DOWN.";
         public string chapter = "CHAPTER 1";
         public string chapterName = "THE LOBBY";

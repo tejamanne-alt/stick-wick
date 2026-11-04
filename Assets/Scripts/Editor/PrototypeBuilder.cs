@@ -12,18 +12,18 @@ namespace ProjectInk.EditorTools
     /// <summary>Builds the whole prototype from code, so it can run headless on CI:
     /// generated materials, the MoveSet, the grey-box room with its staircase, the hero,
     /// the systems, and the Android build.
-    /// Menu: Project INK → Build Prototype Scene / Build Android APK.
+    /// Menu: Stick Wick → Build Prototype Scene / Build Android APK.
     /// CLI:  -executeMethod ProjectInk.EditorTools.PrototypeBuilder.CI_BuildAndroid</summary>
     public static class PrototypeBuilder
     {
         const string GenDir = "Assets/Generated";
         const string ScenePath = "Assets/Scenes/Prototype.unity";
-        const string ApkPath = "build/Android/ProjectInk.apk";
+        const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
         public const int SceneVersion = 9;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
-        [MenuItem("Project INK/Build Prototype Scene")]
+        [MenuItem("Stick Wick/Build Prototype Scene")]
         public static void BuildScene()
         {
             Directory.CreateDirectory(GenDir);
@@ -162,7 +162,7 @@ namespace ProjectInk.EditorTools
             AssetDatabase.ImportAsset(VersionFile);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
             AssetDatabase.SaveAssets();
-            Debug.Log("[Project INK] prototype scene built: " + ScenePath);
+            Debug.Log("[Stick Wick] prototype scene built: " + ScenePath);
         }
 
         static MoveSet BuildMoveSet()
@@ -191,7 +191,7 @@ namespace ProjectInk.EditorTools
                 });
             }
             EditorUtility.SetDirty(set);
-            Debug.Log($"[Project INK] MoveSet: {set.entries.Count} clips ({string.Join(", ", set.entries.Select(e => e.name))})");
+            Debug.Log($"[Stick Wick] MoveSet: {set.entries.Count} clips ({string.Join(", ", set.entries.Select(e => e.name))})");
             if (set.Get("idle") == null || set.Get("jab") == null)
                 throw new BuildFailedException("Stickman clips missing - check the FBX import");
             return set;
@@ -302,9 +302,9 @@ namespace ProjectInk.EditorTools
         /// <summary>Landscape only, on every build path.</summary>
         public static void ConfigurePlayer()
         {
-            PlayerSettings.companyName = "Project INK";
-            PlayerSettings.productName = "Project INK";
-            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.projectink.prototype");
+            PlayerSettings.companyName = "Stick Wick";
+            PlayerSettings.productName = "Stick Wick";
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.stickwick.game");
             PlayerSettings.bundleVersion = "0.1.0";
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation; // landscape left/right only (below)
             PlayerSettings.allowedAutorotateToLandscapeLeft = true;
@@ -316,7 +316,7 @@ namespace ProjectInk.EditorTools
             EditorUserBuildSettings.buildAppBundle = false;
         }
 
-        [MenuItem("Project INK/Build Android APK")]
+        [MenuItem("Stick Wick/Build Android APK")]
         public static void BuildAndroid()
         {
             BuildScene();
@@ -329,7 +329,7 @@ namespace ProjectInk.EditorTools
                 target = BuildTarget.Android,
                 options = BuildOptions.None
             });
-            Debug.Log($"[Project INK] Android build: {report.summary.result}, {report.summary.totalSize / (1024 * 1024)} MB, {report.summary.totalErrors} errors");
+            Debug.Log($"[Stick Wick] Android build: {report.summary.result}, {report.summary.totalSize / (1024 * 1024)} MB, {report.summary.totalErrors} errors");
             if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 throw new BuildFailedException("Android build failed");
         }

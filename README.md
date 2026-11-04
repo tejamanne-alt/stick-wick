@@ -1,4 +1,4 @@
-# Project INK (working title)
+# Stick Wick
 
 A cinematic stickman fighting game for Android and iOS, built with Unity 6.6 and Blender.
 The design is in the plan doc; this repo is the build.
@@ -11,7 +11,7 @@ The design is in the plan doc; this repo is the build.
 3. A push-in on the hero as he beckons, with the chapter card in the lower bar.
 4. The bars slide away, **FIGHT!**, and you have control.
 
-Tap anywhere to skip. A restart plays a short 1.5-second version. The code is in `Assets/Scripts/Level/OpeningCinematic.cs`; the title text is set there too.
+Tap anywhere to skip. A restart plays a short 1.5-second version. The code is in `Assets/Scripts/Level/OpeningCinematic.cs`; the title ("STICK WICK") is set there too.
 
 A **black-and-white film-noir building**:
 - grey architectural concrete and deep blacks
@@ -99,13 +99,13 @@ python tools/blender/build_stickman.py --preview
 
 1. Clone the repo, then in Unity Hub choose **Add → Add project from disk** and pick the repo folder. Use Unity **6000.6.8f1** (6.6).
 2. The first import takes a few minutes. If a dialog asks to enable the Input System backends, either answer works; the code supports both.
-3. When the import finishes, the prototype scene is built and opened automatically (`Assets/Scenes/Prototype.unity`). If it isn't, run **Project INK → Build Prototype Scene**.
+3. When the import finishes, the prototype scene is built and opened automatically (`Assets/Scenes/Prototype.unity`). If it isn't, run **Stick Wick → Build Prototype Scene**.
 4. Set the Game view to a landscape size (for example 1920×1080), then press **Play**. Use A/D or click the left/right half to strike, W for the flying kick, Q/E to dodge, and R to restart.
 5. Commit and push what Unity generated (`*.meta` files, `ProjectSettings/`, `Packages/packages-lock.json`), so the asset IDs stay stable for everyone.
 
 ## Build
 
-In the Unity editor: **Project INK → Build Prototype Scene**, then press Play. Or use **Build Android APK**.
+In the Unity editor: **Stick Wick → Build Prototype Scene**, then press Play. Or use **Build Android APK**.
 
 Headless:
 
@@ -113,7 +113,7 @@ Headless:
 unity-editor -batchmode -nographics -projectPath . -executeMethod ProjectInk.EditorTools.PrototypeBuilder.CI_BuildAndroid -logFile -
 ```
 
-The APK lands in `build/Android/ProjectInk.apk`.
+The APK lands in `build/Android/StickWick.apk`.
 
 ### CI secrets (one-time, done by the repo owner)
 
