@@ -25,6 +25,8 @@ namespace ProjectInk
         public bool InRampage => UnityEngine.Time.unscaledTime < rampageUntil;
 
         public bool InSlowMo => UnityEngine.Time.unscaledTime < slowUntil;
+        /// <summary>The help card is open: the world stops.</summary>
+        public static bool Paused;
         public float Scale => UnityEngine.Time.timeScale;
 
         void Awake()
@@ -91,6 +93,7 @@ namespace ProjectInk
                 scale = Mathf.Min(scale, Mathf.Lerp(1f, rampageScale, k));
             }
             if (now < freezeUntil) scale = 0.02f;
+            if (Paused) scale = 0f;
             UnityEngine.Time.timeScale = scale;
             UnityEngine.Time.fixedDeltaTime = BaseFixedDelta * Mathf.Max(scale, 0.05f);
         }

@@ -84,6 +84,8 @@ namespace ProjectInk
             BestFloor = PlayerPrefs.GetInt("best_floor", 0);
             if (GetComponent<OpeningCinematic>() == null) gameObject.AddComponent<OpeningCinematic>();
             if (GetComponent<VictoryCinematic>() == null) gameObject.AddComponent<VictoryCinematic>();
+            if (GetComponent<TutorialDirector>() == null) gameObject.AddComponent<TutorialDirector>();
+            if (GetComponent<HintDirector>() == null) gameObject.AddComponent<HintDirector>();
         }
 
         static bool CinematicHolding => OpeningCinematic.Instance != null && !OpeningCinematic.Instance.ControlReleased;
@@ -112,6 +114,7 @@ namespace ProjectInk
             {
                 case Phase.Intro:
                     if (Floor == 1 && CinematicHolding) { phaseTime = 0f; break; }
+                    if (TutorialDirector.Instance != null && TutorialDirector.Instance.Holding) { phaseTime = 0f; break; }
                     if (phaseTime > (Floor == 1 && HadCinematic ? 0.2f : 1.4f)) StartWave(0);
                     break;
                 case Phase.Fighting:
@@ -337,6 +340,19 @@ namespace ProjectInk
         void AddFlow(float amount) { Flow = Mathf.Clamp(Flow + amount, 0f, 100f); }
 
         public void SpendFlow() { Flow = 0f; }
+        public void FillFlow() { Flow = 100f; }
+
+        /// <summary>A training stunt double: a pale grey brawler who takes hits and never attacks.</summary>
+        public Enemy SpawnDummy(Vector3 pos)
+        {
+            if (enemyModel == null) return null;
+            var go = FighterFactory.Build(enemyModel, moves, enemyMaterial, $"StuntDouble_{spawnSerial++}", false, trailMaterial, FightStyle.Fists, eyeMaterial);
+            go.transform.position = pos;
+            var e = go.GetComponent<Enemy>();
+            e.Passive = true;
+            e.Init(hero, SpawnKind.RightDoor, EnemyType.Brawler, 400f, new Color(0.62f, 0.62f, 0.64f), trailMaterial);
+            return e;
+        }
 
         /// <summary>Called by the hero for every strike that lands.</summary>
         public void OnHeroHit(Enemy e, int combo, bool heavy, bool killing, string move = "hit")

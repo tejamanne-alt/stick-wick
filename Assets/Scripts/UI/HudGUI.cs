@@ -103,6 +103,7 @@ namespace ProjectInk
             PunchKickZones(w, h);
             if (hero != null) HeroPanel(w);
             if (director != null) DirectorPanel(w, h);
+            GuideLayer(w, h);
             if (showDiagnostics) Diagnostics();
             GUI.matrix = Matrix4x4.identity;
         }
@@ -374,7 +375,8 @@ namespace ProjectInk
                     }
                 }
 
-            if (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f))
+            bool trainingNow = TutorialDirector.Instance != null && TutorialDirector.Instance.Active;
+            if (!trainingNow && (director.CurrentPhase == WaveDirector.Phase.Intro && director.Floor == 1 || (director.Floor == 1 && director.WaveIndex == 0 && director.ElapsedTime < 9f)))
                 GUI.Label(new Rect(0, h - 56, w, 40), GestureInput.Instance != null && !GestureInput.Instance.Classic
                     ? "LEFT thumb: drag to run, flick up to jump   ·   RIGHT: tap = strike, swipe up = jump, sideways = dodge, down = duck/throw   ·   Two fingers: RAMPAGE"
                     : "TAP HIGH = punch combo, TAP LOW = kick combo (left / right side = that way)   ·   HOLD = run   ·   Swipe up = jump, sideways = dodge, down = throw   ·   Two fingers: RAMPAGE", new GUIStyle(small) { fontSize = 17 });
@@ -490,6 +492,324 @@ namespace ProjectInk
         }
 
         static string Spaced(string s) => string.IsNullOrEmpty(s) ? s : string.Join(" ", s.ToCharArray());
+
+        // ================================================================== the guide
+        // The training reel's lesson card and ghost finger, the chalk marks in the world, the
+        // SKIP and ? buttons, and the help card (paused) with REPLAY TRAINING.
+
+        GUIStyle gTitle, gLine, gNice, gChalk, gBtn;
+        Texture2D finger, gRing;
+        bool helpOpen;
+        Rect helpBtn, skipBtn, replayBtn, closeBtn;
+
+        void GuideStyles()
+        {
+            if (gTitle != null) return;
+            LoadFonts();
+            gTitle = new GUIStyle { font = Display, fontSize = 40, alignment = TextAnchor.MiddleCenter };
+            gTitle.normal.textColor = Color.white;
+            gLine = new GUIStyle(gTitle) { font = Body, fontSize = 20 };
+            gNice = new GUIStyle(gTitle) { font = Brush != null ? Brush : Display, fontSize = 46 };
+            gChalk = new GUIStyle(gTitle) { font = Brush != null ? Brush : Body, fontSize = 22 };
+            gBtn = new GUIStyle(gTitle) { font = Body, fontSize = 17 };
+            finger = Disc(64, false);
+            gRing = Disc(96, true);
+        }
+
+        /// <summary>A GUI rect (720-high space) as a screen-pixel rect, origin bottom-left (touch space).</summary>
+        Rect ToScreen(Rect r) => new Rect(r.x * scale, Screen.height - (r.y + r.height) * scale, r.width * scale, r.height * scale);
+
+        bool Pressed(Rect r)
+        {
+            var t = GestureInput.LastButtonTap;
+            if (!t.HasValue || !ToScreen(r).Contains(t.Value)) return false;
+            GestureInput.LastButtonTap = null;
+            return true;
+        }
+
+        void GuideLayer(float w, float h)
+        {
+            GuideStyles();
+            bool repaint = Event.current.type == EventType.Repaint;
+            if (repaint) GestureInput.Blocked.Clear();
+            var tut = TutorialDirector.Instance;
+            bool training = tut != null && tut.Active;
+
+            ChalkMarks(w, h);
+            if (training) TrainingCard(tut, w, h);
+
+            // the ? button (top centre), and SKIP during training
+            helpBtn = new Rect(w * 0.5f - 26, 10, 52, 40);
+            DrawButton(helpBtn, "?", 26);
+            if (repaint) GestureInput.Blocked.Add(ToScreen(helpBtn));
+            if (training && !tut.Finale)
+            {
+                skipBtn = new Rect(w - 210, 196, 190, 38);
+                DrawButton(skipBtn, "SKIP TRAINING  >", 17);
+                if (repaint) GestureInput.Blocked.Add(ToScreen(skipBtn));
+                if (repaint && Pressed(skipBtn)) tut.End(false);
+            }
+            bool hKey = false;
+#if ENABLE_INPUT_SYSTEM
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (repaint && kb != null) hKey = kb.hKey.wasPressedThisFrame || (helpOpen && kb.escapeKey.wasPressedThisFrame);
+#else
+            if (repaint) hKey = Input.GetKeyDown(KeyCode.H) || (helpOpen && Input.GetKeyDown(KeyCode.Escape));
+#endif
+            if (repaint && (Pressed(helpBtn) || hKey)) { helpOpen = !helpOpen; TimeController.Paused = helpOpen; }
+            if (helpOpen) HelpCard(w, h, repaint);
+        }
+
+        void DrawButton(Rect r, string text, int size)
+        {
+            Fill(r, new Color(0f, 0f, 0f, 0.55f));
+            Fill(new Rect(r.x, r.yMax - 1, r.width, 1), new Color(1f, 1f, 1f, 0.5f));
+            var st = new GUIStyle(gBtn) { fontSize = size };
+            st.normal.textColor = new Color(1f, 1f, 1f, 0.92f);
+            GUI.Label(r, text, st);
+        }
+
+        /// <summary>The lesson card in the lower band, the ghost finger showing the gesture where
+        /// it is made, the run marker on the floor, NICE. on success, and the finale card.</summary>
+        void TrainingCard(TutorialDirector tut, float w, float h)
+        {
+            if (tut.Finale)
+            {
+                Fill(new Rect(0, h * 0.30f, w, 170), new Color(0f, 0f, 0f, 0.6f));
+                var t1 = new GUIStyle(gTitle) { fontSize = 64 };
+                Label(new Rect(0, h * 0.30f + 14, w, 80), Spaced("THE BUILDING IS YOUR WEAPON"), t1);
+                Label(new Rect(0, h * 0.30f + 98, w, 40), "ledges, ropes, crates, edges, glass... look for the chalk marks", gChalk);
+                return;
+            }
+            var L = tut.Current;
+            // lower band card
+            var card = new Rect(w * 0.5f - 330, h - 150, 660, 112);
+            Fill(card, new Color(0f, 0f, 0f, 0.62f));
+            Fill(new Rect(card.x, card.y, card.width, 1), new Color(1f, 1f, 1f, 0.4f));
+            var head = new GUIStyle(gLine) { fontSize = 15 };
+            head.normal.textColor = new Color(1f, 1f, 1f, 0.6f);
+            GUI.Label(new Rect(card.x, card.y + 6, card.width, 20), $"T R A I N I N G   ·   {tut.Index + 1} / {tut.Count}", head);
+            Label(new Rect(card.x, card.y + 22, card.width, 48), L.title, gTitle);
+            Label(new Rect(card.x, card.y + 66, card.width, 28), L.line, gLine);
+            // progress pips
+            for (int i = 0; i < L.goal && L.goal > 1; i++)
+                Fill(new Rect(card.center.x - L.goal * 9 + i * 18, card.yMax - 12, 12, 4), i < tut.Progress ? Color.white : new Color(1f, 1f, 1f, 0.25f));
+
+            if (Time.unscaledTime < tut.NiceUntil)
+            {
+                float k = Mathf.Clamp01((tut.NiceUntil - Time.unscaledTime) / 0.9f);
+                gNice.normal.textColor = new Color(1f, 1f, 1f, k);
+                Label(new Rect(0, h * 0.38f - (1f - k) * 20f, w, 70), "NICE.", gNice);
+                return;
+            }
+            GhostFinger(L.gesture, w, h);
+
+            // the run lesson's mark on the floor
+            if (tut.Marker.HasValue && Camera.main != null)
+            {
+                var vp = Camera.main.WorldToViewportPoint(tut.Marker.Value);
+                if (vp.z > 0f)
+                {
+                    float x = vp.x * w, y = (1f - vp.y) * h;
+                    float pulse = 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 5f);
+                    var old = GUI.color;
+                    GUI.color = new Color(1f, 1f, 1f, 0.8f * pulse);
+                    GUI.DrawTexture(new Rect(x - 40, y - 14, 80, 28), gRing);
+                    GUI.color = old;
+                    Label(new Rect(x - 80, y - 60, 160, 36), "HERE", gChalk);
+                }
+            }
+        }
+
+        /// <summary>A translucent fingertip performing the gesture, in the part of the screen
+        /// where it is made: taps ripple, holds fill a ring, swipes trail, two fingers pair up.</summary>
+        void GhostFinger(Gesture g, float w, float h)
+        {
+            if (g == Gesture.None) return;
+            float t = Time.unscaledTime;
+            float cyc = Mathf.Repeat(t, 1.4f) / 1.4f;            // one demonstration every 1.4 s
+            Vector2 a, b;
+            switch (g)
+            {
+                case Gesture.TapHigh: a = b = new Vector2(w * 0.76f, h * 0.30f); break;
+                case Gesture.TapLow: a = b = new Vector2(w * 0.76f, h * 0.70f); break;
+                case Gesture.TapAgain: a = b = new Vector2(w * 0.76f, Mathf.Repeat(t, 0.7f) < 0.35f ? h * 0.30f : h * 0.70f); cyc = Mathf.Repeat(t, 0.35f) / 0.35f; break;
+                case Gesture.Hold: a = b = new Vector2(w * 0.22f, h * 0.55f); break;
+                case Gesture.SwipeUp: a = new Vector2(w * 0.78f, h * 0.66f); b = a + new Vector2(0f, -170f); break;
+                case Gesture.SwipeDown: a = new Vector2(w * 0.78f, h * 0.34f); b = a + new Vector2(0f, 170f); break;
+                case Gesture.SwipeSide: a = new Vector2(w * 0.64f, h * 0.5f); b = a + new Vector2(200f, 0f); break;
+                default: a = new Vector2(w * 0.66f, h * 0.48f); b = new Vector2(w * 0.80f, h * 0.48f); break;   // two fingers
+            }
+            var old = GUI.color;
+            bool swipe = g == Gesture.SwipeUp || g == Gesture.SwipeDown || g == Gesture.SwipeSide;
+            if (swipe)
+            {
+                float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(cyc / 0.6f));
+                float alpha = cyc < 0.75f ? 0.85f : Mathf.Lerp(0.85f, 0f, (cyc - 0.75f) / 0.25f);
+                for (int i = 0; i < 8; i++)                      // the trail
+                {
+                    float u = Mathf.Max(0f, k - i * 0.05f);
+                    var q = Vector2.Lerp(a, b, u);
+                    GUI.color = new Color(1f, 1f, 1f, alpha * 0.35f * (1f - i / 8f));
+                    GUI.DrawTexture(new Rect(q.x - 18, q.y - 18, 36, 36), finger);
+                }
+                var p = Vector2.Lerp(a, b, k);
+                GUI.color = new Color(1f, 1f, 1f, alpha);
+                GUI.DrawTexture(new Rect(p.x - 24, p.y - 24, 48, 48), finger);
+                // the arrowhead at the end
+                if (chevron == null) chevron = ChevronTexture(64);
+                float ang = Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg;
+                var m = GUI.matrix;
+                GUIUtility.RotateAroundPivot(ang, b * scale);
+                GUI.color = new Color(1f, 1f, 1f, 0.5f);
+                GUI.DrawTexture(new Rect(b.x - 16, b.y - 16, 32, 32), chevron);
+                GUI.matrix = m;
+            }
+            else if (g == Gesture.Hold)
+            {
+                float k = Mathf.Clamp01(cyc / 0.8f);
+                GUI.color = new Color(1f, 1f, 1f, 0.85f);
+                GUI.DrawTexture(new Rect(a.x - 24, a.y - 24, 48, 48), finger);
+                GUI.color = new Color(1f, 1f, 1f, 0.5f * (1f - k) + 0.2f);
+                float r = Mathf.Lerp(30f, 70f, k);
+                GUI.DrawTexture(new Rect(a.x - r, a.y - r, r * 2, r * 2), gRing);
+                // a direction arrow: hold a side to run that way
+                if (chevron == null) chevron = ChevronTexture(64);
+                var m = GUI.matrix;
+                GUIUtility.RotateAroundPivot(180f, new Vector2(a.x - 90, a.y) * scale);
+                GUI.color = new Color(1f, 1f, 1f, 0.6f);
+                GUI.DrawTexture(new Rect(a.x - 90 - 16, a.y - 16, 32, 32), chevron);
+                GUI.matrix = m;
+            }
+            else
+            {
+                // taps (and two-finger taps): press, then a ripple
+                float press = cyc < 0.25f ? 1f - cyc / 0.25f * 0.25f : 1f;
+                float rip = Mathf.Clamp01((cyc - 0.15f) / 0.5f);
+                foreach (var q in g == Gesture.TwoFingers ? new[] { a, b } : new[] { a })
+                {
+                    GUI.color = new Color(1f, 1f, 1f, 0.85f);
+                    float s = 48f * press;
+                    GUI.DrawTexture(new Rect(q.x - s / 2, q.y - s / 2, s, s), finger);
+                    if (rip > 0f && rip < 1f)
+                    {
+                        GUI.color = new Color(1f, 1f, 1f, 0.6f * (1f - rip));
+                        float r = Mathf.Lerp(26f, 80f, rip);
+                        GUI.DrawTexture(new Rect(q.x - r, q.y - r, r * 2, r * 2), gRing);
+                    }
+                }
+            }
+            GUI.color = old;
+        }
+
+        /// <summary>The chalk marks: a hand-written word by the object, a small gesture glyph and a
+        /// chalk line to the spot, wobbling slightly like chalk on concrete.</summary>
+        void ChalkMarks(float w, float h)
+        {
+            var hd = HintDirector.Instance;
+            var cam = Camera.main;
+            if (hd == null || cam == null || hd.Shown.Count == 0) return;
+            foreach (var hint in hd.Shown)
+            {
+                var vp = cam.WorldToViewportPoint(hint.world);
+                if (vp.z <= 0f || vp.x < 0.03f || vp.x > 0.97f || vp.y < 0.05f || vp.y > 0.95f) continue;
+                float x = vp.x * w, y = (1f - vp.y) * h;
+                float wob = Mathf.Sin(Time.unscaledTime * 3f + x) * 1.5f;
+                float pulse = 0.75f + 0.25f * Mathf.Sin(Time.unscaledTime * 4f);
+                string glyph = hint.gesture switch
+                {
+                    Gesture.TapAgain or Gesture.TapHigh or Gesture.TapLow => "TAP - ", Gesture.Hold => "HOLD - ", _ => "",
+                };
+                var st = new GUIStyle(gChalk) { fontSize = 24 };
+                st.normal.textColor = new Color(0.97f, 0.97f, 0.95f, pulse);
+                // a soft dark smudge behind for legibility on light walls
+                var old = GUI.color;
+                GUI.color = new Color(0f, 0f, 0f, 0.35f);
+                GUI.DrawTexture(new Rect(x - 95, y - 58 + wob, 190, 44), glowTex);
+                GUI.color = old;
+                Label(new Rect(x - 120, y - 58 + wob, 240, 40), glyph + hint.text, st);
+                // the swipe drawn as chalk arrows beside the word
+                if (hint.gesture == Gesture.SwipeUp || hint.gesture == Gesture.SwipeDown || hint.gesture == Gesture.SwipeSide)
+                {
+                    if (chevron == null) chevron = ChevronTexture(64);
+                    float textHalf = st.CalcSize(new GUIContent(hint.text)).x * 0.5f;
+                    var m0 = GUI.matrix;
+                    var oc = GUI.color;
+                    GUI.color = new Color(1f, 1f, 1f, pulse);
+                    if (hint.gesture == Gesture.SwipeSide)
+                    {
+                        foreach (var (cx2, ang2) in new[] { (x - textHalf - 22f, 180f), (x + textHalf + 22f, 0f) })
+                        {
+                            GUIUtility.RotateAroundPivot(ang2, new Vector2(cx2, y - 38 + wob) * scale);
+                            GUI.DrawTexture(new Rect(cx2 - 12, y - 50 + wob, 24, 24), chevron);
+                            GUI.matrix = m0;
+                        }
+                    }
+                    else
+                    {
+                        float cx2 = x - textHalf - 22f;
+                        GUIUtility.RotateAroundPivot(hint.gesture == Gesture.SwipeUp ? -90f : 90f, new Vector2(cx2, y - 38 + wob) * scale);
+                        GUI.DrawTexture(new Rect(cx2 - 12, y - 50 + wob, 24, 24), chevron);
+                        GUI.matrix = m0;
+                    }
+                    GUI.color = oc;
+                }
+                // a chalk tick down to the spot
+                Fill(new Rect(x - 1, y - 18 + wob, 2, 14), new Color(1f, 1f, 1f, 0.6f * pulse));
+            }
+        }
+
+        /// <summary>The help card (game paused): every move with its gesture, and REPLAY TRAINING.</summary>
+        void HelpCard(float w, float h, bool repaint)
+        {
+            Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.72f));
+            var panel = new Rect(w * 0.5f - 470, 64, 940, h - 128);
+            Fill(new Rect(panel.x, panel.y, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
+            Fill(new Rect(panel.x, panel.yMax - 1, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
+            Label(new Rect(panel.x, panel.y + 10, panel.width, 60), Spaced("MOVES"), new GUIStyle(gTitle) { fontSize = 52 });
+            string[,] rows =
+            {
+                { "TAP HIGH", "Punch combo  (left / right side = that way)" },
+                { "TAP LOW", "Kick combo" },
+                { "HOLD", "Run that way" },
+                { "SWIPE UP", "Jump · climb a striped ledge · grab a rope, trapeze or bar" },
+                { "SWIPE DOWN", "Drop through the floor (onto anyone below) · throw your weapon" },
+                { "SWIPE SIDEWAYS", "Dodge · vault · slide kick · wall flip" },
+                { "TWO FINGERS", "Rampage, when the white bar is full" },
+                { "WALK OVER", "Pick up a dropped weapon" },
+            };
+            var k1 = new GUIStyle(gTitle) { fontSize = 26, alignment = TextAnchor.MiddleRight };
+            var k2 = new GUIStyle(gLine) { fontSize = 19, alignment = TextAnchor.MiddleLeft };
+            float y = panel.y + 84;
+            for (int i = 0; i < rows.GetLength(0); i++)
+            {
+                Label(new Rect(panel.x + 20, y, 250, 34), rows[i, 0], k1);
+                Label(new Rect(panel.x + 300, y, panel.width - 320, 34), rows[i, 1], k2);
+                y += 40;
+            }
+            var hint = new GUIStyle(gChalk) { fontSize = 20 };
+            Label(new Rect(panel.x, y + 6, panel.width, 34), "Some moves happen by themselves: dive from above, over the edge, head scissors, hand stomp, springboard", hint);
+            replayBtn = new Rect(w * 0.5f - 250, panel.yMax - 60, 230, 42);
+            closeBtn = new Rect(w * 0.5f + 20, panel.yMax - 60, 230, 42);
+            DrawButton(replayBtn, "REPLAY TRAINING", 18);
+            DrawButton(closeBtn, "BACK TO THE FIGHT", 18);
+            if (repaint)
+            {
+                GestureInput.Blocked.Add(ToScreen(replayBtn));
+                GestureInput.Blocked.Add(ToScreen(closeBtn));
+                GestureInput.Blocked.Add(ToScreen(new Rect(0, 0, w, h)));     // the whole screen is the card's while open
+                if (Pressed(closeBtn)) { helpOpen = false; TimeController.Paused = false; }
+                else if (Pressed(replayBtn))
+                {
+                    helpOpen = false;
+                    TimeController.Paused = false;
+                    TutorialDirector.ResetDone();
+                    HintDirector.ResetAll();
+                    if (director != null) director.Restart();
+                }
+                else GestureInput.LastButtonTap = null;     // a tap anywhere else on the card does nothing
+            }
+        }
 
         GUIStyle winTitle, winStats;
 

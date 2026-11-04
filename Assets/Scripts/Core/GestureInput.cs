@@ -114,7 +114,7 @@ namespace ProjectInk
 
         void Push(Command c)
         {
-            if (c == Command.None) return;
+            if (c == Command.None || TimeController.Paused) return;
             if (queue.Count >= 3) queue.Dequeue();
             queue.Enqueue(new Pending { cmd = c, time = UnityEngine.Time.unscaledTime });
         }
@@ -155,8 +155,16 @@ namespace ProjectInk
 
         bool InStickZone(Vector2 p) => !Classic && p.x < Screen.width * stickZone;
 
+        /// <summary>Screen rects (pixels, origin bottom-left) owned by on-screen buttons: touches
+        /// starting there are not fight input. Set each frame by the HUD.</summary>
+        public static readonly System.Collections.Generic.List<Rect> Blocked = new System.Collections.Generic.List<Rect>();
+        /// <summary>The last press on an on-screen button (pixels), for the HUD to act on.</summary>
+        public static Vector2? LastButtonTap;
+
         void TouchBegan(int id, Vector2 pos)
         {
+            foreach (var r in Blocked) if (r.Contains(pos)) { consumed.Add(id); LastButtonTap = pos; return; }
+            if (TimeController.Paused) { consumed.Add(id); return; }
             AnyPressThisFrame = true;
             if (InStickZone(pos) && stickId == int.MinValue)
             {

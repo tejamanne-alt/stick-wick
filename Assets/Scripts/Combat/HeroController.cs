@@ -152,6 +152,7 @@ namespace ProjectInk
 
         void BeginDive(Enemy t)
         {
+            Tell("dive");
             var p = transform.position;
             var q = t.transform.position;
             int side = q.x >= p.x ? 1 : -1;
@@ -920,6 +921,7 @@ namespace ProjectInk
                 else if (Style == FightStyle.Fists) Equip(p.kind, p.uses);
                 else continue;
                 if (InkFx.Instance != null) InkFx.Instance.Burst(p.transform.position, 1.6f);
+                Tell("pickup");
                 Sound.Play(p.kind == FightStyle.Sword ? Sfx.SwordClash : Sfx.Pickup, p.kind == FightStyle.Sword ? 0.5f : 1f, p.transform.position);
                 Destroy(p.gameObject);
                 return;
@@ -931,6 +933,7 @@ namespace ProjectInk
 
         void ThrowWeapon()
         {
+            if (Style != FightStyle.Fists) Tell("throw");
             if (Style == FightStyle.Fists) { Duck(); return; }
             if (Style == FightStyle.Knife) { KnifeThrow(PickTarget(Facing, 16f) ?? PickTarget(-Facing, 16f)); return; }
             var t = PickTarget(Facing, 16f) ?? PickTarget(-Facing, 16f);
@@ -1109,6 +1112,7 @@ namespace ProjectInk
             var wd = WaveDirector.Instance;
             if (wd == null || !wd.FlowReady || InRampage) return;
             wd.SpendFlow();
+            Tell("rampage");
             rampageUntil = Time.unscaledTime + rampageSeconds;
             if (TimeController.Instance != null) TimeController.Instance.Rampage(0.4f, rampageSeconds);
             if (InkFx.Instance != null) { InkFx.Instance.ImpactFlash(0.08f); InkFx.Instance.Burst(Chest, 6f); }
@@ -1437,6 +1441,7 @@ namespace ProjectInk
         // ---- rope: a pendulum the hero pumps; feet sweep enemies; let go into a flying kick
         void GrabRope(Swingable sw)
         {
+            Tell("grab");
             holding = sw;
             sw.Held = true;
             var hands = transform.position + Vector3.up * HandReach;
@@ -1482,6 +1487,7 @@ namespace ProjectInk
         // ---- bar: giant circles round the rod, then a dismount into a flying kick
         void GrabBar(Swingable sw)
         {
+            Tell("grab");
             holding = sw;
             sw.Held = true;
             int dir = Mathf.Abs(velocity.x) > 0.5f ? (velocity.x > 0 ? 1 : -1) : Facing;
@@ -1632,6 +1638,7 @@ namespace ProjectInk
                 else BeginLedgeClimb(0.1f);
                 Sound.Play(Sfx.Cloth, 1f, transform.position);
                 Sound.Play(Sfx.HeroEffort, 0.8f, transform.position);
+                Tell("climb");
                 if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(40, "CLIMB");
             }
         }
@@ -1650,6 +1657,7 @@ namespace ProjectInk
             stateTime = 0f;
             body.Play("jump", 0.06f);
             Sound.Play(Sfx.Cloth, 1f, transform.position);
+            Tell("drop");
             TryDeathFromAbove(null);
             return true;
         }
@@ -1878,6 +1886,7 @@ namespace ProjectInk
             if (pendingCrate != null)
             {
                 pendingCrate.Kick(attackDir, this);
+                Tell("crate");
                 pendingCrate = null;
                 if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(40, "KICK!");
                 Impact();
@@ -1956,6 +1965,7 @@ namespace ProjectInk
                 if (bladeCut && currentAttack.lift > 0f && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(30, "LAUNCH!");
                 if (comboLabel != null)
                 {
+                    Tell("combo");
                     // the string's finisher landed: a beat of slow motion if it finished someone
                     if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(120, comboLabel);
                     if (lastKilled && SwordSlowReady)
@@ -2001,8 +2011,14 @@ namespace ProjectInk
         bool lastKilled;
         Vector3 lastHitAt;
 
+        /// <summary>What the hero just did, for the training reel and the chalk hints:
+        /// punch, kick, combo, run, jump, climb, drop, dodge, rampage, crate, grab, dive, throw, pickup.</summary>
+        public static event System.Action<string> Did;
+        static void Tell(string what) { Did?.Invoke(what); }
+
         void OnStrikeLanded(Enemy e, bool killing)
         {
+            Tell(IsKickClip(currentAttack.clip) ? "kick" : "punch");
             lastKilled = killing;
             lastHitAt = e.Chest;
             ComboCount++;
@@ -2064,6 +2080,7 @@ namespace ProjectInk
 
         void Dodge(int dir)
         {
+            Tell("dodge");
             pendingExecution = null;
             throwPending = false;
             Enemy over = null, slideTarget = null;

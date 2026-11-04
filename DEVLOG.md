@@ -524,3 +524,40 @@ Situational cinematic moves built on the level and its objects. Nothing new to l
 - **HAND STOMP:** strike toward an enemy hanging from a ledge below you: a stamp on his hands, a bone crack, and he falls with a scream. Enemies now hang 0.45–0.9 s on climbs, so it's catchable.
 - **SPRINGBOARD:** a crate 0.3–1.6 m ahead and an enemy 0.6–4.5 m beyond it: the hero runs up the crate, flips off it and goes straight into a flying kick.
 - Strike decision order: hand stomp, over the edge, springboard, death from above, head scissors, then the normal strings.
+
+## 2026-11-04: 1.0 the guide
+
+Three layers, learning by doing.
+
+**1. The Training Reel** (`TutorialDirector`). On the first launch, after the opening, eight lessons in the lobby against pale-grey **stunt doubles** (`Enemy.Passive`: they walk up and take hits but never attack).
+- A **ghost finger** performs each gesture where it's made: taps ripple, holds fill a ring with a direction arrow, swipes leave a trail and an arrowhead, two fingers pair up.
+- A lesson completes when the player does it for real (via `HeroController.Did` events): "NICE." with a chime, then the next.
+- The lessons:
+    1. TAP HIGH, punch ×3
+    2. TAP LOW, kick ×2
+    3. KEEP TAPPING, a full combo
+    4. HOLD, run to the striped ledge (a pulsing "HERE" ring on the floor)
+    5. SWIPE UP, climb
+    6. SWIPE DOWN, drop through
+    7. SWIPE SIDEWAYS, dodge
+    8. TWO FINGERS, rampage (the Flow bar is filled for it, three doubles to wreck)
+- Finale: "THE BUILDING IS YOUR WEAPON / look for the chalk marks". Then the stunt doubles vanish and FIGHT! starts wave 1 (the director holds the first wave until then).
+- SKIP TRAINING at any time. Completion is saved (`tutorial_done`).
+
+**2. Chalk marks** (`HintDirector`). Hand-chalked words (Permanent Marker) with drawn arrows appear in the world, by the thing, when it's useful:
+- CLIMB by a reachable striped ledge
+- GRAB under a rope, trapeze or bar
+- TAP - KICK IT by a crate with an enemy beyond
+- DIVE ON HIM when standing above an enemy
+- DODGE over an enemy flashing red beside you
+- TAKE IT by a weapon on the floor
+
+At most two show at once, most urgent first. Each retires for good after the move has been done three times (saved).
+
+**3. The ? button** (top centre, or **H**) **pauses** the game (`TimeController.Paused`) and opens the **MOVES** card: every gesture and what it does, plus a note on the moves that happen by themselves. Its buttons:
+- **REPLAY TRAINING**: resets the tutorial and chalk marks, then restarts.
+- **BACK TO THE FIGHT** (or Esc).
+
+On-screen buttons own their touches (`GestureInput.Blocked`), so pressing them never throws a punch, and a paused game ignores fight input. The old one-line hint is hidden during training.
+
+Mock-ups: `docs/previews/guide_mockups.png`.

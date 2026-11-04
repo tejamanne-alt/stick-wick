@@ -49,6 +49,8 @@ namespace ProjectInk
         public bool IsDown => state == State.Down || state == State.GetUp;
         public bool Engaged => state == State.Advance || state == State.Windup || state == State.Attack || state == State.Pounce;
         public bool Armed => Type == EnemyType.Swordsman;
+        /// <summary>A training stunt double: walks up and takes the hits, never attacks.</summary>
+        public bool Passive;
         public bool Gunner => Type == EnemyType.Gunner;
         public bool Ranged => Type == EnemyType.Gunner || Type == EnemyType.Thrower;
         public bool Carried => state == State.Carried;
@@ -142,7 +144,7 @@ namespace ProjectInk
                     FaceTowards(hero.transform.position.x);
                     velocity.x = 0f;
                     if (!sameLevel || Mathf.Abs(dist - ringDistance) > 1.0f) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
-                    else if (Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
+                    else if (!Passive && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
                         HasToken = true;
                         state = Ranged ? State.Windup : State.Advance;
@@ -294,7 +296,7 @@ namespace ProjectInk
             LeaveStairsLane(dt);
             var p = transform.position;
             float dy = hero.transform.position.y - p.y;
-            if (Ranged && Mathf.Abs(dx) < 9f && Mathf.Abs(dy) < 6.5f) { FireAcrossLevels(); return; }
+            if (!Passive && Ranged && Mathf.Abs(dx) < 9f && Mathf.Abs(dy) < 6.5f) { FireAcrossLevels(); return; }
 
             int me = LevelNav.PlatformAt(p);
             if (me >= 0) stairDir = 0;
@@ -329,7 +331,7 @@ namespace ProjectInk
             }
             // drop. A fighter whose turn it is leaps down at the hero; the rest step off.
             bool heroBelowClose = hero.Grounded && Mathf.Abs(hero.transform.position.x - p.x) < 6.5f && dy < -1f;
-            if (!Ranged && leapDown && heroBelowClose && !hero.IsDead && AttackTokens.TryTake(this))
+            if (!Passive && !Ranged && leapDown && heroBelowClose && !hero.IsDead && AttackTokens.TryTake(this))
             {
                 HasToken = true;
                 state = State.Pounce;
