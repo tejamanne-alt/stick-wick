@@ -490,3 +490,23 @@ Clearing a floor (the fifth wave, after the Brute) now plays `VictoryCinematic` 
 3. **Title card:** FLOOR n CLEAR in Bebas Neue with a hairline, landing with a white flash, a small shake and a cinematic hit. Beneath it: style grade, score and kills. The victory sting is timed to the shot.
 4. **Crane:** the camera rises and pulls back over the floor (1.5 s).
 5. The bars slide away, the camera blends back to gameplay (1 s), control returns and the next chapter starts. The director waits for it, with a 12 s safety timeout.
+
+## 2026-11-04: 0.8 head scissors takedown
+
+A new signature move, chosen by situation (never on every hit):
+- **Choreography** (scripted like the giant swing, 0.88 s of game time):
+    1. the hero leaps onto the enemy's shoulders, legs locked round his head
+    2. a beat leaning back
+    3. the whip: he throws himself into a back-flip, rolling about the camera axis, while the enemy is dragged over in a forward somersault along an arc
+    4. the slam, 2.1 m behind the start: 34 damage, knockdown, a bounce, bone crack, body fall, cinematic hit, ink splash, flash, hit-stop and shake. Anyone standing there is bowled over ("COLLATERAL!")
+    5. the hero rolls out onto his feet
+    - Over the top of the somersault: a short slow-mo and zoom, sharing the 2.5 s slow-mo budget.
+    - "HEAD SCISSORS!" (+220 style).
+- **When it happens** (all need: not the Brute, same level, close, solid floor 2.1 m behind, 4 s cooldown):
+    - **counter** to a close wind-up: 60%
+    - **another enemy right behind you**, who the victim is thrown onto: 45%
+    - **end of the kick string**, in place of the spinning kick: 50%
+    - **finishing blow** on an enemy with ≤ 34 HP: 30%
+    - **from the air**, striking near an enemy at head height: 65%
+- The hero is invulnerable during the move. If the victim vanishes mid-move, the hero drops him and recovers.
+- Motion check: `docs/previews/head_scissors.png` (sampled from the real timings); both bodies stay above the floor.

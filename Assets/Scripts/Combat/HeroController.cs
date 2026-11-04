@@ -24,7 +24,7 @@ namespace ProjectInk
     /// grabbed = tap to break free with a reversal throw. Full Flow = Rampage.</summary>
     public class HeroController : Fighter
     {
-        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun }
+        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors }
 
         public float targetRange = 9f;
         public float gunRange = 14f;
@@ -77,7 +77,7 @@ namespace ProjectInk
         public bool IsGrabbed => state == State.Grabbed;
         public int GrabTaps => grabTaps;
         public bool Invulnerable => Time.time < invulnerableUntil || state == State.Dead || InRampage || OnLedge || state == State.Swing ||
-                                    state == State.Rope || state == State.Bar || state == State.WallRun;
+                                    state == State.Rope || state == State.Bar || state == State.WallRun || state == State.Scissors;
         public bool IsGrabbedBy(Enemy e) => state == State.Grabbed && grabber == e;
 
         string IdleClip => Style == FightStyle.Sword || Style == FightStyle.Pipe ? "sword_idle" : Style == FightStyle.Gun ? "gun_idle" : "idle";
@@ -102,6 +102,221 @@ namespace ProjectInk
         }
 
         void CheckBody() { body.CheckVisible(); }
+
+        // ------------------------------------------------------------------ head scissors takedown
+        // Leap onto the enemy's shoulders, lock the legs round his head, throw yourself into a
+        // back-flip and whip him through a forward somersault over you, slamming him down behind
+        // you (into anyone standing there). Scripted like the giant swing; chosen by situation.
+
+        Enemy scissorsVictim;
+        int scissorsDir;
+        Vector3 scissorsFrom, scissorsNeck, scissorsVictimFrom;
+        float scissorsGround, lastScissorsAt = -99f;
+        bool scissorsSlowed, scissorsSlammed;
+        const float ScissorsLand = 2.1f;       // how far behind the start the victim lands
+
+        /// <summary>Is the takedown possible here? Not on the brute, same level, close, and
+        /// with floor behind to slam him onto.</summary>
+        bool CanScissors(Enemy t, int side, bool fromAir = false)
+        {
+            if (t == null || !t.Targetable || t.Type == EnemyType.Brute || t.OnLedge || t.Carried) return false;
+            if (Time.time - lastScissorsAt < 4f) return false;
+            var p = transform.position;
+            var e = t.transform.position;
+            float dx = (e.x - p.x) * side;
+            if (dx < 0.2f || dx > (fromAir ? 1.9f : 2.6f)) return false;
+            if (fromAir ? (p.y - e.y < -0.3f || p.y - e.y > 2.2f) : Mathf.Abs(e.y - p.y) > 0.3f) return false;
+            float landX = e.x - side * ScissorsLand;
+            if (Mathf.Abs(landX) > arenaMaxX - 0.3f) return false;
+            float g = GroundY(new Vector3(landX, e.y + 0.4f, 0f), 0.4f);
+            return Mathf.Abs(g - e.y) < 0.45f;
+        }
+
+        /// <summary>The situational choice, made on a strike: a counter to a close wind-up, a
+        /// crowd behind you to throw him into, the end of a kick string, or a finishing blow.</summary>
+        bool TryHeadScissors(Enemy t, int side, bool kick)
+        {
+            if (t == null || !Grounded || !CanScissors(t, side)) return false;
+            float dx = Mathf.Abs(t.transform.position.x - transform.position.x);
+            bool counter = t.Telegraphing && dx < 2.3f;
+            bool crowdBehind = false;
+            foreach (var o in Enemy.All)
+            {
+                if (o == t || !o.Targetable) continue;
+                float bx = (o.transform.position.x - transform.position.x) * -side;
+                if (bx > 0.2f && bx < 3.2f && Mathf.Abs(o.transform.position.y - transform.position.y) < 0.4f) crowdBehind = true;
+            }
+            bool kickFinisher = kick && kickStep % AttackData.KickCombo.Length == AttackData.KickCombo.Length - 1;
+            bool finishing = t.Health <= 34f;
+            float chance = counter ? 0.6f : crowdBehind ? 0.45f : kickFinisher ? 0.5f : finishing ? 0.3f : 0f;
+            if (chance <= 0f || Random.value > chance) return false;
+            if (kickFinisher) kickStep++;
+            BeginScissors(t, side);
+            return true;
+        }
+
+        void BeginScissors(Enemy t, int side)
+        {
+            lastScissorsAt = Time.time;
+            scissorsVictim = t;
+            scissorsDir = side;
+            scissorsFrom = transform.position;
+            scissorsVictimFrom = t.transform.position;
+            scissorsNeck = t.Chest + Vector3.up * 0.2f * t.transform.localScale.y;
+            scissorsGround = t.transform.position.y;
+            scissorsSlowed = scissorsSlammed = false;
+            if (t.Telegraphing) t.Interrupt();
+            t.BeginCarried();
+            SetFacing(side);
+            state = State.Scissors;
+            stateTime = 0f;
+            velocity = Vector3.zero;
+            Grounded = false;
+            invulnerableUntil = Time.time + 1.2f;
+            SetTrails(true);
+            body.Play(body.Has("pike") ? "pike" : "jump", 0.04f);
+            Sound.Play(Sfx.WhooshBig, 1f, transform.position);
+            Sound.Play(Sfx.HeroEffort, 1f, transform.position);
+        }
+
+        static float Ease01(float a, float b, float x) => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(a, b, x));
+
+        /// <summary>Place a fighter by its body centre, rolled about the camera axis.</summary>
+        static void PlaceRolled(Transform tr, Vector3 centre, float rollWorld, float yaw, float centreHeight)
+        {
+            var rot = Quaternion.AngleAxis(rollWorld, Vector3.forward) * Quaternion.Euler(0f, yaw, 0f);
+            tr.SetPositionAndRotation(centre - rot * Vector3.up * centreHeight, rot);
+        }
+
+        void UpdateScissors()
+        {
+            var e = scissorsVictim;
+            int dir = scissorsDir;
+            if (e == null || !e.Carried) { EndScissors(); return; }
+            float t = stateTime;
+            float heroYaw = dir > 0 ? 0f : 180f, victimYaw = dir > 0 ? 180f : 0f;
+            float hc = 0.5f * transform.localScale.y, vc = 0.5f * e.transform.localScale.y;
+
+            // A: leap up onto his shoulders, legs locked round his head
+            var wrapC = new Vector3(scissorsNeck.x - dir * 0.08f, scissorsNeck.y + 0.1f, 0f);
+            var startC = scissorsFrom + Vector3.up * hc;
+            var victimC = scissorsVictimFrom + Vector3.up * vc;
+            Vector3 heroC; float heroRoll; Vector3 vicC; float vicRoll;
+            if (t < 0.16f)
+            {
+                float k = Ease01(0f, 0.16f, t);
+                heroC = Vector3.Lerp(startC, wrapC, k) + Vector3.up * Mathf.Sin(k * Mathf.PI) * 0.35f;
+                heroRoll = 0f; vicC = victimC; vicRoll = 0f;
+            }
+            else if (t < 0.30f)
+            {
+                // B: the lock: a beat on his shoulders, leaning back
+                float k = Ease01(0.16f, 0.30f, t);
+                heroC = wrapC; heroRoll = 22f * k;
+                vicC = victimC + Vector3.right * dir * 0.05f * Mathf.Sin(t * 60f); vicRoll = -6f * k;
+            }
+            else if (t < 0.64f)
+            {
+                // C: the whip. He flips back and down; the victim is dragged over in a somersault
+                float k = Ease01(0.30f, 0.64f, t);
+                if (body.CurrentName != "jump") { body.Play("jump", 0.05f); Sound.Play(Sfx.WhooshBig, 1f, transform.position, 0.85f); Sound.Play(Sfx.EnemyHurt, 1f, e.Chest); }
+                heroRoll = Mathf.Lerp(22f, 205f, k);
+                var handstand = new Vector3(scissorsVictimFrom.x - dir * 0.95f, scissorsGround + 0.62f, 0f);
+                heroC = Vector3.Lerp(wrapC, handstand, k) + Vector3.up * Mathf.Sin(k * Mathf.PI) * 0.25f;
+                var land = new Vector3(scissorsVictimFrom.x - dir * ScissorsLand, scissorsGround + 0.45f, 0f);
+                var apex = new Vector3(scissorsVictimFrom.x - dir * 0.9f, scissorsGround + 2.1f, 0f);
+                vicC = Bezier(victimC, apex, land, k * 0.82f);
+                vicRoll = Mathf.Lerp(0f, 230f, k);
+                // the top of the somersault, in slow motion (now and then)
+                if (!scissorsSlowed && k > 0.4f)
+                {
+                    scissorsSlowed = true;
+                    if (SwordSlowReady)
+                    {
+                        swordSlowAt = Time.unscaledTime;
+                        if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.25f, 0.55f, 0.03f, 0.25f);
+                        if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(5f, 0.35f);
+                    }
+                }
+            }
+            else
+            {
+                // D: the slam, and he rolls out of the flip onto his feet
+                float k = Ease01(0.64f, 0.88f, t);
+                var handstand = new Vector3(scissorsVictimFrom.x - dir * 0.95f, scissorsGround + 0.62f, 0f);
+                var stand = new Vector3(scissorsVictimFrom.x - dir * 1.25f, scissorsGround + hc, 0f);
+                heroC = Vector3.Lerp(handstand, stand, k);
+                heroRoll = Mathf.Lerp(205f, 360f, k);
+                var land = new Vector3(scissorsVictimFrom.x - dir * ScissorsLand, scissorsGround + 0.45f, 0f);
+                var apex = new Vector3(scissorsVictimFrom.x - dir * 0.9f, scissorsGround + 2.1f, 0f);
+                vicC = Bezier(victimC, apex, land, Mathf.Lerp(0.82f, 1f, Mathf.Clamp01((t - 0.64f) / 0.08f)));
+                vicRoll = Mathf.Lerp(230f, 270f, Mathf.Clamp01((t - 0.64f) / 0.08f));
+                if (!scissorsSlammed && t >= 0.72f) Slam(e, dir);
+                if (t >= 0.88f)
+                {
+                    transform.position = new Vector3(stand.x, scissorsGround, 0f);
+                    SetFacing(dir);
+                    Grounded = true;
+                    body.Play(body.Has("duck") ? "duck" : IdleClip, 0.05f);
+                    EndScissors();
+                    return;
+                }
+            }
+            PlaceRolled(transform, heroC, dir * heroRoll, heroYaw, hc);
+            if (!scissorsSlammed) PlaceRolled(e.transform, vicC, dir * vicRoll, victimYaw, vc);
+        }
+
+        static Vector3 Bezier(Vector3 a, Vector3 b, Vector3 c, float u)
+        {
+            float v = 1f - u;
+            return v * v * a + 2f * v * u * b + u * u * c;
+        }
+
+        void Slam(Enemy e, int dir)
+        {
+            scissorsSlammed = true;
+            var at = new Vector3(scissorsVictimFrom.x - dir * ScissorsLand, scissorsGround, 0f);
+            e.transform.position = at;
+            e.EndCarried(new Vector3(-dir * 2f, -2f, 0f), this);
+            bool killing = e.Health <= 34f;
+            e.TakeHit(new HitInfo { damage = 34f, direction = -dir, knockback = 2.5f, knockdown = true, heavy = true, hitsDowned = true, lift = 2.2f, attacker = this });
+            lastKilled = killing;
+            lastHitAt = at + Vector3.up * 0.3f;
+            OnStrikeLanded(e, killing);
+            // anyone standing where he comes down goes over too
+            foreach (var o in Enemy.All.ToArray())
+            {
+                if (o == e || !o.Targetable) continue;
+                if (Mathf.Abs(o.transform.position.x - at.x) < 1.2f && Mathf.Abs(o.transform.position.y - at.y) < 0.6f)
+                {
+                    o.TakeHit(new HitInfo { damage = 18f, direction = -dir, knockback = 7f, knockdown = true, heavy = true, attacker = this });
+                    if (WaveDirector.Instance != null) WaveDirector.Instance.OnEnvironmentKill(o, "COLLATERAL!", 120);
+                }
+            }
+            Sound.Play(Sfx.BodyFall, 1f, at);
+            Sound.Play(Sfx.Bone, 0.8f, at);
+            Sound.Play(Sfx.CineHit, 0.6f);
+            if (InkFx.Instance != null)
+            {
+                InkFx.Instance.Splash(at + Vector3.up * 0.2f, Vector3.up, 30, e.InkColor);
+                InkFx.Instance.Burst(at + Vector3.up * 0.2f, 3.5f);
+                InkFx.Instance.ImpactFlash(0.04f);
+            }
+            if (TimeController.Instance != null) TimeController.Instance.HitStop(6);
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.25f, 0.25f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(220, "HEAD SCISSORS!");
+        }
+
+        void EndScissors()
+        {
+            var e = scissorsVictim;
+            scissorsVictim = null;
+            if (e != null && e.Carried && !scissorsSlammed) e.EndCarried(Vector3.zero, this);   // interrupted: drop him
+            SetFacing(scissorsDir != 0 ? scissorsDir : Facing);
+            SetTrails(false);
+            lastAttackEnd = Time.time;
+            if (state == State.Scissors) EnterIdle();
+        }
 
         // ------------------------------------------------------------------ the sword
 
@@ -391,6 +606,7 @@ namespace ProjectInk
                 case State.Rope: UpdateRope(dt); break;
                 case State.Bar: UpdateBar(dt); break;
                 case State.WallRun: UpdateWallRun(dt); break;
+                case State.Scissors: UpdateScissors(); break;
                 case State.Dead: break;
             }
             if (state != State.Dead) TryPickup();
@@ -398,7 +614,7 @@ namespace ProjectInk
             if (state != State.Dash && state != State.Dodge && state != State.ToLedge && state != State.Air && !running &&
                 !(state == State.Attack && currentAttack.clip == "slide_kick") && Grounded)
                 velocity.x = Mathf.MoveTowards(velocity.x, 0f, 30f * dt);
-            bool scripted = state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar ||
+            bool scripted = state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar || state == State.Scissors ||
                             (state == State.WallRun && stateTime < 0.25f);
             if (!scripted) Integrate(dt);
             FootSounds(dt);
@@ -728,6 +944,9 @@ namespace ProjectInk
                 return;
             }
 
+            // the head scissors takedown, when the situation calls for it
+            if (TryHeadScissors(t, side, kick)) return;
+
             bool armed = !kick && (Style == FightStyle.Sword || Style == FightStyle.Pipe || Style == FightStyle.Knife);
             var combo = Style == FightStyle.Sword ? AttackData.SwordCombo : AttackData.PipeCombo;
             if (t == null)
@@ -908,6 +1127,9 @@ namespace ProjectInk
             {
                 int side = cmd == Command.StrikeLeft ? -1 : cmd == Command.StrikeRight ? 1 : (AxisDir != 0 ? AxisDir : Facing);
                 var t = PickTarget(side, 5f);
+                // close enough in the air: land on his shoulders instead of kicking him
+                if (t != null && Mathf.Abs(t.transform.position.x - transform.position.x) < 1.9f && Random.value < 0.65f && CanScissors(t, side, true))
+                { BeginScissors(t, side); return; }
                 SetFacing(side);
                 currentAttack = AttackData.FlyingKick;
                 target = t;
