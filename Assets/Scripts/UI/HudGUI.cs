@@ -323,10 +323,13 @@ namespace ProjectInk
                 var lbl = new GUIStyle(small) { alignment = TextAnchor.UpperLeft, fontSize = 20 };
                 if (ready && !hero.InRampage)
                 {
-                    // the bar is charged: it burns red-white
-                    Fill(new Rect(fb.x, fb.y - 1, fb.width, fb.height + 2), Color.Lerp(RampageRed, Color.white, 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 10f)));
-                    lbl.normal.textColor = Color.Lerp(RampageRed, Color.white, 0.4f + 0.4f * Mathf.Sin(Time.unscaledTime * 10f));
-                    Label(new Rect(24, 44, 400, 26), "R A M P A G E   R E A D Y", lbl);
+                    // charged: quietly, a solid red bar and a small label; it only calls out in trouble
+                    bool trouble = hero.InTrouble;
+                    float k = trouble ? 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 10f) : 0f;
+                    Fill(new Rect(fb.x, fb.y - 1, fb.width, fb.height + 2), Color.Lerp(RampageRed, Color.white, k));
+                    lbl.normal.textColor = trouble ? Color.Lerp(RampageRed, Color.white, 0.4f * k) : new Color(RampageRed.r, RampageRed.g, RampageRed.b, 0.85f);
+                    var small2 = new GUIStyle(lbl) { fontSize = 15 };
+                    Label(new Rect(24, 44, 400, 22), "R A G E   C H A R G E D", small2);
                 }
             }
             // weapon in hand
@@ -657,7 +660,7 @@ namespace ProjectInk
         }
 
         Rect rampageBtn;
-        float readySince;
+        float readySince, troubleUntil;
 
         /// <summary>Upper left, just under the Flow bar it belongs to: clear of the hero (the camera
         /// keeps him mid-screen) and of the thumbs' usual fighting area.</summary>
@@ -669,13 +672,18 @@ namespace ProjectInk
         void RampageButton(float w, float h, bool repaint)
         {
             if (director == null || hero == null) return;
-            bool ready = director.FlowReady && !hero.InRampage && !hero.IsDead && !TimeController.Paused;
+            // the button shows only when it is charged AND the moment calls for it (or in training),
+            // and lingers 3 s after the danger, so it never flickers
+            var tut = TutorialDirector.Instance;
+            bool training = tut != null && tut.Active;
+            bool charged = director.FlowReady && !hero.InRampage && !hero.IsDead && !TimeController.Paused;
+            if (repaint && charged && (hero.InTrouble || training)) troubleUntil = Time.unscaledTime + 3f;
+            bool ready = charged && Time.unscaledTime < troubleUntil;
             if (repaint && ready && !wasReady)
             {
                 readySince = Time.unscaledTime;
-                director.AddStyle(0, "RAMPAGE READY");
-                Sound.Play(Sfx.CineHit, 0.6f);
-                for (int i = 0; i < 3; i++) Sound.PlayLater(Sfx.Boom, 0.6f + i * 0.9f, 0.3f);
+                Sound.Play(Sfx.CineHit, 0.5f);
+                Sound.PlayLater(Sfx.Boom, 0.35f, 0.35f);         // one heartbeat
             }
             if (repaint) wasReady = ready;
             if (!ready) return;
@@ -957,7 +965,7 @@ namespace ProjectInk
                 { "SWIPE UP", "Jump · climb a striped ledge · grab a rope, trapeze or bar" },
                 { "SWIPE DOWN", "Throw your weapon at someone ahead · or drop through the floor (onto anyone below)" },
                 { "SWIPE SIDEWAYS", "Dodge · vault · slide kick · wall flip" },
-                { "RAMPAGE", "When the bar burns red: tap the round RAMPAGE button (or two fingers, or Space)" },
+                { "RAMPAGE", "A rare power for when you're in trouble: the round button appears (or two fingers / Space when charged)" },
                 { "WALK OVER", "Pick up a dropped weapon (sword, pipe, gun, knives): your taps use it" },
             };
             var k1 = new GUIStyle(gTitle) { fontSize = 28, alignment = TextAnchor.MiddleRight };

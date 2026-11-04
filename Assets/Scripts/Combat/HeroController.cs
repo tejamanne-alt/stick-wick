@@ -849,7 +849,7 @@ namespace ProjectInk
             if (RampageIntro) { UpdateTint(); return; }     // the activation cinematic owns him
             // rampage ready: white sparks rise off him
             var wdr = WaveDirector.Instance;
-            if (wdr != null && wdr.FlowReady && !InRampage && Time.unscaledTime > sparkAt)
+            if (wdr != null && wdr.FlowReady && !InRampage && Time.unscaledTime > sparkAt && InTrouble)
             {
                 sparkAt = Time.unscaledTime + 0.16f;
                 StreakFx.Sparks(transform.position + new Vector3(Random.Range(-0.3f, 0.3f), Random.Range(0.1f, 1.0f), 0f), Vector3.up, 2, 3.2f);
@@ -1129,6 +1129,30 @@ namespace ProjectInk
         /// <summary>For the on-screen RAMPAGE button.</summary>
         public void TriggerRampage() => StartRampage();
 
+        /// <summary>A moment that calls for the rampage: low on health, three or more enemies
+        /// pressing in, or the brute close by. The button only appears then.</summary>
+        public bool InTrouble
+        {
+            get
+            {
+                if (IsDead) return false;
+                if (Health <= maxHealth * 0.35f) return true;
+                int near = 0;
+                var p = transform.position;
+                foreach (var e in Enemy.All)
+                {
+                    if (!e.Alive || e.Passive) continue;
+                    var q = e.transform.position;
+                    if (Mathf.Abs(q.y - p.y) > 1.2f) continue;
+                    float d = Mathf.Abs(q.x - p.x);
+                    if (e.Type == EnemyType.Brute && d < 7f) return true;
+                    if (d < 3.2f) near++;
+                }
+                return near >= 3;
+            }
+        }
+        bool surroundedAtStart;
+
         void StartRampage()
         {
             var wd = WaveDirector.Instance;
@@ -1136,6 +1160,17 @@ namespace ProjectInk
             wd.SpendFlow();
             Tell("rampage");
             float now = Time.unscaledTime;
+            // used at the right moment, it gives more: a second wind when nearly beaten ...
+            if (Health <= maxHealth * 0.35f)
+            {
+                Health = Mathf.Min(maxHealth, Health + maxHealth * 0.33f);
+                wd.AddStyle(150, "SECOND WIND");
+            }
+            // ... and a bigger blast when surrounded
+            int near = 0;
+            foreach (var e in Enemy.All)
+                if (e.Alive && Mathf.Abs(e.transform.position.x - transform.position.x) < 3.2f && Mathf.Abs(e.transform.position.y - transform.position.y) < 1.2f) near++;
+            surroundedAtStart = near >= 3;
             rampageIntroUntil = now + RampageIntroSeconds;
             rampageUntil = rampageIntroUntil + rampageSeconds;      // (invulnerable all through)
             StartCoroutine(RampageIntroRoutine());
@@ -1195,10 +1230,12 @@ namespace ProjectInk
                 if (!e.Targetable) continue;
                 var q = e.transform.position;
                 float d = Mathf.Abs(q.x - p.x);
-                if (d > 3.8f || Mathf.Abs(q.y - p.y) > 1.2f) continue;
+                float reach = surroundedAtStart ? 5.2f : 3.8f;
+                if (d > reach || Mathf.Abs(q.y - p.y) > 1.2f) continue;
                 int dir = q.x >= p.x ? 1 : -1;
                 e.Interrupt();
-                e.TakeHit(new HitInfo { damage = 6f, direction = dir, knockback = Mathf.Lerp(11f, 5f, d / 3.8f), knockdown = d < 2.2f, attacker = this });
+                e.TakeHit(new HitInfo { damage = surroundedAtStart ? 12f : 6f, direction = dir, knockback = Mathf.Lerp(12f, 5f, d / reach),
+                                         knockdown = surroundedAtStart || d < 2.2f, attacker = this });
             }
             StreakFx.Sparks(p + Vector3.up * 0.1f, Vector3.right, 22, 10f);
             StreakFx.Sparks(p + Vector3.up * 0.1f, Vector3.left, 22, 10f);

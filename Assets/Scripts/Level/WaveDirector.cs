@@ -337,6 +337,8 @@ namespace ProjectInk
             if (label != null) ShowStyle(label);
         }
 
+        // Rampage is rare: about once or twice a floor. Big moves fill it more than plain hits,
+        // and taking damage builds it too, so it comes to you when you are struggling.
         void AddFlow(float amount) { Flow = Mathf.Clamp(Flow + amount, 0f, 100f); }
 
         public void SpendFlow() { Flow = 0f; }
@@ -359,7 +361,7 @@ namespace ProjectInk
         {
             AddScore(heavy ? 25 : 10);
             AddStylePoints(heavy ? 45f : 25f, move);
-            AddFlow(killing ? 14f : 6f);
+            AddFlow(killing ? 2.5f : 0.5f);
             if (killing) RegisterKill(e, 100);
         }
 
@@ -368,7 +370,7 @@ namespace ProjectInk
         {
             AddScore(points, label);
             AddStylePoints(special ? 160f : 60f, label);
-            AddFlow(18f);
+            AddFlow(4f);
             RegisterKill(e, 0);
         }
 
@@ -377,7 +379,7 @@ namespace ProjectInk
         {
             AddScore(points, label);
             AddStylePoints(140f, label);
-            AddFlow(15f);
+            AddFlow(3.5f);
             if (!e.Alive) RegisterKill(e, 0);
         }
 
@@ -412,14 +414,14 @@ namespace ProjectInk
         {
             DamageTaken += amount;
             StylePoints *= 0.35f;
-            Flow = Mathf.Max(0f, Flow - 25f);
+            AddFlow(amount * 0.45f);                 // pain feeds the rage
         }
 
         public void OnPerfectDodge(string label)
         {
             AddScore(150, label);
             AddStylePoints(120f, label);
-            AddFlow(20f);
+            AddFlow(4f);
         }
 
         public void AddStyle(int points, string label)

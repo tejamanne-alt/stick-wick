@@ -613,3 +613,16 @@ Mock-ups: `docs/previews/guide_mockups.png`.
 **While it runs:** a red frame breathes at the screen's edge, and a big draining RAMPAGE bar sits at the top centre.
 
 The training lesson is now "RAMPAGE: tap the RAMPAGE button", with the ghost finger on the button. The MOVES card is updated. Storyboard: `docs/previews/rampage_storyboard.png`.
+
+## 2026-11-04: 1.1.1 Rampage as a rare power for when it matters
+
+Feedback: the RAMPAGE prompt appeared too often and distracted. Redesigned:
+- **Rare:** the bar fills about 1–2 times per floor (≈180 points over a first floor's ~30 enemies, against a 100-point bar):
+    - hit +0.5, kill +2.5, special kill +4, environment kill +3.5, perfect dodge +4
+    - **damage taken ×0.45** (it used to drain 25): pain feeds the rage, a comeback mechanic
+- **Quiet when charged:** the bar turns solid red with a small "R A G E   C H A R G E D". No button, no sparks, no heartbeat, no call-out.
+- **Appears in trouble** (`HeroController.InTrouble`): health ≤ 35%, three or more enemies within 3.2 m, or the Brute within 7 m. Then the round RAMPAGE button appears with one hit and one heartbeat, the sparks and the pulsing light pool return, and the bar pulses. The button lingers 3 s after the danger so it never flickers. Space and two fingers still work any time it's charged.
+- **Bonuses for using it at the right moment:**
+    - **SECOND WIND:** used at ≤ 35% health, it restores a third of max health.
+    - **Surrounded:** a 5.2 m shockwave (was 3.8) that knocks everyone down for 12 damage.
+- Training lesson and MOVES card text updated (the training lesson still always shows the button).
