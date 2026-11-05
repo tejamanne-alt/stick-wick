@@ -809,3 +809,4 @@ Reported: after switching to `story-mode` with "discard local changes", the game
     - The scene build creates `Assets/Generated`, its `Textures` folder and `Assets/Scenes` up front, and refreshes the asset database.
     - A failed texture import gives a clear error instead of a null reference.
 - `HeroScarf.Reset(Vector3)` renamed to `ResetChain`, so it is not confused with Unity's `Reset()` message.
+- Also: `FirstOpenSetup` treated a missing scene as up to date once it had run in an editor session, so after the failed attempt it never retried. A missing scene or version file now always triggers a rebuild.

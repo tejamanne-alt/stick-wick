@@ -23,7 +23,8 @@ namespace ProjectInk.EditorTools
 
         static bool Outdated()
         {
-            if (!File.Exists(PrototypeBuilder.VersionFile)) return File.Exists(ScenePath);
+            if (!File.Exists(ScenePath)) return true;               // deleted (a clean checkout): build it again
+            if (!File.Exists(PrototypeBuilder.VersionFile)) return true;
             return File.ReadAllText(PrototypeBuilder.VersionFile).Trim() != PrototypeBuilder.SceneVersion.ToString();
         }
 
