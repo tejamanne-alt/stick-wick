@@ -82,7 +82,7 @@ namespace ProjectInk
             return knot.position + new Vector3(0f, t.drop, 0.05f);
         }
 
-        void Reset(Vector3 a)
+        void ResetChain(Vector3 a)
         {
             foreach (var t in tails)
             {
@@ -109,7 +109,7 @@ namespace ProjectInk
 
             var a0 = Anchor(tails[0]);
             float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
-            if (!started || (a0 - lastAnchor).sqrMagnitude > 1.5f * 1.5f) Reset(a0);   // a cut or a teleport
+            if (!started || (a0 - lastAnchor).sqrMagnitude > 1.5f * 1.5f) ResetChain(a0);   // a cut or a teleport
             if (dt <= 0f) { Draw(); return; }
             var vel = (a0 - lastAnchor) / dt;
             lastAnchor = a0;

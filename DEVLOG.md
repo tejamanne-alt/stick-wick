@@ -799,3 +799,13 @@ The hero was a plain black stickman, the same ink as the building's shadows, and
 - **A glint runs across his shades** whenever he beckons (taunt): in the opening, in the victory hero shot, and before the boss.
 - Scene version 19 → 20 (the scene rebuilds on open).
 - Preview: `docs/previews/hero_look.png`, made by `tools/blender/preview_hero_look.py` with the same geometry as the game.
+
+## 2026-11-05: Scene build fix after a clean checkout
+
+Reported: after switching to `story-mode` with "discard local changes", the game would not run. The scene was "Untitled", holding only an empty Building and SpawnPoints, and the camera showed "No cameras rendering".
+- **Cause:** discarding also removed the untracked generated files (`Assets/Generated/…`, `Assets/Scenes/Prototype.unity`). The tower writes its textures to `Assets/Generated/Textures` but never created that folder; it only existed because an older classic-hall build had made it. The automatic rebuild threw at the first texture and stopped.
+- **Fix:**
+    - `SaveTex` creates its folder itself.
+    - The scene build creates `Assets/Generated`, its `Textures` folder and `Assets/Scenes` up front, and refreshes the asset database.
+    - A failed texture import gives a clear error instead of a null reference.
+- `HeroScarf.Reset(Vector3)` renamed to `ResetChain`, so it is not confused with Unity's `Reset()` message.

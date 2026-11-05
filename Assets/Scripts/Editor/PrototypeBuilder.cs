@@ -36,7 +36,9 @@ namespace ProjectInk.EditorTools
         static void Build(LayoutKind kind, string scenePath, bool main)
         {
             Directory.CreateDirectory(GenDir);
+            Directory.CreateDirectory(GenDir + "/Textures");
             Directory.CreateDirectory("Assets/Scenes");
+            AssetDatabase.Refresh();                     // so the asset database knows the folders (they may have been deleted)
             AssetDatabase.ImportAsset(StickmanImport.ModelPath, ImportAssetOptions.ForceUpdate);
 
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(StickmanImport.ModelPath);

@@ -521,9 +521,12 @@ namespace ProjectInk.EditorTools
         internal static Texture2D SaveTex(string name, Texture2D tex, TextureWrapMode wrap = TextureWrapMode.Repeat)
         {
             string path = $"{TexDir}/{name}.png";
+            Directory.CreateDirectory(TexDir);          // the tower writes here too; never assume an earlier build made it
             File.WriteAllBytes(path, tex.EncodeToPNG());
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            if (importer == null) { AssetDatabase.Refresh(); importer = (TextureImporter)AssetImporter.GetAtPath(path); }
+            if (importer == null) throw new System.IO.IOException("Could not import generated texture " + path);
             importer.wrapMode = wrap;
             importer.alphaIsTransparency = true;
             importer.mipmapEnabled = true;
