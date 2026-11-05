@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 20;
+        public const int SceneVersion = 21;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
@@ -106,10 +106,7 @@ namespace ProjectInk.EditorTools
 
             // ---------------------------------------------------------------- hero + systems
             var eyeMat = Mat("Eyes", "Unlit/Color", new Color(0.97f, 0.96f, 0.92f));
-            // the hero's signature: mirrored silver shades and an ink-red scarf
-            var lensMat = Mat("HeroLens", "Unlit/Color", new Color(0.50f, 0.55f, 0.63f));
-            var accentMat = Mat("HeroScarf", "Unlit/Color", new Color(0.80f, 0.06f, 0.07f));
-            var heroGo = FighterFactory.Build(model, moves, ink, "Hero", true, trail, FightStyle.Fists, eyeMat, lensMat, accentMat);
+            var heroGo = FighterFactory.Build(model, moves, ink, "Hero", true, trail, FightStyle.Fists, eyeMat);
             heroGo.transform.position = heroStart;
             var hero = heroGo.GetComponent<HeroController>();
 

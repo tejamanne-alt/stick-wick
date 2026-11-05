@@ -9,7 +9,7 @@ namespace ProjectInk
     {
         public static GameObject Build(GameObject model, MoveSet moves, Material material, string name, bool hero,
                                        Material trailMaterial = null, FightStyle enemyWeapon = FightStyle.Fists,
-                                       Material eyeMaterial = null, Material lensMaterial = null, Material accentMaterial = null)
+                                       Material eyeMaterial = null)
         {
             var root = new GameObject(name);
             // the model is inactive while we wire it up, so Awake runs once everything is set
@@ -49,10 +49,7 @@ namespace ProjectInk
             if (!hero && sword != null && Application.isPlaying) SwordFx.Attach(sword, trailMaterial, null, false);
             Fighter f = hero ? root.AddComponent<HeroController>() : (Fighter)root.AddComponent<Enemy>();
             f.body = player;
-            // the hero wears mirrored shades instead of the cute eyes, and a red scarf knotted at the neck
-            if (hero && lensMaterial != null) BuildShades(player, lensMaterial, eyeMaterial);
-            else if (eyeMaterial != null) f.eyes = BuildEyes(player, eyeMaterial);
-            if (hero && accentMaterial != null) BuildScarfKnot(player, accentMaterial);
+            if (eyeMaterial != null) f.eyes = BuildEyes(player, eyeMaterial);
             if (f is HeroController h)
             {
                 h.sword = sword;
@@ -186,65 +183,6 @@ namespace ProjectInk
                 eyes[i] = e.transform;
             }
             return eyes;
-        }
-
-        static GameObject Part(PrimitiveType type, string name, Transform parent, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
-        {
-            var g = GameObject.CreatePrimitive(type);
-            Object.DestroyImmediate(g.GetComponent<Collider>());
-            g.name = name;
-            g.transform.position = pos;
-            g.transform.rotation = rot;
-            g.transform.localScale = scale;
-            g.transform.SetParent(parent, true);
-            var r = g.GetComponent<Renderer>();
-            r.sharedMaterial = mat;
-            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            r.receiveShadows = false;
-            return g;
-        }
-
-        /// <summary>The hero's mirrored wraparound shades: a silver lens on each side of the face
-        /// (one always faces the camera, whichever way he faces), a temple arm back towards the ear,
-        /// a bridge across the front and a white glint on each lens. Silver reads on the black head
-        /// at any size. Measured in the rest pose: head bone up, model facing +X.</summary>
-        static void BuildShades(ClipPlayer player, Material lens, Material glint)
-        {
-            var head = player.Bone("head");
-            if (head == null) return;
-            var c = head.position + Vector3.up * 0.19f;            // head sphere centre
-            const float R = 0.214f;                                  // just proud of the head (radius 0.21)
-            for (int i = 0; i < 2; i++)
-            {
-                float s = i == 0 ? 1f : -1f;
-                // the lens: a flat, slightly swept oval lying on the face, a touch above the eye line
-                var n = new Vector3(0.60f, 0.13f, 0.79f * s).normalized;       // front three-quarters: it faces the camera
-                var rot = Quaternion.LookRotation(n, Vector3.up) * Quaternion.Euler(0f, 0f, -8f * s);
-                var l = Part(PrimitiveType.Sphere, "Lens" + i, head, c + n * R, rot, new Vector3(0.165f, 0.062f, 0.026f), lens);
-                // the glint: a sliver of white on the lens's upper front
-                if (glint != null)
-                    Part(PrimitiveType.Cube, "Glint" + i, l.transform, c + n * (R + 0.014f) + Vector3.up * 0.017f + Vector3.right * 0.014f,
-                         rot * Quaternion.Euler(0f, 0f, 25f), new Vector3(0.045f, 0.011f, 0.004f), glint);
-                // the temple arm, back along the side of the head towards the ear
-                var side = new Vector3(0.05f, 0.16f, 0.99f * s).normalized;
-                var back = Vector3.ProjectOnPlane(Vector3.left, side).normalized;
-                Part(PrimitiveType.Cube, "Temple" + i, head, c + side * (R + 0.004f) + back * 0.02f,
-                     Quaternion.LookRotation(back, Vector3.up), new Vector3(0.012f, 0.012f, 0.15f), lens);
-            }
-            // the bridge over the nose
-            Part(PrimitiveType.Cube, "Bridge", head, c + new Vector3(R - 0.004f, 0.03f, 0f), Quaternion.identity, new Vector3(0.016f, 0.018f, 0.14f), lens);
-        }
-
-        /// <summary>The knot of the hero's red scarf, at the neck (the tails are cloth, simulated
-        /// at runtime by HeroScarf).</summary>
-        static void BuildScarfKnot(ClipPlayer player, Material accent)
-        {
-            var head = player.Bone("head");
-            var chest = player.Bone("chest");
-            if (head == null || chest == null) return;
-            var neck = head.position + Vector3.up * 0.02f;
-            Part(PrimitiveType.Sphere, "ScarfWrap", chest, neck, Quaternion.identity, new Vector3(0.24f, 0.10f, 0.24f), accent);
-            Part(PrimitiveType.Sphere, "ScarfKnot", chest, neck + new Vector3(-0.11f, -0.02f, 0f), Quaternion.identity, new Vector3(0.09f, 0.09f, 0.09f), accent);
         }
 
         /// <summary>White motion trail (a slash arc, as in the reference) at the end of a limb.

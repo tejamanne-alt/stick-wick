@@ -811,3 +811,7 @@ Reported: after switching to `story-mode` with "discard local changes", the game
 - `HeroScarf.Reset(Vector3)` renamed to `ResetChain`, so it is not confused with Unity's `Reset()` message.
 - Also: `FirstOpenSetup` treated a missing scene as up to date once it had run in an editor session, so after the failed attempt it never retried. A missing scene or version file now always triggers a rebuild.
 - **Stick Wick → Build Prototype Scene** pressed during Play mode threw "This cannot be used during play mode". It now stops Play mode first and builds as soon as the editor is back in edit mode.
+
+## 2026-11-05: Hero look reverted
+
+The steel shades and red scarf were not liked and are removed. The hero is back to the plain black stickman with his eyes. Scene version 21, so the scene rebuilds without the accessories. The build fixes from the same day stay.
