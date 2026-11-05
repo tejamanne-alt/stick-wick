@@ -783,3 +783,19 @@ Reported: fights felt overwhelming with many enemies arriving together, and ther
 - New chalk hint: **TAP HIM: TARGET** over the most dangerous enemy while nobody is targeted. It retires after 3 locks.
 - The help card has a new row: TAP AN ENEMY.
 - New training lesson after the combo lesson: **TAP HIM**. There are two stunt doubles; the ghost finger taps the one behind you.
+
+## 2026-11-05: The hero's look: steel shades and a red scarf
+
+The hero was a plain black stickman, the same ink as the building's shadows, and could blend into the fight. He now has a signature silhouette that reads at any size:
+- **Mirrored steel shades** (`FighterFactory.BuildShades`) replace his cartoon eyes. He is the only one without eyes, which reads as cool rather than cute.
+    - a flat, wide steel-silver lens on each side of the face (whichever way he faces, one is towards the camera)
+    - a white glint on each lens
+    - a thin temple arm back to the ear and a bridge across the front
+- **An ink-red scarf:** the wrap and knot are built at the neck, and two tails are simulated as light cloth at runtime (`HeroScarf`, a verlet chain drawn as camera-facing ribbons just behind the body).
+    - They hang and sway when he stands, stream out behind him when he runs, whip round on a dodge and lift in a fall, so his direction of travel always reads.
+    - They float in slow motion (scaled time), reset on cuts and teleports, and never pass through the floor.
+    - They are hidden while the opening holds him out of sight.
+    - It is the same ink red as the title, the victory card and the chapter rule. He is the only fighter with a single bright accent, so he is found at a glance among the coloured enemies.
+- **A glint runs across his shades** whenever he beckons (taunt): in the opening, in the victory hero shot, and before the boss.
+- Scene version 19 → 20 (the scene rebuilds on open).
+- Preview: `docs/previews/hero_look.png`, made by `tools/blender/preview_hero_look.py` with the same geometry as the game.

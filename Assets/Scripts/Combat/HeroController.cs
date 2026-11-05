@@ -91,6 +91,7 @@ namespace ProjectInk
             if (swordTrail != null) swordTrail.enabled = false;           // replaced by the swept ribbon
             bodyMesh = GetComponentInChildren<SkinnedMeshRenderer>(true);
             HeroSpot.Attach(this);                                          // the spotlight pool that marks the hero
+            HeroScarf.Attach(this);                                         // his red scarf (cloth) and the glint on his shades
             SetTrails(false);
             ApplyStyleVisuals();
         }
