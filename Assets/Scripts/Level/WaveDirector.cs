@@ -84,6 +84,7 @@ namespace ProjectInk
         {
             Instance = this;
             AttackTokens.Clear();
+            AttackTokens.Hero = hero;
             Enemy.Corpses.Clear();
             BestScore = PlayerPrefs.GetInt("best_score", 0);
             BestFloor = PlayerPrefs.GetInt("best_floor", 0);
@@ -209,6 +210,7 @@ namespace ProjectInk
                 incoming.Add(new Incoming { kind = kind, type = type, time = t });
                 t += Random.Range(0.35f, 0.9f) / (1f + 0.1f * Floor);
             }
+            incoming.Sort((a, b) => a.time.CompareTo(b.time));
             WaveSize = incoming.Count;
             WaveKills = 0;
         }
@@ -238,13 +240,45 @@ namespace ProjectInk
             AddStylePoints(400f, "boss finale");
         }
 
+        /// <summary>How many may be in the fight at once: never more than five, so every fight
+        /// reads as a scene rather than a crowd (the first floor starts at three).</summary>
+        public int ActiveCap => Floor == 1 ? Mathf.Min(3 + WaveIndex, 5) : 5;
+        float lastSpawnAt = -10f;
+
+        /// <summary>Those still in the fight (runners and stunt doubles do not count).</summary>
+        public int ActiveCount()
+        {
+            int n = 0;
+            foreach (var e in Enemy.All) if (e.Alive && !e.Fleeing && !e.Passive) n++;
+            return n;
+        }
+
+        /// <summary>Let the wave in as the room has space: a wave is a queue at the doors, not a rush.
+        /// Only as many as there are free places get their door warning; the rest wait outside. If the
+        /// room gets quiet (under three) the next one comes straight in. Arrivals are spaced out.</summary>
         void SpawnDue()
         {
-            for (int i = incoming.Count - 1; i >= 0; i--)
+            float now = Time.time;
+            int active = ActiveCount();
+            int room = ActiveCap - active;
+            for (int i = 0; i < incoming.Count; i++)
             {
-                if (Time.time < incoming[i].time + SpawnWarning) continue;
-                Spawn(incoming[i]);
-                incoming.RemoveAt(i);
+                var inc = incoming[i];
+                if (room <= 0)
+                {
+                    if (inc.time < now + 0.05f) { inc.time = now + 0.05f; incoming[i] = inc; }   // waiting outside, no warning yet
+                    continue;
+                }
+                room--;
+                if (active < 3 && inc.time > now) { inc.time = now; incoming[i] = inc; }          // the room is quiet: in he comes
+                if (now >= inc.time + SpawnWarning && now - lastSpawnAt > 0.45f)
+                {
+                    Spawn(inc);
+                    incoming.RemoveAt(i);
+                    i--;
+                    lastSpawnAt = now;
+                    active++;
+                }
             }
         }
 

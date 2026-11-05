@@ -753,3 +753,33 @@ Reported: after three stunt doubles died, the training gave no way forward. Each
 ## 2026-11-04: No chalk marks during training
 
 Chalk-mark hints are hidden while the training reel runs (and while it is waiting to start), even with HINTS set to ALWAYS. The reel teaches one move at a time, and hints for other moves on top of it were confusing. They come back when the fight starts.
+
+## 2026-11-05: Fewer at once, and pick your fight
+
+Reported: fights felt overwhelming with many enemies arriving together, and there was no way to go after a chosen enemy (the armed one first, say).
+
+**Never more than five on screen**
+- A wave is now a queue at the doors. Only as many get their door warning as there are free places (`ActiveCap`); the rest wait outside.
+    - Floor 1 starts at 3 (wave 1), then 4, then 5.
+    - Later floors: 5.
+- If the room drops below 3, the next man comes straight in.
+- Arrivals are at least 0.45 s apart. Runners and stunt doubles do not count.
+- At most 2 attack at once (`AttackTokens.Max` 3 → 2).
+- Simulated (`spawn_sim.py`): never above the cap, about 3–4 on screen on average, waves of 14–34 s.
+
+**Target lock**
+- **Tap (or click) an enemy** to make him the target (`HeroController.Locked`). Red corner brackets go round him, with his health bar above.
+- Every strike or kick on his side goes to him (`PickTarget` prefers him within reach). Tapping the other side still fights there.
+- **T** on the keyboard cycles targets, the most dangerous first (`Enemy.Threat`: gun > sword > pipe > knives > fists).
+- The lock clears when he dies, runs or is far away.
+
+**The duel**
+- While you have a target, he may always come at you, but only one other may cut in (`AttackTokens`).
+- The other melee enemies circle 1.7 m wider and wait their turn. Ranged enemies keep their distance as before.
+- The fight plays as one-on-one with interruptions, like a film fight.
+
+**Reading the threats**
+- A small drawn weapon icon sits over every armed enemy: sword, pistol, knives or pipe. It turns red while he winds up.
+- New chalk hint: **TAP HIM: TARGET** over the most dangerous enemy while nobody is targeted. It retires after 3 locks.
+- The help card has a new row: TAP AN ENEMY.
+- New training lesson after the combo lesson: **TAP HIM**. There are two stunt doubles; the ghost finger taps the one behind you.

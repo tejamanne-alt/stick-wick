@@ -858,6 +858,7 @@ namespace ProjectInk
             }
             ComboTimer -= dt;
             if (ComboTimer <= 0f) ComboCount = 0;
+            UpdateLock();
             if (CinematicLock)
             {
                 if (!cineFrozen) Integrate(dt);
@@ -1086,6 +1087,7 @@ namespace ProjectInk
                 // swipe down: throw the weapon at someone ahead on this level, otherwise drop through the floor
                 case Command.ThrowWeapon: if (WantsThrow() || !TryDropThrough()) ThrowWeapon(); break;
                 case Command.Rampage: StartRampage(); break;
+                case Command.LockNext: LockNext(); break;
                 case Command.CycleStyle: SetStyle((FightStyle)(((int)Style + 1) % 5)); break;
                 case Command.StyleFists: SetStyle(FightStyle.Fists); break;
                 case Command.StyleSword: SetStyle(FightStyle.Sword); break;
@@ -1093,8 +1095,58 @@ namespace ProjectInk
             }
         }
 
+        // ------------------------------------------------------------------ target lock
+        /// <summary>The enemy the player picked (tap or click him; T on the keyboard). Every strike
+        /// on his side goes to him; the others hang back while the duel lasts.</summary>
+        public Enemy Locked { get; private set; }
+
+        public void LockOn(Enemy e)
+        {
+            if (e == null || !e.Alive || e.Fleeing) return;
+            bool changed = Locked != e;
+            Locked = e;
+            if (changed)
+            {
+                Sound.Play(Sfx.CineHit, 0.3f, null, 1.4f);
+                Tell("lock");
+            }
+        }
+
+        public void ClearLock() { Locked = null; }
+
+        /// <summary>Lock the next one along, the most dangerous first (the keyboard's T).</summary>
+        public void LockNext()
+        {
+            var list = new System.Collections.Generic.List<Enemy>();
+            foreach (var e in Enemy.All) if (e.Alive && !e.Fleeing && !e.Passive && Mathf.Abs(e.transform.position.x - transform.position.x) < 14f) list.Add(e);
+            foreach (var e in Enemy.All) if (e.Passive && e.Alive) list.Add(e);
+            if (list.Count == 0) { Locked = null; return; }
+            var p = transform.position;
+            list.Sort((a, b) =>
+            {
+                int t = b.Threat.CompareTo(a.Threat);
+                return t != 0 ? t : Vector3.Distance(a.transform.position, p).CompareTo(Vector3.Distance(b.transform.position, p));
+            });
+            int i = Locked != null ? list.IndexOf(Locked) : -1;
+            LockOn(list[(i + 1) % list.Count]);
+        }
+
+        void UpdateLock()
+        {
+            if (Locked == null) return;
+            if (!Locked.Alive || Locked.Fleeing || Mathf.Abs(Locked.transform.position.x - transform.position.x) > 16f) Locked = null;
+        }
+
         Enemy PickTarget(int side, float range, bool anyLevel = true)
         {
+            // the one he picked, if he is on that side and within reach
+            if (Locked != null && Locked.Targetable)
+            {
+                float ldx = Locked.transform.position.x - transform.position.x;
+                float ldy = Mathf.Abs(Locked.transform.position.y - transform.position.y);
+                if ((Mathf.Sign(ldx) == side || Mathf.Abs(ldx) < 0.3f) && Mathf.Abs(ldx) <= Mathf.Max(range, targetRange) && (anyLevel || ldy < 1.4f) && ldy < 2.2f)
+                    return Locked;
+            }
             Enemy best = null;
             float bestScore = float.MaxValue;
             foreach (var e in Enemy.All)

@@ -12,7 +12,7 @@ namespace ProjectInk
     {
         None, StrikeLeft, StrikeRight, JumpKick, DodgeLeft, DodgeRight, Restart, CycleStyle,
         StyleFists, StyleSword, StyleGun, ThrowWeapon, Rampage, StrikeForward, DodgeForward,
-        KickLeft, KickRight, KickForward
+        KickLeft, KickRight, KickForward, LockNext
     }
 
     public enum ControlScheme { Classic, TwoThumb }
@@ -146,11 +146,47 @@ namespace ProjectInk
                 // tap high = punch, tap low = kick
                 bool kick = start.y < Screen.height * kickLine;
                 int side = Classic ? (start.x < Screen.width * 0.5f ? -1 : 1) : SideOf(start);
+                // a tap on an enemy picks him: he is the target from now on, and this strike goes his way
+                var picked = EnemyAt(start);
+                if (picked != null && hero != null)
+                {
+                    var hc = hero.GetComponent<HeroController>();
+                    if (hc != null)
+                    {
+                        hc.LockOn(picked);
+                        side = picked.transform.position.x >= hero.position.x ? 1 : -1;
+                        kick = false;
+                    }
+                }
                 if (kick) return side < 0 ? Command.KickLeft : Command.KickRight;
                 return side < 0 ? Command.StrikeLeft : Command.StrikeRight;
             }
             if (Mathf.Abs(d.y) > Mathf.Abs(d.x)) return d.y > 0 ? Command.JumpKick : Command.ThrowWeapon;
             return d.x < 0 ? Command.DodgeLeft : Command.DodgeRight;
+        }
+
+        /// <summary>The enemy under a screen point (pixels), if any: his body, with a generous
+        /// margin for thumbs.</summary>
+        public static Enemy EnemyAt(Vector2 screen)
+        {
+            var cam = Camera.main;
+            if (cam == null) return null;
+            float pad = Screen.height * 0.035f;
+            Enemy best = null;
+            float bestD = float.MaxValue;
+            foreach (var e in Enemy.All)
+            {
+                if (!e.Alive || e.Fleeing || !e.Targetable) continue;
+                var feet = cam.WorldToScreenPoint(e.transform.position);
+                var head = cam.WorldToScreenPoint(e.transform.position + Vector3.up * 1.4f * e.transform.localScale.y);
+                if (feet.z <= 0f) continue;
+                float hgt = head.y - feet.y;
+                float half = Mathf.Max(hgt * 0.32f, Screen.height * 0.03f) + pad;
+                if (screen.x < feet.x - half || screen.x > feet.x + half || screen.y < feet.y - pad || screen.y > head.y + pad) continue;
+                float d = Mathf.Abs(screen.x - feet.x) + Mathf.Abs(screen.y - (feet.y + head.y) * 0.5f) * 0.5f;
+                if (d < bestD) { bestD = d; best = e; }
+            }
+            return best;
         }
 
         bool InStickZone(Vector2 p) => !Classic && p.x < Screen.width * stickZone;
@@ -281,6 +317,7 @@ namespace ProjectInk
                     if (kb.eKey.wasPressedThisFrame) Push(Command.Rampage);
                 }
                 if (kb.rKey.wasPressedThisFrame) Push(Command.Restart);
+                if (kb.tKey.wasPressedThisFrame) Push(Command.LockNext);
                 if (kb.tabKey.wasPressedThisFrame) Push(Command.CycleStyle);
                 if (kb.digit1Key.wasPressedThisFrame) Push(Command.StyleFists);
                 if (kb.digit2Key.wasPressedThisFrame) Push(Command.StyleSword);
@@ -333,6 +370,7 @@ namespace ProjectInk
                 if (Input.GetKeyDown(KeyCode.E)) Push(Command.Rampage);
             }
             if (Input.GetKeyDown(KeyCode.R)) Push(Command.Restart);
+            if (Input.GetKeyDown(KeyCode.T)) Push(Command.LockNext);
             if (Input.GetKeyDown(KeyCode.Tab)) Push(Command.CycleStyle);
             if (Input.GetKeyDown(KeyCode.Alpha1)) Push(Command.StyleFists);
             if (Input.GetKeyDown(KeyCode.Alpha2)) Push(Command.StyleSword);

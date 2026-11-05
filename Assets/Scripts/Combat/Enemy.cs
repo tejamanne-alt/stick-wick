@@ -89,6 +89,14 @@ namespace ProjectInk
             body.Play(IdleClip, 0.1f);
         }
         public bool Gunner => Type == EnemyType.Gunner;
+        /// <summary>How dangerous he is (for picking targets): guns, then blades, pipes, knives, fists.</summary>
+        public int Threat => Boss ? 6 : Type switch
+        {
+            EnemyType.Gunner => 5, EnemyType.Swordsman => 4, EnemyType.Piper => 3, EnemyType.Thrower => 2, _ => 1,
+        };
+        /// <summary>The hero is duelling someone else: the rest circle wider and wait their turn.</summary>
+        bool Sidelined => hero != null && hero.Locked != null && hero.Locked != this && !Ranged && !Boss;
+        float Ring => ringDistance + (Sidelined ? 1.7f : 0f);
         public bool Ranged => Type == EnemyType.Gunner || Type == EnemyType.Thrower;
         public bool Carried => state == State.Carried;
         public bool HoldingHero => state == State.Holding;
@@ -181,14 +189,14 @@ namespace ProjectInk
                     FaceTowards(hero.transform.position.x);
                     if (Boss && dist > 4f && dist < 13f && Time.time > nextSpecialAt && !hero.IsDead && Random.value < dt * 0.9f && AttackTokens.TryTake(this))
                     { HasToken = true; BeginCharge(dx); break; }
-                    if (dist > ringDistance + 0.3f) Walk(Mathf.Sign(dx));
-                    else if (dist < ringDistance - 0.7f) Walk(-Mathf.Sign(dx) * 0.6f);
+                    if (dist > Ring + 0.3f) Walk(Mathf.Sign(dx));
+                    else if (dist < Ring - 0.7f) Walk(-Mathf.Sign(dx) * 0.6f);
                     else GoWait();
                     break;
                 case State.Wait:
                     FaceTowards(hero.transform.position.x);
                     velocity.x = 0f;
-                    if (!sameLevel || Mathf.Abs(dist - ringDistance) > 1.0f) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
+                    if (!sameLevel || Mathf.Abs(dist - Ring) > 1.0f) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
                     else if (!Passive && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
                         HasToken = true;
@@ -227,7 +235,7 @@ namespace ProjectInk
                     break;
                 case State.Recover:
                     if (Boss && recoverFor > 0.6f) velocity.x = Mathf.MoveTowards(velocity.x, 0f, 14f * dt);   // a slow get-up: the opening
-                    else if (dist < ringDistance && !Ranged) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
+                    else if (dist < Ring && !Ranged) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
                     if (stateTime > recoverFor) { recoverFor = 0.5f; GoWait(); }
                     break;
                 case State.Hurt:
@@ -1350,13 +1358,26 @@ namespace ProjectInk
     /// <summary>Only a few enemies may attack at once; the rest circle, taunt and wait.</summary>
     public static class AttackTokens
     {
-        public static int Max = 3;
+        /// <summary>At most two attack at once. While the hero duels a picked target, that one
+        /// may always come at him and only one other may cut in.</summary>
+        public static int Max = 2;
         static readonly HashSet<Enemy> holders = new HashSet<Enemy>();
+        public static HeroController Hero;
 
         public static bool TryTake(Enemy e)
         {
             holders.RemoveWhere(h => h == null || !h.Alive);
             if (holders.Contains(e)) return true;
+            var locked = Hero != null ? Hero.Locked : null;
+            if (locked != null)
+            {
+                if (e == locked) { holders.Add(e); return true; }
+                int others = 0;
+                foreach (var h in holders) if (h != locked) others++;
+                if (others >= 1) return false;
+                holders.Add(e);
+                return true;
+            }
             if (holders.Count >= Max) return false;
             holders.Add(e);
             return true;

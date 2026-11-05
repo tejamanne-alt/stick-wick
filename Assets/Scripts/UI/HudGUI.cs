@@ -124,6 +124,7 @@ namespace ProjectInk
             DrawStick();
             PunchKickZones(w, h);
             if (hero != null) HeroPanel(w);
+            TargetMarks();
             if (director != null) DirectorPanel(w, h);
             if (bd != null) BossBar(bd, w);
             GuideLayer(w, h);
@@ -1097,6 +1098,13 @@ namespace ProjectInk
                 case Gesture.SwipeDown: a = new Vector2(w * 0.78f, h * 0.34f); b = a + new Vector2(0f, 170f); break;
                 case Gesture.SwipeSide: a = new Vector2(w * 0.64f, h * 0.5f); b = a + new Vector2(200f, 0f); break;
                 case Gesture.TapRampage: a = b = RampageButtonCentre(w, h); break;
+                case Gesture.TapEnemy:
+                {
+                    var ft = tutor != null ? tutor.FingerTarget : null;
+                    var sp = ft.HasValue && Camera.main != null ? Camera.main.WorldToScreenPoint(ft.Value) : new Vector3(Screen.width * 0.3f, Screen.height * 0.5f, 1f);
+                    a = b = new Vector2(sp.x / scale, (Screen.height - sp.y) / scale);
+                    break;
+                }
                 default: a = new Vector2(w * 0.66f, h * 0.48f); b = new Vector2(w * 0.80f, h * 0.48f); break;   // two fingers
             }
             var old = GUI.color;
@@ -1269,10 +1277,11 @@ namespace ProjectInk
                 { "SWIPE SIDEWAYS", "Dodge · vault · slide kick · wall flip" },
                 { "RAMPAGE", "A rare power for when you're in trouble: the round button appears (or two fingers / Space when charged)" },
                 { "WALK OVER", "Pick up a dropped weapon (sword, pipe, gun, knives): your taps use it" },
+                { "TAP AN ENEMY", "Target him: your strikes go to him, the rest hang back (click him, or T, on a keyboard)" },
             };
             var k1 = new GUIStyle(gTitle) { fontSize = 28, alignment = TextAnchor.MiddleRight };
             var k2 = new GUIStyle(gLine) { fontSize = 21, alignment = TextAnchor.MiddleLeft };
-            float rowH = Mathf.Min(42f, (panel.height - 190f) / 8f);
+            float rowH = Mathf.Min(42f, (panel.height - 190f) / rows.GetLength(0));
             float y = panel.y + 66;
             for (int i = 0; i < rows.GetLength(0); i++)
             {
@@ -1304,6 +1313,83 @@ namespace ProjectInk
                 }
                 else GestureInput.LastButtonTap = null;     // a tap anywhere else on the card does nothing
             }
+        }
+
+        // ================================================================== targets
+        // Over every armed enemy, a small white icon of his weapon, so the danger reads at a glance.
+        // On the one the player picked: red corner brackets round his body and his health above.
+
+        void TargetMarks()
+        {
+            var cam = Camera.main;
+            if (cam == null || hero == null) return;
+            var locked = hero.Locked;
+            foreach (var e in Enemy.All)
+            {
+                if (!e.Alive || e.Fleeing || e.Boss) continue;
+                var f = cam.WorldToScreenPoint(e.transform.position);
+                if (f.z <= 0f) continue;
+                var hd = cam.WorldToScreenPoint(e.transform.position + Vector3.up * 1.4f * e.transform.localScale.y);
+                float fx = f.x / scale, fy = (Screen.height - f.y) / scale, hy = (Screen.height - hd.y) / scale;
+                float bodyH = Mathf.Max(20f, fy - hy);
+                bool isLocked = e == locked;
+                float iconY = hy - 16f;
+                if (!e.Passive && e.Type != EnemyType.Brawler) WeaponIcon(e.Type, fx, iconY, isLocked ? 1f : 0.8f, e.Telegraphing);
+                if (!isLocked) continue;
+                float pulse = 0.75f + 0.25f * Mathf.Sin(Time.unscaledTime * 7f);
+                var c = new Color(1f, 0.22f, 0.16f, 0.95f * pulse);
+                float half = Mathf.Max(bodyH * 0.42f, 22f), top = hy - 6f, bot = fy + 6f;
+                Brackets(new Rect(fx - half, top, half * 2f, bot - top), 12f, 3f, c);
+                // his health, above the icon
+                float bw = 60f, by = iconY - (e.Type != EnemyType.Brawler && !e.Passive ? 22f : 6f);
+                float hp = Mathf.Clamp01(e.Health / Mathf.Max(1f, e.maxHealth));
+                Fill(new Rect(fx - bw * 0.5f - 1, by - 1, bw + 2, 7), new Color(0f, 0f, 0f, 0.6f));
+                Fill(new Rect(fx - bw * 0.5f, by, bw * hp, 5), new Color(0.9f, 0.12f, 0.1f, 0.95f));
+            }
+        }
+
+        void Brackets(Rect r, float len, float th, Color c)
+        {
+            Fill(new Rect(r.x, r.y, len, th), c); Fill(new Rect(r.x, r.y, th, len), c);
+            Fill(new Rect(r.xMax - len, r.y, len, th), c); Fill(new Rect(r.xMax - th, r.y, th, len), c);
+            Fill(new Rect(r.x, r.yMax - th, len, th), c); Fill(new Rect(r.x, r.yMax - len, th, len), c);
+            Fill(new Rect(r.xMax - len, r.yMax - th, len, th), c); Fill(new Rect(r.xMax - th, r.yMax - len, th, len), c);
+        }
+
+        /// <summary>A tiny drawn weapon: sword, pistol, throwing knife or pipe (red while he winds up).</summary>
+        void WeaponIcon(EnemyType type, float cx, float cy, float a, bool hot)
+        {
+            var col = hot ? new Color(1f, 0.3f, 0.22f, a) : new Color(1f, 1f, 1f, a);
+            Fill(new Rect(cx - 17f, cy - 11f, 34f, 22f), new Color(0f, 0f, 0f, 0.42f * a));
+            var m = GUI.matrix;
+            switch (type)
+            {
+                case EnemyType.Swordsman:
+                    GUIUtility.RotateAroundPivot(-40f, new Vector2(cx, cy) * scale);
+                    Fill(new Rect(cx - 13f, cy - 1.5f, 20f, 3f), col);           // blade
+                    Fill(new Rect(cx + 7f, cy - 5f, 2.5f, 10f), col);            // guard
+                    Fill(new Rect(cx + 9.5f, cy - 1.5f, 5f, 3f), col);           // grip
+                    break;
+                case EnemyType.Gunner:
+                    Fill(new Rect(cx - 11f, cy - 5f, 19f, 5f), col);             // slide and barrel
+                    GUIUtility.RotateAroundPivot(15f, new Vector2(cx + 5f, cy) * scale);
+                    Fill(new Rect(cx + 2f, cy - 1f, 5f, 9f), col);               // grip
+                    break;
+                case EnemyType.Thrower:
+                    GUIUtility.RotateAroundPivot(-30f, new Vector2(cx, cy) * scale);
+                    Fill(new Rect(cx - 10f, cy - 1.5f, 12f, 3f), col);
+                    Fill(new Rect(cx + 2f, cy - 2.5f, 7f, 5f), col);
+                    GUI.matrix = m;
+                    GUIUtility.RotateAroundPivot(30f, new Vector2(cx, cy + 4f) * scale);
+                    Fill(new Rect(cx - 10f, cy + 2.5f, 12f, 3f), new Color(col.r, col.g, col.b, col.a * 0.7f));
+                    break;
+                case EnemyType.Piper:
+                    GUIUtility.RotateAroundPivot(-30f, new Vector2(cx, cy) * scale);
+                    Fill(new Rect(cx - 12f, cy - 2.5f, 24f, 5f), col);
+                    Fill(new Rect(cx - 13f, cy - 4f, 4f, 8f), col);              // the joint at the end
+                    break;
+            }
+            GUI.matrix = m;
         }
 
         GUIStyle bossName, bossTag, bossSmall, bossDefeat;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ProjectInk
 {
-    public enum Gesture { None, TapHigh, TapLow, TapAgain, Hold, SwipeUp, SwipeDown, SwipeSide, TwoFingers, TapRampage }
+    public enum Gesture { None, TapHigh, TapLow, TapAgain, Hold, SwipeUp, SwipeDown, SwipeSide, TwoFingers, TapRampage, TapEnemy }
 
     /// <summary>THE TRAINING REEL. On the first launch, after the opening, the hero learns by
     /// doing, against grey stunt doubles who never hit back. Each lesson shows a ghost finger
@@ -30,6 +30,7 @@ namespace ProjectInk
             new Lesson { title = "TAP HIGH", line = "Punch. Tap high, on the side of the screen he is on.", gesture = Gesture.TapHigh, goal = 3, evt = "punch" },
             new Lesson { title = "TAP LOW", line = "Kick. Tap low, on his side.", gesture = Gesture.TapLow, goal = 2, evt = "kick" },
             new Lesson { title = "KEEP TAPPING", line = "Chain them: a full punch or kick combo.", gesture = Gesture.TapAgain, goal = 1, evt = "combo" },
+            new Lesson { title = "TAP HIM", line = "Pick your fight: tap an enemy to target him. Your strikes go to him; the rest wait.", gesture = Gesture.TapEnemy, goal = 1, evt = "lock" },
             new Lesson { title = "TAKE HIS WEAPON", line = "Enemies drop their weapons. Walk over one to pick it up.", gesture = Gesture.Hold, goal = 1, evt = "pickup", weapon = true },
             new Lesson { title = "TAP TO SWING", line = "A weapon changes your moves. Two swings.", gesture = Gesture.TapHigh, goal = 2, evt = "punch" },
             new Lesson { title = "SWIPE DOWN", line = "Throw it! It spins across the room and takes him down.", gesture = Gesture.SwipeDown, goal = 1, evt = "throw" },
@@ -180,6 +181,17 @@ namespace ProjectInk
             }
         }
 
+        /// <summary>Where the ghost finger taps in the TAP HIM lesson: the second stunt double.</summary>
+        public Vector3? FingerTarget
+        {
+            get
+            {
+                if (!Active || Current.gesture != Gesture.TapEnemy) return null;
+                for (int i = doubles.Count - 1; i >= 0; i--) if (doubles[i] != null) return doubles[i].Chest;
+                return null;
+            }
+        }
+
         /// <summary>Skip just this lesson (the SKIP MOVE button).</summary>
         public void SkipLesson()
         {
@@ -213,7 +225,8 @@ namespace ProjectInk
             switch (L.evt)
             {
                 case "punch": case "kick": case "combo": case "pickup": case "dodge": return new[] { f * 2.3f };
-                case "throw": return new[] { f * 5f };                       // across the room: a throw, not a swing
+                case "throw": return new[] { f * 5f };
+                case "lock": return new[] { f * 2.3f, -f * 2.6f };            // two of them: tap the one behind you                       // across the room: a throw, not a swing
                 case "rampage": return new[] { f * 2f, -f * 2.2f, f * 3.4f };
                 default: return new float[0];                              // moving lessons: a clear floor
             }

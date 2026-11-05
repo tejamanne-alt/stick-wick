@@ -51,7 +51,7 @@ namespace ProjectInk
             string id = what switch
             {
                 "climb" => "ledge", "grab" => "grab", "crate" => "crate", "dive" => "dive",
-                "dodge" => "dodge", "pickup" => "pickup", "throw" => "throw", _ => null,
+                "dodge" => "dodge", "pickup" => "pickup", "throw" => "throw", "lock" => "lock", _ => null,
             };
             if (id == null) return;
             PlayerPrefs.SetInt(Key(id), PlayerPrefs.GetInt(Key(id), 0) + 1);
@@ -61,7 +61,7 @@ namespace ProjectInk
         /// <summary>Bring every chalk mark back (the help card's REPLAY TRAINING).</summary>
         public static void ResetAll()
         {
-            foreach (var id in new[] { "ledge", "grab", "crate", "dive", "dodge", "pickup", "throw" }) PlayerPrefs.DeleteKey(Key(id));
+            foreach (var id in new[] { "ledge", "grab", "crate", "dive", "dodge", "pickup", "throw", "lock" }) PlayerPrefs.DeleteKey(Key(id));
             PlayerPrefs.Save();
         }
 
@@ -80,6 +80,16 @@ namespace ProjectInk
             all.Clear();
             var p = hero.transform.position;
             int myPlat = LevelNav.Active ? LevelNav.PlatformAt(p) : -1;
+
+            // an armed one in the fight and nobody picked: tap him to make him the target
+            if (hero.Locked == null && !Retired("lock"))
+            {
+                Enemy armed = null;
+                foreach (var e in Enemy.All)
+                    if (e.Alive && !e.Fleeing && !e.Boss && e.Threat >= 2 && Mathf.Abs(e.transform.position.x - p.x) < 9f &&
+                        (armed == null || e.Threat > armed.Threat)) armed = e;
+                if (armed != null) all.Add(new Hint { id = "lock", text = "TAP HIM: TARGET", gesture = Gesture.None, world = armed.Chest + Vector3.up * 1.35f });
+            }
 
             // a ledge to climb
             if (LevelNav.Active && hero.Grounded && !Retired("ledge"))
