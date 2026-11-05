@@ -27,7 +27,25 @@ namespace ProjectInk.EditorTools
 
         /// <summary>The main scene: the tower.</summary>
         [MenuItem("Stick Wick/Build Prototype Scene")]
-        public static void BuildScene() => Build(LayoutKind.Tower, ScenePath, true);
+        public static void BuildScene()
+        {
+            // scenes cannot be built in play mode: stop first, then build once the editor is back
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorApplication.isPlaying = false;
+                EditorApplication.playModeStateChanged += BuildAfterStop;
+                Debug.Log("[Stick Wick] Stopping play mode to build the scene…");
+                return;
+            }
+            Build(LayoutKind.Tower, ScenePath, true);
+        }
+
+        static void BuildAfterStop(PlayModeStateChange change)
+        {
+            if (change != PlayModeStateChange.EnteredEditMode) return;
+            EditorApplication.playModeStateChanged -= BuildAfterStop;
+            EditorApplication.delayCall += () => Build(LayoutKind.Tower, ScenePath, true);
+        }
 
         /// <summary>The backup: the classic hall, saved as its own scene (open it and press Play).</summary>
         [MenuItem("Stick Wick/Build Classic Hall (backup)")]

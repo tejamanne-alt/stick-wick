@@ -810,3 +810,4 @@ Reported: after switching to `story-mode` with "discard local changes", the game
     - A failed texture import gives a clear error instead of a null reference.
 - `HeroScarf.Reset(Vector3)` renamed to `ResetChain`, so it is not confused with Unity's `Reset()` message.
 - Also: `FirstOpenSetup` treated a missing scene as up to date once it had run in an editor session, so after the failed attempt it never retried. A missing scene or version file now always triggers a rebuild.
+- **Stick Wick → Build Prototype Scene** pressed during Play mode threw "This cannot be used during play mode". It now stops Play mode first and builds as soon as the editor is back in edit mode.
