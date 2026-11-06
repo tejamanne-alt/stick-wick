@@ -167,6 +167,7 @@ namespace ProjectInk
             }
             if (crackR != null) crackR.material.color = Color.Lerp(crackColor, Color.white, Mathf.Max(Time.unscaledTime < blueUntil ? 0.8f : 0f, crackGlow));
             if (phase != Phase.Cinematic || t < S5 || t >= S6) SearchCurtain(0f, 0f);
+            if (beads != null && (phase != Phase.Cinematic || t >= S3)) CrackWater(Vector3.zero, 0f, 0f, false);
             if (crackTopR != null) crackTopR.material.color = Time.unscaledTime < blueUntil ? Color.white : crackColor;
             if (Time.unscaledTime > glitchUntil && StoryCameraFX.Instance != null && StoryCameraFX.Instance.Glitch > 0f && !(phase == Phase.Cinematic && t > S4 + 5.15f && t < S4 + 5.65f))
                 StoryCameraFX.Set(StoryCameraFX.Instance.Blur, 0f);
@@ -270,6 +271,7 @@ namespace ProjectInk
                 fov = Mathf.Lerp(26f, 22f, k);
                 roll = Mathf.Lerp(0f, 12f, k);
                 PoseDrop(drop0, drop0R, hc, S1 + 0.2f, S1 + 1.4f, 9.8f, S2);
+                CrackWater(hc, S1 + 0.05f, S1 + 0.75f, true);
             }
             else if (t < S3)
             {
@@ -292,6 +294,7 @@ namespace ProjectInk
                 look = new Vector3(hc.x + 0.5f, RoofY, hc.z + 0.2f) + Sway(0.25f, 0.2f, 4f);
                 fov = 64f;
                 if (t < 10.2f) PoseDrop(drop1, drop1R, hc, 9.5f, 9.5f, 26.5f, 10.2f);
+                CrackWater(hc, 0f, 0f, true);                                       // still beading on the seam above him
                 float blur = t < 10.36f ? Mathf.Lerp(1f, 0.72f, Ease(S2, 10.2f, t)) : 0f;
                 StoryCameraFX.Set(blur, StoryCameraFX.Instance != null ? StoryCameraFX.Instance.Glitch : 0f);
             }
@@ -477,23 +480,94 @@ namespace ProjectInk
             if (d == null || r == null) return;
             r.enabled = t >= form && t < hide;
             if (!r.enabled) return;
+            // it hangs from the crack itself: on its jagged line, right at its underside
+            var a = CrackPoint(hc.z);
             float s = Mathf.Lerp(0.012f, 0.05f, Ease(form, release, t)) * 1.28f;
             Vector3 p;
             if (t < release)
             {
                 float wob = 1f + 0.05f * Mathf.Sin(t * 23f) * Ease(release - 0.5f, release, t);
-                p = new Vector3(hc.x, RoofY - 0.02f - s * 0.4f, hc.z);
+                p = new Vector3(a.x, a.y - s * 0.42f, a.z);
                 d.localScale = new Vector3(s * wob, s / wob, 1f);
             }
             else
             {
                 float u = t - release;
-                p = new Vector3(hc.x, RoofY - 0.05f - 0.5f * g * u * u, hc.z);
+                p = new Vector3(a.x, a.y - s * 0.42f - 0.5f * g * u * u, a.z);
                 float osc = 1f + 0.08f * Mathf.Sin(u * 60f) * Mathf.Exp(-u * 6f);     // it rings as it lets go
                 d.localScale = new Vector3(s * osc, s / osc, 1f);
             }
             d.position = p;
             if (cam != null) d.rotation = Quaternion.LookRotation(p - cam.transform.position, cam.transform.up);
+        }
+
+        Vector3[] crackLine;
+
+        /// <summary>The point on the roof crack's jagged centre line at depth z, at its underside
+        /// (world). Read from the crack's own mesh, so a drop on it is really on it.</summary>
+        Vector3 CrackPoint(float z)
+        {
+            if (crackLine == null)
+            {
+                var mf = crack != null ? crack.GetComponent<MeshFilter>() : null;
+                var v = mf != null && mf.sharedMesh != null && mf.sharedMesh.isReadable ? mf.sharedMesh.vertices : null;
+                if (v == null || v.Length < 4) return new Vector3(crack != null ? crack.position.x : home.x, RoofY - 0.03f, z);
+                crackLine = new Vector3[v.Length / 2];
+                for (int i = 0; i < crackLine.Length; i++) crackLine[i] = crack.TransformPoint((v[i * 2] + v[i * 2 + 1]) * 0.5f);
+            }
+            if (z <= crackLine[0].z) return crackLine[0];
+            for (int i = 1; i < crackLine.Length; i++)
+                if (z <= crackLine[i].z)
+                    return Vector3.Lerp(crackLine[i - 1], crackLine[i], Mathf.InverseLerp(crackLine[i - 1].z, crackLine[i].z, z));
+            return crackLine[crackLine.Length - 1];
+        }
+
+        Transform[] beads;
+        Renderer[] beadR;
+        static readonly float[] BeadZ = { -0.5f, 0.42f, 0.78f, 1.2f, 1.62f };
+        static readonly float[] BeadS = { 0.022f, 0.03f, 0.018f, 0.026f, 0.02f };
+
+        /// <summary>Water on the crack: small beads clinging along it, and one running down the seam
+        /// to where the drop gathers (from `form` to `merge`), feeding it.</summary>
+        void CrackWater(Vector3 hc, float form, float merge, bool show)
+        {
+            if (drop0 == null) return;
+            if (beads == null)
+            {
+                beads = new Transform[BeadZ.Length + 1];
+                beadR = new Renderer[beads.Length];
+                for (int i = 0; i < beads.Length; i++)
+                {
+                    beads[i] = Instantiate(drop0.gameObject, drop0.parent).transform;
+                    beads[i].name = "CrackBead" + i;
+                    beadR[i] = beads[i].GetComponent<Renderer>();
+                }
+            }
+            for (int i = 0; i < beads.Length; i++)
+            {
+                bool trickle = i == beads.Length - 1;
+                bool on = show && (!trickle || (t >= form && t < merge));
+                if (beadR[i] != null) beadR[i].enabled = on;
+                if (!on) continue;
+                float sz;
+                Vector3 p;
+                if (trickle)
+                {
+                    float k = Ease(form, merge, t);
+                    var a = CrackPoint(Mathf.Lerp(hc.z + 0.75f, hc.z, k));
+                    sz = Mathf.Lerp(0.024f, 0.012f, k) * 1.28f;
+                    p = a + Vector3.down * sz * 0.4f;
+                }
+                else
+                {
+                    var a = CrackPoint(hc.z + BeadZ[i] - 0.1f);
+                    sz = BeadS[i] * 1.28f * (1f + 0.04f * Mathf.Sin(Time.unscaledTime * 2f + i));
+                    p = a + Vector3.down * sz * 0.4f;
+                }
+                beads[i].position = p;
+                beads[i].localScale = new Vector3(sz, sz, 1f);
+                if (cam != null) beads[i].rotation = Quaternion.LookRotation(p - cam.transform.position, cam.transform.up);
+            }
         }
 
         void HandOff()

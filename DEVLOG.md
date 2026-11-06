@@ -1030,3 +1030,10 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - one small sharp highlight
   - a soft caustic at the bottom
 - Scene version 30.
+
+### The drop comes from the crack
+- The drop used to form at the head's position under the roof, which could be up to about 18 cm off the crack's jagged line, so it seemed to appear out of the dark.
+- It now hangs from the crack itself. `CrackPoint(z)` reads the crack's own mesh for its centre line at that depth, and both drops (shot 1's and the one that lands between his eyes in shot 2) form exactly on it, at its underside.
+- Water on the seam:
+  - five small beads cling along the crack (they stay through shot 2, while the camera still looks up)
+  - one bead runs down the seam to where the drop gathers as it begins to swell, feeding it
