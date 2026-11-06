@@ -8,8 +8,9 @@ namespace ProjectInk
     /// length into the puddle, in slow motion. On the ground, ears ringing, he hears them coming,
     /// laughing. Lightning: in the flash, a glint on the floor ahead, his knife. He drags himself
     /// to it through the water and his fingers close on the handle, and the past breaks in: four
-    /// and a half seconds of fights he does not remember, cut in a frame at a time (rooftops,
-    /// corridors, rain, glass, a red moon) over a racing heart. Thunder, then silence. He gets
+    /// and a half seconds of fights he does not remember, in black and white, the world and the
+    /// men as the fight mode draws them, cut in a frame at a time (rooftops, corridors, rain,
+    /// glass, a white moon) over a racing heart. Thunder, then silence. He gets
     /// up with the knife, turns to face them, and they stop. "My hands remember."
     ///
     /// Runs once; a retry after a defeat starts at the door with the knife already in his hand.</summary>
@@ -448,11 +449,11 @@ namespace ProjectInk
             float jx = CutLen[c] < 0.2f ? Random.Range(-7f, 7f) : Random.Range(-2f, 2f);
             float jy = CutLen[c] < 0.2f ? Random.Range(-5f, 5f) : Random.Range(-1.5f, 1.5f);
             var r = new Rect(w * 0.5f - rw * sc * 0.5f + jx, h * 0.5f - rh * sc * 0.5f + jy, rw * sc, rh * sc);
-            // a colour split at the edges
+            // a double image at the edges, as memory blurs (black and white: no colour comes back)
             float split = 3f + 6f * (1f - k);
-            GUI.color = new Color(1f, 0.25f, 0.25f, 0.5f);
+            GUI.color = new Color(0.55f, 0.55f, 0.55f, 0.5f);
             GUI.DrawTexture(new Rect(r.x + split, r.y, r.width, r.height), tex);
-            GUI.color = new Color(0.25f, 0.9f, 1f, 0.5f);
+            GUI.color = new Color(1f, 1f, 1f, 0.45f);
             GUI.DrawTexture(new Rect(r.x - split, r.y, r.width, r.height), tex);
             GUI.color = new Color(1f, 1f, 1f, 0.8f);
             GUI.DrawTexture(r, tex);

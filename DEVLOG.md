@@ -982,3 +982,12 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - Flashback stills: `tools/blender/render_flashbacks.py` renders 8 noir frames with the real rig and clip poses into `Resources/Story/Flash`. Preview: `docs/previews/flashbacks.png`.
 - New recorded SFX: chain, body splash, crawl, glint, knife grab (a real knife scrape) and flash cuts.
 - A retry skips the escape, with the knife already in hand. Scene version 29.
+
+### Flashbacks redone in the fight mode's look, black and white
+- The stills used shaded, glossy mannequins and colour, so they read as other characters.
+- They are now rendered flat and unlit, exactly as the game draws its fighters:
+  - the hero ink-black with his two white eyes (narrowed, as in story mode, and no wound: this is before)
+  - the men in flat greys taken from their fight-mode colours, darkened so they separate from the walls as their colours do in fight mode
+  - the game's white slash trails on the strikes
+- The world is the fight mode's grayscale: concrete panels with seams, dark steel, white trims, hanging lamps with soft cones, black windows with white city lights, a white moon.
+- Every frame is finished in pure greyscale, and the montage's colour split is now a grey double image. The cuts back to the present stay in colour.
