@@ -28,6 +28,11 @@ namespace ProjectInk
                 r.receiveShadows = false;
                 if (r is SkinnedMeshRenderer smr) smr.updateWhenOffscreen = true;
             }
+            // everything below (weapon mounts, trails, eyes) is measured in the rest pose; the
+            // model's default pose is whatever frame it was exported on, so put it there first
+            var restore = ToBindPose(instance);
+            var forward = Forward(player, moves);
+            ToBindPose(instance);
 
             if (hero && trailMaterial != null)
             {
@@ -49,7 +54,7 @@ namespace ProjectInk
             if (!hero && sword != null && Application.isPlaying) SwordFx.Attach(sword, trailMaterial, null, false);
             Fighter f = hero ? root.AddComponent<HeroController>() : (Fighter)root.AddComponent<Enemy>();
             f.body = player;
-            if (eyeMaterial != null) f.eyes = BuildEyes(player, eyeMaterial);
+            if (eyeMaterial != null) f.eyes = BuildEyes(player, eyeMaterial, forward);
             if (f is HeroController h)
             {
                 h.sword = sword;
@@ -62,8 +67,60 @@ namespace ProjectInk
                 h.weaponMaterial = material;
                 h.trailMaterial = trailMaterial;
             }
+            restore?.Invoke();
             root.SetActive(true);
             return root;
+        }
+
+        /// <summary>Which way the model faces (world, horizontal), measured exactly as
+        /// ClipPlayer.CalibrateFacing does at runtime: the knee against the hips at the hit of
+        /// the front kick. Leaves the model in that pose. +X if it cannot tell.</summary>
+        public static Vector3 Forward(ClipPlayer player, MoveSet moves)
+        {
+            var kick = moves != null ? moves.Get("front_kick") : null;
+            var hips = player.Bone("hips");
+            var knee = player.Bone("shin.R");
+            if (kick == null || kick.clip == null || hips == null || knee == null) return Vector3.right;
+            try { kick.clip.SampleAnimation(player.gameObject, kick.hitTime > 0 ? kick.hitTime : kick.Length * 0.4f); }
+            catch { return Vector3.right; }
+            var fwd = knee.position - hips.position;
+            fwd.y = 0f;
+            return fwd.sqrMagnitude < 1e-4f ? Vector3.right : fwd.normalized;
+        }
+
+        /// <summary>Put a model into its bind (rest) pose, from the skinned mesh's bind poses,
+        /// so measurements made on its bones do not depend on the frame it was exported on.
+        /// Returns how to put it back (null if there was nothing to do).</summary>
+        public static System.Action ToBindPose(GameObject model)
+        {
+            var smr = model.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            if (smr == null || smr.sharedMesh == null) return null;
+            Matrix4x4[] bind;
+            try { bind = smr.sharedMesh.bindposes; } catch { return null; }
+            var bones = smr.bones;
+            if (bind == null || bones == null || bind.Length != bones.Length) return null;
+            var order = new System.Collections.Generic.List<int>();
+            for (int i = 0; i < bones.Length; i++) if (bones[i] != null) order.Add(i);
+            int Depth(Transform t) { int d = 0; for (; t != null; t = t.parent) d++; return d; }
+            order.Sort((a, b) => Depth(bones[a]).CompareTo(Depth(bones[b])));
+            var savedP = new Vector3[bones.Length];
+            var savedR = new Quaternion[bones.Length];
+            foreach (int i in order) { savedP[i] = bones[i].localPosition; savedR[i] = bones[i].localRotation; }
+            var mesh = smr.transform.localToWorldMatrix;
+            foreach (int i in order)                                   // parents first
+            {
+                var w = mesh * bind[i].inverse;
+                bones[i].SetPositionAndRotation(w.GetColumn(3), w.rotation);
+            }
+            return () =>
+            {
+                for (int k = order.Count - 1; k >= 0; k--)
+                {
+                    int i = order[k];
+                    bones[i].localPosition = savedP[i];
+                    bones[i].localRotation = savedR[i];
+                }
+            };
         }
 
         /// <summary>A weapon mount on the right hand bone, its +Z pointing where the hand
@@ -161,8 +218,8 @@ namespace ProjectInk
 
         /// <summary>Two small white ovals on the head, one on each side, so whichever way the
         /// fighter faces the eye towards the camera shows (cute, and it blinks).
-        /// Measured in the rest pose: the head bone points up, the model faces +X.</summary>
-        static Transform[] BuildEyes(ClipPlayer player, Material mat)
+        /// Measured in the rest pose (the head bone points up), towards `fwd`.</summary>
+        static Transform[] BuildEyes(ClipPlayer player, Material mat, Vector3 fwd)
         {
             var head = player.Bone("head");
             if (head == null) return null;
@@ -175,7 +232,8 @@ namespace ProjectInk
                 e.name = "Eye" + i;
                 e.transform.SetParent(head, true);
                 // on the sphere's surface, towards the front of the face, one on each side
-                e.transform.position = center + new Vector3(0.84f, 0.17f, i == 0 ? 0.52f : -0.52f).normalized * 0.2f;
+                var side = Vector3.Cross(fwd, Vector3.up);
+                e.transform.position = center + (fwd * 0.84f + Vector3.up * 0.17f + side * (i == 0 ? 0.52f : -0.52f)).normalized * 0.2f;
                 e.transform.localScale = new Vector3(0.04f, 0.07f, 0.04f);
                 var r = e.GetComponent<Renderer>();
                 r.sharedMaterial = mat;

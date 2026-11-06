@@ -949,3 +949,7 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - **no broadband hiss anywhere:** noisy material is band-limited and darkened, and the electrical "static" is a buzz and glitch held below 6 kHz instead of white noise
   - the wind uses a smooth time-varying filter, so the old block clicks are gone
 - **The drop in shot 1** is now a clear water lens instead of an opaque ball, turned to the camera: almost transparent, a thin bright rim, the dark inner ring, a glint, and the roof crack refracted upside down inside it. It wobbles as it gathers and rings as it lets go. Scene version 25.
+
+### Floating eyes and scar fixed
+- The eyes and scar were floating off the head in story close-ups. Cause: they, the weapon mounts and the limb trails are placed by measuring the bones when the fighter is built, assuming the model is in its rest pose. But the model's default pose is whatever frame it was exported on. Since the story clips were added, that frame is a crouched story pose: the head sits 0.27 m forward and 0.29 m low.
+- `FighterFactory.ToBindPose` now puts the model into its true bind pose (from the skinned mesh's bind poses) for those measurements, then puts it back. Forward is measured the way `ClipPlayer.CalibrateFacing` does at runtime, instead of being assumed to be +X. The story scar uses the same rules. Scene version 26.

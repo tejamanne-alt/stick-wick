@@ -442,14 +442,19 @@ namespace ProjectInk.EditorTools
             var player = hero.GetComponentInChildren<ClipPlayer>(true);
             var head = player != null ? player.Bone("head") : null;
             if (head == null) return;
+            var restore = FighterFactory.ToBindPose(player.gameObject);       // measured in the rest pose, like the eyes
+            var fwd = FighterFactory.Forward(player, player.moves);
+            FighterFactory.ToBindPose(player.gameObject);
+            var side = Vector3.Cross(fwd, Vector3.up);
             var c = head.position + Vector3.up * 0.19f;
             for (int s = -1; s <= 1; s += 2)
             {
                 var pts = new[] { new Vector3(0.40f, 0.62f, 0.68f * s), new Vector3(0.20f, 0.58f, 0.79f * s), new Vector3(0.26f, 0.44f, 0.86f * s), new Vector3(0.04f, 0.40f, 0.92f * s) };
                 for (int i = 0; i < pts.Length - 1; i++)
                 {
-                    var a = c + pts[i].normalized * 0.213f;
-                    var b = c + pts[i + 1].normalized * 0.213f;
+                    Vector3 W(Vector3 v) => (fwd * v.x + Vector3.up * v.y + side * v.z).normalized;
+                    var a = c + W(pts[i]) * 0.213f;
+                    var b = c + W(pts[i + 1]) * 0.213f;
                     var g = Vis(GameObject.CreatePrimitive(PrimitiveType.Cube).transform);
                     g.name = "Scar";
                     g.position = (a + b) * 0.5f;
@@ -461,6 +466,7 @@ namespace ProjectInk.EditorTools
                     r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 }
             }
+            restore?.Invoke();
         }
 
         // ------------------------------------------------------------ textures
