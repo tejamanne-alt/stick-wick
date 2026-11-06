@@ -934,3 +934,9 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   Then the piano and **YOU'VE DONE THIS BEFORE.**
 - Moonbeams halved, so they never wash a fighter out. Scene version 24.
 - Storyboard on the real baked set: `docs/previews/story_storyboard.png`.
+
+### Puddle reveal, redone (story-mode)
+- Shot 3 is now a simulated puddle (`PuddleShot.cs`), not stacked 2D shapes. Detailed wet concrete with a darker wet halo, an irregular puddle with a meniscus, and a reflection at 2x resolution: the roof crack, the trusses, his head, eye slits and scar.
+- **One drop, one ripple.** The drop falls into the centre, with a crown of beads and a rebound column. A single wave packet spreads in slow motion, refracting the reflection and catching highlights, then dies away.
+- **The face surfaces as the water calms**, unreadable before the drop and fully clear by about 3.4. Then lightning at 3.8 blows the reflection white, with the thunder close behind. The push-up follows at 4.4.
+- Sound re-timed: breath, groan, a slowed plop as the drop lands, piano as the face emerges, then lightning and thunder.

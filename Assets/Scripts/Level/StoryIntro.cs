@@ -294,13 +294,13 @@ namespace ProjectInk
                     StoryCameraFX.Set(0f, 0f);
                     if (hero.body.Has("allfours")) hero.body.Play("allfours", 0.05f);
                 }
-                if (At(S3 + 0.15f)) Sound.Play(Sfx.Breath, 0.9f);
-                if (At(S3 + 0.6f)) Sound.Play(Sfx.HeroEffort, 0.9f, null, 0.72f);       // a groan
-                if (At(S3 + 0.9f)) Sound.Play(Sfx.Piano, 0.75f);                         // who is this?
-                if (At(S3 + 1.2f)) Lightning(1f, 0.65f, 0.25f);
-                if (At(S3 + 1.7f)) Sound.Play(Sfx.Drip, 0.9f, null, 0.8f);
-                if (At(S3 + 3.7f)) { Sound.Play(Sfx.Splash, 0.9f); Sound.Play(Sfx.Cloth, 0.8f); }
-                if (At(S3 + 4.1f)) Sound.Play(Sfx.Breath, 0.8f, null, 0.9f);
+                if (At(S3 + 0.1f)) Sound.Play(Sfx.Breath, 0.9f);
+                if (At(S3 + 0.25f)) Sound.Play(Sfx.HeroEffort, 0.7f, null, 0.72f);      // a groan
+                if (At(S3 + PuddleShot.DropAt)) Sound.Play(Sfx.Drip, 1f, null, 0.7f);    // plop, slowed down
+                if (At(S3 + 1.6f)) Sound.Play(Sfx.Piano, 0.75f);                         // a face, surfacing: who is this?
+                if (At(S3 + PuddleShot.FlashAt)) Lightning(1f, 0.8f, 0.1f);              // and the sky answers
+                if (At(S3 + 4.4f)) { Sound.Play(Sfx.Splash, 0.9f); Sound.Play(Sfx.Cloth, 0.8f); }
+                if (At(S3 + 4.6f)) Sound.Play(Sfx.Breath, 0.8f, null, 0.9f);
                 pos = hc + new Vector3(0f, 0.6f, -0.1f);
                 look = hc;
                 fov = 50f;
@@ -759,83 +759,70 @@ namespace ProjectInk
 
         // ---- shot 3: the puddle, his reflection
 
+        PuddleShot puddle;
+
+        /// <summary>Looking straight down into the water between his hands: a drop falls in, ONE ripple
+        /// spreads in slow motion and dies away, and as it calms his face surfaces; then the lightning.</summary>
         void Puddle(float w, float h, float u)
         {
+            if (puddle == null) puddle = new PuddleShot(Screen.width / (float)Screen.height);
+            if (Event.current.type == EventType.Repaint) puddle.Update(u);
             var old = GUI.color;
             var m0 = GUI.matrix;
-            float lift = Ease(3.9f, 4.8f, u);                                  // pushing up, away from the water
-            float sc = Mathf.Lerp(1f, 0.82f, lift);
+            float lift = Ease(4.4f, 4.8f, u);                                  // pushing up, away from the water
+            float sc = Mathf.Lerp(1f, 0.8f, lift);
             GUIUtility.ScaleAroundPivot(new Vector2(sc, sc), new Vector2(w * 0.5f, h * 0.5f) * scale);
-            GUI.color = new Color(0.10f, 0.105f, 0.12f);
-            GUI.DrawTextureWithTexCoords(new Rect(-w * 0.2f, -h * 0.2f, w * 1.4f, h * 1.4f), noise, new Rect(0, 0, w / 90f, h / 90f));
-            var P = new Vector2(w * 0.5f, h * 0.47f);
-            var R = new Vector2(w * 0.34f, h * 0.36f);
-            float flash = u >= 1.2f ? Mathf.Clamp01(1f - (u - 1.2f) / 0.6f) : 0f;
-            GUI.color = Color.Lerp(new Color(0.16f, 0.19f, 0.25f), new Color(0.48f, 0.54f, 0.66f), flash);
-            GUI.DrawTexture(new Rect(P.x - R.x * 1.15f, P.y - R.y * 1.15f, R.x * 2.3f, R.y * 2.3f), disc);
-            GUI.color = Color.Lerp(new Color(0.05f, 0.06f, 0.09f, 0.92f), new Color(0.30f, 0.34f, 0.44f, 0.92f), flash);
-            GUI.DrawTexture(new Rect(P.x - R.x * 0.95f, P.y - R.y * 0.95f, R.x * 1.9f, R.y * 1.9f), disc);
-            // the girders and the crack above, reflected
-            GUI.color = new Color(0f, 0f, 0f, 0.55f);
-            for (int i = -1; i <= 1; i++) GUI.DrawTexture(new Rect(P.x - R.x * 0.7f, P.y + i * R.y * 0.42f, R.x * 1.4f, 6f), Texture2D.whiteTexture);
-            GUI.color = new Color(0.7f, 0.8f, 1f, 0.25f + 0.7f * flash);
-            for (int i = 0; i < 4; i++) GUI.DrawTexture(new Rect(P.x - R.x * 0.55f + i * R.x * 0.28f, P.y - R.y * 0.62f + (i % 2) * 7f, R.x * 0.3f, 3f), Texture2D.whiteTexture);
-            // his face in the water, in the flash; a drop shatters it into slivers
-            float fa = u < 1.2f ? 0f : u < 1.75f ? 1f : Mathf.Clamp01(1f - (u - 1.75f) / 0.45f);
-            if (fa > 0.01f) Face(new Vector2(P.x, P.y - R.y * 0.05f), h * 0.17f, u, fa);
-            // ripples
-            Ripple(P, R.x * 0.9f, u, 0.1f, 0.5f);
-            Ripple(new Vector2(P.x, P.y - R.y * 0.05f), R.x * 1.1f, u, 1.7f, 0.9f);
-            Ripple(P + new Vector2(R.x * 0.3f, R.y * 0.2f), R.x * 0.6f, u, 2.8f, 0.4f);
-            Ripple(P - new Vector2(R.x * 0.35f, -R.y * 0.1f), R.x * 0.6f, u, 3.7f, 0.4f);
-            // his arms and palms, planted on the concrete, trembling
-            float j = Mathf.Sin(u * 41f) * 1.4f;
+            float fl = PuddleShot.Flash(u);
+            Fill(new Rect(-w * 0.2f, -h * 0.2f, w * 1.4f, h * 1.4f), Color.Lerp(new Color(0.07f, 0.072f, 0.08f), new Color(0.2f, 0.22f, 0.26f), fl));
+            GUI.color = Color.white;
+            GUI.DrawTexture(new Rect(0, 0, w, h), puddle.Concrete);
+            if (fl > 0f) Fill(new Rect(-w * 0.2f, -h * 0.2f, w * 1.4f, h * 1.4f), new Color(0.75f, 0.82f, 1f, 0.22f * fl));   // the concrete lit blue-white
+            GUI.color = Color.white;
+            GUI.DrawTexture(new Rect(0, 0, w, h), puddle.Water);
+            var C = new Vector2(w * 0.5f, h * 0.5f);
+            // the drop: a bright streak falling from the crack above, straight down into the centre
+            if (u >= 0.25f && u < PuddleShot.DropAt)
+            {
+                float k = Ease(0.25f, PuddleShot.DropAt, u);
+                float ds = Mathf.Lerp(3f, 11f, k * k);
+                var at = Vector2.Lerp(C + new Vector2(-w * 0.02f, -h * 0.08f), C, k * k);
+                GUI.color = new Color(0.8f, 0.86f, 1f, 0.35f + 0.5f * k);
+                GUI.DrawTexture(new Rect(at.x - ds, at.y - ds, ds * 2f, ds * 2f), disc);
+                GUI.color = new Color(1f, 1f, 1f, 0.7f * k);
+                GUI.DrawTexture(new Rect(at.x - ds * 0.3f, at.y - ds * 0.3f, ds * 0.6f, ds * 0.6f), disc);
+            }
+            // the crown: a few beads thrown up and out, falling back, in slow motion
+            if (u >= PuddleShot.DropAt && u < PuddleShot.DropAt + 0.55f)
+            {
+                float k = (u - PuddleShot.DropAt) / 0.55f;
+                for (int i = 0; i < 9; i++)
+                {
+                    float ang = i * 0.698f + 0.3f, rr = 14f + 44f * k * (0.8f + 0.25f * Mathf.Sin(i * 2.1f));
+                    float up = 46f * k * (1f - k) * (0.7f + 0.3f * Mathf.Cos(i * 1.7f));
+                    var bp = C + new Vector2(Mathf.Cos(ang) * rr, Mathf.Sin(ang) * rr * 0.55f - up);
+                    float bs = 3.2f * (1f - k * 0.6f);
+                    GUI.color = new Color(0.85f, 0.9f, 1f, 0.8f * (1f - k));
+                    GUI.DrawTexture(new Rect(bp.x - bs, bp.y - bs, bs * 2f, bs * 2f), disc);
+                }
+                // the rebound column (the Worthington jet), rising and sinking back
+                float jh = 34f * Mathf.Sin(Mathf.PI * Mathf.Clamp01(k * 1.6f));
+                if (jh > 1f)
+                {
+                    GUI.color = new Color(0.78f, 0.84f, 0.98f, 0.55f * (1f - k));
+                    GUI.DrawTexture(new Rect(C.x - 2.5f, C.y - jh, 5f, jh), Texture2D.whiteTexture);
+                    GUI.DrawTexture(new Rect(C.x - 4.5f, C.y - jh - 4.5f, 9f, 9f), disc);
+                }
+            }
+            // his arms and palms, planted either side of the water, trembling
+            float j = Mathf.Sin(u * 41f) * 1.2f;
             float drop = lift * h * 0.35f;
-            Arm(new Vector2(w * 0.10f, h + 60f), new Vector2(w * 0.24f + j, h * 0.80f + drop));
-            Arm(new Vector2(w * 0.90f, h + 60f), new Vector2(w * 0.76f - j, h * 0.82f + drop));
+            Arm(new Vector2(w * 0.06f, h + 60f), new Vector2(w * 0.17f + j, h * 0.84f + drop));
+            Arm(new Vector2(w * 0.94f, h + 60f), new Vector2(w * 0.83f - j, h * 0.86f + drop));
             GUI.matrix = m0;
-            GUI.color = new Color(0, 0, 0, 0.85f);
+            GUI.color = new Color(0, 0, 0, 0.8f * (1f - fl * 0.6f));
             GUI.DrawTexture(new Rect(-w * 0.05f, -h * 0.05f, w * 1.1f, h * 1.1f), vig);
+            if (fl > 0f) { GUI.color = new Color(0.8f, 0.86f, 1f, 0.18f * fl); GUI.DrawTexture(new Rect(0, 0, w, h), Texture2D.whiteTexture); }
             GUI.color = old;
-        }
-
-        void Face(Vector2 F, float fr, float u, float alpha)
-        {
-            float amp = 2f + 34f * Ease(1.7f, 2.15f, u);
-            int n = 16;
-            float top = F.y - fr * 1.15f, hgt = fr * 2.3f;
-            for (int i = 0; i < n; i++)
-            {
-                float y0 = top + hgt * i / n, sh = hgt / n + 1f;
-                float dx = Mathf.Sin(i * 0.9f + u * 14f) * amp;
-                GUI.BeginGroup(new Rect(0, y0, 4000f, sh));
-                float ox = dx, oy = -y0;
-                GUI.color = new Color(0.02f, 0.02f, 0.025f, alpha);
-                GUI.DrawTexture(new Rect(F.x - fr + ox, F.y - fr + oy, fr * 2f, fr * 2f), circle);
-                GUI.color = new Color(1f, 1f, 1f, alpha);
-                // stark white eye slits
-                GUI.DrawTexture(new Rect(F.x - fr * 0.56f + ox, F.y - fr * 0.08f + oy, fr * 0.34f, fr * 0.075f), Texture2D.whiteTexture);
-                GUI.DrawTexture(new Rect(F.x + fr * 0.22f + ox, F.y - fr * 0.08f + oy, fr * 0.34f, fr * 0.075f), Texture2D.whiteTexture);
-                // the jagged hairline fracture at the temple
-                GUI.DrawTexture(new Rect(F.x - fr * 0.70f + ox, F.y - fr * 0.62f + oy, fr * 0.13f, fr * 0.035f), Texture2D.whiteTexture);
-                GUI.DrawTexture(new Rect(F.x - fr * 0.60f + ox, F.y - fr * 0.55f + oy, fr * 0.035f, fr * 0.11f), Texture2D.whiteTexture);
-                GUI.DrawTexture(new Rect(F.x - fr * 0.60f + ox, F.y - fr * 0.45f + oy, fr * 0.12f, fr * 0.035f), Texture2D.whiteTexture);
-                GUI.DrawTexture(new Rect(F.x - fr * 0.50f + ox, F.y - fr * 0.45f + oy, fr * 0.035f, fr * 0.10f), Texture2D.whiteTexture);
-                GUI.EndGroup();
-            }
-        }
-
-        void Ripple(Vector2 c, float maxR, float u, float t0, float strength)
-        {
-            float k = (u - t0) / 1.6f;
-            if (k <= 0f || k >= 1f) return;
-            float r0 = maxR * Mathf.Sqrt(k);
-            for (int i = 0; i < 2; i++)
-            {
-                float rr = r0 * (1f - i * 0.28f);
-                GUI.color = new Color(0.75f, 0.82f, 0.95f, strength * (1f - k) * (i == 0 ? 0.6f : 0.35f));
-                GUI.DrawTexture(new Rect(c.x - rr, c.y - rr * 0.82f, rr * 2f, rr * 1.64f), ring);
-            }
         }
 
         void Arm(Vector2 from, Vector2 palm)
