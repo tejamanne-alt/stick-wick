@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEngine;
 
 namespace ProjectInk.EditorTools
@@ -93,117 +94,76 @@ namespace ProjectInk.EditorTools
             return go.transform;
         }
 
+        public const string SetPath = "Assets/Art/Story/StorySet.fbx";
+
         public static void Build(Transform room, Material ground, Transform spawnRoot, Transform[] points, out Vector3 heroStart)
         {
-            // ------------------------------------------------------------ materials
-            var wallTex = EnvironmentBuilder.SaveTex("StoryCorrugated", CorrugatedTexture(256, new Color(0.33f, 0.36f, 0.41f), 3));
-            var shutterTex = EnvironmentBuilder.SaveTex("StoryShutter", ShutterTexture(128, new Color(0.27f, 0.28f, 0.30f)));
-            var skylineTex = EnvironmentBuilder.SaveTex("StorySkyline", EnvironmentBuilder.SkylineTexture(1024, 512, 17), TextureWrapMode.Clamp);
-            var glowTex = EnvironmentBuilder.SaveTex("StoryGlow", EnvironmentBuilder.GlowTexture(128), TextureWrapMode.Clamp);
-            var wallMat = EnvironmentBuilder.TexMat("StoryWall", "Unlit/Texture", wallTex, new Vector2(HalfW * 2f / 3.2f, RoofY / 3.2f));
-            var sideMat = EnvironmentBuilder.TexMat("StoryWallSide", "Unlit/Texture", wallTex, new Vector2(1.2f, RoofY / 3.2f));
-            var shutterMat = EnvironmentBuilder.TexMat("StoryShutterMat", "Unlit/Texture", shutterTex, new Vector2(1f, 1f));
-            var sprite = PrototypeBuilder.Mat("StoryVertex", "Sprites/Default", Color.white);
-            var glow = EnvironmentBuilder.TexMat("StoryGlowMat", "Legacy Shaders/Particles/Additive", glowTex, Vector2.one, new Color(0.55f, 0.36f, 0.16f, 0.5f));
-            var neonGlow = EnvironmentBuilder.TexMat("StoryNeonGlow", "Legacy Shaders/Particles/Additive", glowTex, Vector2.one, new Color(0.40f, 0.16f, 0.45f, 0.5f));
-            var puddleMat = EnvironmentBuilder.TexMat("StoryPuddle", "Sprites/Default", glowTex, Vector2.one, new Color(0.30f, 0.35f, 0.45f, 0.55f));
-            var skyline = EnvironmentBuilder.TexMat("StorySkylineMat", "Sprites/Default", skylineTex, Vector2.one, new Color(0.10f, 0.08f, 0.14f, 1f));
-            var skylineFar = EnvironmentBuilder.TexMat("StorySkylineFar", "Sprites/Default", skylineTex, new Vector2(1.6f, 1f), new Color(0.16f, 0.10f, 0.20f, 1f));
-            var roofMat = PrototypeBuilder.Mat("StoryRoof", "Unlit/Color", new Color(0.10f, 0.10f, 0.11f));
-            var steel = PrototypeBuilder.Mat("StorySteel", "Unlit/Color", new Color(0.06f, 0.065f, 0.075f));
-            var machine = PrototypeBuilder.Mat("StoryMachine", "Unlit/Color", new Color(0.12f, 0.13f, 0.15f));
-            var machineDark = PrototypeBuilder.Mat("StoryMachineDark", "Unlit/Color", new Color(0.08f, 0.085f, 0.095f));
-            var rust = PrototypeBuilder.Mat("StoryRust", "Unlit/Color", new Color(0.20f, 0.10f, 0.06f));
-            var floorMat = PrototypeBuilder.Mat("StoryFloor", "Unlit/Color", new Color(0.115f, 0.12f, 0.135f));
-            var yardMat = PrototypeBuilder.Mat("StoryYard", "Unlit/Color", new Color(0.035f, 0.04f, 0.05f));
-            var crackMat = PrototypeBuilder.Mat("StoryCrack", "Unlit/Color", new Color(0.55f, 0.65f, 0.85f));
-            var moonMat = PrototypeBuilder.Mat("StoryMoonGap", "Unlit/Color", new Color(0.72f, 0.80f, 0.95f));
-            var outsideMat = PrototypeBuilder.Mat("StoryOutside", "Unlit/Color", new Color(0.08f, 0.10f, 0.16f));
-            var dropMat = PrototypeBuilder.Mat("StoryDroplet", "Unlit/Color", new Color(0.78f, 0.86f, 0.98f));
-            Material[] containerMats =
-            {
-                PrototypeBuilder.Mat("StoryBoxRust", "Unlit/Color", new Color(0.20f, 0.07f, 0.06f)),
-                PrototypeBuilder.Mat("StoryBoxTeal", "Unlit/Color", new Color(0.05f, 0.14f, 0.15f)),
-                PrototypeBuilder.Mat("StoryBoxOchre", "Unlit/Color", new Color(0.17f, 0.12f, 0.05f)),
-                PrototypeBuilder.Mat("StoryBoxGrey", "Unlit/Color", new Color(0.11f, 0.11f, 0.13f)),
-                PrototypeBuilder.Mat("StoryBoxBlue", "Unlit/Color", new Color(0.06f, 0.08f, 0.16f)),
-            };
-
+            // ------------------------------------------------------------ the modelled, baked set (tools/blender/build_story_set.py)
             var env = new GameObject("Warehouse").transform;
             env.SetParent(room, false);
-
-            // ------------------------------------------------------------ the floor (the only collider besides the ground)
-            PrototypeBuilder.Box(room, "Ground", new Vector3(0, -2f, 10f), new Vector3(160, 4, 160), yardMat);
-            VBox(env, "ShedFloor", new Vector3(0, -0.005f, 0.9f), new Vector3(HalfW * 2f, 0.01f, 3.8f), floorMat);
-
-            // ------------------------------------------------------------ the shed
-            float doorL = ShutterX - 1.6f, doorR = ShutterX + 1.6f, doorH = 3.6f;
-            VBox(env, "BackWallLeft", new Vector3((-HalfW - 0.2f + doorL) * 0.5f, RoofY * 0.5f, BackZ + 0.15f), new Vector3(doorL + HalfW + 0.2f, RoofY, 0.3f), wallMat);
-            VBox(env, "BackWallRight", new Vector3((doorR + HalfW + 0.2f) * 0.5f, RoofY * 0.5f, BackZ + 0.15f), new Vector3(HalfW + 0.2f - doorR, RoofY, 0.3f), sideMat);
-            VBox(env, "BackWallOverDoor", new Vector3(ShutterX, (doorH + RoofY) * 0.5f, BackZ + 0.15f), new Vector3(doorR - doorL, RoofY - doorH, 0.3f), sideMat);
-            VBox(env, "WallLeft", new Vector3(-HalfW - 0.2f, RoofY * 0.5f, 1.0f), new Vector3(0.4f, RoofY, 3.8f), sideMat);
-            VBox(env, "WallRight", new Vector3(HalfW + 0.2f, RoofY * 0.5f, 1.0f), new Vector3(0.4f, RoofY, 3.8f), sideMat);
-            VBox(env, "Roof", new Vector3(0, RoofY + 0.15f, 1.0f), new Vector3(HalfW * 2f + 0.8f, 0.3f, 4.0f), roofMat);
-            // the crack: a seam of storm light under the roof over where he lies, and on the roof top
-            Crack(env, "RoofCrack", HeroStartX - 0.6f, RoofY - 0.005f, -0.7f, 1.9f, 0.035f, crackMat, 5);
-            Crack(env, "RoofCrackTop", HeroStartX - 0.6f, RoofY + 0.305f, -0.7f, 1.9f, 0.06f, crackMat, 5);
-            // girders across the depth, two long beams, columns on the back wall
-            for (float x = -HalfW + 1.2f; x < HalfW; x += 3.4f)
-                VBox(env, "Girder", new Vector3(x, RoofY - 0.32f, 1.0f), new Vector3(0.16f, 0.42f, 3.9f), steel);
-            VBox(env, "BeamFront", new Vector3(0, RoofY - 0.62f, 0.2f), new Vector3(HalfW * 2f, 0.2f, 0.14f), steel);
-            VBox(env, "BeamBack", new Vector3(0, RoofY - 0.62f, 2.2f), new Vector3(HalfW * 2f, 0.2f, 0.14f), steel);
-            for (float x = -HalfW + 3.5f; x < HalfW - 2f; x += 7f)
-                if (Mathf.Abs(x - ShutterX) > 2.2f) VBox(env, "Column", new Vector3(x, RoofY * 0.5f, BackZ - 0.12f), new Vector3(0.28f, RoofY, 0.24f), steel);
-            // chains hanging from the front beam, with hooks
-            foreach (var cx in new[] { -3.2f, 2.6f, 7.4f })
+            AssetDatabase.ImportAsset(SetPath, ImportAssetOptions.ForceUpdate);
+            var setModel = AssetDatabase.LoadAssetAtPath<GameObject>(SetPath);
+            if (setModel == null) throw new BuildFailedException("StorySet.fbx missing - run tools/blender/build_story_set.py");
+            var set = (GameObject)Object.Instantiate(setModel, room);
+            set.name = "StorySet";
+            AlignAxes(set.transform);
+            var shaftTex = EnvironmentBuilder.SaveTex("StoryShaft", ShaftTexture(64, 256), TextureWrapMode.Clamp);
+            var shaftMat = EnvironmentBuilder.TexMat("StoryShaftMat", "Legacy Shaders/Particles/Additive", shaftTex, Vector2.one, new Color(0.30f, 0.38f, 0.58f, 0.5f));
+            Transform fan = null;
+            foreach (var r in set.GetComponentsInChildren<Renderer>(true))
             {
-                float len = 1.6f + Mathf.Abs(cx) * 0.06f;
-                VBox(env, "Chain", new Vector3(cx, RoofY - 0.72f - len * 0.5f, 0.2f), new Vector3(0.035f, len, 0.035f), steel);
-                VBox(env, "Hook", new Vector3(cx + 0.06f, RoofY - 0.78f - len, 0.2f), new Vector3(0.16f, 0.06f, 0.05f), steel);
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                r.receiveShadows = false;
+                string n = r.gameObject.name;
+                Material m;
+                if (n.StartsWith("Shafts")) m = shaftMat;
+                else
+                {
+                    var tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/Story/Story_{n}.png");
+                    m = EnvironmentBuilder.TexMat("StorySet_" + n, "Unlit/Texture", tex, Vector2.one);
+                }
+                var mats = new Material[r.sharedMaterials.Length];
+                for (int i = 0; i < mats.Length; i++) mats[i] = m;
+                r.sharedMaterials = mats;
+                if (n == "Fan") fan = r.transform;
             }
-            // dead machinery against the back wall, and scrap
-            VBox(env, "PressBase", new Vector3(-1.4f, 0.55f, 1.95f), new Vector3(2.4f, 1.1f, 1.0f), machine);
-            VBox(env, "PressColumnL", new Vector3(-2.35f, 2.0f, 1.95f), new Vector3(0.35f, 2.0f, 0.6f), machineDark);
-            VBox(env, "PressColumnR", new Vector3(-0.45f, 2.0f, 1.95f), new Vector3(0.35f, 2.0f, 0.6f), machineDark);
-            VBox(env, "PressHead", new Vector3(-1.4f, 3.15f, 1.95f), new Vector3(2.5f, 0.7f, 0.9f), machine);
-            VBox(env, "LatheBed", new Vector3(5.2f, 0.55f, 2.0f), new Vector3(3.4f, 0.35f, 0.7f), machine);
-            VBox(env, "LatheLegs", new Vector3(5.2f, 0.2f, 2.0f), new Vector3(3.0f, 0.4f, 0.5f), machineDark);
-            VBox(env, "LatheHead", new Vector3(3.8f, 0.95f, 2.0f), new Vector3(0.8f, 0.6f, 0.7f), machineDark);
-            VBox(env, "Bench", new Vector3(-5.6f, 0.45f, 2.1f), new Vector3(2.2f, 0.08f, 0.7f), rust);
-            VBox(env, "BenchLegs", new Vector3(-5.6f, 0.21f, 2.1f), new Vector3(2.0f, 0.42f, 0.5f), machineDark);
-            var rnd = new System.Random(11);
-            for (int i = 0; i < 9; i++)
+            foreach (var c in set.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c);
+            if (fan != null)
             {
-                var size = new Vector3(0.5f + (float)rnd.NextDouble() * 1.2f, 0.25f + (float)rnd.NextDouble() * 0.7f, 0.4f + (float)rnd.NextDouble() * 0.6f);
-                var t = VBox(env, "Scrap", new Vector3(-12.2f + (float)rnd.NextDouble() * 2.6f, size.y * 0.5f + (float)rnd.NextDouble() * 0.5f, 1.9f + (float)rnd.NextDouble() * 0.5f), size, i % 3 == 0 ? rust : machineDark);
-                t.rotation = Quaternion.Euler((float)rnd.NextDouble() * 30f - 15f, (float)rnd.NextDouble() * 60f - 30f, (float)rnd.NextDouble() * 40f - 20f);
-            }
-            foreach (var bx in new[] { 8.4f, 9.1f, 8.75f })
-            {
-                var b = Vis(GameObject.CreatePrimitive(PrimitiveType.Cylinder).transform);
-                b.name = "Barrel"; b.SetParent(env, false);
-                b.position = new Vector3(bx, bx == 8.75f ? 1.32f : 0.45f, 2.15f);
-                b.localScale = new Vector3(0.58f, 0.45f, 0.58f);
-                b.GetComponent<Renderer>().sharedMaterial = rust;
+                // the blades turn about the wall's normal (world z), round their own centre
+                var pivot = new GameObject("FanPivot").transform;
+                pivot.SetParent(set.transform, true);
+                pivot.position = fan.GetComponent<Renderer>().bounds.center;
+                pivot.rotation = Quaternion.identity;
+                fan.SetParent(pivot, true);
+                pivot.gameObject.AddComponent<Spin>().degreesPerSecond = 70f;
             }
 
-            // ------------------------------------------------------------ the shutter, and the light under it
-            var shutter = VBox(env, "Shutter", new Vector3(ShutterX, doorH * 0.5f + 0.06f, BackZ + 0.14f), new Vector3(doorR - doorL, doorH - 0.12f, 0.06f), shutterMat);
-            VBox(env, "ShutterHousing", new Vector3(ShutterX, doorH + 0.2f, BackZ - 0.05f), new Vector3(doorR - doorL + 0.4f, 0.4f, 0.3f), steel);
-            VBox(env, "MoonGap", new Vector3(ShutterX, 0.05f, BackZ + 0.02f), new Vector3(doorR - doorL - 0.1f, 0.1f, 0.02f), moonMat);
-            VBox(env, "Outside", new Vector3(ShutterX, doorH * 0.5f, BackZ + 1.2f), new Vector3(doorR - doorL + 0.6f, doorH + 0.2f, 0.05f), outsideMat);
-            var moon = new Color(0.62f, 0.70f, 0.88f, 0.5f); var moon0 = new Color(0.62f, 0.70f, 0.88f, 0f);
+            // ------------------------------------------------------------ what the scene animates, and the invisible floor
+            var floor = PrototypeBuilder.Box(room, "Ground", new Vector3(0, -2f, 10f), new Vector3(160, 4, 160), ground);
+            floor.GetComponent<Renderer>().enabled = false;                 // the baked slab and yard are the visible floor
+            var sprite = PrototypeBuilder.Mat("StoryVertex", "Sprites/Default", Color.white);
+            var crackMat = PrototypeBuilder.Mat("StoryCrack", "Unlit/Color", new Color(0.55f, 0.65f, 0.85f));
+            var moonMat = PrototypeBuilder.Mat("StoryMoonGap", "Unlit/Color", new Color(0.72f, 0.80f, 0.95f));
+            var dropMat = PrototypeBuilder.Mat("StoryDroplet", "Unlit/Color", new Color(0.78f, 0.86f, 0.98f));
+            var glowTex = EnvironmentBuilder.SaveTex("StoryGlow", EnvironmentBuilder.GlowTexture(128), TextureWrapMode.Clamp);
+            var puddleMat = EnvironmentBuilder.TexMat("StoryPuddle", "Sprites/Default", glowTex, Vector2.one, new Color(0.30f, 0.36f, 0.48f, 0.45f));
+            // the storm seam in the roof (it flares with the lightning), under and on top
+            Crack(env, "RoofCrack", HeroStartX - 0.6f, RoofY - 0.03f, -0.7f, 1.9f, 0.035f, crackMat, 5);
+            Crack(env, "RoofCrackTop", HeroStartX - 0.6f, RoofY + 0.36f, -0.7f, 1.9f, 0.06f, crackMat, 5);
+            float doorL = ShutterX - 1.6f, doorR = ShutterX + 1.6f;
+            VBox(env, "MoonGap", new Vector3(ShutterX, 0.05f, BackZ + 0.1f), new Vector3(doorR - doorL - 0.12f, 0.08f, 0.02f), moonMat);
+            var moon = new Color(0.62f, 0.70f, 0.88f, 0.42f); var moon0 = new Color(0.62f, 0.70f, 0.88f, 0f);
             FloorQuad(env, "MoonSlit", new[] {
                 new Vector3(doorL + 0.1f, 0.006f, BackZ), new Vector3(doorR - 0.1f, 0.006f, BackZ),
                 new Vector3(doorL - 0.6f, 0.006f, -0.6f), new Vector3(doorR + 0.4f, 0.006f, -0.6f) },
                 new[] { moon, moon, moon0, moon0 }, sprite);
-            var flood = new Color(0.62f, 0.70f, 0.88f, 0.42f);
+            var flood = new Color(0.62f, 0.70f, 0.88f, 0.38f);
             var floodQuad = FloorQuad(env, "MoonFlood", new[] {
                 new Vector3(doorL, 0.007f, BackZ), new Vector3(doorR, 0.007f, BackZ),
                 new Vector3(doorL - 3.2f, 0.007f, -1.4f), new Vector3(doorR + 1.0f, 0.007f, -1.4f) },
                 new[] { flood, flood, moon0, moon0 }, sprite);
             floodQuad.GetComponent<Renderer>().enabled = false;
-            // two shadows that will cross the slit (feet outside the door)
             var shade = new Color(0f, 0f, 0f, 0.75f); var shade0 = new Color(0f, 0f, 0f, 0f);
             for (int i = 0; i < 2; i++)
             {
@@ -214,22 +174,12 @@ namespace ProjectInk.EditorTools
                 q.position = new Vector3(doorL - 2f, 0f, 0f);
                 q.GetComponent<Renderer>().enabled = false;
             }
-
-            // ------------------------------------------------------------ puddles and long shadows on the floor
+            // a wet sheen on the puddles (the bake is matte)
             Puddle(env, puddleMat, HeroStartX - 0.7f, 0.15f, 1.3f, 0.7f);
             Puddle(env, puddleMat, -3.6f, 0.4f, 1.6f, 0.6f);
             Puddle(env, puddleMat, 1.2f, -0.1f, 1.1f, 0.5f);
             Puddle(env, puddleMat, 6.5f, 0.3f, 1.8f, 0.6f);
             Puddle(env, puddleMat, 9.8f, -0.2f, 1.0f, 0.45f);
-            foreach (var (x0, len) in new[] { (-1.4f, 4.0f), (5.2f, 3.4f), (-11.3f, 2.6f), (8.8f, 2.2f), (-5.6f, 2.4f) })
-            {
-                FloorQuad(env, "LongShadow", new[] {
-                    new Vector3(x0 - 1.0f, 0.004f, 1.6f), new Vector3(x0 + 1.0f, 0.004f, 1.6f),
-                    new Vector3(x0 - 1.0f - len, 0.004f, -0.9f), new Vector3(x0 + 0.6f - len, 0.004f, -0.9f) },
-                    new[] { new Color(0, 0, 0, 0.5f), new Color(0, 0, 0, 0.5f), new Color(0, 0, 0, 0f), new Color(0, 0, 0, 0f) }, sprite);
-            }
-
-            // ------------------------------------------------------------ the droplets (posed by the intro)
             for (int i = 0; i < 2; i++)
             {
                 var d = Vis(GameObject.CreatePrimitive(PrimitiveType.Sphere).transform);
@@ -239,76 +189,113 @@ namespace ProjectInk.EditorTools
                 d.GetComponent<Renderer>().sharedMaterial = dropMat;
                 d.GetComponent<Renderer>().enabled = false;
             }
+            // the night sky behind the city (the towers themselves are in the set)
+            SkyQuad(env, "Sky", new Vector3(0f, 60f, -320f), new Vector2(900f, 240f), sprite);
 
-            // ------------------------------------------------------------ the yard (seen in the opening wide shot)
-            var yard = new GameObject("Yard").transform;
-            yard.SetParent(room, false);
-            var r2 = new System.Random(23);
-            foreach (float z in new[] { 7f, 13.5f, 21f, 28.5f, 36f, -9f, -16f })
-            {
-                for (float x = -48f; x < 48f; x += 6.6f)
-                {
-                    if (r2.NextDouble() < 0.28) continue;                          // gaps: the labyrinth
-                    if (z < 0f && Mathf.Abs(x) < 20f) continue;                    // keep the shed's front clear
-                    int stack = 1 + r2.Next(3);
-                    for (int k = 0; k < stack; k++)
-                    {
-                        var m = containerMats[r2.Next(containerMats.Length)];
-                        VBox(yard, "Container", new Vector3(x + (float)(r2.NextDouble() - 0.5) * 0.6f, 1.3f + k * 2.6f, z + (float)(r2.NextDouble() - 0.5)),
-                             new Vector3(6.0f, 2.55f, 2.44f), m, (float)(r2.NextDouble() - 0.5) * 6f);
-                    }
-                }
-            }
-            for (int i = 0; i < 14; i++)
-            {
-                float x = (i % 2 == 0 ? -1f : 1f) * (17f + (float)r2.NextDouble() * 12f);
-                float z = 2f + (float)r2.NextDouble() * 4f;
-                float y = 0.65f + (i / 2 % 3) * 1.1f;
-                var car = VBox(yard, "ScrapCar", new Vector3(x, y, z), new Vector3(4.2f, 1.1f, 1.9f), i % 3 == 0 ? rust : machineDark, (float)r2.NextDouble() * 50f - 25f);
-                car.rotation *= Quaternion.Euler((float)r2.NextDouble() * 16f - 8f, 0f, (float)r2.NextDouble() * 14f - 7f);
-                VBox(car, "Cabin", car.position + Vector3.up * 0.75f, new Vector3(0.5f, 0.55f, 0.85f), machineDark);
-            }
-            foreach (var (lx, lz) in new[] { (-24f, 10f), (20f, 16f), (-8f, 24f), (34f, 4f), (-36f, 30f) })
-            {
-                VBox(yard, "LampPole", new Vector3(lx, 4f, lz), new Vector3(0.18f, 8f, 0.18f), steel);
-                var g = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
-                g.name = "LampGlow"; g.SetParent(yard, false);
-                g.position = new Vector3(lx, 8.1f, lz); g.localScale = Vector3.one * 5f;
-                g.rotation = Quaternion.Euler(60f, 180f, 0f);
-                g.GetComponent<Renderer>().sharedMaterial = glow;
-                var pool = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
-                pool.name = "LampPool"; pool.SetParent(yard, false);
-                pool.position = new Vector3(lx, 0.02f, lz); pool.localScale = Vector3.one * 9f;
-                pool.rotation = Quaternion.Euler(90f, 0f, 0f);
-                pool.GetComponent<Renderer>().sharedMaterial = glow;
-            }
-            for (int i = 0; i < 8; i++)
-            {
-                var n = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
-                n.name = "NeonPuddle"; n.SetParent(yard, false);
-                n.position = new Vector3(-30f + i * 8.5f, 0.02f, 4f + (i % 3) * 7f); n.localScale = new Vector3(4f, 2.2f, 1f);
-                n.rotation = Quaternion.Euler(90f, 0f, 0f);
-                n.GetComponent<Renderer>().sharedMaterial = neonGlow;
-            }
-            // the city: two skyline layers and a sky with the haze over the horizon (all far beyond the
-            // shed's front, so only the opening wide shot, looking that way, sees them)
-            SkyQuad(yard, "Sky", new Vector3(0f, 40f, -230f), new Vector2(600f, 160f), sprite);
-            var far = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
-            far.name = "SkylineFar"; far.SetParent(yard, false);
-            far.position = new Vector3(0f, 26f, -200f); far.localScale = new Vector3(520f, 60f, 1f);
-            far.rotation = Quaternion.Euler(0f, 180f, 0f);
-            far.GetComponent<Renderer>().sharedMaterial = skylineFar;
-            var near = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
-            near.name = "Skyline"; near.SetParent(yard, false);
-            near.position = new Vector3(20f, 16f, -150f); near.localScale = new Vector3(360f, 40f, 1f);
-            near.rotation = Quaternion.Euler(0f, 180f, 0f);
-            near.GetComponent<Renderer>().sharedMaterial = skyline;
+            // ------------------------------------------------------------ weather: rain outside, dust in the moonlight
+            var particle = AssetDatabase.LoadAssetAtPath<Material>("Assets/Generated/InkParticle.mat");
+            Rain(env, particle);
+            Dust(env, particle);
 
             // ------------------------------------------------------------ spawn points: everyone comes through the shutter
             var door = new Vector3(ShutterX, 0f, BackZ + 0.5f);
             for (int i = 0; i < points.Length; i++)
                 points[i] = PrototypeBuilder.Point(spawnRoot, ((SpawnKind)i).ToString(), door);
             heroStart = new Vector3(HeroStartX, 0f, 0f);
+        }
+
+        /// <summary>The set is modelled in Blender (x along the lane, y the depth, z up). Three marker
+        /// empties tell us where those axes landed after the FBX import; turn and (if needed) mirror the
+        /// root so Blender x = Unity x, Blender y = Unity z, Blender z = Unity y, at 1:1.</summary>
+        static void AlignAxes(Transform root)
+        {
+            root.position = Vector3.zero;
+            root.rotation = Quaternion.identity;
+            root.localScale = Vector3.one;
+            Transform mx = null, my = null, mz = null;
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "Mark_X") mx = t;
+                if (t.name == "Mark_Y") my = t;
+                if (t.name == "Mark_Z") mz = t;
+            }
+            if (mx == null || my == null || mz == null) { Debug.LogWarning("[Stick Wick] StorySet: axis markers missing"); return; }
+            var ax = mx.position / 10f; var ay = my.position / 10f; var az = mz.position / 10f;
+            // M maps Blender axes to where they are now; we want T = (x -> x, y -> z, z -> y)
+            var M = new Matrix4x4(ax, ay, az, new Vector4(0, 0, 0, 1));
+            var T = new Matrix4x4(new Vector4(1, 0, 0, 0), new Vector4(0, 0, 1, 0), new Vector4(0, 1, 0, 0), new Vector4(0, 0, 0, 1));
+            var C = T * M.inverse;                                       // correction to apply on top of the import
+            float det = C.determinant;
+            var S = Matrix4x4.identity;
+            if (det < 0f) S = Matrix4x4.Scale(new Vector3(-1f, 1f, 1f));
+            var R = C * S;                                               // C = R * S  (S is its own inverse)
+            Vector3 fwd = R.GetColumn(2), up = R.GetColumn(1);
+            float k = fwd.magnitude;
+            root.rotation = Quaternion.LookRotation(fwd, up);
+            root.localScale = new Vector3(det < 0f ? -k : k, k, k);
+            foreach (var t in new[] { mx, my, mz }) Object.DestroyImmediate(t.gameObject);
+        }
+
+        static void Rain(Transform parent, Material mat)
+        {
+            var go = new GameObject("RainOutside");
+            go.transform.SetParent(parent, false);
+            go.transform.position = new Vector3(0f, 14f, 10f);
+            var ps = go.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.startLifetime = 1.4f;
+            main.startSpeed = 14f;
+            main.startSize = 0.03f;
+            main.startColor = new Color(0.72f, 0.80f, 1f, 0.35f);
+            main.maxParticles = 1800;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.useUnscaledTime = false;
+            var em = ps.emission; em.rateOverTime = 1100f;
+            var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(70f, 14f, 0.5f);
+            go.transform.rotation = Quaternion.Euler(95f, 0f, 0f);       // emits along local z: down, a little slanted by the wind
+            var r = go.GetComponent<ParticleSystemRenderer>();
+            r.renderMode = ParticleSystemRenderMode.Stretch;
+            r.velocityScale = 0.05f;
+            r.lengthScale = 2f;
+            r.sharedMaterial = mat;
+        }
+
+        static void Dust(Transform parent, Material mat)
+        {
+            var go = new GameObject("Dust");
+            go.transform.SetParent(parent, false);
+            go.transform.position = new Vector3(-1.5f, 2.4f, 0.8f);
+            var ps = go.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.startLifetime = 9f;
+            main.startSpeed = 0.05f;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.012f, 0.03f);
+            main.startColor = new Color(0.75f, 0.82f, 1f, 0.22f);
+            main.maxParticles = 220;
+            main.prewarm = true;
+            var em = ps.emission; em.rateOverTime = 24f;
+            var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(24f, 4.4f, 3.2f);
+            var noise = ps.noise; noise.enabled = true; noise.strength = 0.06f; noise.frequency = 0.4f;
+            var r = go.GetComponent<ParticleSystemRenderer>();
+            r.sharedMaterial = mat;
+        }
+
+        /// <summary>A moonbeam: bright near the window, fading towards the floor, soft at its edges.</summary>
+        static Texture2D ShaftTexture(int w, int h)
+        {
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, true) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color[w * h];
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    float u = x / (float)(w - 1), v = y / (float)(h - 1);
+                    float edge = Mathf.Sin(u * Mathf.PI);
+                    float a = edge * edge * Mathf.Lerp(0.15f, 1f, v);
+                    px[y * w + x] = new Color(a, a, a, a);
+                }
+            tex.SetPixels(px);
+            tex.Apply();
+            return tex;
         }
 
         static void Puddle(Transform parent, Material m, float x, float z, float sx, float sz)

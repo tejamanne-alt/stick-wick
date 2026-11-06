@@ -845,3 +845,59 @@ The story begins. He wakes in a warehouse with no memory; across five chapters h
 - `WaveDirector.scripted`: no waves, floor or score, and no opening, tutorial, victory or boss; the story spawns its own (`SpawnScripted`).
 - Scene version 22: **Build All Scenes** (also the old Build Prototype Scene menu item) builds the menu, the story and the tower, sets the build list, and opens the menu.
 - Not playtested in Unity yet. Timings, camera positions and the puddle art will want tuning on device.
+
+## 2026-11-06: The warehouse, modelled and lit like a film set
+
+The prologue's set was Unity boxes. It is now modelled in detail in Blender (`tools/blender/build_story_set.py`), lit for night, and **baked**: the light is painted into textures. The unlit game shows a lit film set at no runtime cost.
+
+**Inside the shed**
+- The building:
+    - a concrete-block plinth with mortar joints, corrugated iron above (ribs, lap seams, rust bleeding from the bolts)
+    - four steel-framed clerestory windows with broken panes
+    - side walls with rails
+    - a corrugated roof torn open at the crack, with flaps hanging
+- The structure: Warren roof trusses every 3.4 m with purlins, I-beam columns with base plates and bolts, a yellow crane rail with a trolley and a chain of real links down to a hook block.
+- On the walls:
+    - pipes with flanges, brackets and a red valve wheel
+    - a fuse box with conduit and a DANGER HIGH VOLTAGE plate
+    - painted BAY 7 and NO SMOKING stencils
+    - a wall fan (it turns)
+- Lamps: four enamel shades on cords; one still burns.
+- Machinery: a green hydraulic press (control box with lit buttons, sagging hydraulic hose, warning stripes) and a blue lathe (chuck and jaws, carriage, tailstock, motor).
+- The workbench: a vise, a toolbox, a pegboard of tools.
+- On the floor:
+    - a forklift parked crooked (cage, mast, forks)
+    - scrap and pipes, oil drums with rims (one lying, one stacked), a pallet stack
+    - crates with battens, a tyre stack, a leaning ladder
+    - the slab: joints, a yellow walkway line, hazard stripes at the door, a drain, oil stains
+- The shutter: real slats, a bottom bar, guide rails, the drum housing, a chain hoist, NO ENTRY.
+
+**Outside** (the opening shot)
+- Six rows of containers, stacked 1 to 4 high, with corrugated sides, corner posts and door lock bars. A road through the stacks leads the eye to the shed.
+- Two gantry cranes with lit cabs and red aviation lights.
+- Stacks of crushed cars, sodium light poles, a chain-link fence with barbed wire.
+- The shed's exterior: gutters, downpipes, the painted bay letters under their lamp.
+- A city skyline with lit windows, neon signs and aviation lights, under the night sky.
+
+**The light** (baked with Cycles)
+- Cold moonlight through the windows and the open front.
+- A storm seam through the roof crack onto where he lies.
+- Moonlight under the shutter.
+- One warm sodium spot inside (a single warm pool in a cold blue room).
+- The bay lamp and the pole lamps outside.
+- A cold fill tuned so black fighters always read against the back wall.
+
+**In Unity** (`StoryBuilder`)
+- The set FBX goes in with one baked texture per part.
+- Its axes are aligned from marker empties exported with it.
+- Unity adds:
+    - moonbeam shafts (additive)
+    - the flaring crack seam and the light under the door
+    - puddle sheen, droplets, the night sky
+    - rain outside (seen through the windows, the door and in the wide shot), dust drifting in the moonlight
+    - the turning fan
+- Import rules: `StorySetImport`. The shutter disappears into its drum after the breach.
+- The opening wide shot was re-framed down the road to the shed. Scene version 23.
+- Previews:
+    - `docs/previews/story_set_baked.png`: the exported set re-imported and rendered through its baked textures only, as Unity shows it
+    - `docs/previews/story_set.png`: the lit preview

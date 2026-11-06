@@ -190,9 +190,9 @@ namespace ProjectInk
                 // SHOT 0: the desolate yard
                 if (At(0.05f)) Sound.Play(Sfx.Wind, 0.9f);
                 if (At(2.3f)) Lightning(1f, 1f, 0.08f);
-                pos = new Vector3(-6f, 16f, 36f);
-                look = new Vector3(-2f, 2f, -6f);
-                fov = Mathf.Lerp(42f, 41.16f, Ease(0f, S1, t));          // a slow 2% push-in
+                pos = new Vector3(-10f, 18f, 40f);                         // high over the yard, down the road to the shed
+                look = new Vector3(-2f, 3f, -60f);
+                fov = Mathf.Lerp(40f, 39.2f, Ease(0f, S1, t));            // a slow 2% push-in
             }
             else if (t < S2)
             {
@@ -427,6 +427,7 @@ namespace ProjectInk
             {
                 float k = Ease(BreachAt, BreachAt + 0.25f, b);
                 shutter.position = new Vector3(shutter.position.x, shutterY + 3.6f * k, shutter.position.z);
+                if (k >= 0.999f) foreach (var r in shutter.GetComponentsInChildren<Renderer>()) r.enabled = false;   // rolled away into its drum
             }
             for (int i = 0; i < men.Length; i++)
                 if (spawned == i && b >= BreachAt + 0.05f + i * 0.28f && director != null)
