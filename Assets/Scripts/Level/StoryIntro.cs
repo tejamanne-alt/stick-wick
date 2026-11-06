@@ -123,6 +123,7 @@ namespace ProjectInk
             if (!setUp)
             {
                 setUp = true;
+                HeadWound.Chapter = 1;                       // the warehouse: the night of the blow
                 if (Retry) { BeginAtDoor(); }
                 else
                 {

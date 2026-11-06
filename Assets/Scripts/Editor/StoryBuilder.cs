@@ -460,11 +460,12 @@ namespace ProjectInk.EditorTools
 
             // the gash: from up behind the temple, down and forward towards the brow
             var gash = Smooth(new[] { On(0.22f, 0.66f, 0.72f), On(0.34f, 0.55f, 0.77f), On(0.47f, 0.45f, 0.77f), On(0.58f, 0.36f, 0.73f) }, 10);
-            Ribbon(head, "WoundLip", gash, c, k => 0.016f * Taper(k, 0.18f) * (1f + 0.1f * Mathf.Sin(k * 23f)), 0.0016f, lip);
-            Ribbon(head, "WoundCut", gash, c, k => 0.0065f * Taper(k, 0.3f) * (1f + 0.2f * Mathf.Sin(k * 37f + 1f)), 0.0028f, cut);
+            var wound = hero.AddComponent<HeadWound>();
+            wound.lip = Ribbon(head, "WoundLip", gash, c, k => 0.016f * Taper(k, 0.18f) * (1f + 0.1f * Mathf.Sin(k * 23f)), 0.0016f, lip);
+            wound.cut = Ribbon(head, "WoundCut", gash, c, k => 0.0065f * Taper(k, 0.3f) * (1f + 0.2f * Mathf.Sin(k * 37f + 1f)), 0.0028f, cut);
             // the trickle: from the low end of the cut, running down the side of the face
             var drip = Smooth(new[] { On(0.56f, 0.35f, 0.74f), On(0.585f, 0.22f, 0.78f), On(0.6f, 0.08f, 0.8f), On(0.59f, -0.05f, 0.81f) }, 10);
-            Ribbon(head, "WoundBlood", drip, c, k => 0.0045f * (1f - 0.55f * k) * Mathf.Min(1f, k * 8f + 0.4f), 0.0014f, dried);
+            wound.blood = Ribbon(head, "WoundBlood", drip, c, k => 0.0045f * (1f - 0.55f * k) * Mathf.Min(1f, k * 8f + 0.4f), 0.0014f, dried);
             var bead = Vis(GameObject.CreatePrimitive(PrimitiveType.Sphere).transform);
             bead.name = "WoundBead";
             bead.position = drip[drip.Length - 1] + (drip[drip.Length - 1] - c).normalized * 0.001f;
@@ -473,6 +474,7 @@ namespace ProjectInk.EditorTools
             var br = bead.GetComponent<Renderer>();
             br.sharedMaterial = dried;
             br.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            wound.bead = br;
             restore?.Invoke();
         }
 
@@ -497,7 +499,7 @@ namespace ProjectInk.EditorTools
 
         /// <summary>A flat strip along `path` on the head's surface (centre `c`), width(k) for k in 0..1,
         /// lifted `lift` off the skin, parented to the head bone. Both faces, so it never vanishes.</summary>
-        static void Ribbon(Transform head, string name, Vector3[] path, Vector3 c, System.Func<float, float> width, float lift, Material mat)
+        static MeshFilter Ribbon(Transform head, string name, Vector3[] path, Vector3 c, System.Func<float, float> width, float lift, Material mat)
         {
             int n = path.Length;
             var go = new GameObject(name);
@@ -525,10 +527,25 @@ namespace ProjectInk.EditorTools
             string asset = $"Assets/Generated/{name}.asset";
             AssetDatabase.DeleteAsset(asset);
             AssetDatabase.CreateAsset(mesh, asset);
-            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var mf = go.AddComponent<MeshFilter>();
+            mf.sharedMesh = mesh;
             var r = go.AddComponent<MeshRenderer>();
             r.sharedMaterial = mat;
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            return mf;
+        }
+
+        // preview the wound's healing in play mode (each story chapter sets its own stage)
+        [MenuItem("Stick Wick/Wound Stage/1 Fresh")] static void W1() => PreviewWound(1);
+        [MenuItem("Stick Wick/Wound Stage/2 Scabbed")] static void W2() => PreviewWound(2);
+        [MenuItem("Stick Wick/Wound Stage/3 Closing")] static void W3() => PreviewWound(3);
+        [MenuItem("Stick Wick/Wound Stage/4 Healed")] static void W4() => PreviewWound(4);
+        [MenuItem("Stick Wick/Wound Stage/5 Old Scar")] static void W5() => PreviewWound(5);
+        [MenuItem("Stick Wick/Wound Stage/Follow Chapter")] static void W0() => PreviewWound(0);
+
+        static void PreviewWound(int stage)
+        {
+            foreach (var w in Object.FindObjectsByType<HeadWound>()) w.previewChapter = stage;
         }
 
         // ------------------------------------------------------------ textures
