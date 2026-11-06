@@ -1020,3 +1020,13 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - The curtain's strip sweeps across the floor towards him. He crouches (`duck`) and it stops at his feet for three heartbeats.
   - It slides away and fades. He rises, and the camera turns with his eyes to the shutter, leading into shot 6.
 - `StoryIntro.SearchCurtain` builds the light at runtime from the searchlight's own material, with its floor strip a clone of the search pool.
+
+### The drop, realistic
+- The drop's texture had the roof crack drawn inside it as a sharp zigzag ("refracted"), so the drop itself looked cracked. It's rebuilt as a ball lens seen from below against the light, with nothing in it a hard line:
+  - nearly clear water
+  - the light above as a soft, straight, inverted band low across it
+  - an edge darkening where the water bends the dark room in
+  - a hairline crescent of light on the lit side only
+  - one small sharp highlight
+  - a soft caustic at the bottom
+- Scene version 30.

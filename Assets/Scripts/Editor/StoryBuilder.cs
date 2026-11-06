@@ -23,48 +23,42 @@ namespace ProjectInk.EditorTools
         /// <summary>Where the mooring chain lies across the floor, and where his knife lies.</summary>
         public const float ChainX = 3.3f, KnifeX = 0.45f;
 
-        /// <summary>A water drop seen from below against the light: nearly clear, a thin bright
-        /// rim, the dark ring of total internal reflection inside it, a specular glint, and the
-        /// roof crack refracted through it upside down.</summary>
+        /// <summary>A water drop seen from below against the light, as a ball lens shows it: nearly
+        /// clear; the light above it seen through it small, upside down and soft (a curved smear,
+        /// no edges); a thin fresnel rim; a soft dark ring where the light reflects inside; one sharp
+        /// highlight; and a bright crescent at the bottom where it focuses the light. Nothing in it
+        /// is a hard line.</summary>
         static Texture2D DropTexture(int n)
         {
             var tex = new Texture2D(n, n, TextureFormat.RGBA32, false);
             float c = n * 0.5f, r = n * 0.39f;
-            var crack = new[] { new Vector2(-0.62f, 0.10f), new Vector2(-0.30f, -0.04f), new Vector2(-0.12f, 0.12f), new Vector2(0.10f, -0.02f), new Vector2(0.28f, 0.08f), new Vector2(0.60f, -0.10f) };
+            float G(float x, float s) => Mathf.Exp(-(x * x) / (2f * s * s));
             for (int j = 0; j < n; j++)
                 for (int i = 0; i < n; i++)
                 {
-                    float dx = i + 0.5f - c, dy = j + 0.5f - c, d = Mathf.Sqrt(dx * dx + dy * dy), e = r - d;
-                    float inside = Mathf.Clamp01(e + 0.5f);
+                    float dx = (i + 0.5f - c) / r, dy = (j + 0.5f - c) / r;          // -1..1 across the drop
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    float inside = Mathf.Clamp01((1f - d) * r + 0.5f);
                     if (inside <= 0f) { tex.SetPixel(i, j, new Color(1f, 1f, 1f, 0f)); continue; }
-                    // body: almost clear, the lens gathering a little light in the middle
-                    Color col = new Color(0.72f, 0.82f, 0.96f); float a = 0.07f + 0.1f * Mathf.Clamp01(1f - d / r);
-                    // the dark ring just inside the edge, heavier on the side away from the light
-                    float band = Mathf.Exp(-Mathf.Pow((e - r * 0.12f) / (r * 0.07f), 2f)) * (0.75f + 0.25f * Mathf.Clamp01((dx - dy) / r));
-                    col = Color.Lerp(col, new Color(0.04f, 0.05f, 0.08f), band); a = Mathf.Lerp(a, 0.55f, band);
-                    // the bright outer rim
-                    float rim = Mathf.Exp(-e / (r * 0.03f)) * (0.6f + 0.4f * Mathf.Clamp01((-dx + dy) / r + 0.5f));
-                    col = Color.Lerp(col, new Color(0.86f, 0.92f, 1f), rim); a = Mathf.Max(a, 0.7f * rim);
-                    // the crack, refracted: upside down and squeezed toward the middle
-                    if (e > r * 0.2f)
-                    {
-                        var q = new Vector2(-dx, -dy) / (r * 0.7f);
-                        float best = 9f;
-                        for (int k = 0; k + 1 < crack.Length; k++)
-                        {
-                            Vector2 a0 = crack[k], ab = crack[k + 1] - crack[k];
-                            float tt = Mathf.Clamp01(Vector2.Dot(q - a0, ab) / ab.sqrMagnitude);
-                            best = Mathf.Min(best, (q - (a0 + ab * tt)).magnitude);
-                        }
-                        float px = best * r * 0.7f;
-                        float line = Mathf.Clamp01(1.6f - px) + 0.3f * Mathf.Exp(-px / 4f);
-                        col = Color.Lerp(col, new Color(0.9f, 0.95f, 1f), Mathf.Clamp01(line)); a = Mathf.Max(a, 0.85f * Mathf.Clamp01(line));
-                    }
-                    // specular glints (the light behind him, the crack's brightest point)
-                    float g1 = Mathf.Exp(-((dx + r * 0.36f) * (dx + r * 0.36f) + (dy - r * 0.4f) * (dy - r * 0.4f)) / (2f * r * r * 0.012f));
-                    float g2 = Mathf.Exp(-((dx - r * 0.3f) * (dx - r * 0.3f) + (dy + r * 0.34f) * (dy + r * 0.34f)) / (2f * r * r * 0.004f)) * 0.55f;
-                    float g = Mathf.Clamp01(g1 + g2);
-                    col = Color.Lerp(col, Color.white, g); a = Mathf.Max(a, g);
+                    // the body: water, barely there, a touch of the cold light it carries
+                    Color col = new Color(0.78f, 0.86f, 0.97f);
+                    float a = 0.05f + 0.06f * (1f - d * d);
+                    // the light above, through the lens: inverted and soft, a straight band low across it
+                    float band = G(dy + 0.2f, 0.12f) * G(dx, 0.55f);
+                    col = Color.Lerp(col, new Color(0.92f, 0.95f, 1f), band * 0.8f); a = Mathf.Max(a, 0.36f * band);
+                    // the edge: water bends the dark room in from round the sides, so it darkens towards the rim
+                    float edge = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.6f, 0.97f, d));
+                    col = Color.Lerp(col, new Color(0.06f, 0.07f, 0.1f), edge * 0.75f); a = Mathf.Lerp(a, 0.42f, edge * 0.8f);
+                    // light caught on the lit side only: a thin crescent, upper left
+                    float lit = Mathf.Clamp01((-dx + dy) * 0.9f);
+                    float rim = G(d - 0.965f, 0.025f) * lit * lit;
+                    col = Color.Lerp(col, new Color(0.92f, 0.96f, 1f), rim); a = Mathf.Max(a, 0.8f * rim);
+                    // the bright caustic at the bottom: the lens focusing the light it caught
+                    float cres = G(d - 0.8f, 0.08f) * Mathf.Clamp01(-dy * 1.3f) * Mathf.Clamp01(1f - Mathf.Abs(dx) * 1.2f);
+                    col = Color.Lerp(col, Color.white, cres * 0.7f); a = Mathf.Max(a, 0.45f * cres);
+                    // one small sharp highlight, up on the lit side, near the edge
+                    float hl = Mathf.Clamp01(G(dx + 0.42f, 0.06f) * G(dy - 0.5f, 0.05f) * 1.2f);
+                    col = Color.Lerp(col, Color.white, hl); a = Mathf.Max(a, hl);
                     col.a = a * inside;
                     tex.SetPixel(i, j, col);
                 }
