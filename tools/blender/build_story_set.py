@@ -521,20 +521,15 @@ def build_shed(coll, M):
         g.box((s * (HALF_W + 0.15), (FRONT + BACK) / 2 + 0.2, ROOF / 2), (0.3, BACK - FRONT + 0.8, ROOF), M["iron_dark"])
         for z in (0.6, 3.6):
             g.box((s * (HALF_W - 0.02), (FRONT + BACK) / 2 + 0.2, z), (0.06, BACK - FRONT + 0.6, 0.12), M["steel"])
-    # roof: the underside sheet with the crack torn in it, and the roof top
-    for (xa, xb, ya, yb) in ((-HALF_W - 0.3, CRACK_X0, FRONT - 0.3, BACK + 0.3), (CRACK_X1, HALF_W + 0.3, FRONT - 0.3, BACK + 0.3),
-                             (CRACK_X0, CRACK_X1, FRONT - 0.3, CRACK_Y0), (CRACK_X0, CRACK_X1, CRACK_Y1, BACK + 0.3)):
-        g.box(((xa + xb) / 2, (ya + yb) / 2, ROOF + 0.02), (xb - xa, yb - ya, 0.04), M["iron_dark"])
-        g.box(((xa + xb) / 2, (ya + yb) / 2, ROOF + 0.32), (xb - xa, yb - ya, 0.06), M["rust"])
+    # roof: the underside sheet and the roof top, whole (the crack, its torn lips and the storm light
+    # through it are added in the game, on the line the drop falls from)
+    g.box((0, (FRONT + BACK) / 2, ROOF + 0.02), (HALF_W * 2 + 0.6, BACK - FRONT + 0.6, 0.04), M["iron_dark"])
+    g.box((0, (FRONT + BACK) / 2, ROOF + 0.32), (HALF_W * 2 + 0.6, BACK - FRONT + 0.6, 0.06), M["rust"])
     x = -HALF_W
     while x < HALF_W:                                                                        # roof ribs (underside)
-        if not (CRACK_X0 - 0.05 < x < CRACK_X1 + 0.05):
+        if not (CRACK_X0 - 0.4 < x < CRACK_X1 + 0.6):                                         # none across the crack
             g.box((x, (FRONT + BACK) / 2, ROOF - 0.01), (0.08, BACK - FRONT + 0.6, 0.03), M["iron"])
         x += 0.3
-    for i in range(7):                                                                       # torn flaps at the crack
-        fx = rnd.uniform(CRACK_X0, CRACK_X1)
-        fy = rnd.uniform(CRACK_Y0, CRACK_Y1)
-        g.box((fx, fy, ROOF - 0.06), (0.25, 0.4, 0.015), M["rust"], rot=(rnd.uniform(-35, 35), rnd.uniform(-35, 35), rnd.uniform(0, 180)))
     # structure
     x = -HALF_W + 1.2
     while x < HALF_W:
@@ -836,7 +831,7 @@ def lights():
     sun.rotation_euler = MOON_DIR.to_track_quat("-Z", "Y").to_euler()
     sun.data.angle = math.radians(1.5)
     # storm light through the roof crack, straight down onto where he lies
-    add("AREA", "CrackLight", ((CRACK_X0 + CRACK_X1) / 2, (CRACK_Y0 + CRACK_Y1) / 2, ROOF + 0.6), 320, (0.62, 0.72, 1.0), size=1.0)
+    add("AREA", "CrackLight", ((CRACK_X0 + CRACK_X1) / 2, (CRACK_Y0 + CRACK_Y1) / 2, ROOF - 0.12), 260, (0.62, 0.72, 1.0), size=0.6)
     # moonlight under the shutter (from outside, low)
     add("AREA", "DoorGap", ((DOOR_L + DOOR_R) / 2, BACK + 0.9, 0.25), 220, (0.62, 0.72, 1.0), size=2.6,
         rot=(math.radians(-92), 0, 0))

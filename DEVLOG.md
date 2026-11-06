@@ -1037,3 +1037,14 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - Water on the seam:
   - five small beads cling along the crack (they stay through shot 2, while the camera still looks up)
   - one bead runs down the seam to where the drop gathers as it begins to swell, feeding it
+
+### The roof crack, one and real
+- Looking up in shot 1 there were two different "cracks" that didn't line up:
+  - the Blender set's rectangular hole in the roof sheet, with seven flat rusty "flaps" at random angles inside it (a dark box of tilted orange cards)
+  - beside it, the game's glowing jagged seam (the one the drop falls from)
+- The set's roof is now whole (`build_story_set.py`): no hole, no flaps, no ribs across the seam. The storm light that came through the hole is now a narrow light just under the roof, so the pool on the floor where he lies stays.
+- The glowing seam is the only crack. `StoryBuilder.TornLips` gives it torn metal, built on the seam's own jagged outline so it follows it exactly:
+  - a ragged lip of iron bent down into the room on each side, with a pale worn edge where it tore
+  - rust bled out round it
+  - all children of the crack, so they move with it
+- Scene version 31.

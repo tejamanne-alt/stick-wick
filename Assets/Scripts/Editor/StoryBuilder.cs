@@ -139,6 +139,66 @@ namespace ProjectInk.EditorTools
             return go.transform;
         }
 
+        /// <summary>The roof sheet torn along the crack: on each side a ragged lip of iron bent down
+        /// into the room (built on the crack's own jagged outline, so it follows it exactly), a pale
+        /// worn edge where the metal tore, and rust bled out round it. Children of the crack, so they
+        /// move with it.</summary>
+        static void TornLips(Transform crack, Texture2D glowTex)
+        {
+            var src = crack.GetComponent<MeshFilter>().sharedMesh.vertices;
+            int n = src.Length / 2;
+            var rnd = new System.Random(17);
+            var iron = PrototypeBuilder.Mat("StoryTornIron", "Unlit/Color", new Color(0.075f, 0.07f, 0.068f));
+            var worn = PrototypeBuilder.Mat("StoryTornEdge", "Unlit/Color", new Color(0.34f, 0.29f, 0.25f));
+            foreach (int side in new[] { -1, 1 })
+            {
+                var v = new List<Vector3>(); var e = new List<Vector3>(); var tri = new List<int>(); var etri = new List<int>();
+                for (int i = 0; i < n; i++)
+                {
+                    var inner = src[i * 2 + (side < 0 ? 0 : 1)];
+                    float reach = 0.05f + (float)rnd.NextDouble() * 0.09f;          // how far the torn sheet hangs
+                    float bend = 0.03f + (float)rnd.NextDouble() * 0.07f;           // and how far down it is bent
+                    var tip = inner + new Vector3(side * 0.004f, -bend, 0f);
+                    var root = inner + new Vector3(side * reach, 0.012f, 0f);
+                    v.Add(root); v.Add(tip);
+                    e.Add(tip); e.Add(tip + new Vector3(side * 0.012f, 0.004f, 0f));
+                    if (i > 0)
+                    {
+                        int k = i * 2;
+                        tri.AddRange(new[] { k - 2, k, k - 1, k - 1, k, k + 1, k - 2, k - 1, k, k - 1, k + 1, k });
+                        etri.AddRange(new[] { k - 2, k, k - 1, k - 1, k, k + 1, k - 2, k - 1, k, k - 1, k + 1, k });
+                    }
+                }
+                Strip(crack, "CrackLip" + (side < 0 ? "L" : "R"), v, tri, iron);
+                Strip(crack, "CrackLipEdge" + (side < 0 ? "L" : "R"), e, etri, worn);
+            }
+            // rust bled out round the tear, soft
+            var stain = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
+            stain.name = "CrackRust"; stain.SetParent(crack, false);
+            var mid = (src[n] + src[n + 1]) * 0.5f;
+            stain.localPosition = new Vector3(mid.x, mid.y + 0.022f, (src[0].z + src[src.Length - 1].z) * 0.5f);
+            stain.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            stain.localScale = new Vector3(0.9f, (src[src.Length - 1].z - src[0].z) + 0.6f, 1f);
+            stain.GetComponent<Renderer>().sharedMaterial = EnvironmentBuilder.TexMat("StoryCrackRust", "Sprites/Default", glowTex, Vector2.one, new Color(0.36f, 0.17f, 0.08f, 0.55f));
+        }
+
+        static void Strip(Transform parent, string name, List<Vector3> v, List<int> tri, Material m)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var mesh = new Mesh { name = name };
+            mesh.SetVertices(v);
+            mesh.SetTriangles(tri, 0);
+            mesh.RecalculateBounds();
+            string path = $"Assets/Generated/Story_{name}.asset";
+            AssetDatabase.DeleteAsset(path);
+            AssetDatabase.CreateAsset(mesh, path);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = m;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+
         public const string SetPath = "Assets/Art/Story/StorySet.fbx";
 
         public static void Build(Transform room, Material ground, Transform spawnRoot, Transform[] points, out Vector3 heroStart)
@@ -203,7 +263,8 @@ namespace ProjectInk.EditorTools
             var glowTex = EnvironmentBuilder.SaveTex("StoryGlow", EnvironmentBuilder.GlowTexture(128), TextureWrapMode.Clamp);
             var puddleMat = EnvironmentBuilder.TexMat("StoryPuddle", "Sprites/Default", glowTex, Vector2.one, new Color(0.30f, 0.36f, 0.48f, 0.45f));
             // the storm seam in the roof (it flares with the lightning), under and on top
-            Crack(env, "RoofCrack", HeroStartX - 0.6f, RoofY - 0.03f, -0.7f, 1.9f, 0.035f, crackMat, 5);
+            var roofCrack = Crack(env, "RoofCrack", HeroStartX - 0.6f, RoofY - 0.03f, -0.7f, 1.9f, 0.035f, crackMat, 5);
+            TornLips(roofCrack, glowTex);
             Crack(env, "RoofCrackTop", HeroStartX - 0.6f, RoofY + 0.36f, -0.7f, 1.9f, 0.06f, crackMat, 5);
             float doorL = ShutterX - 1.6f, doorR = ShutterX + 1.6f;
             VBox(env, "MoonGap", new Vector3(ShutterX, 0.05f, BackZ + 0.1f), new Vector3(doorR - doorL - 0.12f, 0.08f, 0.02f), moonMat);
