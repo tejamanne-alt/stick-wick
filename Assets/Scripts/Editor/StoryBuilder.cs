@@ -20,6 +20,8 @@ namespace ProjectInk.EditorTools
     {
         public const float HalfW = 14.0f, RoofY = 7.2f, BackZ = 2.6f, ShutterX = 12.0f;
         public const float HeroStartX = -8.0f;
+        /// <summary>Where the mooring chain lies across the floor, and where his knife lies.</summary>
+        public const float ChainX = 3.3f, KnifeX = 0.45f;
 
         /// <summary>A water drop seen from below against the light: nearly clear, a thin bright
         /// rim, the dark ring of total internal reflection inside it, a specular glint, and the
@@ -247,6 +249,9 @@ namespace ProjectInk.EditorTools
                 d.GetComponent<Renderer>().sharedMaterial = dropMat;
                 d.GetComponent<Renderer>().enabled = false;
             }
+            // the escape: the chain he trips on, and his knife at the far edge of the puddle
+            Chain(env, ChainX);
+            FloorKnife(env, new Vector3(KnifeX, 0f, 0.04f), glowTex);
             // the night sky behind the city (the towers themselves are in the set)
             SkyQuad(env, "Sky", new Vector3(0f, 60f, -320f), new Vector2(900f, 240f), sprite);
             var swap = room.gameObject.AddComponent<LightningSwap>();
@@ -400,6 +405,104 @@ namespace ProjectInk.EditorTools
             tex.SetPixels(px);
             tex.Apply();
             return tex;
+        }
+
+        /// <summary>A heavy rusted chain dropped across the floor in a lazy S, every link a real
+        /// ring, alternating flat and on edge as a chain lies. Named "Chain" (the story shakes it).</summary>
+        static void Chain(Transform parent, float x)
+        {
+            var root = new GameObject("Chain").transform;
+            root.SetParent(parent, false);
+            root.position = new Vector3(x, 0f, 0f);
+            var ring = RingMesh(0.05f, 0.03f, 0.0125f, 14, 6);
+            var mat = PrototypeBuilder.Mat("StoryChain", "Unlit/Color", new Color(0.19f, 0.12f, 0.08f));
+            var hi = PrototypeBuilder.Mat("StoryChainWorn", "Unlit/Color", new Color(0.33f, 0.24f, 0.17f));
+            const int n = 30;
+            Vector3 P(float k) => new Vector3(0.28f * Mathf.Sin(k * 5.2f) + 0.12f * Mathf.Sin(k * 11f), 0f, Mathf.Lerp(-1.25f, 1.35f, k));
+            for (int i = 0; i < n; i++)
+            {
+                float k = i / (float)(n - 1);
+                var a = P(k); var b2 = P(Mathf.Min(1f, k + 0.01f));
+                var link = new GameObject("Link" + i).transform;
+                link.SetParent(root, false);
+                bool edge = i % 2 == 1;
+                link.localPosition = a + new Vector3(0f, edge ? 0.05f : 0.013f, 0f);
+                var dir = (b2 - a).normalized;
+                link.localRotation = Quaternion.LookRotation(Vector3.Cross(dir, Vector3.up), Vector3.up) * Quaternion.Euler(0f, 90f, 0f)
+                                     * (edge ? Quaternion.Euler(90f, 0f, 0f) : Quaternion.identity);
+                link.gameObject.AddComponent<MeshFilter>().sharedMesh = ring;
+                var r = link.gameObject.AddComponent<MeshRenderer>();
+                r.sharedMaterial = i % 5 == 2 ? hi : mat;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+        }
+
+        /// <summary>An oval ring (a chain link) in the XZ plane: half-length a along X, half-width b
+        /// along Z, tube radius r.</summary>
+        static Mesh RingMesh(float a, float b, float r, int seg, int side)
+        {
+            var v = new List<Vector3>();
+            var tri = new List<int>();
+            for (int i = 0; i <= seg; i++)
+            {
+                float u = i / (float)seg * Mathf.PI * 2f;
+                var c = new Vector3(Mathf.Cos(u) * a, 0f, Mathf.Sin(u) * b);
+                var nrm = new Vector3(Mathf.Cos(u) * b, 0f, Mathf.Sin(u) * a).normalized;
+                for (int j = 0; j <= side; j++)
+                {
+                    float w = j / (float)side * Mathf.PI * 2f;
+                    v.Add(c + nrm * (Mathf.Cos(w) * r) + Vector3.up * (Mathf.Sin(w) * r));
+                }
+            }
+            for (int i = 0; i < seg; i++)
+                for (int j = 0; j < side; j++)
+                {
+                    int a0 = i * (side + 1) + j, a1 = a0 + side + 1;
+                    tri.AddRange(new[] { a0, a1, a0 + 1, a0 + 1, a1, a1 + 1, a0, a0 + 1, a1, a0 + 1, a1 + 1, a1 });
+                }
+            var m = new Mesh { name = "ChainLink" };
+            m.SetVertices(v);
+            m.SetTriangles(tri, 0);
+            m.RecalculateNormals();
+            m.RecalculateBounds();
+            System.IO.Directory.CreateDirectory("Assets/Generated");
+            AssetDatabase.DeleteAsset("Assets/Generated/ChainLink.asset");
+            AssetDatabase.CreateAsset(m, "Assets/Generated/ChainLink.asset");
+            return m;
+        }
+
+        /// <summary>His combat knife lying flat on the wet floor, blade half in the puddle, with a
+        /// glint sprite the story flares when the lightning catches it. "FloorKnife", "KnifeGlint".</summary>
+        static void FloorKnife(Transform parent, Vector3 at, Texture2D glowTex)
+        {
+            var root = new GameObject("FloorKnife").transform;
+            root.SetParent(parent, false);
+            root.position = at;
+            root.rotation = Quaternion.Euler(0f, -72f, 0f);               // blade towards the puddle, handle towards him
+            var steel = PrototypeBuilder.Mat("StoryKnifeSteel", "Unlit/Color", new Color(0.52f, 0.56f, 0.62f));
+            var edge = PrototypeBuilder.Mat("StoryKnifeEdge", "Unlit/Color", new Color(0.82f, 0.86f, 0.92f));
+            var grip = PrototypeBuilder.Mat("StoryKnifeGrip", "Unlit/Color", new Color(0.05f, 0.05f, 0.055f));
+            void Part(string n, Vector3 p, Vector3 sz, Material m)
+            {
+                var c = Vis(GameObject.CreatePrimitive(PrimitiveType.Cube).transform);
+                c.name = n; c.SetParent(root, false);
+                c.localPosition = p; c.localScale = sz;
+                c.GetComponent<Renderer>().sharedMaterial = m;
+                c.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+            Part("Grip", new Vector3(0f, 0.018f, -0.07f), new Vector3(0.036f, 0.032f, 0.13f), grip);
+            Part("Guard", new Vector3(0f, 0.018f, 0.0f), new Vector3(0.075f, 0.03f, 0.016f), grip);
+            Part("Blade", new Vector3(0f, 0.008f, 0.12f), new Vector3(0.042f, 0.008f, 0.22f), steel);
+            Part("Edge", new Vector3(0.019f, 0.009f, 0.12f), new Vector3(0.006f, 0.009f, 0.21f), edge);
+            Part("Tip", new Vector3(0.008f, 0.008f, 0.24f), new Vector3(0.025f, 0.008f, 0.04f), edge);
+            var glint = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
+            glint.name = "KnifeGlint"; glint.SetParent(root, false);
+            glint.localPosition = new Vector3(0.01f, 0.03f, 0.17f);
+            glint.localScale = Vector3.one * 0.35f;
+            var gm = EnvironmentBuilder.TexMat("StoryKnifeGlint", "Legacy Shaders/Particles/Additive", glowTex, Vector2.one, new Color(0.8f, 0.88f, 1f, 0.5f));
+            var gr = glint.GetComponent<Renderer>();
+            gr.sharedMaterial = gm;
+            gr.enabled = false;
         }
 
         static void Puddle(Transform parent, Material m, float x, float z, float sx, float sz)

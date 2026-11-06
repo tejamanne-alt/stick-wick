@@ -302,6 +302,48 @@
       "hitFrame": -1
     },
     {
+      "name": "trip",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "prone",
+      "frames": 48,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "crawl",
+      "frames": 32,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "reach_grab",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "prone_knife",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "rise_knife",
+      "frames": 44,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
       "name": "idle",
       "frames": 35,
       "fps": 30,

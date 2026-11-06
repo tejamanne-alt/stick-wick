@@ -545,6 +545,43 @@ STORY_CLIPS = {
     "walk": dict(frames=24, loop=True, hit=None, keys=[
         (0, WALK_A), (6, WALK_P), (12, mirror_legs_arms(WALK_A)), (18, mirror_legs_arms(WALK_P)), (24, WALK_A)]),
 }
+# --- the escape (chapter 1): he runs, trips over a chain, falls on his face in a puddle, crawls
+# to his knife, grips it, and gets up with it. Face down = the whole body rotated by -90.
+TRIP_CATCH = pose(STRAIGHT, spine=150, chest=140, head=150, upperarm_L=125, forearm_L=160, upperarm_R=70, forearm_R=95,
+                  thigh_L=40, shin_L=10, thigh_R=-35, shin_R=-70)
+TRIP_FALL = pose(STRAIGHT, hips=120, spine=108, chest=102, head=110, upperarm_L=98, forearm_L=92, upperarm_R=92, forearm_R=84,
+                 thigh_L=-30, shin_L=-55, thigh_R=-50, shin_R=-80, dz=-0.42)
+PRONE = pose(STRAIGHT, hips=90, spine=90, chest=91, head=100, upperarm_L=12, forearm_L=92, upperarm_R=6, forearm_R=96,
+             thigh_L=-88, shin_L=-92, thigh_R=-92, shin_R=-96, dz=-0.82)
+PRONE_FLAT = pose(PRONE, head=86, dz=-0.84)                       # face in the water
+CRAWL_A = pose(PRONE, chest=100, head=132, upperarm_R=84, forearm_R=86, upperarm_L=22, forearm_L=88,
+               thigh_L=-92, shin_L=-90, thigh_R=-62, shin_R=-118, dz=-0.8)
+CRAWL_B = mirror_legs_arms(CRAWL_A)
+CRAWL_PULL = pose(PRONE, chest=102, head=130, upperarm_R=40, forearm_R=92, upperarm_L=40, forearm_L=92,
+                  thigh_L=-75, shin_L=-108, thigh_R=-75, shin_R=-108, dz=-0.79)
+REACH = pose(PRONE, chest=102, head=135, upperarm_R=84, forearm_R=86, hand_R=84, upperarm_L=24, forearm_L=90, dz=-0.81)
+GRIP = pose(REACH, hand_R=60)
+PRONE_KNIFE = pose(PRONE, chest=102, head=128, upperarm_R=30, forearm_R=104, hand_R=70, upperarm_L=20, forearm_L=88, dz=-0.79)
+PUSH_UP = pose(STRAIGHT, hips=140, spine=128, chest=122, head=150, upperarm_L=4, forearm_L=-2, upperarm_R=50, forearm_R=115,
+               thigh_L=40, shin_L=-70, thigh_R=-60, shin_R=-95, dz=-0.48)
+KNEEL_KNIFE = pose(STRAIGHT, spine=170, chest=164, head=170, upperarm_L=45, forearm_L=120, upperarm_R=62, forearm_R=112,
+                   thigh_L=84, shin_L=0, thigh_R=0, shin_R=-90)
+KNIFE_STANCE = pose(STANCE, upperarm_R=48, forearm_R=118, hand_R=100)
+ESCAPE_CLIPS = {
+    "trip": dict(frames=22, loop=False, hit=None, keys=[            # the chain takes his foot; down he goes
+        (0, RUN_A), (3, TRIP_CATCH), (8, TRIP_FALL), (12, PRONE), (16, pose(PRONE, head=92, dz=-0.85)), (22, PRONE_FLAT)]),
+    "prone": dict(frames=48, loop=True, hit=None, keys=[            # face down in the water, breathing
+        (0, PRONE_FLAT), (24, pose(PRONE_FLAT, head=92, chest=93)), (48, PRONE_FLAT)]),
+    "crawl": dict(frames=32, loop=True, hit=None, keys=[            # dragging himself on his forearms
+        (0, CRAWL_A), (8, CRAWL_PULL), (16, CRAWL_B), (24, CRAWL_PULL), (32, CRAWL_A)]),
+    "reach_grab": dict(frames=26, loop=False, hit=None, keys=[      # the arm out, the fingers close on the handle
+        (0, CRAWL_PULL), (9, REACH), (14, GRIP), (26, PRONE_KNIFE)]),
+    "prone_knife": dict(frames=40, loop=True, hit=None, keys=[      # holding it, shaking
+        (0, PRONE_KNIFE), (20, pose(PRONE_KNIFE, hand_R=64, head=116)), (40, PRONE_KNIFE)]),
+    "rise_knife": dict(frames=44, loop=False, hit=None, keys=[      # up off the floor, the knife coming up with him
+        (0, PRONE_KNIFE), (12, PUSH_UP), (24, KNEEL_KNIFE), (32, KNEEL_KNIFE), (44, KNIFE_STANCE)]),
+}
+STORY_CLIPS.update(ESCAPE_CLIPS)
 CLIPS.update(STORY_CLIPS)
 
 
@@ -822,7 +859,15 @@ def main():
     meta = build_actions(arm, skip=mocap_names)
     if use_mocap:
         meta += build_mocap_actions(arm)
-    arm.animation_data.action = bpy.data.actions["idle"]
+    arm.animation_data.action = None
+    # the default pose the FBX carries is the rig's current one: make it the rest pose,
+    # not whatever clip happened to be keyed last (eyes, mounts are measured on it)
+    scn = bpy.context.scene
+    scn.frame_set(0)
+    for pb in arm.pose.bones:
+        pb.rotation_mode = "QUATERNION"
+        pb.rotation_quaternion = (1, 0, 0, 0)
+        pb.location = (0, 0, 0)
     export(arm, meta)
     if "--preview" in sys.argv:
         render_previews(arm)

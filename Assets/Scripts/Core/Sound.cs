@@ -18,6 +18,7 @@ namespace ProjectInk
         RankUp, WaveClear, FloorClear, Defeat,
         // story mode (synthesised by tools/audio/make_story_sfx.py)
         Thunder, Drip, Splat, Tinnitus, Heartbeat, Static, Whispers, Drone, Latch, Splash, Breath, Wind, Piano, Rotor,
+        Chain, BodySplash, Crawl, Glint, KnifeGrab, FlashCut,
     }
 
     /// <summary>The mixer. Plays recorded takes with no immediate repeats, small pitch and
@@ -188,6 +189,12 @@ namespace ProjectInk
                 case Sfx.Wind: level = 0.35f; spread = 0.05f; gap = 2f; slows = false; break;
                 case Sfx.Piano: level = 0.6f; spread = 0f; gap = 2f; slows = false; break;
                 case Sfx.Rotor: level = 0.5f; spread = 0.03f; gap = 2f; slows = false; break;
+                case Sfx.Chain: level = 0.85f; spread = 0.04f; gap = 0.3f; break;
+                case Sfx.BodySplash: level = 0.95f; spread = 0.03f; gap = 0.3f; break;
+                case Sfx.Crawl: level = 0.45f; spread = 0.08f; gap = 0.25f; slows = false; break;
+                case Sfx.Glint: level = 0.4f; spread = 0.03f; gap = 0.5f; slows = false; break;
+                case Sfx.KnifeGrab: level = 0.75f; spread = 0.03f; gap = 0.3f; slows = false; break;
+                case Sfx.FlashCut: level = 0.7f; spread = 0.06f; gap = 0.05f; slows = false; break;
             }
         }
 

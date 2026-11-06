@@ -1144,6 +1144,14 @@ namespace ProjectInk
             if (laser != null) laser.enabled = false;
         }
         public void PuppetPose(Vector3 at) { transform.position = at; }
+        /// <summary>A cutscene lets go: back to the fight, closing in.</summary>
+        public void PuppetRelease()
+        {
+            if (state != State.Scripted) return;
+            state = State.Approach;
+            stateTime = 0f;
+            velocity = Vector3.zero;
+        }
         public void PuppetPlay(string clip, float fade = 0.05f, float speed = 1f) { if (body.Has(clip)) body.Play(clip, fade, true, speed); }
         public void PuppetFlash() { Tint(Color.white, 0.07f); }
         public void PuppetDie()

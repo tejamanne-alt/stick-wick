@@ -389,6 +389,80 @@ def piano():
         save("piano", room(lp(y, 5000, 2), 3.2, 0.42, 0.03, 2200), take, peak=0.7)
 
 
+# ------------------------------------------------------------------ the escape (chapter 1)
+
+def chain():
+    """His foot catching a heavy chain lying across the concrete: links dragged and slapping
+    down, keys-on-a-ring jingle for the small links, a heavy metal body for the big ones."""
+    keys = [trim(oc("OBJKey_KeyDrop_OS_01")), trim(oc("OBJKey_KeyDrop_OS_02"))]
+    drops = [trim(oc(f"METLImpt_MetalObjDrop_OS_0{i}")) for i in (1, 2, 3, 4)]
+    for take in (1, 2):
+        k1 = shelf_dark(pitch(keys[take - 1], 0.62), 3500, 0.5)
+        k2 = shelf_dark(pitch(keys[2 - take], 0.55), 3500, 0.5)
+        d1 = lp(pitch(drops[take - 1], 0.8), 6000, 2)
+        d2 = lp(pitch(drops[take + 1], 0.72), 5000, 2)
+        y = mix((d1, 1.0, 0.0), (k1, 0.8, 0.02), (k2, 0.55, 0.11), (d2, 0.6, 0.16), (k1[::1], 0.3, 0.27))
+        save("chain", room(y, 2.0, 0.28, 0.015, 2600), take)
+
+
+def body_splash():
+    """A man going down full length on wet concrete, into shallow water: the slap of the body,
+    a heavy splash, the water settling."""
+    fall = load(os.path.join(ROOT, "body_fall", "body_fall_01.ogg"))
+    sp = trim(kit("everyday-props/props-splash"))
+    for take, r in ((1, 0.62), (2, 0.55)):
+        s1 = lp(shelf_dark(fades(pitch(sp, r), 0.001, 0.25), 2200, 0.6), 5000, 2)
+        s2 = lp(shelf_dark(fades(pitch(sp, r * 1.25), 0.001, 0.2), 2500, 0.6), 5500, 2)
+        n = int(0.5 * SR)
+        thump = np.sin(2 * np.pi * (62 - 20 * t(0.5)) * t(0.5)) * env(n, 0.002, 0.08)
+        lap = oc("WATRLap_WaterLapping_LOOP_01", 12.0 + take * 3, 1.2)
+        lap = fades(lp(shelf_dark(lap, 2000, 0.7), 3000, 2), 0.2, 0.5)
+        y = mix((trim(fall), 0.9, 0.0), (s1, 1.0, 0.012), (s2, 0.5, 0.09), (thump, 0.45, 0.0), (lap, 0.35, 0.25))
+        save("body_splash", room(y, 1.9, 0.24, 0.015, 2400), take)
+
+
+def crawl():
+    """Dragging himself through the wet on his forearms: cloth on concrete, a little water."""
+    for take in (1, 2):
+        c = oc(f"CLOTHMvmt_ClothingMovement_OS_0{take + 1}")
+        c = fades(lp(shelf_dark(trim(c), 2500, 0.6), 5000, 2)[:int(0.9 * SR)], 0.02, 0.2)
+        w = oc("WATRLap_WaterLapping_LOOP_01", 20.0 + 4 * take, 0.8)
+        w = fades(lp(shelf_dark(w, 2000, 0.7), 2600, 2), 0.1, 0.3)
+        save("crawl", room(mix((c, 1.0, 0.0), (w, 0.45, 0.05)), 1.6, 0.18, 0.012, 2400), take, peak=0.7)
+
+
+def glint():
+    """The lightning catching the blade on the floor: a cold, quiet ring."""
+    for take, src in ((1, "shimmers/shimmer-short-soft"), (2, "shimmers/shimmer-medium-soft")):
+        x = trim(kit(src))
+        x = lp(shelf_dark(x, 5000, 0.5), 9000, 2)
+        ring = np.sin(2 * np.pi * 2350 * t(1.4)) * np.exp(-t(1.4) / 0.35) * 0.25
+        save("glint", room(mix((x, 1.0, 0.0), (ring, 1.0, 0.0)), 2.2, 0.35, 0.02, 3000), take, peak=0.55)
+
+
+def knife_grab():
+    """The handle dragged across the concrete into his fist: a real knife scrape, close."""
+    sc = trim(oc("WEAPKnif_KnifeScrape_OS_01"))
+    for take, (r, cut) in ((1, (1.0, 0.7)), (2, (0.9, 0.85))):
+        x = fades(pitch(sc, r)[:int(cut * SR)], 0.003, 0.15)
+        x = lp(shelf_dark(x, 4500, 0.4), 9000, 2)
+        grip = lp(trim(oc("CLOTHMvmt_MovementWithGear_OS_01"))[:int(0.4 * SR)], 3000, 2)
+        save("knife_grab", room(mix((x, 1.0, 0.0), (fades(grip, 0.01, 0.1), 0.5, cut * 0.85)), 1.2, 0.15, 0.01, 3000), take)
+
+
+def flash_cut():
+    """The memory cuts: each one sucks in (a reversed whoosh) and lands (a hit), some with
+    metal, some with a drum. Short, hard, different every time."""
+    rev = [trim(kit("reverse-whooshes/reverse-whoosh-short-strong")), trim(kit("reverse-whooshes/reverse-whoosh-short-soft"))]
+    hits = ["cinematic-hits/cinematic-metal-big", "cinematic-hits/cinematic-drum-big", "impacts/impact-deep-hard", "cinematic-hits/cinematic-slam-big"]
+    for take, h in enumerate(hits, 1):
+        r = rev[take % 2]
+        r = r[-int(min(len(r), 0.35 * SR)):]
+        hit = lp(shelf_dark(trim(kit(h)), 3500, 0.5), 8000, 2)
+        y = mix((r, 0.7, 0.0), (hit, 1.0, len(r) / SR - 0.01))
+        save("flash_cut", room(y, 1.4, 0.2, 0.01, 2500), take)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--oculus", default="/home/user/facebookincubator/meta-open-sound/corpora/oculus-audio-pack/ogg")
@@ -398,6 +472,7 @@ if __name__ == "__main__":
     if not os.path.isdir(O) or not os.path.isdir(K):
         sys.exit("need the two sound libraries: --oculus <...>/oculus-audio-pack/ogg --kit <...>/sounds")
     for name in ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", "static",
-                 "whispers", "drone", "latch", "wind", "rotor", "piano"):
+                 "whispers", "drone", "latch", "wind", "rotor", "piano",
+                 "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut"):
         clear(name)
         globals()[name]()

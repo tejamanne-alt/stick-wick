@@ -962,3 +962,23 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 ### Fix: running on the spot at the shutter
 - Walking up to the shutter starts the break-in, which locks the hero with `CineLock`. The lock left his run state and run animation on, so he kept running on the spot after the arrow was released, sliding to a stop.
 - `CineLock` now stops a run: horizontal velocity is zeroed and he settles into his stance (`IdleClip`). This also covers every other cinematic that locks a standing hero.
+
+### The escape (prologue, between the breach and the fight)
+- Story beats:
+  - The men walk in and he runs.
+  - A chain across the floor trips him into the puddle, in slow motion.
+  - He lies dazed while they come, laughing.
+  - Lightning shows his knife glinting on the floor ahead, and he crawls to it.
+  - He grips it, and 4.5 s of past fights flash in.
+  - He rises with the knife, turns to face them, and they step back: *"...My hands remember."* Then the knife fight.
+- `StoryEscape.cs` (a partial of `StoryIntro`):
+  - the timeline, with hand-cut camera shots
+  - the men walked up as puppets (`Enemy.PuppetRelease` added)
+  - the chain jumping and dragging where his foot caught it
+  - the knife glint
+  - the montage: stills pushed in and shaken, split at the edges, torn, grained, with white and black frames and cuts back to him bled red, in a new random order each time
+- New clips `trip`, `prone`, `crawl`, `reach_grab`, `prone_knife` and `rise_knife` in `build_stickman.py`. The export now resets the rig to rest before writing.
+- Set: `Chain` (30 real ring links in an S across the lane at x 3.3) and `FloorKnife` (steel blade, glint sprite) in `StoryBuilder`.
+- Flashback stills: `tools/blender/render_flashbacks.py` renders 8 noir frames with the real rig and clip poses into `Resources/Story/Flash`. Preview: `docs/previews/flashbacks.png`.
+- New recorded SFX: chain, body splash, crawl, glint, knife grab (a real knife scrape) and flash cuts.
+- A retry skips the escape, with the knife already in hand. Scene version 29.

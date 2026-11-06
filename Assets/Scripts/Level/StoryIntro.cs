@@ -28,7 +28,7 @@ namespace ProjectInk
     ///          "He's awake. Finish it." The fight. When the last one falls, a memory breaks through.
     /// All cinematic timing is in real seconds. Tap SKIP to jump to the walk (and after a defeat,
     /// the retry starts at the door).</summary>
-    public class StoryIntro : MonoBehaviour
+    public partial class StoryIntro : MonoBehaviour
     {
         public static StoryIntro Instance { get; private set; }
         /// <summary>Survives the reload after a defeat: start again at the door, not the wake-up.</summary>
@@ -37,11 +37,11 @@ namespace ProjectInk
         public HeroController hero;
         public WaveDirector director;
 
-        enum Phase { Cinematic, Walk, Breach, Fight, Memory, End }
+        enum Phase { Cinematic, Walk, Breach, Escape, Fight, Memory, End }
         Phase phase = Phase.Cinematic;
 
         /// <summary>The fight HUD steps aside while the story holds the screen.</summary>
-        public bool HideHud => phase == Phase.Cinematic || phase == Phase.Memory || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
+        public bool HideHud => phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Memory || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
 
         // the edit (real seconds)
         const float S1 = 4.2f, S2 = 6.8f, S3 = 10.8f, S4 = 15.6f, S5 = 22.2f, S6 = 27.0f, Control = 30.6f;
@@ -96,6 +96,7 @@ namespace ProjectInk
             runSpeed = hero.runSpeed;
             StoryCameraFX.Set(0f, 0f);
             Sound.Ambience(2.4f, 0.2f, 22000f);
+            FindEscapeProps();
         }
 
         static Transform Find(string n) { var g = GameObject.Find(n); return g != null ? g.transform : null; }
@@ -124,6 +125,7 @@ namespace ProjectInk
             {
                 setUp = true;
                 HeadWound.Chapter = 1;                       // the warehouse: the night of the blow
+                if (!Retry) EscapeSeen = false;              // from the top: he has not found the knife yet
                 if (Retry) { BeginAtDoor(); }
                 else
                 {
@@ -145,6 +147,10 @@ namespace ProjectInk
                     Cinematic();
                     break;
                 case Phase.Walk: UpdateWalk(); break;
+                case Phase.Escape:
+                    prevE = e; e += dt;
+                    UpdateEscape();
+                    break;
                 case Phase.Breach:
                     prevB = b; b += dt;
                     UpdateBreach();
@@ -534,8 +540,11 @@ namespace ProjectInk
                 cam.Scripted(new Vector3(hp.x - 1.7f, 0.7f, -1.9f) + Sway(0.03f, 0.6f, 8f), new Vector3(ShutterX, 1.6f, BackZ + 0.6f), Mathf.Min(wIn, wOut), 46f);
             }
             barsPx = b < ReleaseAt ? Mathf.Lerp(0f, 70f, Ease(0f, 0.5f, b)) : Mathf.Lerp(70f, 0f, Ease(ReleaseAt, ReleaseAt + 0.6f, b));
+            if (AtB(ReleaseAt) && CanEscape) { BeginEscape(); return; }       // he runs (see StoryEscape)
             if (AtB(ReleaseAt))
             {
+                // a retry: the knife is already his
+                if (EscapeSeen) { hero.GiveWeapon(FightStyle.Knife, 4); if (floorKnife != null) floorKnife.gameObject.SetActive(false); }
                 foreach (var e in men) if (e != null) e.Passive = false;
                 hero.CineRelease();
                 chipUntil = Time.unscaledTime + 7f;
@@ -637,6 +646,7 @@ namespace ProjectInk
                 if (t >= S4 + 5.15f && t < S4 + 5.65f) Void(w, h);
             }
             if (phase == Phase.Memory) Memory(w, h);
+            if (phase == Phase.Escape) EscapeGUI(w, h);
 
             // lightning: two white frames, then a blue afterglow
             if (flashFrames > 0) { Fill(new Rect(0, 0, w, h), Color.white); if (repaint) flashFrames--; }
@@ -700,7 +710,7 @@ namespace ProjectInk
                 Fill(r, new Color(0f, 0f, 0f, 0.5f * a));
                 cap.alignment = TextAnchor.MiddleCenter;
                 cap.normal.textColor = new Color(1f, 1f, 1f, 0.9f * a);
-                GUI.Label(r, "TAP HIGH  PUNCH    ·    TAP LOW  KICK    ·    SWIPE SIDEWAYS  DODGE", cap);
+                GUI.Label(r, EscapeSeen ? "TAP HIGH  STAB    ·    TAP LOW  KICK    ·    SWIPE SIDEWAYS  DODGE" : "TAP HIGH  PUNCH    ·    TAP LOW  KICK    ·    SWIPE SIDEWAYS  DODGE", cap);
                 cap.alignment = TextAnchor.MiddleLeft;
             }
             if (phase == Phase.End) EndCard(w, h);
