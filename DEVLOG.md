@@ -958,3 +958,7 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - The two mirrored white zigzag "scars" are replaced by a single fresh head wound on his **right temple**: the side his right hand touches in `touch_temple`, and the side the camera sees in the prologue. It's a short, slightly curved, tapered gash (a dark lip round a wet red cut) with a thin trickle of dried blood running down past the eye, ending in a bead.
 - It's built as ribbon meshes laid on the head sphere, parented to the head bone and measured in the bind pose like the eyes.
 - The puddle reflection shows the same single red gash and trickle instead of the white zigzag. Scene version 27.
+
+### Fix: running on the spot at the shutter
+- Walking up to the shutter starts the break-in, which locks the hero with `CineLock`. The lock left his run state and run animation on, so he kept running on the spot after the arrow was released, sliding to a stop.
+- `CineLock` now stops a run: horizontal velocity is zeroed and he settles into his stance (`IdleClip`). This also covers every other cinematic that locks a standing hero.

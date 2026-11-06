@@ -796,7 +796,14 @@ namespace ProjectInk
         }
 
         /// <summary>Lock a hero who is already standing (the short replay intro).</summary>
-        public void CineLock() { CinematicLock = true; cineFrozen = false; }
+        public void CineLock()
+        {
+            CinematicLock = true;
+            cineFrozen = false;
+            // a run in progress stops here: no sliding, no run cycle on the spot
+            velocity.x = 0f;
+            if (running || body.CurrentName == "run") { running = false; if (state == State.Idle) body.Play(IdleClip, 0.2f); }
+        }
 
         /// <summary>A cutscene moves him by hand: no input, no physics (the boss finale).</summary>
         public void CinePuppet() { CinematicLock = true; cineFrozen = true; velocity = Vector3.zero; }
