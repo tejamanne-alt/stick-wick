@@ -1026,8 +1026,8 @@ namespace ProjectInk
             {
                 Fill(new Rect(0, h * 0.30f, w, 170), new Color(0f, 0f, 0f, 0.6f));
                 var t1 = new GUIStyle(gTitle) { fontSize = 64 };
-                Label(new Rect(0, h * 0.30f + 14, w, 80), Spaced(tut.FinaleTitle), t1);
-                Label(new Rect(0, h * 0.30f + 98, w, 40), tut.FinaleLine, gChalk);
+                Label(new Rect(0, h * 0.30f + 14, w, 80), Spaced("THE BUILDING IS YOUR WEAPON"), t1);
+                Label(new Rect(0, h * 0.30f + 98, w, 40), "ledges, ropes, crates, edges, glass... look for the chalk marks", gChalk);
                 return;
             }
             var L = tut.Current;
@@ -1037,7 +1037,7 @@ namespace ProjectInk
             Fill(new Rect(card.x, card.y, card.width, 1), new Color(1f, 1f, 1f, 0.4f));
             var head = new GUIStyle(gLine) { fontSize = 17 };
             head.normal.textColor = new Color(1f, 1f, 1f, 0.6f);
-            GUI.Label(new Rect(card.x, card.y + 6, card.width, 20), $"{tut.Header}   ·   {tut.Index + 1} / {tut.Count}", head);
+            GUI.Label(new Rect(card.x, card.y + 6, card.width, 20), $"T R A I N I N G   ·   {tut.Index + 1} / {tut.Count}", head);
             Label(new Rect(card.x, card.y + 22, card.width, 48), L.title, gTitle);
             Label(new Rect(card.x, card.y + 66, card.width, 28), L.line, gLine);
             // progress pips

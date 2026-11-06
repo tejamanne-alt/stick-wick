@@ -243,10 +243,10 @@ namespace ProjectInk
             if (AtD(D_Release))
             {
                 EscapeSeen = true;
-                foreach (var m0 in men) if (m0 != null) m0.PuppetRelease();
+                foreach (var m0 in men) if (m0 != null) { m0.PuppetRelease(); m0.Passive = false; }
                 hero.CineRelease();
                 hero.runSpeed = runSpeed;
-                StartFight();
+                chipUntil = Time.unscaledTime + 7f;
                 StoryCameraFX.Set(0f, 0f);
             }
             if (d > D_Release)
@@ -261,27 +261,6 @@ namespace ProjectInk
                 }
             }
             else barsPx = Mathf.MoveTowards(barsPx, 70f, dt * 120f);
-        }
-
-        /// <summary>The first time he fights: the instinct lessons on these three men first (they hold
-        /// back and cannot fall for good until it is over), then they come for real.</summary>
-        void StartFight()
-        {
-            if (!TutorialDirector.StoryDone && director != null)
-            {
-                foreach (var m0 in men) if (m0 != null) m0.Passive = true;
-                TutorialDirector.StoryMode = true;
-                var tut = director.GetComponent<TutorialDirector>();
-                if (tut == null) tut = director.gameObject.AddComponent<TutorialDirector>();
-                tut.BeginStory(men, () =>
-                {
-                    foreach (var m0 in men) if (m0 != null) m0.Passive = false;
-                    chipUntil = Time.unscaledTime + 5f;
-                });
-                return;
-            }
-            foreach (var m0 in men) if (m0 != null) m0.Passive = false;
-            chipUntil = Time.unscaledTime + 7f;
         }
 
         void Trip()
