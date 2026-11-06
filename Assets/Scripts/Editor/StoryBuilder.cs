@@ -437,7 +437,11 @@ namespace ProjectInk.EditorTools
 
         /// <summary>The scar he wakes with: a jagged white hairline at the temple (both sides of
         /// the head, so it shows whichever way he faces). Built in the rest pose like the eyes.</summary>
-        public static void AddScar(GameObject hero, Material white)
+        /// <summary>The head wound that took his memory, on the right temple (the side his right
+        /// hand goes to, and the side the camera sees): one short, slightly curved gash, ragged
+        /// and tapered, dark at its lips and wet red in the cut, with a thin trickle of dried blood
+        /// running down past the eye and ending in a bead. Real ribbons laid on the head sphere.</summary>
+        public static void AddScar(GameObject hero, Material unused = null)
         {
             var player = hero.GetComponentInChildren<ClipPlayer>(true);
             var head = player != null ? player.Bone("head") : null;
@@ -445,28 +449,86 @@ namespace ProjectInk.EditorTools
             var restore = FighterFactory.ToBindPose(player.gameObject);       // measured in the rest pose, like the eyes
             var fwd = FighterFactory.Forward(player, player.moves);
             FighterFactory.ToBindPose(player.gameObject);
-            var side = Vector3.Cross(fwd, Vector3.up);
+            var right = -Vector3.Cross(fwd, Vector3.up);                        // Cross(fwd, up) is his left
             var c = head.position + Vector3.up * 0.19f;
-            for (int s = -1; s <= 1; s += 2)
+            const float R = 0.21f;
+            Vector3 On(float f, float u, float r) => c + (fwd * f + Vector3.up * u + right * r).normalized * R;
+
+            var lip = PrototypeBuilder.Mat("WoundLip", "Unlit/Color", new Color(0.30f, 0.02f, 0.025f));
+            var cut = PrototypeBuilder.Mat("WoundCut", "Unlit/Color", new Color(0.72f, 0.07f, 0.06f));
+            var dried = PrototypeBuilder.Mat("WoundBlood", "Unlit/Color", new Color(0.40f, 0.025f, 0.025f));
+
+            // the gash: from up behind the temple, down and forward towards the brow
+            var gash = Smooth(new[] { On(0.22f, 0.66f, 0.72f), On(0.34f, 0.55f, 0.77f), On(0.47f, 0.45f, 0.77f), On(0.58f, 0.36f, 0.73f) }, 10);
+            Ribbon(head, "WoundLip", gash, c, k => 0.016f * Taper(k, 0.18f) * (1f + 0.1f * Mathf.Sin(k * 23f)), 0.0016f, lip);
+            Ribbon(head, "WoundCut", gash, c, k => 0.0065f * Taper(k, 0.3f) * (1f + 0.2f * Mathf.Sin(k * 37f + 1f)), 0.0028f, cut);
+            // the trickle: from the low end of the cut, running down the side of the face
+            var drip = Smooth(new[] { On(0.56f, 0.35f, 0.74f), On(0.585f, 0.22f, 0.78f), On(0.6f, 0.08f, 0.8f), On(0.59f, -0.05f, 0.81f) }, 10);
+            Ribbon(head, "WoundBlood", drip, c, k => 0.0045f * (1f - 0.55f * k) * Mathf.Min(1f, k * 8f + 0.4f), 0.0014f, dried);
+            var bead = Vis(GameObject.CreatePrimitive(PrimitiveType.Sphere).transform);
+            bead.name = "WoundBead";
+            bead.position = drip[drip.Length - 1] + (drip[drip.Length - 1] - c).normalized * 0.001f;
+            bead.localScale = new Vector3(0.0075f, 0.009f, 0.0075f);
+            bead.SetParent(head, true);
+            var br = bead.GetComponent<Renderer>();
+            br.sharedMaterial = dried;
+            br.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            restore?.Invoke();
+        }
+
+        static float Taper(float k, float ends) => Mathf.SmoothStep(0f, 1f, Mathf.Min(k, 1f - k) / ends);
+
+        /// <summary>Catmull-Rom through the points, `n` steps per span.</summary>
+        static Vector3[] Smooth(Vector3[] p, int n)
+        {
+            var o = new System.Collections.Generic.List<Vector3>();
+            for (int i = 0; i < p.Length - 1; i++)
             {
-                var pts = new[] { new Vector3(0.40f, 0.62f, 0.68f * s), new Vector3(0.20f, 0.58f, 0.79f * s), new Vector3(0.26f, 0.44f, 0.86f * s), new Vector3(0.04f, 0.40f, 0.92f * s) };
-                for (int i = 0; i < pts.Length - 1; i++)
+                Vector3 p0 = p[Mathf.Max(0, i - 1)], p1 = p[i], p2 = p[i + 1], p3 = p[Mathf.Min(p.Length - 1, i + 2)];
+                for (int s = 0; s < n; s++)
                 {
-                    Vector3 W(Vector3 v) => (fwd * v.x + Vector3.up * v.y + side * v.z).normalized;
-                    var a = c + W(pts[i]) * 0.213f;
-                    var b = c + W(pts[i + 1]) * 0.213f;
-                    var g = Vis(GameObject.CreatePrimitive(PrimitiveType.Cube).transform);
-                    g.name = "Scar";
-                    g.position = (a + b) * 0.5f;
-                    g.rotation = Quaternion.LookRotation(b - a, (a + b) * 0.5f - c);
-                    g.localScale = new Vector3(0.012f, 0.006f, Vector3.Distance(a, b) + 0.008f);
-                    g.SetParent(head, true);
-                    var r = g.GetComponent<Renderer>();
-                    r.sharedMaterial = white;
-                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    float t = s / (float)n, t2 = t * t, t3 = t2 * t;
+                    o.Add(0.5f * (2f * p1 + (-p0 + p2) * t + (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 + (-p0 + 3f * p1 - 3f * p2 + p3) * t3));
                 }
             }
-            restore?.Invoke();
+            o.Add(p[p.Length - 1]);
+            return o.ToArray();
+        }
+
+        /// <summary>A flat strip along `path` on the head's surface (centre `c`), width(k) for k in 0..1,
+        /// lifted `lift` off the skin, parented to the head bone. Both faces, so it never vanishes.</summary>
+        static void Ribbon(Transform head, string name, Vector3[] path, Vector3 c, System.Func<float, float> width, float lift, Material mat)
+        {
+            int n = path.Length;
+            var go = new GameObject(name);
+            go.transform.SetParent(head, false);
+            var verts = new Vector3[n * 2];
+            for (int i = 0; i < n; i++)
+            {
+                var nrm = (path[i] - c).normalized;
+                var tan = (path[Mathf.Min(n - 1, i + 1)] - path[Mathf.Max(0, i - 1)]).normalized;
+                var across = Vector3.Cross(nrm, tan).normalized;
+                float w = width(i / (float)(n - 1)) * 0.5f;
+                var p = path[i] + nrm * lift;
+                verts[i * 2] = go.transform.InverseTransformPoint(p - across * w);
+                verts[i * 2 + 1] = go.transform.InverseTransformPoint(p + across * w);
+            }
+            var tris = new System.Collections.Generic.List<int>();
+            for (int i = 0; i < n - 1; i++)
+            {
+                int a = i * 2, b = a + 1, d = a + 2, e = a + 3;
+                tris.AddRange(new[] { a, d, b, b, d, e, a, b, d, b, e, d });
+            }
+            var mesh = new Mesh { name = name, vertices = verts, triangles = tris.ToArray() };
+            mesh.RecalculateBounds();
+            System.IO.Directory.CreateDirectory("Assets/Generated");
+            string asset = $"Assets/Generated/{name}.asset";
+            AssetDatabase.DeleteAsset(asset);
+            AssetDatabase.CreateAsset(mesh, asset);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = mat;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         }
 
         // ------------------------------------------------------------ textures

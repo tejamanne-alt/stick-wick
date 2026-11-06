@@ -6,7 +6,7 @@ namespace ProjectInk
     /// One drop falls in; ONE ripple spreads out in slow motion (a real wave packet: a few crests
     /// that bend the reflection and catch the light, dying as they travel); as the water calms his
     /// face surfaces in it, black against the light of the roof crack behind his head, eye slits and
-    /// the scar at the temple white; then lightning blows the reflection stark white.
+    /// the wound at the temple dark red; then lightning blows the reflection stark white.
     ///
     /// Two textures: the wet concrete (static, detailed, made once) and the water (its reflection
     /// recomputed every frame on the CPU, at a modest size, drawn over it with a soft edge).
@@ -171,32 +171,62 @@ namespace ProjectInk
                     float sh = (dx / 0.36f) * (dx / 0.36f) + ((y - (cy + 0.33f)) / 0.2f) * ((y - (cy + 0.33f)) / 0.2f);
                     float body = Mathf.Max(head, Mathf.Clamp01((1f - sh) * 40f));
                     float rim = Mathf.Clamp01(1f - Mathf.Abs(r - 0.158f) * RH * 0.5f) * (1f - head);
-                    // eye slits (slanted, a little angry) and the scar at the temple: stark white
+                    // eye slits (slanted, a little angry): stark white
                     float white = 0f;
                     for (int s = -1; s <= 1; s += 2)
                     {
                         float ex = dx - s * 0.058f, ey = (y - (cy - 0.005f)) + s * ex * 0.22f;
                         white = Mathf.Max(white, Mathf.Clamp01((0.03f - Mathf.Abs(ex)) * RH) * Mathf.Clamp01((0.0055f - Mathf.Abs(ey)) * RH));
                     }
-                    white = Mathf.Max(white, Scar(dx, dy) * head);
                     Shade(refR, refG, refB, idx, body, rim, white);
                     Shade(flR, flG, flB, idx, body, rim, white);
+                    // the wound at his temple: one gash, a dark lip round a wet red cut, and the
+                    // thin line of dried blood under it (red in the dark, redder in the flash)
+                    Wound(dx, dy, out float lip, out float cutv, out float trickle);
+                    lip *= head; cutv *= head; trickle *= head;
+                    Tint(refR, refG, refB, idx, Mathf.Max(lip, trickle), 0.22f, 0.015f, 0.02f);
+                    Tint(refR, refG, refB, idx, cutv, 0.5f, 0.05f, 0.045f);
+                    Tint(flR, flG, flB, idx, Mathf.Max(lip, trickle), 0.42f, 0.03f, 0.035f);
+                    Tint(flR, flG, flB, idx, cutv, 0.85f, 0.12f, 0.1f);
                 }
         }
 
-        float Scar(float dx, float dy)
+        static float Seg(Vector2 p, Vector2[] pts, out float along)
         {
-            var pts = new[] { new Vector2(-0.11f, -0.105f), new Vector2(-0.085f, -0.075f), new Vector2(-0.105f, -0.05f), new Vector2(-0.075f, -0.025f) };
-            float best = 1f;
-            var p = new Vector2(dx, -dy);
+            float best = 1f; along = 0f;
+            float total = 0f, acc = 0f;
+            for (int i = 0; i < pts.Length - 1; i++) total += (pts[i + 1] - pts[i]).magnitude;
             for (int i = 0; i < pts.Length - 1; i++)
             {
-                var a = pts[i]; var b = pts[i + 1];
-                var ab = b - a;
+                var a = pts[i]; var ab = pts[i + 1] - a;
                 float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / ab.sqrMagnitude);
-                best = Mathf.Min(best, (p - (a + ab * t)).magnitude);
+                float d = (p - (a + ab * t)).magnitude;
+                if (d < best) { best = d; along = (acc + ab.magnitude * t) / total; }
+                acc += ab.magnitude;
             }
-            return Mathf.Clamp01((0.0045f - best) * RH);
+            return best;
+        }
+
+        /// <summary>Coverage of the gash's lip, its cut, and the trickle under it, at (dx, dy) from
+        /// the head's centre (seen in the water, so on the screen-left temple).</summary>
+        void Wound(float dx, float dy, out float lip, out float cut, out float trickle)
+        {
+            var p = new Vector2(dx, -dy);
+            var gash = new[] { new Vector2(-0.118f, -0.098f), new Vector2(-0.104f, -0.077f), new Vector2(-0.092f, -0.06f), new Vector2(-0.083f, -0.045f) };
+            float d = Seg(p, gash, out float k);
+            float taper = Mathf.SmoothStep(0f, 1f, Mathf.Min(k, 1f - k) / 0.25f);
+            float rag = 1f + 0.25f * Mathf.Sin(k * 40f);
+            lip = Mathf.Clamp01((0.0055f * taper * rag - d) * RH + 0.5f);
+            cut = Mathf.Clamp01((0.0024f * taper * rag - d) * RH + 0.5f);
+            var run = new[] { new Vector2(-0.085f, -0.047f), new Vector2(-0.088f, -0.025f), new Vector2(-0.09f, -0.002f), new Vector2(-0.089f, 0.018f) };
+            float dt = Seg(p, run, out float kt);
+            trickle = Mathf.Clamp01((0.0018f * (1f - 0.5f * kt) - dt) * RH + 0.5f);
+        }
+
+        static void Tint(float[] r, float[] g, float[] b, int i, float k, float cr, float cg, float cb)
+        {
+            if (k <= 0f) return;
+            r[i] = Mathf.Lerp(r[i], cr, k); g[i] = Mathf.Lerp(g[i], cg, k); b[i] = Mathf.Lerp(b[i], cb, k);
         }
 
         static void Shade(float[] r, float[] g, float[] b, int i, float body, float rim, float white)

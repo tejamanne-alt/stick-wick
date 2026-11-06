@@ -953,3 +953,8 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 ### Floating eyes and scar fixed
 - The eyes and scar were floating off the head in story close-ups. Cause: they, the weapon mounts and the limb trails are placed by measuring the bones when the fighter is built, assuming the model is in its rest pose. But the model's default pose is whatever frame it was exported on. Since the story clips were added, that frame is a crouched story pose: the head sits 0.27 m forward and 0.29 m low.
 - `FighterFactory.ToBindPose` now puts the model into its true bind pose (from the skinned mesh's bind poses) for those measurements, then puts it back. Forward is measured the way `ClipPlayer.CalibrateFacing` does at runtime, instead of being assumed to be +X. The story scar uses the same rules. Scene version 26.
+
+### One wound, not two scars
+- The two mirrored white zigzag "scars" are replaced by a single fresh head wound on his **right temple**: the side his right hand touches in `touch_temple`, and the side the camera sees in the prologue. It's a short, slightly curved, tapered gash (a dark lip round a wet red cut) with a thin trickle of dried blood running down past the eye, ending in a bead.
+- It's built as ribbon meshes laid on the head sphere, parented to the head bone and measured in the bind pose like the eyes.
+- The puddle reflection shows the same single red gash and trickle instead of the white zigzag. Scene version 27.
