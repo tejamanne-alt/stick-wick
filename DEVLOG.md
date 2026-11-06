@@ -991,3 +991,10 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - the game's white slash trails on the strikes
 - The world is the fight mode's grayscale: concrete panels with seams, dark steel, white trims, hanging lamps with soft cones, black windows with white city lights, a white moon.
 - Every frame is finished in pure greyscale, and the montage's colour split is now a grey double image. The cuts back to the present stay in colour.
+
+### Story: the first fight teaches (INSTINCT)
+- The first time the prologue's knife fight starts, `TutorialDirector` runs in story mode on the three real men: no stunt doubles, nobody moved around. They hold back as `Passive` and can't be finished until it's over.
+- Five lessons for the knife: TAP HIGH stab, TAP LOW kick, TAP HIM pick your man, SWIPE SIDEWAYS dodge, SWIPE DOWN throw.
+- The card is headed I N S T I N C T and the close is THEY'RE YOURS. The ghost finger, SKIP THIS MOVE and SKIP TRAINING all work as in fight mode.
+- When it ends (or is skipped), the men fight for real.
+- It runs once (`story_training_done`); retries skip it. `TutorialDirector.StoryMode` is read once in `Awake`, so the fight-mode reel is unaffected.

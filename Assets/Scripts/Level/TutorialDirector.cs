@@ -41,12 +41,36 @@ namespace ProjectInk
             new Lesson { title = "RAMPAGE", line = "Your rare power. When you're in trouble and it's charged, this button appears. Tap it.", gesture = Gesture.TapRampage, goal = 1, evt = "rampage" },
         };
 
+        /// <summary>STORY MODE: the first fight of the prologue teaches the knife against the three
+        /// real men (held back, unkillable while he learns), as his instinct coming back. Set before
+        /// the component is added, so it does not start the fight-mode reel on its own.</summary>
+        public static bool StoryMode;
+        const string StoryDoneKey = "story_training_done";
+        public static bool StoryDone => PlayerPrefs.GetInt(StoryDoneKey, 0) == 1;
+
+        static readonly Lesson[] StoryLessons =
+        {
+            new Lesson { title = "TAP HIGH", line = "Stab. Tap high, on the side he is on.", gesture = Gesture.TapHigh, goal = 2, evt = "punch" },
+            new Lesson { title = "TAP LOW", line = "Kick. Tap low, on his side.", gesture = Gesture.TapLow, goal = 2, evt = "kick" },
+            new Lesson { title = "TAP HIM", line = "Pick your man: tap him. Your strikes go to him; the others wait.", gesture = Gesture.TapEnemy, goal = 1, evt = "lock" },
+            new Lesson { title = "SWIPE SIDEWAYS", line = "Dodge. When one of them flashes red, get out of the way.", gesture = Gesture.SwipeSide, goal = 1, evt = "dodge" },
+            new Lesson { title = "SWIPE DOWN", line = "Throw the knife. You carry more than one.", gesture = Gesture.SwipeDown, goal = 1, evt = "throw" },
+        };
+
+        Lesson[] lessons = Lessons;
+        bool story;
+        System.Action onFinished;
+        /// <summary>The card's heading and the closing title (the story calls it instinct).</summary>
+        public string Header => story ? "I N S T I N C T" : "T R A I N I N G";
+        public string FinaleTitle => story ? "THEY'RE YOURS." : "THE BUILDING IS YOUR WEAPON";
+        public string FinaleLine => story ? "your hands remember: the rest comes back as you fight" : "ledges, ropes, crates, edges, glass... look for the chalk marks";
+
         public bool Active { get; private set; }
         /// <summary>Holding the first wave back (training running, or waiting to start).</summary>
         public bool Holding => Active || pendingStart;
         public int Index { get; private set; }
-        public int Count => Lessons.Length;
-        public Lesson Current => Lessons[Mathf.Clamp(Index, 0, Lessons.Length - 1)];
+        public int Count => lessons.Length;
+        public Lesson Current => lessons[Mathf.Clamp(Index, 0, lessons.Length - 1)];
         public int Progress { get; private set; }
         public float NiceUntil { get; private set; }
         public bool Finale { get; private set; }
@@ -67,7 +91,8 @@ namespace ProjectInk
         void Awake()
         {
             Instance = this;
-            pendingStart = !Done;
+            pendingStart = !Done && !StoryMode;
+            StoryMode = false;                       // read once: a fight-mode scene after the story gets its own reel
         }
 
         void OnEnable() { HeroController.Did += OnDid; }
@@ -104,8 +129,21 @@ namespace ProjectInk
             if (Current.evt == null && Marker.HasValue && hero != null &&
                 Mathf.Abs(hero.transform.position.x - Marker.Value.x) < 0.7f && hero.Grounded)
                 Complete();
-            // keep the stunt doubles in front of him
-            TendDoubles();
+            // keep the stunt doubles in front of him (the story's men keep their own distance)
+            if (!story) TendDoubles();
+        }
+
+        /// <summary>The prologue's first fight: teach the knife on these men, then call `done`.</summary>
+        public void BeginStory(Enemy[] men, System.Action done)
+        {
+            story = true;
+            lessons = StoryLessons;
+            onFinished = done;
+            pendingStart = false;
+            if (hero == null && WaveDirector.Instance != null) hero = WaveDirector.Instance.hero;
+            doubles.Clear();
+            foreach (var m in men) if (m != null) doubles.Add(m);
+            Begin();
         }
 
         void Begin()
@@ -127,13 +165,26 @@ namespace ProjectInk
 
         void StartLesson()
         {
-            if (Index >= Lessons.Length) { BeginFinale(); return; }
-            var L = Lessons[Index];
+            if (Index >= lessons.Length) { BeginFinale(); return; }
+            var L = lessons[Index];
             if (!Applicable(L)) { Index++; StartLesson(); return; }
             Progress = 0;
             Marker = null;
             lessonStart = Time.unscaledTime;
             var wd = WaveDirector.Instance;
+            if (story)
+            {
+                // the men stay where they are; he turns to the nearest, so the first tap goes his way
+                if (hero != null)
+                {
+                    Enemy near = null;
+                    foreach (var d in doubles) if (d != null && (near == null || Mathf.Abs(d.transform.position.x - hero.transform.position.x) < Mathf.Abs(near.transform.position.x - hero.transform.position.x))) near = d;
+                    if (near != null && hero.Free) hero.FaceTowards(near.transform.position.x);
+                }
+                if (L.evt == "throw" && hero != null && hero.Style == FightStyle.Fists) hero.GiveWeapon(FightStyle.Knife, 2);
+                Sound.Play(Sfx.CineHit, 0.35f);
+                return;
+            }
             // every lesson starts clean: the stunt doubles back on their marks, on their feet
             SetupDoubles(L);
             if (L.evt == "rampage" && wd != null) wd.FillFlow();
@@ -299,7 +350,7 @@ namespace ProjectInk
         void OnDid(string what)
         {
             if (!Active || Finale || nextAt > 0f) return;
-            var L = Lessons[Index];
+            var L = lessons[Index];
             if (L.evt == null || L.evt != what) return;
             Progress++;
             if (Progress >= L.goal) Complete();
@@ -307,7 +358,7 @@ namespace ProjectInk
 
         void Complete()
         {
-            Progress = Lessons[Index].goal;
+            Progress = lessons[Index].goal;
             NiceUntil = Time.unscaledTime + 0.9f;
             nextAt = Time.unscaledTime + 1.0f;
             Sound.Play(Sfx.Pickup, 0.8f, null, 1.2f);
@@ -324,6 +375,18 @@ namespace ProjectInk
         /// <summary>Finish (or skip): clear the stunt doubles and let the fight begin.</summary>
         public void End(bool completed)
         {
+            if (story)
+            {
+                doubles.Clear();
+                Active = false;
+                Finale = false;
+                PlayerPrefs.SetInt(StoryDoneKey, 1);
+                PlayerPrefs.Save();
+                var done = onFinished;
+                onFinished = null;
+                done?.Invoke();
+                return;
+            }
             foreach (var d in doubles) if (d != null) Destroy(d.gameObject);
             doubles.Clear();
             Active = false;
