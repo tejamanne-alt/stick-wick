@@ -16,6 +16,8 @@ namespace ProjectInk
         BruteHurt, BruteDeath, BruteLaugh, FallScream,
         SlowmoIn, SlowmoOut, CineHit, CineMassive, Riser, Boom,
         RankUp, WaveClear, FloorClear, Defeat,
+        // story mode (synthesised by tools/audio/make_story_sfx.py)
+        Thunder, Drip, Splat, Tinnitus, Heartbeat, Static, Whispers, Drone, Latch, Splash, Breath, Wind,
     }
 
     /// <summary>The mixer. Plays recorded takes with no immediate repeats, small pitch and
@@ -172,6 +174,18 @@ namespace ProjectInk
                 case Sfx.RankUp: level = 0.35f; spread = 0.02f; gap = 0.5f; slows = false; break;
                 case Sfx.WaveClear: level = 0.55f; spread = 0f; slows = false; break;
                 case Sfx.FloorClear: case Sfx.Defeat: level = 0.6f; spread = 0f; gap = 1f; slows = false; break;
+                case Sfx.Thunder: level = 1f; spread = 0.04f; gap = 0.8f; slows = false; break;
+                case Sfx.Drip: level = 0.5f; spread = 0.1f; gap = 0.08f; break;
+                case Sfx.Splat: level = 0.9f; spread = 0.03f; slows = false; break;
+                case Sfx.Tinnitus: level = 0.22f; spread = 0f; gap = 1f; slows = false; break;
+                case Sfx.Heartbeat: level = 0.8f; spread = 0.02f; gap = 0.3f; slows = false; break;
+                case Sfx.Static: level = 0.45f; spread = 0.05f; gap = 0.1f; slows = false; break;
+                case Sfx.Whispers: level = 0.55f; spread = 0.05f; gap = 0.3f; slows = false; break;
+                case Sfx.Drone: level = 0.5f; spread = 0f; gap = 2f; slows = false; break;
+                case Sfx.Latch: level = 0.85f; spread = 0.03f; gap = 0.2f; break;
+                case Sfx.Splash: level = 0.3f; spread = 0.1f; gap = 0.12f; break;
+                case Sfx.Breath: level = 0.45f; spread = 0.05f; gap = 0.4f; slows = false; break;
+                case Sfx.Wind: level = 0.35f; spread = 0.05f; gap = 2f; slows = false; break;
             }
         }
 
@@ -234,6 +248,17 @@ namespace ProjectInk
             return Mathf.Lerp(0.72f, 1f, Mathf.InverseLerp(0.15f, 1f, ts));
         }
 
+        // the scene's ambience (story mode): how loud the rain is, how muffled the room is
+        public static float RainLevel = 1f, RoomLevel = 1f, AmbienceCutoff = 22000f;
+
+        /// <summary>Set the weather for the shot: rain level (1 = normal), the room tone, and a
+        /// low-pass on both (indoors, the storm is muffled). Reset with ResetAmbience.</summary>
+        public static void Ambience(float rain, float room, float cutoff)
+        {
+            RainLevel = rain; RoomLevel = room; AmbienceCutoff = cutoff;
+        }
+        public static void ResetAmbience() { RainLevel = 1f; RoomLevel = 1f; AmbienceCutoff = 22000f; }
+
         /// <summary>Fade the boss drone in or out.</summary>
         public static void Tension(bool on) { if (Instance != null) Instance.droneWant = on ? 0.3f : 0f; }
 
@@ -257,11 +282,12 @@ namespace ProjectInk
                 if (voices[i].isPlaying && voicePitch[i] > 0f) voices[i].pitch = voicePitch[i] * SlowPitch();
             }
             float ambCut = Mathf.Lerp(900f, 22000f, Mathf.Pow(Mathf.InverseLerp(0.15f, 1f, ts), 1.6f));
+            ambCut = Mathf.Min(ambCut, AmbienceCutoff);
             if (roomLp != null) roomLp.cutoffFrequency = Mathf.Lerp(roomLp.cutoffFrequency, ambCut, k);
             if (rainLp != null) rainLp.cutoffFrequency = Mathf.Lerp(rainLp.cutoffFrequency, ambCut, k);
             if (drone != null) drone.volume = Mathf.MoveTowards(drone.volume, droneWant * Master, Time.unscaledDeltaTime * 0.15f);
-            if (room != null) room.volume = 0.32f * Master;
-            if (rain != null) rain.volume = 0.22f * Master;
+            if (room != null) room.volume = Mathf.MoveTowards(room.volume, 0.32f * Master * RoomLevel, Time.unscaledDeltaTime * 0.6f);
+            if (rain != null) rain.volume = Mathf.MoveTowards(rain.volume, Mathf.Min(1f, 0.22f * Master * RainLevel), Time.unscaledDeltaTime * 0.8f);
         }
     }
 }

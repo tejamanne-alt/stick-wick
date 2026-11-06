@@ -10,3 +10,6 @@ Cinematic hits, booms, risers, reverse whooshes and some impacts and whooshes ar
 SFX Kit (https://github.com/wyzowl/sfx-kit), CC0 1.0 (public domain).
 
 The CC BY 4.0 credit above must appear in the game's credits screen and store listing.
+
+Story mode (thunder, drip, splat, tinnitus, heartbeat, static, whispers, drone, latch, splash,
+breath, wind): synthesised for this project by tools/audio/make_story_sfx.py (no recordings).

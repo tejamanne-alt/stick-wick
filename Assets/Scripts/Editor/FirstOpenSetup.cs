@@ -11,7 +11,7 @@ namespace ProjectInk.EditorTools
     [InitializeOnLoad]
     static class FirstOpenSetup
     {
-        const string ScenePath = "Assets/Scenes/Prototype.unity";
+        const string ScenePath = PrototypeBuilder.MenuScenePath;
         const string SessionKey = "ProjectInk.FirstOpenSetup.Ran";
 
         static FirstOpenSetup()

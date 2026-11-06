@@ -20,12 +20,15 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 21;
+        public const int SceneVersion = 22;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
+        public const string StoryScenePath = "Assets/Scenes/Story_Warehouse.unity";
+        public const string MenuScenePath = "Assets/Scenes/Menu.unity";
 
         /// <summary>The main scene: the tower.</summary>
+        [MenuItem("Stick Wick/Build All Scenes")]
         [MenuItem("Stick Wick/Build Prototype Scene")]
         public static void BuildScene()
         {
@@ -37,14 +40,48 @@ namespace ProjectInk.EditorTools
                 Debug.Log("[Stick Wick] Stopping play mode to build the scene…");
                 return;
             }
-            Build(LayoutKind.Tower, ScenePath, true);
+            BuildAllNow();
         }
 
         static void BuildAfterStop(PlayModeStateChange change)
         {
             if (change != PlayModeStateChange.EnteredEditMode) return;
             EditorApplication.playModeStateChanged -= BuildAfterStop;
-            EditorApplication.delayCall += () => Build(LayoutKind.Tower, ScenePath, true);
+            EditorApplication.delayCall += BuildAllNow;
+        }
+
+        /// <summary>Every scene of the game: the main menu, story mode's warehouse and the tower
+        /// (fight mode). Opens the menu at the end.</summary>
+        public static void BuildAllNow()
+        {
+            Build(LayoutKind.Tower, ScenePath, false);
+            Build(LayoutKind.Warehouse, StoryScenePath, false);
+            BuildMenu();
+            File.WriteAllText(VersionFile, SceneVersion.ToString());
+            AssetDatabase.ImportAsset(VersionFile);
+            EditorBuildSettings.scenes = new[]
+            {
+                new EditorBuildSettingsScene(MenuScenePath, true),
+                new EditorBuildSettingsScene(StoryScenePath, true),
+                new EditorBuildSettingsScene(ScenePath, true),
+            };
+            AssetDatabase.SaveAssets();
+            EditorSceneManager.OpenScene(MenuScenePath);
+            Debug.Log("[Stick Wick] built: menu, story (warehouse) and fight mode (tower). Press Play.");
+        }
+
+        /// <summary>The title screen: STORY MODE or FIGHT MODE.</summary>
+        static void BuildMenu()
+        {
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            RenderSettings.skybox = null;
+            var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
+            var cam = camGo.AddComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.01f, 0.012f, 0.02f);
+            camGo.AddComponent<AudioListener>();
+            new GameObject("Menu").AddComponent<MainMenu>();
+            EditorSceneManager.SaveScene(scene, MenuScenePath);
         }
 
         /// <summary>The backup: the classic hall, saved as its own scene (open it and press Play).</summary>
@@ -93,10 +130,16 @@ namespace ProjectInk.EditorTools
             var spawnRoot = new GameObject("SpawnPoints").transform;
             var points = new Transform[5];
             Vector3 heroStart;
+            bool story = kind == LayoutKind.Warehouse;
             if (kind == LayoutKind.Hall)
             {
                 layout.roofY = 6.8f;
                 BuildHall(room, ground, arch, trail, spawnRoot, points, out heroStart);
+            }
+            else if (story)
+            {
+                layout.roofY = StoryBuilder.RoofY;
+                StoryBuilder.Build(room, ground, spawnRoot, points, out heroStart);
             }
             else
             {
@@ -109,6 +152,14 @@ namespace ProjectInk.EditorTools
             var heroGo = FighterFactory.Build(model, moves, ink, "Hero", true, trail, FightStyle.Fists, eyeMat);
             heroGo.transform.position = heroStart;
             var hero = heroGo.GetComponent<HeroController>();
+            if (story)
+            {
+                // the man in the warehouse: narrowed eyes and the scar at his temple
+                hero.eyeOpenY = 0.034f;
+                StoryBuilder.AddScar(heroGo, eyeMat);
+                hero.arenaMinX = -StoryBuilder.HalfW + 0.6f;
+                hero.arenaMaxX = StoryBuilder.HalfW - 0.6f;
+            }
 
             var systems = new GameObject("Systems");
             systems.AddComponent<TimeController>();
@@ -131,6 +182,13 @@ namespace ProjectInk.EditorTools
             var hud = systems.AddComponent<HudGUI>();
             hud.hero = hero;
             hud.director = director;
+            if (story)
+            {
+                director.scripted = true;                 // no waves: the story spawns its own
+                var intro = systems.AddComponent<StoryIntro>();
+                intro.hero = hero;
+                intro.director = director;
+            }
 
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<Camera>();
@@ -149,10 +207,20 @@ namespace ProjectInk.EditorTools
             dirCam.minX = -7f;
             dirCam.maxX = 7f;
             camGo.transform.position = new Vector3(6f, 1.6f, -11f);
+            if (story)
+            {
+                cam.backgroundColor = new Color(0.012f, 0.014f, 0.024f);
+                cam.farClipPlane = 320f;                   // the city on the horizon in the opening shot
+                dirCam.minX = -9f;
+                dirCam.maxX = 9f;
+                dirCam.wallX = StoryBuilder.HalfW - 0.4f;
+                camGo.AddComponent<StoryCameraFX>();
+            }
 
             // grey gradient backdrop that travels with the camera, so it fills every shot,
-            // including the kill-cam orbits
+            // including the kill-cam orbits (not in the story: the night is the backdrop there)
             var backdrop = new GameObject("Backdrop");
+            if (story) backdrop.SetActive(false);
             backdrop.transform.SetParent(camGo.transform, false);
             backdrop.transform.localPosition = new Vector3(0, 0, 60f);
             backdrop.AddComponent<MeshFilter>().sharedMesh = BackdropMesh();
@@ -164,12 +232,8 @@ namespace ProjectInk.EditorTools
             ConfigurePlayer();
 
             EditorSceneManager.SaveScene(scene, scenePath);
-            if (!main) { AssetDatabase.SaveAssets(); Debug.Log("[Stick Wick] classic hall built: " + scenePath); return; }
-            File.WriteAllText(VersionFile, SceneVersion.ToString());
-            AssetDatabase.ImportAsset(VersionFile);
-            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
             AssetDatabase.SaveAssets();
-            Debug.Log("[Stick Wick] prototype scene built: " + ScenePath);
+            Debug.Log("[Stick Wick] scene built: " + scenePath);
         }
 
         static MoveSet BuildMoveSet()
@@ -433,7 +497,7 @@ namespace ProjectInk.EditorTools
             Directory.CreateDirectory(Path.GetDirectoryName(ApkPath));
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
-                scenes = new[] { ScenePath },
+                scenes = new[] { MenuScenePath, StoryScenePath, ScenePath },
                 locationPathName = ApkPath,
                 target = BuildTarget.Android,
                 options = BuildOptions.None

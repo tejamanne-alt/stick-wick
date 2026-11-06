@@ -50,6 +50,8 @@ namespace ProjectInk
         // scripted shots (the opening cinematic): blended over the gameplay camera by weight
         Vector3 scriptPos, scriptLook;
         float scriptWeight, scriptFov;
+        /// <summary>A Dutch angle for the scripted shot (degrees of roll), weighted with it.</summary>
+        public float ScriptRoll;
 
         /// <summary>Drive the camera from a cutscene this frame. weight 1 = fully scripted,
         /// 0 = gameplay framing; fov 0 keeps the gameplay field of view.</summary>
@@ -302,6 +304,7 @@ namespace ProjectInk
 
             transform.position = pos;
             transform.rotation = Quaternion.LookRotation(look - pos, Vector3.up);
+            if (scriptWeight > 0.0001f && Mathf.Abs(ScriptRoll) > 0.01f) transform.rotation *= Quaternion.Euler(0f, 0f, ScriptRoll * scriptWeight);
         }
     }
 }

@@ -253,6 +253,55 @@
       "hitFrame": -1
     },
     {
+      "name": "lie",
+      "frames": 48,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "allfours",
+      "frames": 36,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "rise",
+      "frames": 54,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "idle_loose",
+      "frames": 48,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "look_hands",
+      "frames": 48,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "touch_temple",
+      "frames": 36,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "walk",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
       "name": "idle",
       "frames": 35,
       "fps": 30,

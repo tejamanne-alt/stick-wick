@@ -19,6 +19,8 @@ namespace ProjectInk
         public Material weaponMaterial;
         public Material eyeMaterial;
         public Transform[] spawnPoints = new Transform[5]; // indexed by SpawnKind
+        [Tooltip("Story mode: no waves, floors or score; the story spawns its own enemies.")]
+        public bool scripted;
 
         public const int WavesPerFloor = 5;
         const float SpawnWarning = 0.6f;
@@ -88,11 +90,15 @@ namespace ProjectInk
             Enemy.Corpses.Clear();
             BestScore = PlayerPrefs.GetInt("best_score", 0);
             BestFloor = PlayerPrefs.GetInt("best_floor", 0);
-            if (GetComponent<OpeningCinematic>() == null) gameObject.AddComponent<OpeningCinematic>();
-            if (GetComponent<VictoryCinematic>() == null) gameObject.AddComponent<VictoryCinematic>();
-            if (GetComponent<TutorialDirector>() == null) gameObject.AddComponent<TutorialDirector>();
+            Sound.ResetAmbience();
+            if (!scripted)
+            {
+                if (GetComponent<OpeningCinematic>() == null) gameObject.AddComponent<OpeningCinematic>();
+                if (GetComponent<VictoryCinematic>() == null) gameObject.AddComponent<VictoryCinematic>();
+                if (GetComponent<TutorialDirector>() == null) gameObject.AddComponent<TutorialDirector>();
+                if (GetComponent<BossDirector>() == null) gameObject.AddComponent<BossDirector>();
+            }
             if (GetComponent<HintDirector>() == null) gameObject.AddComponent<HintDirector>();
-            if (GetComponent<BossDirector>() == null) gameObject.AddComponent<BossDirector>();
         }
 
         static bool CinematicHolding => OpeningCinematic.Instance != null && !OpeningCinematic.Instance.ControlReleased;
@@ -100,7 +106,7 @@ namespace ProjectInk
 
         void Start()
         {
-            if (!HadCinematic) ShowBanner("CHAPTER 1", 1.6f);   // the opening has its own chapter card
+            if (!HadCinematic && !scripted) ShowBanner("CHAPTER 1", 1.6f);   // the opening has its own chapter card
             phaseTime = 0f;
         }
 
@@ -116,6 +122,16 @@ namespace ProjectInk
 
             var input = GestureInput.Instance;
             if (input != null && input.Peek() == Command.Restart) { input.Next(); Restart(); return; }
+
+            if (scripted)
+            {
+                // the story runs the scene; this only keeps score of the fighting and handles death
+                if (hero != null && !hero.CinematicLock) ElapsedTime += dt;
+                if (hero != null && hero.IsDead && CurrentPhase != Phase.Dead) EnterDead();
+                if (CurrentPhase == Phase.Dead && phaseTime > 1.5f && input != null && input.AnyPressThisFrame) Restart();
+                UpdateFraming();
+                return;
+            }
 
             switch (CurrentPhase)
             {
@@ -230,6 +246,12 @@ namespace ProjectInk
         }
 
         public void Announce(string text, float seconds) { ShowBanner(text, seconds); }
+
+        /// <summary>Story mode: bring one in through a door now.</summary>
+        public Enemy SpawnScripted(EnemyType type, SpawnKind kind)
+        {
+            return Spawn(new Incoming { kind = kind, type = type, time = Time.time });
+        }
 
         /// <summary>The finale is over: the boss is down.</summary>
         public void OnBossFinished(Enemy e)
@@ -368,7 +390,7 @@ namespace ProjectInk
             Sound.PlayLater(Sfx.Defeat, 0.9f);
             ShowBanner("K.O.", 99f);
             if (Score > BestScore) { BestScore = Score; NewBest = true; PlayerPrefs.SetInt("best_score", Score); }
-            if (Floor > BestFloor) { BestFloor = Floor; PlayerPrefs.SetInt("best_floor", Floor); }
+            if (!scripted && Floor > BestFloor) { BestFloor = Floor; PlayerPrefs.SetInt("best_floor", Floor); }
             PlayerPrefs.Save();
         }
 
@@ -469,6 +491,7 @@ namespace ProjectInk
                 bool big = WaveIndex == WavesPerFloor - 1;
                 if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.18f, big ? 1.6f : 1.1f, 0.03f, 0.35f);
                 if (CameraDirector.Instance != null) CameraDirector.Instance.KillCam(e.Chest, big ? 1.6f : 1.1f, big ? 160f : 100f);
+                if (scripted) { Sound.Play(Sfx.CineHit, 0.6f); return; }      // the story frames its own ending
                 AddScore(big ? 500 : 200, big ? "FINISH!" : "WAVE CLEAR");
                 Sound.Play(big ? Sfx.CineMassive : Sfx.CineHit, big ? 1f : 0.6f);
                 if (!big) Sound.PlayLater(Sfx.WaveClear, 0.7f);

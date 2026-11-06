@@ -90,6 +90,8 @@ namespace ProjectInk
                 Fill(new Rect(0, h - bh, w, bh), Color.black);
             }
             if (cutscene) { OpeningCards(cine, w, h); GUI.matrix = Matrix4x4.identity; return; }
+            var storyScene = StoryIntro.Instance;
+            if (storyScene != null && storyScene.HideHud) { GUI.matrix = Matrix4x4.identity; return; }   // the story draws its own
             var bd = BossDirector.Instance;
             if (bd != null && bd.Cinematic)
             {
@@ -634,9 +636,12 @@ namespace ProjectInk
 
         void DirectorPanel(float w, float h)
         {
-            Label(new Rect(w - 324, 8, 300, 48), director.Score.ToString("N0"), new GUIStyle(mid) { alignment = TextAnchor.UpperRight, fontSize = 44 });
-            Label(new Rect(w - 324, 54, 300, 22), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}",
-                  new GUIStyle(small) { alignment = TextAnchor.UpperRight, fontSize = 18 });
+            if (!director.scripted)
+            {
+                Label(new Rect(w - 324, 8, 300, 48), director.Score.ToString("N0"), new GUIStyle(mid) { alignment = TextAnchor.UpperRight, fontSize = 44 });
+                Label(new Rect(w - 324, 54, 300, 22), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}",
+                      new GUIStyle(small) { alignment = TextAnchor.UpperRight, fontSize = 18 });
+            }
 
             StyleRank(w);
 
@@ -832,7 +837,7 @@ namespace ProjectInk
         GUIStyle gTitle, gLine, gNice, gChalk, gBtn;
         Texture2D finger, gRing;
         bool helpOpen, pauseOpen;
-        Rect helpBtn, skipBtn, skipMoveBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, restartBtn, hintsBtn;
+        Rect helpBtn, skipBtn, skipMoveBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, restartBtn, hintsBtn, menuBtn;
 
         /// <summary>Open or close the pause screen (and stop the world, and its sound).</summary>
         void SetPause(bool on)
@@ -1247,8 +1252,10 @@ namespace ProjectInk
             DrawButton(soundBtn, Sound.Master > 0f ? "SOUND  ON" : "SOUND  OFF", 24);
             DrawButton(restartBtn, "RESTART", 24);
             // chalk-mark hints: AUTO retires each one once learned; ALWAYS keeps them all on
-            hintsBtn = new Rect(w * 0.5f - bw * 0.5f, y + (bh + gap) * 2f, bw, bh);
+            hintsBtn = new Rect(w * 0.5f - bw - gap * 0.5f, y + (bh + gap) * 2f, bw, bh);
+            menuBtn = new Rect(w * 0.5f + gap * 0.5f, y + (bh + gap) * 2f, bw, bh);
             DrawButton(hintsBtn, HintDirector.AlwaysShow ? "HINTS  ALWAYS" : "HINTS  AUTO", 24);
+            DrawButton(menuBtn, "MAIN MENU", 24);
             if (!repaint) return;
             GestureInput.Blocked.Add(ToScreen(new Rect(0, 0, w, h)));         // the screen belongs to the pause card
             if (Pressed(resumeBtn)) SetPause(false);
@@ -1256,6 +1263,13 @@ namespace ProjectInk
             else if (Pressed(soundBtn)) Sound.SetMuted(Sound.Master > 0f);
             else if (Pressed(restartBtn)) { SetPause(false); if (director != null) director.Restart(); }
             else if (Pressed(hintsBtn)) HintDirector.AlwaysShow = !HintDirector.AlwaysShow;
+            else if (Pressed(menuBtn))
+            {
+                SetPause(false);
+                StoryIntro.Retry = false;
+                Time.timeScale = 1f;
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
+            }
             else GestureInput.LastButtonTap = null;
         }
 

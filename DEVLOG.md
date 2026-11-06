@@ -815,3 +815,33 @@ Reported: after switching to `story-mode` with "discard local changes", the game
 ## 2026-11-05: Hero look reverted
 
 The steel shades and red scarf were not liked and are removed. The hero is back to the plain black stickman with his eyes. Scene version 21, so the scene rebuilds without the accessories. The build fixes from the same day stay.
+
+## 2026-11-06: Story mode, the prologue (the warehouse awakening)
+
+The story begins. He wakes in a warehouse with no memory; across five chapters he recovers one memory each. The tower stays as **Fight Mode**.
+
+- **Main menu** (`MainMenu`, scene `Menu`): STICK WICK over a stormy night. The choices are **STORY MODE** (the prologue) and **FIGHT MODE** (the tower, unchanged). The pause menu has **MAIN MENU**.
+- **The set** (`StoryBuilder`, scene `Story_Warehouse`).
+    - **Inside:** a 28 m corrugated-iron shed, cut away to the camera.
+        - Roof and walls: a cracked roof with a seam of storm light over the spot where he lies; girders, two long beams, columns, hanging chains with hooks.
+        - Props: a dead press and lathe, a bench, a scrap pile, barrels.
+        - Floor: puddles, and long fake shadows.
+        - The way out: a rusted roll-up shutter with moonlight spilling under it.
+    - **Outside**, seen only in the opening wide shot: a labyrinth of stacked containers in five dark colours, piles of crushed cars, sodium lamps with pools of light, neon puddles. Far off, a city in two skyline layers under an amber and purple haze.
+    - Props are visual only (no colliders).
+- **The intro** (`StoryIntro`): seven shots, then the play hand-off, as written in `docs/story/prologue.md`.
+    - The revised script fixes three things for a stickman:
+        - the reflection shot is now his view down into the puddle on hands and knees
+        - the scarred knuckles become fists and a knuckle crack
+        - a location card, the thugs' line and the first memory flash ("YOU'VE DONE THIS BEFORE.") are added
+    - The walk to the door is played. The breach has crossing shadows, two latch clanks, the shutter flying up and slow motion, then three brawlers and the fight.
+    - It ends with the memory flash and a PROLOGUE COMPLETE card (PLAY AGAIN / MAIN MENU).
+    - SKIP jumps to the walk. A defeat retries at the door.
+    - Lightning means two white frames and a blue afterglow, the roof crack flaring, and phone vibration on mobile.
+- **New lens effects** (`StoryCameraFX`), with no custom shaders: a downsample blur for waking eyes and slice glitches for the fractured memory. Also a Dutch-angle roll for scripted shots (`CameraDirector.ScriptRoll`).
+- **New animations** in the Blender pipeline: `lie`, `allfours`, `rise`, `idle_loose`, `look_hands`, `touch_temple`, `walk`. `Stickman.fbx` and the clip data were re-exported; the 48 existing clips are unchanged.
+- **New sounds**, synthesised by `tools/audio/make_story_sfx.py`: thunder, drip, splat, tinnitus, heartbeat, static, reversed whispers, a cello drone, latch, water footsteps, breath, wind. There are also storm ambience controls (`Sound.Ambience`): the storm is loud outside and muffled inside.
+- **The hero in the story:** narrowed eye slits (`Fighter.eyeOpenY`) and a white scar at the temple.
+- `WaveDirector.scripted`: no waves, floor or score, and no opening, tutorial, victory or boss; the story spawns its own (`SpawnScripted`).
+- Scene version 22: **Build All Scenes** (also the old Build Prototype Scene menu item) builds the menu, the story and the tower, sets the build list, and opens the menu.
+- Not playtested in Unity yet. Timings, camera positions and the puddle art will want tuning on device.

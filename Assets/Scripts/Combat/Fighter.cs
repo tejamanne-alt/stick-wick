@@ -34,6 +34,8 @@ namespace ProjectInk
 
         [Tooltip("The eyes (built by FighterFactory): two small white ovals that blink.")]
         public Transform[] eyes;
+        [Tooltip("How tall the eyes are when open (0.07 round; smaller reads as narrowed slits).")]
+        public float eyeOpenY = 0.07f;
         float nextBlink, blinkUntil;
         bool facingSet;
 
@@ -99,7 +101,7 @@ namespace ProjectInk
             if (t > nextBlink) { blinkUntil = t + 0.11f; nextBlink = t + Random.Range(2.2f, 5.5f); }
             bool closed = !Alive || t < blinkUntil;
             foreach (var e in eyes)
-                if (e != null) e.localScale = new Vector3(e.localScale.x, closed ? 0.012f : 0.07f, e.localScale.z);
+                if (e != null) e.localScale = new Vector3(e.localScale.x, closed ? 0.012f : eyeOpenY, e.localScale.z);
         }
 
         /// <summary>Height of the walkable surface under a point (floors, stairs, landings).</summary>

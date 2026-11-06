@@ -504,6 +504,49 @@ WEAPON_CLIPS = {
 }
 CLIPS.update(WEAPON_CLIPS)
 
+# ---------------------------------------------------------------- story mode (the warehouse awakening)
+# Angles are absolute, from straight down, positive towards the way he faces.
+LOOSE = pose(STRAIGHT, spine=178, chest=176, head=176, upperarm_L=8, forearm_L=14, upperarm_R=-6, forearm_R=4,
+             thigh_L=6, shin_L=2, thigh_R=-5, shin_R=-3)
+LIE = rotated(pose(STRAIGHT, head=184, upperarm_L=8, forearm_L=12, upperarm_R=-6, forearm_R=-2,
+                   thigh_L=10, shin_L=-6, thigh_R=-2, shin_R=-10), 90, dz=-0.85)
+ALLFOURS = pose(STRAIGHT, spine=84, chest=80, head=58, upperarm_L=-4, forearm_L=-6, upperarm_R=6, forearm_R=4,
+                thigh_L=2, shin_L=-88, thigh_R=-8, shin_R=-92)
+KNEEL_PUSH = pose(STRAIGHT, spine=150, chest=142, head=150, upperarm_L=38, forearm_L=20, upperarm_R=10, forearm_R=0,
+                  thigh_L=84, shin_L=0, thigh_R=0, shin_R=-90)
+KNEEL = pose(STRAIGHT, spine=176, chest=172, head=168, upperarm_L=40, forearm_L=80, upperarm_R=6, forearm_R=10,
+             thigh_L=84, shin_L=0, thigh_R=0, shin_R=-90)
+HANDS_UP = pose(LOOSE, chest=172, head=150, upperarm_L=70, forearm_L=150, upperarm_R=64, forearm_R=142)
+HANDS_TURN = pose(LOOSE, chest=172, head=148, upperarm_L=70, forearm_L=128, upperarm_R=64, forearm_R=120)
+FISTS = pose(LOOSE, chest=170, head=150, upperarm_L=74, forearm_L=158, upperarm_R=68, forearm_R=152)
+TOUCH = pose(LOOSE, chest=178, head=188, upperarm_R=120, forearm_R=215, hand_R=215)
+FLINCH = pose(LOOSE, spine=181, chest=185, head=198, upperarm_R=126, forearm_R=222, hand_R=222,
+              upperarm_L=16, forearm_L=30)
+WALK_A = pose(LOOSE, upperarm_L=-18, forearm_L=-8, upperarm_R=20, forearm_R=38,
+              thigh_L=22, shin_L=8, thigh_R=-16, shin_R=-26)
+WALK_P = pose(LOOSE, upperarm_L=0, forearm_L=8, upperarm_R=2, forearm_R=14,
+              thigh_L=-2, shin_L=-4, thigh_R=18, shin_R=-38)
+STORY_CLIPS = {
+    "lie": dict(frames=48, loop=True, hit=None, keys=[            # on his back, barely breathing
+        (0, LIE), (24, rotated(pose(STRAIGHT, head=186, chest=183, upperarm_L=8, forearm_L=12, upperarm_R=-6,
+                                    forearm_R=-2, thigh_L=10, shin_L=-6, thigh_R=-2, shin_R=-10), 90, dz=-0.85)),
+        (48, LIE)]),
+    "allfours": dict(frames=36, loop=True, hit=None, keys=[        # on hands and knees over the puddle, trembling
+        (0, ALLFOURS), (18, pose(ALLFOURS, spine=82, chest=77, head=54)), (36, ALLFOURS)]),
+    "rise": dict(frames=54, loop=False, hit=None, keys=[            # all fours -> one knee -> standing
+        (0, ALLFOURS), (14, KNEEL_PUSH), (26, KNEEL), (40, KNEEL), (54, LOOSE)]),
+    "idle_loose": dict(frames=48, loop=True, hit=None, keys=[       # standing, not in a guard: he does not know he fights
+        (0, LOOSE), (24, pose(LOOSE, chest=174, head=174, dz=-0.01)), (48, LOOSE)]),
+    "look_hands": dict(frames=48, loop=False, hit=None, keys=[      # hands up, palms turned, then fists
+        (0, LOOSE), (12, HANDS_UP), (22, HANDS_TURN), (31, FISTS),
+        (34, pose(FISTS, forearm_L=154, forearm_R=149)), (37, FISTS), (48, FISTS)]),
+    "touch_temple": dict(frames=36, loop=False, hit=None, keys=[    # fingers to the scar, a flinch
+        (0, LOOSE), (10, TOUCH), (16, FLINCH), (24, TOUCH), (36, TOUCH)]),
+    "walk": dict(frames=24, loop=True, hit=None, keys=[
+        (0, WALK_A), (6, WALK_P), (12, mirror_legs_arms(WALK_A)), (18, mirror_legs_arms(WALK_P)), (24, WALK_A)]),
+}
+CLIPS.update(STORY_CLIPS)
+
 
 # ---------------------------------------------------------------- build
 def reset_scene():
