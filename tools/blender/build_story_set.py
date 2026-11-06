@@ -858,6 +858,34 @@ def lights():
     bpy.context.scene.world = w
 
 
+def lightning_lights():
+    """A lightning strike: the sky goes white-blue, the moon becomes a blinding flash from
+    above and behind, and the windows, the roof crack and the gap under the door blaze."""
+    for ob in bpy.context.scene.objects:
+        if ob.type == "LIGHT":
+            if ob.name.startswith(("Sodium", "Pole", "BayLamp")):
+                ob.data.energy *= 0.5
+            elif ob.name == "Moon":
+                ob.data.energy = 9.0
+                ob.data.color = (0.78, 0.86, 1.0)
+            elif ob.name in ("CrackLight", "DoorGap"):
+                ob.data.energy *= 6.0
+            elif ob.name.startswith("Fill"):
+                ob.data.energy *= 2.2
+                ob.data.color = (0.7, 0.8, 1.0)
+    for cx in WINDOWS:
+        ld = bpy.data.lights.new("Strike", "AREA")
+        ld.energy = 1600
+        ld.color = (0.8, 0.88, 1.0)
+        ld.size = WIN_W
+        ob = bpy.data.objects.new("Strike", ld)
+        ob.location = (cx, BACK + 1.2, (WIN_Z0 + WIN_Z1) / 2 + 0.6)
+        ob.rotation_euler = (math.radians(-60), 0, 0)
+        bpy.context.scene.collection.objects.link(ob)
+    w = bpy.context.scene.world
+    w.node_tree.nodes["Background"].inputs[0].default_value = (0.22, 0.26, 0.40, 1)
+
+
 # ---------------------------------------------------------------- preview shots (Unity camera -> Blender)
 
 def U(x, y, z):
@@ -937,7 +965,21 @@ def preview(shots):
 
 # ---------------------------------------------------------------- bake and export
 
-def bake(ob, size, samples):
+def unwrap(ob):
+    """Lightmap UVs, once per object (every bake of it shares them)."""
+    sc = bpy.context.scene
+    for o in sc.objects:
+        o.select_set(False)
+    bpy.context.view_layer.objects.active = ob
+    ob.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.003, area_weight=0.0, scale_to_bounds=False)
+    bpy.ops.uv.pack_islands(margin=0.003)
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+
+def bake(ob, size, samples, suffix=""):
     sc = bpy.context.scene
     sc.render.engine = "CYCLES"
     sc.cycles.samples = samples
@@ -946,13 +988,7 @@ def bake(ob, size, samples):
         o.select_set(False)
     bpy.context.view_layer.objects.active = ob
     ob.select_set(True)
-    # lightmap UVs
-    bpy.ops.object.mode_set(mode="EDIT")
-    bpy.ops.mesh.select_all(action="SELECT")
-    bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.003, area_weight=0.0, scale_to_bounds=False)
-    bpy.ops.uv.pack_islands(margin=0.003)
-    bpy.ops.object.mode_set(mode="OBJECT")
-    img = bpy.data.images.new("Story_" + ob.name, size, size, alpha=False)
+    img = bpy.data.images.new("Story_" + ob.name + suffix, size, size, alpha=False)
     for m in ob.data.materials:
         nt = m.node_tree
         node = nt.nodes.get("BakeTarget") or nt.nodes.new("ShaderNodeTexImage")
@@ -971,7 +1007,7 @@ def bake(ob, size, samples):
     rb.use_pass_transmission = True
     rb.use_pass_emit = True
     bpy.ops.object.bake(type="COMBINED")
-    path = os.path.join(OUT, "Story_" + ob.name + ".png")
+    path = os.path.join(OUT, "Story_" + ob.name + suffix + ".png")
     img.filepath_raw = path
     img.file_format = "PNG"
     img.save()
@@ -1021,12 +1057,20 @@ def main():
         return
     for o in (interior, yard, ground, city, shutter, fan):
         o.select_set(False)
+    for o in (interior, shutter, fan, yard, ground, city):
+        unwrap(o)
     bake(interior, 2048, 48)
     bake(shutter, 512, 32)
     bake(fan, 256, 16)
     bake(yard, 2048, 24)
     bake(ground, 1024, 16)
     bake(city, 1024, 8)
+    # the same set in a lightning strike: everything blown cold white for a few frames
+    lightning_lights()
+    bake(interior, 2048, 32, "_Lightning")
+    bake(shutter, 512, 16, "_Lightning")
+    bake(yard, 2048, 16, "_Lightning")
+    bake(ground, 1024, 12, "_Lightning")
     marks = []
     for n, p in (("Mark_X", (10, 0, 0)), ("Mark_Y", (0, 10, 0)), ("Mark_Z", (0, 0, 10))):
         e = bpy.data.objects.new(n, None)

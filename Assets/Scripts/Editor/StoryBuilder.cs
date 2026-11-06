@@ -108,8 +108,10 @@ namespace ProjectInk.EditorTools
             set.name = "StorySet";
             AlignAxes(set.transform);
             var shaftTex = EnvironmentBuilder.SaveTex("StoryShaft", ShaftTexture(64, 256), TextureWrapMode.Clamp);
-            var shaftMat = EnvironmentBuilder.TexMat("StoryShaftMat", "Legacy Shaders/Particles/Additive", shaftTex, Vector2.one, new Color(0.30f, 0.38f, 0.58f, 0.5f));
+            var shaftMat = EnvironmentBuilder.TexMat("StoryShaftMat", "Legacy Shaders/Particles/Additive", shaftTex, Vector2.one, new Color(0.15f, 0.19f, 0.31f, 0.5f));
+            var searchMat = EnvironmentBuilder.TexMat("StorySearchBeam", "Legacy Shaders/Particles/Additive", shaftTex, Vector2.one, new Color(0.42f, 0.48f, 0.62f, 0.5f));
             Transform fan = null;
+            var swapR = new List<Renderer>(); var swapN = new List<Material>(); var swapF = new List<Material>();
             foreach (var r in set.GetComponentsInChildren<Renderer>(true))
             {
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -126,6 +128,13 @@ namespace ProjectInk.EditorTools
                 for (int i = 0; i < mats.Length; i++) mats[i] = m;
                 r.sharedMaterials = mats;
                 if (n == "Fan") fan = r.transform;
+                // the lightning bake of this part, if there is one
+                var flashTex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/Story/Story_{n}_Lightning.png");
+                if (flashTex != null)
+                {
+                    swapR.Add(r); swapN.Add(m);
+                    swapF.Add(EnvironmentBuilder.TexMat("StorySet_" + n + "_Lightning", "Unlit/Texture", flashTex, Vector2.one));
+                }
             }
             foreach (var c in set.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c);
             if (fan != null)
@@ -191,6 +200,25 @@ namespace ProjectInk.EditorTools
             }
             // the night sky behind the city (the towers themselves are in the set)
             SkyQuad(env, "Sky", new Vector3(0f, 60f, -320f), new Vector2(900f, 240f), sprite);
+            var swap = room.gameObject.AddComponent<LightningSwap>();
+            swap.renderers = swapR.ToArray(); swap.normal = swapN.ToArray(); swap.flash = swapF.ToArray();
+
+            // a helicopter searching the yard (the opening shot): a beam, its pool on the ground, a red light
+            var beam = Beam(env, "Searchlight", 40f, 0.6f, 7f, searchMat);
+            beam.position = new Vector3(30f, 30f, 28f);
+            var redMat = EnvironmentBuilder.TexMat("StoryHeliRed", "Legacy Shaders/Particles/Additive", glowTex, Vector2.one, new Color(1f, 0.1f, 0.05f, 0.5f));
+            var red = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
+            red.name = "HeliLight"; red.SetParent(env, false); red.localScale = Vector3.one * 2.2f;
+            red.GetComponent<Renderer>().sharedMaterial = redMat;
+            var poolMat = EnvironmentBuilder.TexMat("StorySearchPool", "Legacy Shaders/Particles/Additive", glowTex, Vector2.one, new Color(0.45f, 0.52f, 0.7f, 0.5f));
+            var pool = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
+            pool.name = "SearchPool"; pool.SetParent(env, false); pool.rotation = Quaternion.Euler(90f, 0f, 0f); pool.localScale = new Vector3(9f, 6f, 1f);
+            pool.GetComponent<Renderer>().sharedMaterial = poolMat;
+            // the moonlight that floods in through the doorway when the shutter goes (hidden until then)
+            var doorBeam = Beam(env, "DoorBeam", 7.5f, 3.0f, 4.4f, searchMat);
+            doorBeam.position = new Vector3(ShutterX, 3.4f, BackZ + 0.4f);
+            doorBeam.rotation = Quaternion.FromToRotation(Vector3.down, new Vector3(-0.15f, -0.55f, -1f));
+            foreach (var rr in doorBeam.GetComponentsInChildren<Renderer>()) rr.enabled = false;
 
             // ------------------------------------------------------------ weather: rain outside, dust in the moonlight
             var particle = AssetDatabase.LoadAssetAtPath<Material>("Assets/Generated/InkParticle.mat");
@@ -202,6 +230,33 @@ namespace ProjectInk.EditorTools
             for (int i = 0; i < points.Length; i++)
                 points[i] = PrototypeBuilder.Point(spawnRoot, ((SpawnKind)i).ToString(), door);
             heroStart = new Vector3(HeroStartX, 0f, 0f);
+        }
+
+        /// <summary>A light beam: two crossed quads from a narrow end (at the origin) to a wide end
+        /// `length` down local -y, bright at the source; for the additive shaft material.</summary>
+        static Transform Beam(Transform parent, string name, float length, float w0, float w1, Material m)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var mesh = new Mesh { name = name };
+            var v = new List<Vector3>(); var uv = new List<Vector2>(); var tri = new List<int>();
+            foreach (var axis in new[] { Vector3.right, Vector3.forward })
+            {
+                int k = v.Count;
+                v.Add(-axis * w0 * 0.5f); v.Add(axis * w0 * 0.5f);
+                v.Add(axis * w1 * 0.5f + Vector3.down * length); v.Add(-axis * w1 * 0.5f + Vector3.down * length);
+                uv.Add(new Vector2(0, 1)); uv.Add(new Vector2(1, 1)); uv.Add(new Vector2(1, 0)); uv.Add(new Vector2(0, 0));
+                tri.AddRange(new[] { k, k + 1, k + 2, k, k + 2, k + 3 });
+            }
+            mesh.SetVertices(v); mesh.SetUVs(0, uv); mesh.SetTriangles(tri, 0); mesh.RecalculateBounds();
+            string path = $"Assets/Generated/Story_{name}.asset";
+            AssetDatabase.DeleteAsset(path);
+            AssetDatabase.CreateAsset(mesh, path);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = m;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            return go.transform;
         }
 
         /// <summary>The set is modelled in Blender (x along the lane, y the depth, z up). Three marker

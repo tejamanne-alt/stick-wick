@@ -17,7 +17,7 @@ namespace ProjectInk
         SlowmoIn, SlowmoOut, CineHit, CineMassive, Riser, Boom,
         RankUp, WaveClear, FloorClear, Defeat,
         // story mode (synthesised by tools/audio/make_story_sfx.py)
-        Thunder, Drip, Splat, Tinnitus, Heartbeat, Static, Whispers, Drone, Latch, Splash, Breath, Wind,
+        Thunder, Drip, Splat, Tinnitus, Heartbeat, Static, Whispers, Drone, Latch, Splash, Breath, Wind, Piano, Rotor,
     }
 
     /// <summary>The mixer. Plays recorded takes with no immediate repeats, small pitch and
@@ -186,6 +186,8 @@ namespace ProjectInk
                 case Sfx.Splash: level = 0.3f; spread = 0.1f; gap = 0.12f; break;
                 case Sfx.Breath: level = 0.45f; spread = 0.05f; gap = 0.4f; slows = false; break;
                 case Sfx.Wind: level = 0.35f; spread = 0.05f; gap = 2f; slows = false; break;
+                case Sfx.Piano: level = 0.6f; spread = 0f; gap = 2f; slows = false; break;
+                case Sfx.Rotor: level = 0.5f; spread = 0.03f; gap = 2f; slows = false; break;
             }
         }
 

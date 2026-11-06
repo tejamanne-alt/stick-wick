@@ -46,6 +46,8 @@ namespace ProjectInk
         // the edit (real seconds)
         const float S1 = 4.2f, S2 = 6.8f, S3 = 10.8f, S4 = 15.6f, S5 = 22.2f, S6 = 27.0f, Control = 30.6f;
         const float Bar = 92f, ReleaseAt = 4.6f, BreachAt = 1.9f;
+        /// <summary>The opening plays slower than written: half as long again, so it breathes.</summary>
+        const float Pace = 1.5f;
         const float ShutterX = 12.0f, DoorL = 10.4f, DoorR = 13.6f, RoofY = 7.2f;
 
         float t, prevT, b, prevB, m, prevM;
@@ -59,6 +61,9 @@ namespace ProjectInk
         Color crackColor;
         float shutterY;
         Enemy[] men = new Enemy[3];
+        Color[] menColor = new Color[3];
+        float dustAt;
+        const float BackZ = 2.6f;
         int spawned;
         float blueUntil, blueStrength, splatAt = -9f, glitchUntil, clearedAt = -1f;
         int flashFrames;
@@ -85,6 +90,7 @@ namespace ProjectInk
             slitShadow0 = Find("SlitShadow0"); slitShadow1 = Find("SlitShadow1");
             drop0 = Find("Droplet0"); drop1 = Find("Droplet1");
             drop0R = drop0 != null ? drop0.GetComponent<Renderer>() : null;
+            searchlight = Find("Searchlight"); searchPool = Find("SearchPool"); heliLight = Find("HeliLight");
             drop1R = drop1 != null ? drop1.GetComponent<Renderer>() : null;
             home = hero.transform.position;
             runSpeed = hero.runSpeed;
@@ -134,7 +140,7 @@ namespace ProjectInk
             switch (phase)
             {
                 case Phase.Cinematic:
-                    prevT = t; t += dt;
+                    prevT = t; t += dt / Pace;
                     Cinematic();
                     break;
                 case Phase.Walk: UpdateWalk(); break;
@@ -167,7 +173,7 @@ namespace ProjectInk
                 if (thunderDelay <= 0f) Sound.Play(Sfx.Thunder, thunderVol);
                 else Sound.PlayLater(Sfx.Thunder, thunderDelay, thunderVol);
             }
-            if (strength > 0.6f) Buzz();
+            if (strength > 0.6f) { Buzz(); LightningSwap.Strike(0.42f); }
         }
 
         void Glitch(float amount, float seconds)
@@ -178,31 +184,82 @@ namespace ProjectInk
 
         // ================================================================== the cinematic
 
+        /// <summary>The camera breathes: a slow handheld drift, never still.</summary>
+        static Vector3 Sway(float amp, float speed, float seed)
+        {
+            float T = Time.unscaledTime * speed;
+            return new Vector3(Mathf.PerlinNoise(T, seed) - 0.5f, Mathf.PerlinNoise(seed + 3.1f, T) - 0.5f, Mathf.PerlinNoise(T + 7.7f, seed + 1.3f) - 0.5f) * (2f * amp);
+        }
+
+        float ambientAt = 2f;
+        Transform searchlight, searchPool, heliLight;
+
+        /// <summary>Between the beats the place keeps living: thunder rolling far off, the iron
+        /// creaking in the wind, a chain chinking, water dripping somewhere in the dark.</summary>
+        void Ambient()
+        {
+            if (Time.unscaledTime < ambientAt || t < S1) return;
+            ambientAt = Time.unscaledTime + Random.Range(3.5f, 7f);
+            var spot = new Vector3(home.x + Random.Range(-10f, 10f), 4f, 1f);
+            switch (Random.Range(0, 4))
+            {
+                case 0: Sound.Play(Sfx.Thunder, Random.Range(0.18f, 0.3f), null, Random.Range(0.8f, 0.95f)); break;
+                case 1: Sound.Play(Sfx.MetalClang, 0.12f, spot, Random.Range(0.42f, 0.55f)); break;      // the iron creaks
+                case 2: Sound.Play(Sfx.Shell, 0.25f, spot, Random.Range(0.55f, 0.7f)); break;           // a chain chinks
+                default: Sound.Play(Sfx.Drip, Random.Range(0.3f, 0.6f), spot, Random.Range(0.8f, 1.2f)); break;
+            }
+        }
+
         void Cinematic()
         {
             if (cam == null) return;
             Vector3 pos, look;
             float fov, roll = 0f;
             var hc = HeadC();
+            Ambient();
+            ShowSearch(t < S1);
 
             if (t < S1)
             {
-                // SHOT 0: the desolate yard
-                if (At(0.05f)) Sound.Play(Sfx.Wind, 0.9f);
-                if (At(2.3f)) Lightning(1f, 1f, 0.08f);
-                pos = new Vector3(-10f, 18f, 40f);                         // high over the yard, down the road to the shed
-                look = new Vector3(-2f, 3f, -60f);
-                fov = Mathf.Lerp(40f, 39.2f, Ease(0f, S1, t));            // a slow 2% push-in
+                // SHOT 0: the desolate yard. Craning down the road to the shed; a helicopter's beam
+                // combs the stacks; lightning forks over the city and the whole yard flashes white.
+                if (At(0.05f)) { Sound.Play(Sfx.Wind, 0.9f); Sound.Play(Sfx.Rotor, 0.7f); }
+                if (At(2.3f))
+                {
+                    Lightning(1f, 1f, 0.12f);
+                    if (LightningSwap.Instance != null) LightningSwap.Instance.Bolt(new Vector3(-46f, 95f, -170f), new Vector3(-30f, 18f, -160f), 1.6f);
+                }
+                float k = Ease(0f, S1, t);
+                pos = Vector3.Lerp(new Vector3(-12f, 23f, 45f), new Vector3(-10f, 18f, 40f), k) + Sway(0.12f, 0.25f, 1f);
+                look = Vector3.Lerp(new Vector3(-3f, 1f, -60f), new Vector3(-2f, 3f, -60f), k);
+                fov = Mathf.Lerp(40f, 39.2f, k);
+                // the searchlight: from the sky, sweeping across the yard towards the shed
+                if (searchlight != null)
+                {
+                    var heli = Vector3.Lerp(new Vector3(34f, 30f, 30f), new Vector3(16f, 27f, 22f), k);
+                    var target = Vector3.Lerp(new Vector3(26f, 0f, 14f), new Vector3(2f, 0f, 9f), k) + new Vector3(Mathf.Sin(t * 1.3f) * 3f, 0f, Mathf.Cos(t * 0.9f) * 2f);
+                    searchlight.position = heli;
+                    searchlight.rotation = Quaternion.FromToRotation(Vector3.down, target - heli);
+                    if (searchPool != null) searchPool.position = target + Vector3.up * 0.05f;
+                    if (heliLight != null)
+                    {
+                        heliLight.position = heli + Vector3.up * 0.6f;
+                        heliLight.rotation = Quaternion.LookRotation(heliLight.position - pos);
+                        heliLight.gameObject.SetActive(Mathf.Repeat(Time.unscaledTime, 1.1f) < 0.2f);
+                    }
+                }
             }
             else if (t < S2)
             {
-                // SHOT 1: the roof fracture
+                // SHOT 1: the roof fracture. Looking straight up, the camera turning slowly as the drop gathers.
                 if (At(S1)) { Sound.Ambience(0.9f, 0.55f, 800f); }
                 if (At(S1 + 0.3f)) Sound.Play(Sfx.Drip, 0.35f, null, 0.9f);
                 if (At(S1 + 1.4f)) Sound.Play(Sfx.Whoosh, 0.8f, null, 1.7f);
-                pos = hc + new Vector3(0f, 0.35f, 0f);
+                float k = Ease(S1, S2, t);
+                pos = hc + new Vector3(0f, 0.35f + 0.12f * k, 0f) + Sway(0.006f, 0.4f, 2f);
                 look = new Vector3(hc.x, RoofY, hc.z + 0.25f);
-                fov = 24f;
+                fov = Mathf.Lerp(26f, 22f, k);
+                roll = Mathf.Lerp(0f, 12f, k);
                 PoseDrop(drop0, drop0R, hc, S1 + 0.2f, S1 + 1.4f, 9.8f, S2);
             }
             else if (t < S3)
@@ -211,6 +268,7 @@ namespace ProjectInk
                 if (At(S2 + 0.05f)) Sound.Play(Sfx.Tinnitus, 1f);
                 if (At(S2 + 0.8f)) Sound.Play(Sfx.Heartbeat, 0.5f);
                 if (At(S2 + 1.5f)) Lightning(0.3f, 0.4f, 0.6f);
+                if (At(S2 + 2.4f)) Sound.Play(Sfx.Heartbeat, 0.6f);
                 if (At(10.2f))
                 {
                     splatAt = Time.unscaledTime;
@@ -220,8 +278,9 @@ namespace ProjectInk
                     if (drop1R != null) drop1R.enabled = false;
                 }
                 if (drop0R != null) drop0R.enabled = false;
-                pos = hc + new Vector3(0f, 0.1f, 0f);
-                look = new Vector3(hc.x + 0.5f, RoofY, hc.z + 0.2f);
+                // the head lolls a little: the eyes drift as he breathes
+                pos = hc + new Vector3(0f, 0.1f, 0f) + Sway(0.02f, 0.3f, 3f);
+                look = new Vector3(hc.x + 0.5f, RoofY, hc.z + 0.2f) + Sway(0.25f, 0.2f, 4f);
                 fov = 64f;
                 if (t < 10.2f) PoseDrop(drop1, drop1R, hc, 9.5f, 9.5f, 26.5f, 10.2f);
                 float blur = t < 10.36f ? Mathf.Lerp(1f, 0.72f, Ease(S2, 10.2f, t)) : 0f;
@@ -237,6 +296,7 @@ namespace ProjectInk
                 }
                 if (At(S3 + 0.15f)) Sound.Play(Sfx.Breath, 0.9f);
                 if (At(S3 + 0.6f)) Sound.Play(Sfx.HeroEffort, 0.9f, null, 0.72f);       // a groan
+                if (At(S3 + 0.9f)) Sound.Play(Sfx.Piano, 0.75f);                         // who is this?
                 if (At(S3 + 1.2f)) Lightning(1f, 0.65f, 0.25f);
                 if (At(S3 + 1.7f)) Sound.Play(Sfx.Drip, 0.9f, null, 0.8f);
                 if (At(S3 + 3.7f)) { Sound.Play(Sfx.Splash, 0.9f); Sound.Play(Sfx.Cloth, 0.8f); }
@@ -247,53 +307,57 @@ namespace ProjectInk
             }
             else if (t < S5)
             {
-                // SHOT 4: the lost identity (side profile, Dutch angle)
-                if (At(S4)) { if (hero.body.Has("rise")) hero.body.Play("rise", 0.08f, true, 0.9f); Sound.Play(Sfx.HeroEffort, 0.8f, null, 0.8f); }
+                // SHOT 4: the lost identity (side profile, Dutch angle), creeping in as he rises
+                if (At(S4)) { if (hero.body.Has("rise")) hero.body.Play("rise", 0.08f, true, 0.9f / Pace); Sound.Play(Sfx.HeroEffort, 0.8f, null, 0.8f); }
                 if (At(S4 + 0.8f)) Sound.Play(Sfx.Cloth, 0.7f);
-                if (At(S4 + 2.5f)) { if (hero.body.Has("look_hands")) hero.body.Play("look_hands", 0.15f); }
+                if (At(S4 + 2.5f)) { if (hero.body.Has("look_hands")) hero.body.Play("look_hands", 0.15f, true, 1f / Pace); }
                 if (At(S4 + 2.8f)) Sound.Play(Sfx.Heartbeat, 0.9f);
                 if (At(S4 + 3.6f)) Sound.Play(Sfx.Heartbeat, 1f);
                 if (At(S4 + 3.8f)) Sound.Play(Sfx.Bone, 0.35f, null, 1.5f);            // the knuckles crack
-                if (At(S4 + 4.5f)) { if (hero.body.Has("touch_temple")) hero.body.Play("touch_temple", 0.12f); }
-                if (At(S4 + 4.9f)) { Sound.Play(Sfx.Static, 1f); Glitch(1f, 0.07f); }   // touching the wound
+                if (At(S4 + 4.5f)) { if (hero.body.Has("touch_temple")) hero.body.Play("touch_temple", 0.12f, true, 1f / Pace); }
+                if (At(S4 + 4.9f)) { Sound.Play(Sfx.Static, 1f); Glitch(1f, 0.09f); }   // touching the wound
                 if (At(S4 + 5.15f)) { Sound.Play(Sfx.Whispers, 1f); Sound.Play(Sfx.Static, 0.5f, null, 0.7f); }
-                if (At(S4 + 5.65f)) { Sound.Play(Sfx.Heartbeat, 1f); Glitch(0.6f, 0.05f); }
+                if (At(S4 + 5.65f)) { Sound.Play(Sfx.Heartbeat, 1f); Glitch(0.6f, 0.06f); }
                 if (At(S4 + 6.0f)) Sound.Play(Sfx.Breath, 0.7f);
+                float k = Ease(S4, S5, t);
                 look = new Vector3(hc.x + 0.15f, Mathf.Max(0.45f, hc.y - 0.15f), 0f);
-                pos = look + new Vector3(0.6f, -0.12f, -2.7f);
+                pos = look + Vector3.Lerp(new Vector3(0.7f, -0.14f, -3.0f), new Vector3(0.45f, -0.08f, -2.2f), k) + Sway(0.015f, 0.35f, 5f);
                 fov = 33f;
-                roll = 7f;
+                roll = Mathf.Lerp(8f, 5f, k);
             }
             else if (t < S6)
             {
-                // SHOT 5: total isolation, from the rafters
+                // SHOT 5: total isolation. Craning down out of the rafters, drifting round him as he turns.
                 if (At(S5)) { if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f); Sound.Play(Sfx.Wind, 1f); Sound.Ambience(0.55f, 0.3f, 700f); }
                 foreach (var dd in new[] { 0.7f, 1.9f, 3.2f, 4.1f })
                     if (At(S5 + dd)) Sound.Play(Sfx.Drip, Random.Range(0.4f, 0.7f), new Vector3(home.x + Random.Range(-6f, 6f), 0f, 0f), Random.Range(0.8f, 1.15f));
                 float k = Ease(S5 + 0.4f, S6 - 0.4f, t);
                 hero.transform.rotation = Quaternion.Euler(0f, 360f * k, 0f);           // a slow turn, all the way round
-                pos = new Vector3(home.x + 3.0f, 6.2f, -2.4f);
+                float kc = Ease(S5, S6, t);
+                var orbit = Quaternion.Euler(0f, Mathf.Lerp(-12f, 14f, kc), 0f);
+                pos = new Vector3(home.x, 0f, 0f) + orbit * new Vector3(3.0f, 0f, -2.4f) + Vector3.up * Mathf.Lerp(6.5f, 5.4f, kc) + Sway(0.04f, 0.2f, 6f);
                 look = new Vector3(home.x, 0.5f, 0.4f);
-                fov = 52f;
+                fov = Mathf.Lerp(54f, 48f, kc);
             }
             else
             {
                 // SHOT 6: the path to the shutter, then the hand-off to play
-                if (At(S6)) { hero.SetFacing(1); if (hero.body.Has("walk")) hero.body.Play("walk", 0.25f, false, 1.7f); }
+                if (At(S6)) { hero.SetFacing(1); if (hero.body.Has("walk")) hero.body.Play("walk", 0.25f, false, 1.7f / Pace); }
                 if (At(S6 + 0.2f)) Sound.Play(Sfx.Drone, 1f);
                 float wx = home.x + 1.3f * Mathf.Max(0f, t - (S6 + 0.2f));
                 hero.CinePose(new Vector3(wx, home.y, 0f));
                 if (t - (S6 + 0.2f) > 0f && Time.unscaledTime > footAt)
                 {
-                    footAt = Time.unscaledTime + 0.45f;
+                    footAt = Time.unscaledTime + 0.45f * Pace;
                     Sound.Play(Sfx.Splash, 0.8f, hero.transform.position);
                     Sound.Play(Sfx.Footstep, 0.9f, hero.transform.position, 0.85f);
+                    if (InkFx.Instance != null) InkFx.Instance.Splash(hero.transform.position + Vector3.up * 0.05f, Vector3.up, 5, new Color(0.55f, 0.62f, 0.76f));
                 }
                 var h = hero.transform.position;
                 float a = Ease(S6, Control - 0.4f, t);
                 float th = Mathf.Lerp(180f, 270f, a) * Mathf.Deg2Rad;
                 float rad = Mathf.Lerp(2.0f, 10.5f, a);
-                pos = h + new Vector3(Mathf.Cos(th) * rad, Mathf.Lerp(0.35f, 1.7f, a), Mathf.Sin(th) * rad);
+                pos = h + new Vector3(Mathf.Cos(th) * rad, Mathf.Lerp(0.35f, 1.7f, a), Mathf.Sin(th) * rad) + Sway(0.03f * (1f - a), 0.5f, 7f);
                 look = h + new Vector3(Mathf.Lerp(3.0f, 0.3f, a), Mathf.Lerp(0.9f, 1.0f, a), 0f);
                 fov = Mathf.Lerp(40f, 32f, a);
                 float wgt = 1f - Ease(Control - 1.0f, Control, t);
@@ -306,6 +370,14 @@ namespace ProjectInk
             barsPx = Bar;
             cam.ScriptRoll = roll;
             cam.Scripted(pos, look, 1f, fov);
+        }
+
+        /// <summary>The helicopter only exists in the opening shot (its red light blinks itself).</summary>
+        void ShowSearch(bool on)
+        {
+            if (searchlight != null && searchlight.gameObject.activeSelf != on) searchlight.gameObject.SetActive(on);
+            if (searchPool != null && searchPool.gameObject.activeSelf != on) searchPool.gameObject.SetActive(on);
+            if (!on && heliLight != null && heliLight.gameObject.activeSelf) heliLight.gameObject.SetActive(false);
         }
 
         /// <summary>A drop forms at the crack (from `form` it swells), lets go at `release`
@@ -333,6 +405,7 @@ namespace ProjectInk
         void HandOff()
         {
             phase = Phase.Walk;
+            ShowSearch(false);
             PlayerPrefs.SetInt("story_intro_seen", 1);
             PlayerPrefs.Save();
             StoryCameraFX.Set(0f, 0f);
@@ -383,6 +456,7 @@ namespace ProjectInk
             if (!wet) return;
             footAt = Time.unscaledTime + 0.32f;
             Sound.Play(Sfx.Splash, 0.7f, hero.transform.position);
+            if (InkFx.Instance != null) InkFx.Instance.Splash(hero.transform.position + Vector3.up * 0.05f, Vector3.up, 4, new Color(0.55f, 0.62f, 0.76f));
         }
 
         void UpdateBreach()
@@ -402,12 +476,19 @@ namespace ProjectInk
             MoveShadow(slitShadow1, 0.55f, 1.65f, DoorR + 0.6f, DoorL - 0.4f);
             foreach (var fs in new[] { 0.3f, 0.65f, 1.0f, 1.4f })
                 if (AtB(fs)) Sound.Play(Sfx.Footstep, 1f, new Vector3(ShutterX, 0f, 3f), 0.8f);
-            if (AtB(0.9f)) Sound.Play(Sfx.Latch, 1f, new Vector3(ShutterX, 1f, 3f));
-            if (AtB(1.25f)) Sound.Play(Sfx.Latch, 0.8f, new Vector3(ShutterX, 1f, 3f), 0.9f);
+            var latch = new Vector3(DoorL + 0.6f, 1.0f, 2.6f);
+            if (AtB(0.9f)) { Sound.Play(Sfx.Latch, 1f, new Vector3(ShutterX, 1f, 3f)); StreakFx.Sparks(latch, new Vector3(-0.4f, 0.6f, -1f), 12, 4f); }
+            if (AtB(1.25f)) { Sound.Play(Sfx.Latch, 0.8f, new Vector3(ShutterX, 1f, 3f), 0.9f); StreakFx.Sparks(latch, new Vector3(-0.3f, 0.4f, -1f), 8, 3f); }
             if (shutter != null && b < BreachAt)
             {
                 float rattle = b > 1.0f ? Mathf.Sin(b * 70f) * 0.02f : 0f;
                 shutter.position = new Vector3(shutter.position.x, shutterY + rattle, shutter.position.z);
+                // rust and dust shaken loose from the drum
+                if (b > 1.0f && Time.unscaledTime > dustAt && InkFx.Instance != null)
+                {
+                    dustAt = Time.unscaledTime + 0.09f;
+                    InkFx.Instance.Splash(new Vector3(Random.Range(DoorL, DoorR), 3.7f, 2.45f), Vector3.down, 3, new Color(0.45f, 0.36f, 0.28f));
+                }
             }
             if (AtB(BreachAt))
             {
@@ -415,8 +496,10 @@ namespace ProjectInk
                 Sound.Play(Sfx.MetalClang, 1f, new Vector3(ShutterX, 2f, 3f));
                 Sound.Play(Sfx.Door, 1f, new Vector3(ShutterX, 1f, 3f));
                 Sound.Play(Sfx.Boom, 0.7f);
-                Lightning(0.5f, 0.6f, 0.1f);
+                Lightning(1f, 0.8f, 0.05f);                       // the strike lights the doorway: three men in it
                 Buzz();
+                var beam = Find("DoorBeam");
+                if (beam != null) foreach (var r in beam.GetComponentsInChildren<Renderer>()) r.enabled = true;
                 if (cam != null) cam.Shake(0.3f, 0.3f);
                 if (tc != null) tc.SlowMo(0.35f, 1.0f, 0.02f, 0.3f);
                 if (slit != null) slit.enabled = false;
@@ -433,8 +516,20 @@ namespace ProjectInk
                 if (spawned == i && b >= BreachAt + 0.05f + i * 0.28f && director != null)
                 {
                     men[i] = director.SpawnScripted(EnemyType.Brawler, SpawnKind.Background);
-                    if (men[i] != null) men[i].Passive = true;             // no swings until the scene lets go
+                    if (men[i] != null)
+                    {
+                        men[i].Passive = true;                              // no swings until the scene lets go
+                        menColor[i] = men[i].InkColor;
+                        men[i].SetBaseColor(new Color(0.015f, 0.015f, 0.02f));   // black against the moonlight
+                    }
                     spawned++;
+                }
+            // their colour comes up as they step out of the backlight into the room
+            for (int i = 0; i < men.Length; i++)
+                if (men[i] != null)
+                {
+                    float k = Mathf.InverseLerp(2.4f, 0.4f, men[i].transform.position.z);
+                    men[i].SetBaseColor(Color.Lerp(new Color(0.015f, 0.015f, 0.02f), menColor[i], k * k));
                 }
             if (AtB(2.7f)) Say("HIM", "Wait... who are you?", 1.25f);
             if (AtB(4.0f)) Say("THUG", "He's awake. Finish it.", 1.5f);
@@ -444,7 +539,8 @@ namespace ProjectInk
             {
                 float wIn = Ease(0f, 0.6f, b), wOut = 1f - Ease(ReleaseAt, ReleaseAt + 0.6f, b);
                 var hp = hero.transform.position;
-                cam.Scripted(new Vector3(hp.x - 1.5f, 1.35f, -5.4f), new Vector3(ShutterX - 1.2f, 1.1f, 1.6f), Mathf.Min(wIn, wOut), 38f);
+                // low, over his shoulder, the doorway beyond him
+                cam.Scripted(new Vector3(hp.x - 1.7f, 0.7f, -1.9f) + Sway(0.03f, 0.6f, 8f), new Vector3(ShutterX, 1.6f, BackZ + 0.6f), Mathf.Min(wIn, wOut), 46f);
             }
             barsPx = b < ReleaseAt ? Mathf.Lerp(0f, 70f, Ease(0f, 0.5f, b)) : Mathf.Lerp(70f, 0f, Ease(ReleaseAt, ReleaseAt + 0.6f, b));
             if (AtB(ReleaseAt))
@@ -487,11 +583,14 @@ namespace ProjectInk
 
         void UpdateMemory()
         {
+            // the inserts: a scope on a man, a muzzle flash, a target photo, each a stab of static
             if (AtM(0.01f)) { Sound.Play(Sfx.Static, 1f); Sound.Play(Sfx.Whispers, 1f); Glitch(1f, 0.18f); Buzz(); }
-            if (AtM(0.4f)) Sound.Play(Sfx.Heartbeat, 1f);
-            if (AtM(1.25f)) Sound.Play(Sfx.Heartbeat, 1f);
-            if (AtM(1.3f)) Sound.Play(Sfx.CineMassive, 0.7f);
-            if (AtM(3.2f))
+            if (AtM(0.45f)) { Sound.Play(Sfx.Heartbeat, 1f); Sound.Play(Sfx.Static, 0.7f, null, 1.2f); }
+            if (AtM(0.85f)) { Sound.Play(Sfx.GunBody, 0.9f); Sound.Play(Sfx.GunTail, 0.8f); Glitch(0.8f, 0.1f); Buzz(); }
+            if (AtM(1.2f)) { Sound.Play(Sfx.Static, 0.8f, null, 0.9f); Sound.Play(Sfx.CineHit, 0.6f); }
+            if (AtM(1.75f)) { Sound.Play(Sfx.Piano, 0.8f); Sound.Play(Sfx.Heartbeat, 1f); }
+            if (AtM(1.8f)) Sound.Play(Sfx.CineMassive, 0.7f);
+            if (AtM(5.2f))
             {
                 phase = Phase.End;
                 Retry = false;
@@ -764,21 +863,102 @@ namespace ProjectInk
 
         void Memory(float w, float h)
         {
-            float white = m > 0.12f && m < 0.32f ? 1f : 0f;
-            float dark = Mathf.Min(Ease(0f, 0.3f, m), 1f - Ease(2.8f, 3.2f, m));
-            Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.88f * dark));
-            if (m > 0.32f)
+            float dark = Mathf.Min(Ease(0f, 0.25f, m), 1f - Ease(4.8f, 5.2f, m));
+            Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.9f * dark));
+            if (m > 0.12f && m < 0.2f) { Fill(new Rect(0, 0, w, h), Color.white); return; }
+            float jx = Random.Range(-4f, 4f), jy = Random.Range(-3f, 3f);
+            if (m >= 0.2f && m < 0.82f) Scope(w, h, m - 0.2f, jx, jy);
+            else if (m >= 0.82f && m < 1.18f) Muzzle(w, h, m - 0.82f);
+            else if (m >= 1.18f && m < 1.7f) Photo(w, h, m - 1.18f, jx, jy);
+            else if (m >= 1.7f && m < 1.78f) Fill(new Rect(0, 0, w, h), Color.white);
+            else if (m >= 1.78f)
             {
-                float k = Ease(0.32f, 0.5f, m);
+                float k = Ease(1.78f, 2.0f, m);
                 var m0 = GUI.matrix;
                 float sc = Mathf.Lerp(1.35f, 1f, k);
-                GUIUtility.ScaleAroundPivot(new Vector2(sc, sc), new Vector2(w * 0.5f, h * 0.45f) * scale);
+                GUIUtility.ScaleAroundPivot(new Vector2(sc, sc), (Vector2)GUI.matrix.MultiplyPoint3x4(new Vector2(w * 0.5f, h * 0.45f)));
                 big.normal.textColor = new Color(1f, 1f, 1f, k * dark);
                 GUI.Label(new Rect(0, h * 0.45f - 45, w, 90), Spaced("YOU'VE DONE THIS BEFORE."), big);
                 GUI.matrix = m0;
                 Fill(new Rect(w * 0.5f - 160 * k, h * 0.45f + 48, 320 * k, 3), new Color(0.8f, 0.06f, 0.07f, k * dark));
             }
-            if (white > 0f) Fill(new Rect(0, 0, w, h), Color.white);
+        }
+
+        /// <summary>Through a rifle scope: a man's silhouette in the circle, the crosshair settling on him.</summary>
+        void Scope(float w, float h, float u, float jx, float jy)
+        {
+            float r = h * 0.4f;
+            var c = new Vector2(w * 0.5f + jx, h * 0.5f + jy);
+            var drift = new Vector2(Mathf.Sin(u * 9f) * 18f * (1f - u), Mathf.Cos(u * 7f) * 12f * (1f - u));
+            var old = GUI.color;
+            GUI.color = new Color(0.12f, 0.16f, 0.2f);
+            GUI.DrawTexture(new Rect(c.x - r, c.y - r, r * 2f, r * 2f), circle);
+            // the target: head and shoulders, unaware
+            var tgt = c + new Vector2(30f, 20f) - drift;
+            GUI.color = new Color(0.02f, 0.02f, 0.03f);
+            GUI.DrawTexture(new Rect(tgt.x - 34f, tgt.y - 92f, 68f, 68f), circle);
+            GUI.DrawTexture(new Rect(tgt.x - 70f, tgt.y - 30f, 140f, 160f), circle);
+            GUI.color = old;
+            // crosshair and mil dots
+            var red = new Color(0.9f, 0.08f, 0.06f, 0.95f);
+            Fill(new Rect(c.x - r, c.y - 1, r * 2f, 2f), new Color(0f, 0f, 0f, 0.9f));
+            Fill(new Rect(c.x - 1, c.y - r, 2f, r * 2f), new Color(0f, 0f, 0f, 0.9f));
+            for (int i = -4; i <= 4; i++) if (i != 0) { Fill(new Rect(c.x + i * r * 0.18f - 2, c.y - 2, 4, 4), Color.black); Fill(new Rect(c.x - 2, c.y + i * r * 0.18f - 2, 4, 4), Color.black); }
+            Fill(new Rect(c.x - 3, c.y - 3, 6, 6), red);
+            cap.normal.textColor = new Color(0.9f, 0.9f, 0.9f, 0.8f);
+            GUI.Label(new Rect(c.x + r * 0.45f, c.y + r * 0.55f, 200, 24), "450 M", cap);
+        }
+
+        /// <summary>A muzzle flash: a white star in the dark, a ring of fire.</summary>
+        void Muzzle(float w, float h, float u)
+        {
+            float k = 1f - u / 0.36f;
+            var c = new Vector2(w * 0.55f, h * 0.48f);
+            var old = GUI.color;
+            GUI.color = new Color(1f, 0.75f, 0.35f, 0.9f * k);
+            float r = h * 0.55f * (0.6f + 0.4f * k);
+            GUI.DrawTexture(new Rect(c.x - r, c.y - r, r * 2f, r * 2f), disc);
+            GUI.color = new Color(1f, 1f, 1f, k);
+            GUI.DrawTexture(new Rect(c.x - r * 0.3f, c.y - r * 0.3f, r * 0.6f, r * 0.6f), disc);
+            var m0 = GUI.matrix;
+            for (int i = 0; i < 6; i++)
+            {
+                GUIUtility.RotateAroundPivot(30f, (Vector2)GUI.matrix.MultiplyPoint3x4(c));
+                Fill(new Rect(c.x - r * 0.9f, c.y - 3f, r * 1.8f, 6f), new Color(1f, 0.95f, 0.8f, 0.8f * k));
+            }
+            GUI.matrix = m0;
+            GUI.color = old;
+        }
+
+        /// <summary>A target photo, pinned, a red cross through the face, TARGET stamped on it.</summary>
+        void Photo(float w, float h, float u, float jx, float jy)
+        {
+            var c = new Vector2(w * 0.5f + jx, h * 0.48f + jy);
+            float pw = h * 0.5f, ph = h * 0.6f;
+            var m0 = GUI.matrix;
+            GUIUtility.RotateAroundPivot(-6f + u * 4f, (Vector2)GUI.matrix.MultiplyPoint3x4(c));
+            Fill(new Rect(c.x - pw / 2, c.y - ph / 2, pw, ph), new Color(0.86f, 0.84f, 0.78f));
+            Fill(new Rect(c.x - pw / 2 + 14, c.y - ph / 2 + 14, pw - 28, ph - 70), new Color(0.32f, 0.33f, 0.36f));
+            var old = GUI.color;
+            GUI.color = new Color(0.05f, 0.05f, 0.06f);
+            GUI.DrawTexture(new Rect(c.x - 34f, c.y - ph * 0.3f, 68f, 68f), circle);
+            GUI.DrawTexture(new Rect(c.x - 66f, c.y - ph * 0.3f + 60f, 132f, 120f), circle);
+            GUI.color = old;
+            var red = new Color(0.82f, 0.05f, 0.05f, 0.95f);
+            var m1 = GUI.matrix;
+            var face = new Vector2(c.x, c.y - ph * 0.3f + 34f);
+            GUIUtility.RotateAroundPivot(45f, (Vector2)GUI.matrix.MultiplyPoint3x4(face));
+            Fill(new Rect(face.x - 60, face.y - 4, 120, 8), red);
+            GUI.matrix = m1;
+            GUIUtility.RotateAroundPivot(-45f, (Vector2)GUI.matrix.MultiplyPoint3x4(face));
+            Fill(new Rect(face.x - 60, face.y - 4, 120, 8), red);
+            GUI.matrix = m1;
+            big.fontSize = 44;
+            big.normal.textColor = red;
+            GUIUtility.RotateAroundPivot(-12f, (Vector2)GUI.matrix.MultiplyPoint3x4(new Vector2(c.x, c.y + ph * 0.36f)));
+            GUI.Label(new Rect(c.x - 150, c.y + ph * 0.36f - 26, 300, 52), Spaced("TARGET"), big);
+            big.fontSize = 72;
+            GUI.matrix = m0;
         }
 
         void EndCard(float w, float h)

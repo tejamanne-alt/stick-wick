@@ -47,7 +47,7 @@ def env(n, attack, release, total=None):
 
 def echoes(x, delays=(0.09, 0.17, 0.29, 0.43), gain=0.45):
     """A big empty room: a few decaying reflections."""
-    out = np.concatenate([x, np.zeros(int(0.8 * SR))])
+    out = np.concatenate([x, np.zeros(int((max(delays) + 0.1) * SR))])
     for i, d in enumerate(delays):
         n = int(d * SR)
         out[n:n + len(x)] += x * gain ** (i + 1)
@@ -204,7 +204,42 @@ def wind(take):
     save("wind", y, take, peak=0.6)
 
 
+def piano_note(f, dur, vel=1.0):
+    x = t(dur)
+    y = np.zeros_like(x)
+    for h, a in ((1, 1.0), (2, 0.42), (3, 0.2), (4, 0.11), (5, 0.06), (6, 0.03)):
+        fh = f * h * (1 + 0.0004 * h * h)                               # a touch of piano stretch
+        y += a * np.sin(2 * np.pi * fh * x) * np.exp(-x * (1.1 + 0.55 * h))
+    hammer = hp(rng.standard_normal(len(x)), 2000) * np.exp(-x / 0.004) * 0.05
+    return (y * np.minimum(1, x / 0.004) + hammer) * vel
+
+
+def piano(take):
+    """A sparse, melancholic motif in A minor, in a big empty room (who am I?)."""
+    notes = [(220.0, 0.0, 0.9), (261.63, 0.9, 0.7), (329.63, 1.8, 0.75), (246.94, 2.9, 0.85)] if take == 1 else \
+            [(329.63, 0.0, 0.8), (293.66, 0.8, 0.7), (261.63, 1.6, 0.7), (220.0, 2.6, 0.9), (110.0, 2.6, 0.5)]
+    total = 6.5
+    y = np.zeros(int(total * SR))
+    for f, at, v in notes:
+        n = piano_note(f, total - at, v)
+        k = int(at * SR)
+        y[k:k + len(n)] += n[:len(y) - k]
+    save("piano", echoes(y, delays=(0.21, 0.43, 0.71, 1.03), gain=0.38), take, peak=0.7)
+
+
+def rotor(take):
+    """A helicopter far off: blade slap at ~11 Hz under a low turbine whine."""
+    x = t(6.0)
+    slap = (np.sin(2 * np.pi * 11.0 * x) > 0.82).astype(float)
+    slap = lp(slap * rng.standard_normal(len(x)) * 0.6 + slap * 0.5, 600)
+    whine = 0.08 * np.sin(2 * np.pi * 820 * x + 3 * np.sin(2 * np.pi * 0.4 * x))
+    y = lp(slap, 350) + whine
+    y *= np.minimum(1, x / 1.5) * np.minimum(1, (6.0 - x) / 1.5)
+    save("rotor", y, take, peak=0.6)
+
+
 if __name__ == "__main__":
+    piano(1); piano(2); rotor(1)
     for take in (1, 2):
         thunder(take); drip(take); splat(take); latch(take); splash(take); breath(take)
     tinnitus(1); heartbeat(1); static(1); static(2); whispers(1); drone(1); wind(1)

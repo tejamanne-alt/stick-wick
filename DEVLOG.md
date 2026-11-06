@@ -901,3 +901,36 @@ The prologue's set was Unity boxes. It is now modelled in detail in Blender (`to
 - Previews:
     - `docs/previews/story_set_baked.png`: the exported set re-imported and rendered through its baked textures only, as Unity shows it
     - `docs/previews/story_set.png`: the lit preview
+
+## 2026-11-06: Richer, slower, immersive opening shots
+
+Feedback: the shots should be richer and premium, mixing emotion, thriller and action. These are the beginning scenes, so they should be slower, making the player feel he is there.
+
+- **Slower.** The whole opening plays at 1.5× its written length (`StoryIntro.Pace`): about 46 s instead of 31. The written beat times stay as they were; the cinematic clock runs slower. Blinks are heavier, the drop hangs before it falls, and camera moves are slower. His rise, look at his hands, scar touch and walk are slowed to match.
+- **Alive between the beats.**
+    - Every few seconds: distant thunder, iron creaking, a chain chinking, drips in the dark (`Ambient`).
+    - Every shot breathes with a slow handheld drift (`Sway`).
+- **Real lightning.**
+    - The set is baked a second time, lit by a strike: windows, roof crack and door blazing, the sky white-blue (`*_Lightning.png`).
+    - `LightningSwap` flickers the set's materials to that bake (on, off, on, gone) with every strike.
+    - In the opening a forked bolt (three jagged lines) splits the sky over the city.
+- **Shot 0:** a slow crane down the road to the shed. A helicopter searches the yard: its beam combs the stacks, its pool of light slides over the containers, its red light blinks, and the rotor thumps far off. Someone is hunting him.
+- **Each shot moves.**
+    - Shot 1 turns slowly as it looks up into the crack.
+    - Shot 2's eyes drift as he breathes.
+    - Shot 4 creeps in on the Dutch angle.
+    - Shot 5 cranes down out of the rafters and drifts round him as he turns.
+- **Emotion.** A sparse piano motif in A minor plays when he sees his own face in the puddle, and again at the memory (`Sfx.Piano`, synthesised).
+- **The walk.** Water splashes at his feet (cinematic and play).
+- **The breach.**
+    - A low camera over his shoulder.
+    - Sparks fly from the latch at each clank; rust and dust shake off the drum while it rattles.
+    - The breach itself is a full lightning strike with a beam of moonlight through the doorway. The three men stand **black against it** and only get their colours as they step into the room.
+- **The memory flash** (about 5 s). White, then split-second inserts, each with a stab of static:
+    1. **through a rifle scope** onto a man, at 450 m
+    2. **a muzzle flash** with a gunshot
+    3. **a target photo**: a red cross through the face, TARGET stamped on it
+
+  Then the piano and **YOU'VE DONE THIS BEFORE.**
+- Moonbeams halved, so they never wash a fighter out. Scene version 24.
+- Storyboard on the real baked set: `docs/previews/story_storyboard.png`.
