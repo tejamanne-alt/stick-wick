@@ -1,66 +1,152 @@
-"""Synthesises the story-mode sound effects (no recordings needed): thunder, roof drip, the
-splat between the eyes, tinnitus, heartbeat, electrical static, reversed whispers, a cello
-drone, the shutter latch, footsteps in shallow water, a ragged breath and wind through vents.
+"""Builds the story-mode sound effects: real recordings where a real sound exists (breathing,
+drips, a splash, metal, whispers, thunder, a creepy drone), designed and layered, placed in
+the warehouse with a convolution reverb; synthesis only where synthesis is the right tool
+(the ringing in the ears, the heartbeat, the wind in the vents, the far-off rotor, the piano,
+the bowed cello under the drone).
 
-    python tools/audio/make_story_sfx.py
+    python tools/audio/make_story_sfx.py --oculus <meta-open-sound>/corpora/oculus-audio-pack/ogg \\
+                                         --kit <sfx-kit>/sounds
 
-Writes 16-bit mono WAVs into Assets/Resources/Audio/<sound>/ (the Sound mixer loads every clip
-in a sound's folder and picks a take at random). Deterministic: the same files every run."""
+The two libraries are the same ones build_audio.py uses (Oculus Audio Pack 01, CC BY 4.0;
+SFX Kit, CC0). Needs numpy, scipy and ffmpeg. Writes 16-bit mono WAVs into
+Assets/Resources/Audio/<sound>/<sound>_<take>.wav (the Sound mixer loads every clip in a
+sound's folder and picks a take at random). Deterministic: the same files every run.
+
+Rules that keep it clean: no broadband hiss (everything noisy is band-limited and darkened,
+there is no "tssshh"), every one-shot starts on its transient and ends in a fade, and the
+room is one consistent space (a big concrete warehouse, about 2 s of decay)."""
+import argparse
 import os
+import subprocess
+import sys
 import wave
 import numpy as np
-from scipy.signal import butter, lfilter
+from scipy.signal import butter, sosfilt, fftconvolve, resample_poly
 
 SR = 44100
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Assets", "Resources", "Audio")
 rng = np.random.default_rng(7)
+O = K = ""
+
+
+# ------------------------------------------------------------------ plumbing
+
+def load(path, start=0.0, dur=None):
+    """A recording as mono float at SR, optionally a slice of it."""
+    cmd = ["ffmpeg", "-v", "error", "-ss", f"{start}", "-i", path]
+    if dur is not None:
+        cmd += ["-t", f"{dur}"]
+    cmd += ["-ac", "1", "-ar", str(SR), "-f", "f32le", "-"]
+    raw = subprocess.run(cmd, capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.float32).astype(np.float64)
+
+
+def oc(stem, start=0.0, dur=None):
+    return load(os.path.join(O, stem + ".ogg"), start, dur)
+
+
+def kit(path, start=0.0, dur=None):
+    return load(os.path.join(K, path + ".wav"), start, dur)
 
 
 def t(sec):
     return np.arange(int(sec * SR)) / SR
 
 
-def bp(x, lo, hi, order=2):
-    b, a = butter(order, [lo / (SR / 2), hi / (SR / 2)], btype="band")
-    return lfilter(b, a, x)
+def _sos(kind, f, order):
+    f = np.atleast_1d(f) / (SR / 2)
+    return butter(order, f if len(f) > 1 else f[0], btype=kind, output="sos")
 
 
-def lp(x, hi, order=2):
-    b, a = butter(order, hi / (SR / 2), btype="low")
-    return lfilter(b, a, x)
+def lp(x, f, order=2): return sosfilt(_sos("low", f, order), x)
+def hp(x, f, order=2): return sosfilt(_sos("high", f, order), x)
+def bp(x, lo, hi, order=2): return sosfilt(_sos("band", [lo, hi], order), x)
 
 
-def hp(x, lo, order=2):
-    b, a = butter(order, lo / (SR / 2), btype="high")
-    return lfilter(b, a, x)
+def shelf_dark(x, f=3500, amount=0.6):
+    """Take the top end down by `amount` above f (keeps the body, loses the fizz)."""
+    return x - amount * hp(x, f, 2)
 
 
-def env(n, attack, release, total=None):
-    """Attack then exponential-ish release over n samples."""
-    a = max(1, int(attack * SR))
-    e = np.ones(n)
-    e[:a] = np.linspace(0, 1, a)
-    k = np.arange(n - a) / SR
-    e[a:] = np.exp(-k / max(release, 1e-4))
-    return e
+def pitch(x, ratio):
+    """Play at `ratio` speed (tape-style: pitch and length together)."""
+    up, down = int(round(1000 / ratio)), 1000
+    g = np.gcd(up, down)
+    return resample_poly(x, up // g, down // g)
 
 
-def echoes(x, delays=(0.09, 0.17, 0.29, 0.43), gain=0.45):
-    """A big empty room: a few decaying reflections."""
-    out = np.concatenate([x, np.zeros(int((max(delays) + 0.1) * SR))])
-    for i, d in enumerate(delays):
-        n = int(d * SR)
-        out[n:n + len(x)] += x * gain ** (i + 1)
+def trim(x, thresh_db=-45):
+    """Start on the transient."""
+    a = np.abs(x)
+    i = np.argmax(a > a.max() * 10 ** (thresh_db / 20))
+    return x[max(0, i - int(0.002 * SR)):]
+
+
+def fades(x, fin=0.003, fout=0.04):
+    x = x.copy()
+    a, b = min(len(x) // 4, int(fin * SR)), min(len(x) // 3, int(fout * SR))
+    if a > 0: x[:a] *= np.linspace(0, 1, a) ** 2
+    if b > 0: x[-b:] *= np.linspace(1, 0, b) ** 2
+    return x
+
+
+def pad(x, n):
+    return np.concatenate([x, np.zeros(max(0, n - len(x)))])
+
+
+def mix(*parts):
+    """Sum (signal, gain, delay seconds) parts."""
+    n = max(int(d * SR) + len(s) for s, g, d in parts)
+    out = np.zeros(n)
+    for s, g, d in parts:
+        k = int(d * SR)
+        out[k:k + len(s)] += s * g
     return out
 
 
-def save(name, x, take=1, peak=0.9):
+def env(n, attack, release):
+    a = max(1, int(attack * SR))
+    e = np.ones(n)
+    e[:a] = np.linspace(0, 1, a)
+    e[a:] = np.exp(-np.arange(n - a) / SR / max(release, 1e-4))
+    return e
+
+
+_irs = {}
+
+
+def room(x, rt60=2.0, wet=0.3, predelay=0.018, dark=2800, size="hall"):
+    """Convolution reverb with a synthesised impulse response: a few early reflections off
+    concrete, then a dense exponentially decaying tail that darkens as it decays."""
+    key = (rt60, predelay, dark, size)
+    if key not in _irs:
+        r = np.random.default_rng(11)
+        n = int(rt60 * 1.1 * SR)
+        tt = np.arange(n) / SR
+        tail = r.standard_normal(n) * np.exp(-6.9 * tt / rt60)
+        early = lp(tail, dark * 1.6, 2)
+        late = lp(tail, dark * 0.55, 2)
+        k = np.clip(tt / (rt60 * 0.5), 0, 1)
+        ir = early * (1 - k) + late * k
+        ir[:int(predelay * SR)] = 0
+        for d, g in ((0.011, 0.5), (0.019, 0.38), (0.031, 0.3), (0.047, 0.22), (0.066, 0.16)):
+            ir[int((predelay + d) * SR)] += g * (1 if r.random() > 0.5 else -1)
+        ir = hp(ir, 90, 2)
+        _irs[key] = ir / np.sqrt(np.sum(ir ** 2))
+    ir = _irs[key]
+    w = fftconvolve(x, ir)[:len(x) + len(ir)]
+    dry = pad(x, len(w))
+    return dry * (1 - wet) + w * wet * 0.9
+
+
+def save(name, x, take=1, peak=0.89):
     x = np.asarray(x, dtype=np.float64)
-    m = np.max(np.abs(x)) or 1.0
-    x = x / m * peak
-    fade = min(len(x) // 10, int(0.01 * SR))
-    if fade > 0:
-        x[-fade:] *= np.linspace(1, 0, fade)
+    x = x - np.mean(x)
+    # drop the inaudible tail
+    a = np.abs(x)
+    end = len(x) - np.argmax(a[::-1] > a.max() * 10 ** (-60 / 20))
+    x = fades(x[:min(len(x), end + int(0.02 * SR))], 0.0005, 0.06)
+    x = x / (np.max(np.abs(x)) or 1.0) * peak
     d = os.path.join(ROOT, name)
     os.makedirs(d, exist_ok=True)
     path = os.path.join(d, f"{name}_{take}.wav")
@@ -68,178 +154,250 @@ def save(name, x, take=1, peak=0.9):
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(SR)
-        w.writeframes((x * 32767).astype(np.int16).tobytes())
-    print("wrote", os.path.relpath(path))
+        w.writeframes(np.round(x * 32767).astype(np.int16).tobytes())
+    print("wrote", os.path.relpath(path), f"{len(x) / SR:.2f}s")
 
 
-def thunder(take):
-    n = int(5.5 * SR)
-    crack = hp(rng.standard_normal(n), 1500) * env(n, 0.002, 0.08) * 1.4
-    brown = np.cumsum(rng.standard_normal(n))
-    brown = hp(brown, 20)
-    rumble = lp(brown, 160 + 40 * take, 3)
-    mod = 0.6 + 0.4 * np.abs(lp(rng.standard_normal(n), 3.0, 1)) * 30
-    rumble *= env(n, 0.06, 1.6 + 0.4 * take) * np.clip(mod, 0.2, 1.6)
-    rumble /= np.max(np.abs(rumble)) + 1e-9
-    roll = lp(hp(rng.standard_normal(n), 60), 700) * env(n, 0.03, 0.9) * 0.5
-    save("thunder", crack * 0.7 + rumble + roll, take)
+def clear(name):
+    d = os.path.join(ROOT, name)
+    if os.path.isdir(d):
+        for f in os.listdir(d):
+            if f.endswith(".wav") or f.endswith(".wav.meta"):
+                os.remove(os.path.join(d, f))
 
 
-def drip(take):
-    x = t(0.16)
-    f = (1300 + 150 * take) * np.exp(-x * 9) + 650
-    tone = np.sin(2 * np.pi * np.cumsum(f) / SR) * env(len(x), 0.001, 0.035)
-    click = hp(rng.standard_normal(len(x)), 3000) * env(len(x), 0.0005, 0.004) * 0.4
-    save("drip", echoes(tone + click, gain=0.5), take, peak=0.7)
+# ------------------------------------------------------------------ the sounds
+
+def thunder():
+    """Outside, beyond the walls: the crack softened by distance, a long rolling body and a
+    sub you feel more than hear."""
+    for take, src in ((1, "cinematic-hits/cinematic-thunder-big"), (2, "cinematic-hits/cinematic-thunder-massive")):
+        x = trim(kit(src))
+        x = lp(shelf_dark(x, 2500, 0.7), 7000, 2)
+        n = len(x) + int(2.5 * SR)
+        brown = np.cumsum(rng.standard_normal(n)); brown = hp(brown, 18, 2)
+        sub = lp(brown, 75, 4)
+        sub = sub / (np.max(np.abs(sub)) + 1e-9) * env(n, 0.08, 1.8 + 0.5 * take)
+        roll = lp(hp(rng.standard_normal(n), 40), 260, 3)
+        roll *= np.clip(lp(np.abs(rng.standard_normal(n)), 2.5, 1) * 9, 0.15, 1.5) * env(n, 0.25, 2.2)
+        roll /= np.max(np.abs(roll)) + 1e-9
+        y = mix((x, 1.0, 0.0), (sub, 0.3, 0.02), (roll, 0.25, 0.35))
+        save("thunder", room(y, 2.6, 0.22, 0.03, 2000), take)
 
 
-def splat(take):
-    n = int(0.35 * SR)
-    wet = bp(rng.standard_normal(n), 250, 3500) * env(n, 0.001, 0.05 + 0.01 * take)
-    thump = np.sin(2 * np.pi * 85 * t(0.35)) * env(n, 0.002, 0.06)
-    spray = hp(rng.standard_normal(n), 4000) * env(n, 0.01, 0.12) * 0.25
-    save("splat", wet + thump * 0.8 + spray, take)
+def drip():
+    """Single drops from the roof into standing water, in the big room."""
+    src = kit("everyday-props/props-drip")
+    for take, at in ((1, 0.0), (2, 0.66)):
+        x = trim(src[int(at * SR):int((at + 0.34) * SR)])
+        x = fades(x, 0.0005, 0.08)
+        x = shelf_dark(x, 6000, 0.4)
+        save("drip", room(x, 2.0, 0.34, 0.02, 3000), take, peak=0.75)
 
 
-def tinnitus(take):
-    x = t(3.5)
-    f = 7200 + 30 * np.sin(2 * np.pi * 0.7 * x)
-    tone = np.sin(2 * np.pi * np.cumsum(f) / SR) + 0.3 * np.sin(2 * np.pi * np.cumsum(f * 1.007) / SR)
-    e = np.minimum(1, x / 0.15) * np.exp(-x / 1.4)
-    save("tinnitus", tone * e, take, peak=0.5)
+def splat():
+    """The drop landing between his eyes, right against the skin: a heavy, close, wet tap
+    with weight (a big drop slowed down) and a tiny thump through the skull."""
+    src = kit("everyday-props/props-drip")
+    for take, (at, ratio) in ((1, (0.0, 0.62)), (2, (0.34, 0.56))):
+        x = trim(src[int(at * SR):int((at + 0.3) * SR)])
+        x = fades(pitch(x, ratio), 0.0005, 0.12)
+        x = shelf_dark(x, 3000, 0.5)
+        n = int(0.4 * SR)
+        thump = np.sin(2 * np.pi * (70 - 25 * t(0.4)) * t(0.4)) * env(n, 0.002, 0.05)
+        body = lp(rng.standard_normal(n), 500, 2) * env(n, 0.001, 0.025) * 0.5
+        y = mix((x, 1.0, 0.0), (thump, 0.3, 0.0), (body, 0.25, 0.0))
+        save("splat", room(y, 0.5, 0.12, 0.004, 3500), take)
 
 
-def heartbeat(take):
-    x = t(0.9)
+def splash():
+    """Palms coming up out of a shallow puddle: a soft slosh and drips running off, no hiss."""
+    sp = trim(kit("everyday-props/props-splash"))
+    for take, ratio in ((1, 0.92), (2, 0.8)):
+        x = fades(pitch(sp, ratio), 0.001, 0.15)
+        x = lp(shelf_dark(x, 2500, 0.65), 6000, 2)
+        d = trim(kit("everyday-props/props-drip")[int(0.66 * SR):int(1.0 * SR)])
+        d = shelf_dark(fades(pitch(d, 1.15), 0.0005, 0.05), 5000, 0.5)
+        y = mix((x, 1.0, 0.0), (d, 0.25, 0.32), (d, 0.15, 0.55))
+        save("splash", room(y, 1.8, 0.26, 0.015, 2600), take, peak=0.7)
+
+
+def breath():
+    """Real breathing (a man, winded), single breaths sliced at their natural gaps and
+    darkened so they sit close and warm instead of hissing."""
+    src = oc("HMNBrth_MaleBreathing_OS_01")
+    for take, (a, b) in ((1, (0.0, 1.02)), (2, (0.52, 1.58))):
+        x = src[int(a * SR):int(b * SR)]
+        x = fades(x, 0.04, 0.18)
+        x = lp(shelf_dark(x, 2200, 0.7), 5200, 2)
+        x = x + 0.25 * lp(x, 400, 2)                                  # a little chest
+        save("breath", room(x, 1.6, 0.14, 0.01, 2400), take, peak=0.6)
+
+
+def tinnitus():
+    """The ringing in the ears: a pure high tone with a slow beat and its quieter twin,
+    fading in fast and away slowly. Nothing noisy."""
+    x = t(3.8)
+    f = 6800 + 18 * np.sin(2 * np.pi * 0.5 * x)
+    tone = np.sin(2 * np.pi * np.cumsum(f) / SR) + 0.25 * np.sin(2 * np.pi * np.cumsum(f * 1.0035) / SR)
+    tone += 0.12 * np.sin(2 * np.pi * np.cumsum(f * 0.5) / SR)
+    e = np.minimum(1, x / 0.25) ** 2 * np.exp(-x / 1.5)
+    save("tinnitus", tone * e, 1, peak=0.5)
+
+
+def heartbeat():
+    """Lub-dub, heard from inside: a low damped knock with a falling pitch, a softer second
+    sound, and the chest's own resonance."""
+    x = t(1.0)
+
     def beat(at, amp, f0):
         y = np.zeros_like(x)
         m = x >= at
         k = x[m] - at
-        y[m] = amp * np.sin(2 * np.pi * (f0 - 20 * k) * k) * np.exp(-k / 0.07) * np.minimum(1, k / 0.004)
+        f = f0 * (1 + 0.6 * np.exp(-k / 0.02))
+        ph = 2 * np.pi * np.cumsum(f) / SR
+        body = np.sin(ph) * np.exp(-k / 0.085) + 0.35 * np.sin(2 * ph) * np.exp(-k / 0.04)
+        y[m] = amp * body * np.minimum(1, k / 0.006)
         return y
-    y = beat(0.0, 1.0, 58) + beat(0.2, 0.7, 52)
-    save("heartbeat", lp(y, 300), take)
+    y = beat(0.0, 1.0, 48) + beat(0.24, 0.65, 42)
+    knock = lp(rng.standard_normal(len(x)), 180, 2) * (env(len(x), 0.002, 0.03) + 0.6 * np.roll(env(len(x), 0.002, 0.025), int(0.24 * SR)))
+    y = lp(y + knock * 0.35, 220, 2)
+    save("heartbeat", room(y, 0.6, 0.1, 0.005, 800), 1)
 
 
-def static(take):
-    n = int(0.45 * SR)
-    noise = bp(rng.standard_normal(n), 900, 9000)
-    crackle = np.zeros(n)
-    idx = rng.integers(0, n, 140)
-    crackle[idx] = rng.choice([-1, 1], 140) * rng.uniform(1.5, 3, 140)
-    gate = (lp(rng.standard_normal(n), 30) > -0.002).astype(float) * 0.6 + 0.4
-    hum = np.sin(2 * np.pi * 120 * t(0.45)) * 0.3
-    save("static", (noise * gate + crackle + hum) * env(n, 0.003, 0.25), take)
+def static():
+    """The wound touched, the memory breaking through: electrical, not hiss. A dying signal,
+    a glitch, a mains buzz with its harmonics stuttering, all held below 6 kHz."""
+    n = int(0.7 * SR)
+    x = t(0.7)
+    buzz = sum(np.sin(2 * np.pi * 50 * h * x) / h ** 0.8 for h in (1, 2, 3, 5, 7, 9, 11))
+    gate = (np.sin(2 * np.pi * 23 * x) + 0.6 * np.sin(2 * np.pi * 37 * x + 1) > 0.2).astype(float)
+    gate = lp(gate, 300, 2)
+    buzz = bp(buzz * gate, 70, 3000, 2) * env(n, 0.002, 0.25)
+    for take in (1, 2):
+        g = trim(kit("digital/digital-signal-drop" if take == 1 else "digital/digital-glitch-clear"))
+        g = lp(shelf_dark(g, 3000, 0.5), 6000, 2)
+        y = mix((g, 1.0, 0.0), (buzz, 0.32, 0.0))
+        if take == 2:
+            g2 = lp(trim(kit("digital/digital-glitch-subtle")), 6000, 2)
+            y = mix((y, 1.0, 0.0), (g2, 0.7, 0.21))
+        save("static", room(y, 0.9, 0.12, 0.008, 3000), take, peak=0.75)
 
 
-def whispers(take):
-    n = int(0.9 * SR)
+def whispers():
+    """Voices from a life he does not remember: real whispers, one take forwards in a
+    big space, one reversed so it swells and cuts."""
+    a = oc("VOXWhsp_WhispersCreepyReverb_OS_01", 0.6, 2.6)
+    a = fades(lp(shelf_dark(a, 3000, 0.45), 7000, 2), 0.25, 0.6)
+    save("whispers", room(a, 2.4, 0.3, 0.03, 2400), 1, peak=0.6)
+    b = oc("VOXWhsp_WhispersCreepy_OS_01", 1.0, 2.2)
+    b = lp(shelf_dark(b, 3000, 0.45), 7000, 2)
+    b = room(b, 2.4, 0.45, 0.03, 2400)[::-1]
+    b = fades(b * np.linspace(0.2, 1, len(b)) ** 1.5, 0.3, 0.01)
+    save("whispers", b, 2, peak=0.6)
+
+
+def drone():
+    """The walk to the shutter: a recorded creepy drone underneath a bowed cello C with its
+    fifth, swelling in."""
+    x = t(8.0)
+    f0 = 65.41 * (1 + 0.003 * np.sin(2 * np.pi * 5.0 * x))
+    saw = sum(np.sin(2 * np.pi * h * np.cumsum(f0) / SR) / h * (0.9 ** h) for h in range(1, 16))
+    fifth = sum(np.sin(2 * np.pi * h * np.cumsum(f0 * 1.5) / SR) / h * (0.88 ** h) for h in range(1, 10))
+    bow = 1 + 0.06 * lp(rng.standard_normal(len(x)), 6, 1) * 40
+    cello = lp(saw + 0.4 * fifth, 1100, 2) * bow
+    cello /= np.max(np.abs(cello))
+    bed = oc("DSGNDron_DroneCreepy_OS_01", 4.0, 8.0)
+    bed = lp(bed, 3000, 2)
+    bed /= np.max(np.abs(bed)) + 1e-9
+    y = cello * 0.8 + pad(bed, len(cello))[:len(cello)] * 0.45
+    y *= np.minimum(1, x / 3.5) ** 2 * np.minimum(1, (8.0 - x) / 1.5)
+    save("drone", room(y, 3.0, 0.3, 0.03, 2000), 1, peak=0.8)
+
+
+def latch():
+    """The shutter's latch tried from outside: a heavy metal clunk and the sheet ringing in
+    the big room."""
+    box = trim(oc("METLHndl_ElectricBoxOpen_OS_01", 0.3))
+    for take, hit in ((1, "METLImpt_MetalHitSurface_OS_01"), (2, "METLImpt_MetalHitSurface_OS_02")):
+        h = trim(oc(hit))
+        h = lp(shelf_dark(h, 3000, 0.4), 8000, 2)
+        b = lp(box, 7000, 2)
+        y = mix((h, 1.0, 0.0), (b, 0.6, 0.03 if take == 1 else 0.05))
+        save("latch", room(y, 2.4, 0.32, 0.02, 2800), take)
+
+
+def wind():
+    """Wind through the roof vents: a moaning resonance that glides with the gusts (a
+    smoothly time-varying filter, so no clicks), over a dark rush. No high end at all."""
+    dur = 7.0
+    n = int(dur * SR)
+    x = t(dur)
+    src = lp(rng.standard_normal(n), 2500, 2)
+    gust = 0.55 + 0.45 * np.sin(2 * np.pi * 0.09 * x + 0.5) * np.sin(2 * np.pi * 0.23 * x + 2)
+    fc = 380 + 260 * gust
+    q = 9.0
     y = np.zeros(n)
-    for v in range(4):
-        src = rng.standard_normal(n)
-        f1 = 500 + 400 * rng.random()
-        f2 = 1500 + 900 * rng.random()
-        voice = bp(src, f1 * 0.8, f1 * 1.25) + 0.7 * bp(src, f2 * 0.85, f2 * 1.2)
-        syll = np.clip(np.sin(2 * np.pi * (4 + 3 * rng.random()) * t(0.9) + rng.random() * 6), 0, 1) ** 2
-        y += voice * syll * (0.6 + 0.4 * rng.random())
-    y *= np.linspace(0.05, 1, n) ** 1.5          # reversed: swells up, then cuts
-    save("whispers", echoes(y[::-1][::-1], gain=0.35), take, peak=0.6)
+    low = band = 0.0
+    for i in range(n):                                   # Chamberlin state-variable filter
+        f = 2 * np.sin(np.pi * fc[i] / SR)
+        high = src[i] - low - band / q
+        band += f * high
+        low += f * band
+        y[i] = band
+    rush = lp(hp(rng.standard_normal(n), 120, 2), 700, 2) * (0.4 + 0.6 * gust)
+    y = y / np.max(np.abs(y)) * gust + rush / np.max(np.abs(rush)) * 0.35
+    y *= np.minimum(1, x / 1.5) * np.minimum(1, (dur - x) / 1.5)
+    save("wind", room(y, 2.0, 0.25, 0.02, 1500), 1, peak=0.6)
 
 
-def drone(take):
-    x = t(7.0)
-    f0 = 65.41 * (1 + 0.004 * np.sin(2 * np.pi * 5.2 * x))       # C2 with a bowed vibrato
-    saw = np.zeros_like(x)
-    for h in range(1, 14):
-        saw += np.sin(2 * np.pi * h * np.cumsum(f0) / SR) / h * (0.92 ** h)
-    fifth = np.zeros_like(x)
-    for h in range(1, 9):
-        fifth += np.sin(2 * np.pi * h * np.cumsum(f0 * 1.5) / SR) / h * (0.9 ** h)
-    bow = 1 + 0.08 * lp(rng.standard_normal(len(x)), 8) * 40
-    y = lp(saw + 0.45 * fifth, 900, 2) * bow
-    y *= np.minimum(1, x / 3.5) ** 2 * np.minimum(1, (7.0 - x) / 1.2)      # swells in
-    save("drone", y, take, peak=0.8)
-
-
-def latch(take):
-    n = int(0.9 * SR)
-    x = t(0.9)
-    partials = [(620, 1.0, 0.18), (1370, 0.7, 0.12), (2210, 0.5, 0.09), (3170, 0.35, 0.06), (4630, 0.2, 0.04)]
-    ring = sum(a * np.sin(2 * np.pi * f * (1 + 0.01 * take) * x) * np.exp(-x / d) for f, a, d in partials)
-    click = hp(rng.standard_normal(n), 2000) * env(n, 0.0005, 0.01)
-    second = np.zeros(n)
-    k = int(0.09 * SR)
-    second[k:] = 0.6 * ring[:n - k]
-    save("latch", echoes(ring * 0.6 + click + second, delays=(0.12, 0.23, 0.37), gain=0.35), take)
-
-
-def splash(take):
-    n = int(0.3 * SR)
-    hit = bp(rng.standard_normal(n), 700, 4500) * env(n, 0.002, 0.04 + 0.01 * take)
-    slosh = bp(rng.standard_normal(n), 300, 1200) * env(n, 0.03, 0.08) * 0.5
-    thud = np.sin(2 * np.pi * 70 * t(0.3)) * env(n, 0.002, 0.03) * 0.6
-    save("splash", hit + slosh + thud, take, peak=0.7)
-
-
-def breath(take):
-    n = int(0.9 * SR)
-    x = t(0.9)
-    air = bp(rng.standard_normal(n), 450, 2400)
-    shake = 1 + 0.35 * np.sin(2 * np.pi * 11 * x) * (x < 0.6)           # ragged
-    e = np.minimum(1, x / 0.45) * np.exp(-np.maximum(0, x - 0.5) / 0.12)
-    save("breath", air * shake * e, take, peak=0.6)
-
-
-def wind(take):
-    x = t(6.0)
-    src = rng.standard_normal(len(x))
-    centre = 520 + 260 * np.sin(2 * np.pi * 0.11 * x + take)
-    y = np.zeros_like(x)
-    block = 2048
-    for s in range(0, len(x), block):
-        c = centre[s]
-        y[s:s + block] = bp(src[s:s + block + 0], c * 0.85, c * 1.15)[:len(x[s:s + block])]
-    y = lp(y, 1400)
-    y *= np.minimum(1, x / 1.5) * np.minimum(1, (6.0 - x) / 1.5)
-    save("wind", y, take, peak=0.6)
+def rotor():
+    """A helicopter far off over the yard: blade slap and turbine, small with distance."""
+    dur = 6.5
+    x = t(dur)
+    rate = 10.5 * (1 + 0.02 * np.sin(2 * np.pi * 0.2 * x))
+    ph = np.cumsum(rate) / SR
+    pulse = np.exp(-((ph % 1.0) / 0.06)) * (0.85 + 0.15 * np.sin(2 * np.pi * 0.37 * x))
+    slap = lp(pulse * (0.6 + 0.4 * lp(rng.standard_normal(len(x)), 300, 2) * 8), 320, 3)
+    whine = 0.05 * np.sin(2 * np.pi * np.cumsum(780 + 12 * np.sin(2 * np.pi * 0.3 * x)) / SR)
+    y = slap / np.max(np.abs(slap)) + whine
+    y *= np.minimum(1, x / 1.8) * np.minimum(1, (dur - x) / 1.8)
+    save("rotor", room(y, 2.5, 0.35, 0.05, 1200), 1, peak=0.6)
 
 
 def piano_note(f, dur, vel=1.0):
     x = t(dur)
     y = np.zeros_like(x)
-    for h, a in ((1, 1.0), (2, 0.42), (3, 0.2), (4, 0.11), (5, 0.06), (6, 0.03)):
-        fh = f * h * (1 + 0.0004 * h * h)                               # a touch of piano stretch
-        y += a * np.sin(2 * np.pi * fh * x) * np.exp(-x * (1.1 + 0.55 * h))
-    hammer = hp(rng.standard_normal(len(x)), 2000) * np.exp(-x / 0.004) * 0.05
-    return (y * np.minimum(1, x / 0.004) + hammer) * vel
+    for h, a in ((1, 1.0), (2, 0.45), (3, 0.22), (4, 0.12), (5, 0.07), (6, 0.035), (7, 0.02)):
+        fh = f * h * (1 + 0.0004 * h * h)
+        det = 1 + 0.0007 * (h % 2)
+        y += a * (np.sin(2 * np.pi * fh * x) + 0.5 * np.sin(2 * np.pi * fh * det * x)) * np.exp(-x * (0.9 + 0.5 * h))
+    hammer = lp(rng.standard_normal(len(x)), 2500, 2) * np.exp(-x / 0.006) * 0.08
+    return (y * np.minimum(1, x / 0.003) + hammer) * vel
 
 
-def piano(take):
-    """A sparse, melancholic motif in A minor, in a big empty room (who am I?)."""
-    notes = [(220.0, 0.0, 0.9), (261.63, 0.9, 0.7), (329.63, 1.8, 0.75), (246.94, 2.9, 0.85)] if take == 1 else \
-            [(329.63, 0.0, 0.8), (293.66, 0.8, 0.7), (261.63, 1.6, 0.7), (220.0, 2.6, 0.9), (110.0, 2.6, 0.5)]
-    total = 6.5
-    y = np.zeros(int(total * SR))
-    for f, at, v in notes:
-        n = piano_note(f, total - at, v)
-        k = int(at * SR)
-        y[k:k + len(n)] += n[:len(y) - k]
-    save("piano", echoes(y, delays=(0.21, 0.43, 0.71, 1.03), gain=0.38), take, peak=0.7)
-
-
-def rotor(take):
-    """A helicopter far off: blade slap at ~11 Hz under a low turbine whine."""
-    x = t(6.0)
-    slap = (np.sin(2 * np.pi * 11.0 * x) > 0.82).astype(float)
-    slap = lp(slap * rng.standard_normal(len(x)) * 0.6 + slap * 0.5, 600)
-    whine = 0.08 * np.sin(2 * np.pi * 820 * x + 3 * np.sin(2 * np.pi * 0.4 * x))
-    y = lp(slap, 350) + whine
-    y *= np.minimum(1, x / 1.5) * np.minimum(1, (6.0 - x) / 1.5)
-    save("rotor", y, take, peak=0.6)
+def piano():
+    """A sparse, melancholic motif in A minor, in the empty building (who am I?)."""
+    for take, notes in ((1, [(220.0, 0.0, 0.9), (261.63, 0.9, 0.7), (329.63, 1.8, 0.75), (246.94, 2.9, 0.85)]),
+                        (2, [(329.63, 0.0, 0.8), (293.66, 0.8, 0.7), (261.63, 1.6, 0.7), (220.0, 2.6, 0.9), (110.0, 2.6, 0.5)])):
+        total = 6.5
+        y = np.zeros(int(total * SR))
+        for f, at, v in notes:
+            nn = piano_note(f, total - at, v)
+            k = int(at * SR)
+            y[k:k + len(nn)] += nn[:len(y) - k]
+        save("piano", room(lp(y, 5000, 2), 3.2, 0.42, 0.03, 2200), take, peak=0.7)
 
 
 if __name__ == "__main__":
-    piano(1); piano(2); rotor(1)
-    for take in (1, 2):
-        thunder(take); drip(take); splat(take); latch(take); splash(take); breath(take)
-    tinnitus(1); heartbeat(1); static(1); static(2); whispers(1); drone(1); wind(1)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--oculus", default="/home/user/facebookincubator/meta-open-sound/corpora/oculus-audio-pack/ogg")
+    ap.add_argument("--kit", default="/home/user/wyzowl/sfx-kit/sounds")
+    a = ap.parse_args()
+    O, K = a.oculus, a.kit
+    if not os.path.isdir(O) or not os.path.isdir(K):
+        sys.exit("need the two sound libraries: --oculus <...>/oculus-audio-pack/ogg --kit <...>/sounds")
+    for name in ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", "static",
+                 "whispers", "drone", "latch", "wind", "rotor", "piano"):
+        clear(name)
+        globals()[name]()

@@ -11,5 +11,7 @@ SFX Kit (https://github.com/wyzowl/sfx-kit), CC0 1.0 (public domain).
 
 The CC BY 4.0 credit above must appear in the game's credits screen and store listing.
 
-Story mode (thunder, drip, splat, tinnitus, heartbeat, static, whispers, drone, latch, splash,
-breath, wind): synthesised for this project by tools/audio/make_story_sfx.py (no recordings).
+Story mode sounds are built by tools/audio/make_story_sfx.py: real recordings from the two
+libraries above (breathing, whispers, the creepy drone and metal from the Oculus pack; thunder,
+drips, the splash and the digital glitches from SFX Kit), layered and placed in a convolution
+reverb; the tinnitus, heartbeat, wind, rotor, piano and cello are synthesised.

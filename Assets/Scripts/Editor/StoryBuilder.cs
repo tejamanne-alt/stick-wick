@@ -21,6 +21,55 @@ namespace ProjectInk.EditorTools
         public const float HalfW = 14.0f, RoofY = 7.2f, BackZ = 2.6f, ShutterX = 12.0f;
         public const float HeroStartX = -8.0f;
 
+        /// <summary>A water drop seen from below against the light: nearly clear, a thin bright
+        /// rim, the dark ring of total internal reflection inside it, a specular glint, and the
+        /// roof crack refracted through it upside down.</summary>
+        static Texture2D DropTexture(int n)
+        {
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false);
+            float c = n * 0.5f, r = n * 0.39f;
+            var crack = new[] { new Vector2(-0.62f, 0.10f), new Vector2(-0.30f, -0.04f), new Vector2(-0.12f, 0.12f), new Vector2(0.10f, -0.02f), new Vector2(0.28f, 0.08f), new Vector2(0.60f, -0.10f) };
+            for (int j = 0; j < n; j++)
+                for (int i = 0; i < n; i++)
+                {
+                    float dx = i + 0.5f - c, dy = j + 0.5f - c, d = Mathf.Sqrt(dx * dx + dy * dy), e = r - d;
+                    float inside = Mathf.Clamp01(e + 0.5f);
+                    if (inside <= 0f) { tex.SetPixel(i, j, new Color(1f, 1f, 1f, 0f)); continue; }
+                    // body: almost clear, the lens gathering a little light in the middle
+                    Color col = new Color(0.72f, 0.82f, 0.96f); float a = 0.07f + 0.1f * Mathf.Clamp01(1f - d / r);
+                    // the dark ring just inside the edge, heavier on the side away from the light
+                    float band = Mathf.Exp(-Mathf.Pow((e - r * 0.12f) / (r * 0.07f), 2f)) * (0.75f + 0.25f * Mathf.Clamp01((dx - dy) / r));
+                    col = Color.Lerp(col, new Color(0.04f, 0.05f, 0.08f), band); a = Mathf.Lerp(a, 0.55f, band);
+                    // the bright outer rim
+                    float rim = Mathf.Exp(-e / (r * 0.03f)) * (0.6f + 0.4f * Mathf.Clamp01((-dx + dy) / r + 0.5f));
+                    col = Color.Lerp(col, new Color(0.86f, 0.92f, 1f), rim); a = Mathf.Max(a, 0.7f * rim);
+                    // the crack, refracted: upside down and squeezed toward the middle
+                    if (e > r * 0.2f)
+                    {
+                        var q = new Vector2(-dx, -dy) / (r * 0.7f);
+                        float best = 9f;
+                        for (int k = 0; k + 1 < crack.Length; k++)
+                        {
+                            Vector2 a0 = crack[k], ab = crack[k + 1] - crack[k];
+                            float tt = Mathf.Clamp01(Vector2.Dot(q - a0, ab) / ab.sqrMagnitude);
+                            best = Mathf.Min(best, (q - (a0 + ab * tt)).magnitude);
+                        }
+                        float px = best * r * 0.7f;
+                        float line = Mathf.Clamp01(1.6f - px) + 0.3f * Mathf.Exp(-px / 4f);
+                        col = Color.Lerp(col, new Color(0.9f, 0.95f, 1f), Mathf.Clamp01(line)); a = Mathf.Max(a, 0.85f * Mathf.Clamp01(line));
+                    }
+                    // specular glints (the light behind him, the crack's brightest point)
+                    float g1 = Mathf.Exp(-((dx + r * 0.36f) * (dx + r * 0.36f) + (dy - r * 0.4f) * (dy - r * 0.4f)) / (2f * r * r * 0.012f));
+                    float g2 = Mathf.Exp(-((dx - r * 0.3f) * (dx - r * 0.3f) + (dy + r * 0.34f) * (dy + r * 0.34f)) / (2f * r * r * 0.004f)) * 0.55f;
+                    float g = Mathf.Clamp01(g1 + g2);
+                    col = Color.Lerp(col, Color.white, g); a = Mathf.Max(a, g);
+                    col.a = a * inside;
+                    tex.SetPixel(i, j, col);
+                }
+            tex.Apply();
+            return tex;
+        }
+
         static Transform Vis(Transform t)
         {
             var c = t.GetComponent<Collider>();
@@ -154,7 +203,7 @@ namespace ProjectInk.EditorTools
             var sprite = PrototypeBuilder.Mat("StoryVertex", "Sprites/Default", Color.white);
             var crackMat = PrototypeBuilder.Mat("StoryCrack", "Unlit/Color", new Color(0.55f, 0.65f, 0.85f));
             var moonMat = PrototypeBuilder.Mat("StoryMoonGap", "Unlit/Color", new Color(0.72f, 0.80f, 0.95f));
-            var dropMat = PrototypeBuilder.Mat("StoryDroplet", "Unlit/Color", new Color(0.78f, 0.86f, 0.98f));
+            var dropMat = EnvironmentBuilder.TexMat("StoryDroplet", "Sprites/Default", EnvironmentBuilder.SaveTex("StoryDroplet", DropTexture(128), TextureWrapMode.Clamp), Vector2.one, Color.white);
             var glowTex = EnvironmentBuilder.SaveTex("StoryGlow", EnvironmentBuilder.GlowTexture(128), TextureWrapMode.Clamp);
             var puddleMat = EnvironmentBuilder.TexMat("StoryPuddle", "Sprites/Default", glowTex, Vector2.one, new Color(0.30f, 0.36f, 0.48f, 0.45f));
             // the storm seam in the roof (it flares with the lightning), under and on top
@@ -191,7 +240,7 @@ namespace ProjectInk.EditorTools
             Puddle(env, puddleMat, 9.8f, -0.2f, 1.0f, 0.45f);
             for (int i = 0; i < 2; i++)
             {
-                var d = Vis(GameObject.CreatePrimitive(PrimitiveType.Sphere).transform);
+                var d = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);       // a lens, turned to the camera
                 d.name = "Droplet" + i; d.SetParent(env, false);
                 d.position = new Vector3(HeroStartX - 0.6f, RoofY - 0.05f, 0f);
                 d.localScale = Vector3.one * 0.05f;

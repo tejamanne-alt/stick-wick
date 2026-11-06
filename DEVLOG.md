@@ -940,3 +940,12 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - **One drop, one ripple.** The drop falls into the centre, with a crown of beads and a rebound column. A single wave packet spreads in slow motion, refracting the reflection and catching highlights, then dies away.
 - **The face surfaces as the water calms**, unreadable before the drop and fully clear by about 3.4. Then lightning at 3.8 blows the reflection white, with the thunder close behind. The push-up follows at 4.4.
 - Sound re-timed: breath, groan, a slowed plop as the drop lands, piano as the face emerges, then lightning and thunder.
+
+### Story sound pass, clean walk, a real drop (story-mode)
+- **Walking no longer splashes.** The ink splash particles and the splash sound on every step through a puddle are gone, both in the walk to the shutter and in the shot-6 hand-off. Plain footsteps only.
+- **Story SFX rebuilt from real recordings** (`tools/audio/make_story_sfx.py`, now taking the same two libraries as `build_audio.py`):
+  - real male breathing, real whispers, a recorded drone under the cello, real metal for the latch, recorded thunder, drips and a splash
+  - all of it in one consistent warehouse convolution reverb
+  - **no broadband hiss anywhere:** noisy material is band-limited and darkened, and the electrical "static" is a buzz and glitch held below 6 kHz instead of white noise
+  - the wind uses a smooth time-varying filter, so the old block clicks are gone
+- **The drop in shot 1** is now a clear water lens instead of an opaque ball, turned to the camera: almost transparent, a thin bright rim, the dark inner ring, a glint, and the roof crack refracted upside down inside it. It wobbles as it gathers and rings as it lets go. Scene version 25.

@@ -349,9 +349,7 @@ namespace ProjectInk
                 if (t - (S6 + 0.2f) > 0f && Time.unscaledTime > footAt)
                 {
                     footAt = Time.unscaledTime + 0.45f * Pace;
-                    Sound.Play(Sfx.Splash, 0.8f, hero.transform.position);
                     Sound.Play(Sfx.Footstep, 0.9f, hero.transform.position, 0.85f);
-                    if (InkFx.Instance != null) InkFx.Instance.Splash(hero.transform.position + Vector3.up * 0.05f, Vector3.up, 5, new Color(0.55f, 0.62f, 0.76f));
                 }
                 var h = hero.transform.position;
                 float a = Ease(S6, Control - 0.4f, t);
@@ -381,25 +379,30 @@ namespace ProjectInk
         }
 
         /// <summary>A drop forms at the crack (from `form` it swells), lets go at `release`
-        /// and falls with acceleration `g`, hidden after `hide`.</summary>
+        /// and falls with acceleration `g`, hidden after `hide`. It is a clear lens on a quad,
+        /// always turned to the camera; it trembles a little as it gathers.</summary>
         void PoseDrop(Transform d, Renderer r, Vector3 hc, float form, float release, float g, float hide)
         {
             if (d == null || r == null) return;
             r.enabled = t >= form && t < hide;
             if (!r.enabled) return;
-            float s = Mathf.Lerp(0.015f, 0.05f, Ease(form, release, t));
+            float s = Mathf.Lerp(0.012f, 0.05f, Ease(form, release, t)) * 1.28f;
+            Vector3 p;
             if (t < release)
             {
-                float stretch = 1f + 0.4f * Ease(release - 0.3f, release, t);
-                d.position = new Vector3(hc.x, RoofY - 0.02f - s * 0.5f * stretch, hc.z);
-                d.localScale = new Vector3(s, s * stretch, s);
+                float wob = 1f + 0.05f * Mathf.Sin(t * 23f) * Ease(release - 0.5f, release, t);
+                p = new Vector3(hc.x, RoofY - 0.02f - s * 0.4f, hc.z);
+                d.localScale = new Vector3(s * wob, s / wob, 1f);
             }
             else
             {
                 float u = t - release;
-                d.position = new Vector3(hc.x, RoofY - 0.05f - 0.5f * g * u * u, hc.z);
-                d.localScale = new Vector3(s * 0.9f, s * 1.5f, s * 0.9f);           // streaking as it falls
+                p = new Vector3(hc.x, RoofY - 0.05f - 0.5f * g * u * u, hc.z);
+                float osc = 1f + 0.08f * Mathf.Sin(u * 60f) * Mathf.Exp(-u * 6f);     // it rings as it lets go
+                d.localScale = new Vector3(s * osc, s / osc, 1f);
             }
+            d.position = p;
+            if (cam != null) d.rotation = Quaternion.LookRotation(p - cam.transform.position, cam.transform.up);
         }
 
         void HandOff()
@@ -443,20 +446,7 @@ namespace ProjectInk
             float moved = Mathf.Abs(hero.transform.position.x - walkFromX);
             float want = moved < 1.5f ? 1f : 0f;
             promptAlpha = Mathf.MoveTowards(promptAlpha, want, Time.unscaledDeltaTime * (want > 0f ? 1.2f : 2.5f));
-            Splashes();
             if (hero.transform.position.x > ShutterX - 5f) { phase = Phase.Breach; b = prevB = 0f; }
-        }
-
-        /// <summary>Footsteps in the shallow water where the puddles are.</summary>
-        void Splashes()
-        {
-            if (!hero.Grounded || Time.unscaledTime < footAt) return;
-            float x = hero.transform.position.x;
-            bool wet = Mathf.Abs(x + 8.7f) < 0.7f || Mathf.Abs(x + 3.6f) < 0.8f || Mathf.Abs(x - 1.2f) < 0.6f || Mathf.Abs(x - 6.5f) < 0.9f || Mathf.Abs(x - 9.8f) < 0.5f;
-            if (!wet) return;
-            footAt = Time.unscaledTime + 0.32f;
-            Sound.Play(Sfx.Splash, 0.7f, hero.transform.position);
-            if (InkFx.Instance != null) InkFx.Instance.Splash(hero.transform.position + Vector3.up * 0.05f, Vector3.up, 4, new Color(0.55f, 0.62f, 0.76f));
         }
 
         void UpdateBreach()
