@@ -46,8 +46,11 @@ namespace ProjectInk
         public bool HasToken { get; private set; }
         public bool Telegraphing => state == State.Windup || (state == State.Pounce && !pounceLaunched) ||
                                     (state == State.Charge && !chargeRunning) || (state == State.Slam && !slamLeapt);
-        public bool Targetable => Alive && state != State.Down && state != State.GetUp && state != State.Dead && state != State.Carried &&
-                                  !(state == State.Enter && kind == SpawnKind.Background) && !Untouchable;
+        public bool Targetable => (Alive && state != State.Down && state != State.GetUp && state != State.Dead && state != State.Carried &&
+                                  !(state == State.Enter && kind == SpawnKind.Background) && !Untouchable) ||
+                                  (PuppetPickable && Alive && state == State.Scripted);
+        /// <summary>A story puppet the player may pick with a tap (the directed fight's TAP HIM).</summary>
+        public bool PuppetPickable;
         /// <summary>Cutscene states: no one may hit him.</summary>
         bool Untouchable => state == State.BossIntro || state == State.Enrage || state == State.Stagger || state == State.Scripted;
 

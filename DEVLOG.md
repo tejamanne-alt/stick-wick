@@ -991,3 +991,24 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - the game's white slash trails on the strikes
 - The world is the fight mode's grayscale: concrete panels with seams, dark steel, white trims, hanging lamps with soft cones, black windows with white city lights, a white moon.
 - Every frame is finished in pure greyscale, and the montage's colour split is now a grey double image. The cuts back to the present stay in colour.
+
+### INSTINCT: the first fight, directed (replaces the training-reel version)
+- `StoryDuel.cs` (a partial of `StoryIntro`): the prologue's first fight is choreographed. The three men are puppets on their marks, and every attack, hit, fall and camera cut is scripted. The player only gives the input at each beat's moment of decision.
+- **The prompt:**
+  - Time crawls (`TimeController.CineScale`, a new story-held scale under everything else) to about 3%.
+  - The edges darken and a heartbeat plays.
+  - The move appears: its name, how to make it, the key on desktop, and combo pips.
+  - A ghost finger makes the gesture at the right place: a high or low tap on the target's half of the screen (with the high/low line), a tap on the man, or a swipe.
+  - A red ring pulses on the man it's for.
+  - It accepts only the real `GestureInput` command. A wrong one shakes the prompt. You can't lose.
+- **Beats:**
+  1. PUNCH (tap high)
+  2. KICK (tap low, under his guard)
+  3. COMBO (three taps: jab, cross, uppercut)
+  4. SLIDE (swipe toward him, under the haymaker)
+  5. The knife comes out of his belt
+  6. STAB (tap high on the left, the man behind him)
+  7. THROW (swipe down, a flying knife that stays in him)
+  8. TAP HIM (a tap on the man picks him; `Enemy.PuppetPickable` lets a puppet be picked)
+- Hit weight: reaction clips, ink burst and splash in the man's colour, hit-stop, shake, slow-motion beats, cinematic kill shots and lightning.
+- After the last falls, the existing memory ("YOU'VE DONE THIS BEFORE.") follows.

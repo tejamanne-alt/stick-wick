@@ -243,11 +243,9 @@ namespace ProjectInk
             if (AtD(D_Release))
             {
                 EscapeSeen = true;
-                foreach (var m0 in men) if (m0 != null) { m0.PuppetRelease(); m0.Passive = false; }
-                hero.CineRelease();
-                hero.runSpeed = runSpeed;
-                chipUntil = Time.unscaledTime + 7f;
                 StoryCameraFX.Set(0f, 0f);
+                BeginDuel();                                  // INSTINCT: the directed fight (StoryDuel)
+                return;
             }
             if (d > D_Release)
             {

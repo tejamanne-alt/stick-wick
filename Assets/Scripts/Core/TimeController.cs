@@ -24,6 +24,10 @@ namespace ProjectInk
 
         public bool InRampage => UnityEngine.Time.unscaledTime < rampageUntil;
 
+        /// <summary>A story scene holding time (its directed fight crawls almost to a stop while it
+        /// waits for the player's input): applied under everything else, 1 = off.</summary>
+        public float CineScale = 1f;
+
         public bool InSlowMo => UnityEngine.Time.unscaledTime < slowUntil;
         /// <summary>The help card is open: the world stops.</summary>
         public static bool Paused;
@@ -72,6 +76,7 @@ namespace ProjectInk
 
         public void Clear()
         {
+            CineScale = 1f;
             freezeUntil = 0f;
             slowUntil = 0f;
             rampageUntil = 0f;
@@ -92,7 +97,8 @@ namespace ProjectInk
                 float k = Mathf.Clamp01((rampageUntil - now) / 0.3f);   // ease out at the end
                 scale = Mathf.Min(scale, Mathf.Lerp(1f, rampageScale, k));
             }
-            if (now < freezeUntil) scale = 0.02f;
+            scale = Mathf.Min(scale, Mathf.Clamp(CineScale, 0.005f, 1f));
+            if (now < freezeUntil) scale = Mathf.Min(scale, 0.02f);
             if (Paused) scale = 0f;
             UnityEngine.Time.timeScale = scale;
             UnityEngine.Time.fixedDeltaTime = BaseFixedDelta * Mathf.Max(scale, 0.05f);
