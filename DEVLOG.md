@@ -1012,3 +1012,11 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   8. TAP HIM (a tap on the man picks him; `Enemy.PuppetPickable` lets a puppet be picked)
 - Hit weight: reaction clips, ink burst and splash in the man's colour, hit-stop, shake, slow-motion beats, cinematic kill shots and lightning.
 - After the last falls, the existing memory ("YOU'VE DONE THIS BEFORE.") follows.
+
+### Shot 5 rethought: THE LIGHT
+- The overhead crane with the hero turning 360° on the spot didn't belong in the scene. Replaced:
+  - The helicopter from shot 0 returns, rotor rising.
+  - Its searchlight drops through the roof crack as a hard white curtain: two slanted additive sheets, rain flicker, the crack blazing.
+  - The curtain's strip sweeps across the floor towards him. He crouches (`duck`) and it stops at his feet for three heartbeats.
+  - It slides away and fades. He rises, and the camera turns with his eyes to the shutter, leading into shot 6.
+- `StoryIntro.SearchCurtain` builds the light at runtime from the searchlight's own material, with its floor strip a clone of the search pool.
