@@ -22,6 +22,9 @@ import bpy  # noqa: E402  (bpy first: it provides bmesh and mathutils)
 import bmesh
 from mathutils import Euler, Matrix, Vector
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import story_hall as H  # noqa: E402
+
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 OUT = os.path.join(ROOT, "Assets", "Art", "Story")
 PREVIEW = os.path.join(ROOT, "docs", "previews")
@@ -415,7 +418,7 @@ def bench(g, x, y, M):
             g.box((x + dx + 0.12, BACK - 0.06, 1.7), (0.22, 0.015, 0.3), M["steel_mid"])
 
 
-def forklift(g, x, y, M, yaw):
+def forklift(g, x, y, M, yaw, fork_z=0.1):
     rot = Matrix.Rotation(math.radians(yaw), 4, "Z")
     def P(dx, dy, dz):
         return (Matrix.Translation((x, y, 0)) @ rot @ Vector((dx, dy, dz)))[:]
@@ -430,8 +433,8 @@ def forklift(g, x, y, M, yaw):
     g.box(P(-0.05, 0, 2.15), (1.1, 1.0, 0.06), M["steel"], rot=R)                             # roof guard
     for dy in (-0.32, 0.32):
         g.box(P(1.05, dy, 1.35), (0.1, 0.1, 2.6), M["steel_mid"], rot=R)                      # mast rails
-        g.box(P(1.55, dy, 0.1), (1.1, 0.12, 0.05), M["steel_mid"], rot=R)                     # forks
-    g.box(P(1.12, 0, 0.6), (0.06, 0.8, 0.5), M["steel"], rot=R)                               # carriage
+        g.box(P(1.55, dy, fork_z), (1.1, 0.12, 0.05), M["steel_mid"], rot=R)                  # forks
+    g.box(P(1.12, 0, fork_z + 0.5), (0.06, 0.8, 0.5), M["steel"], rot=R)                      # carriage
 
 
 def drum(g, c, M, m, lying=False):
@@ -518,8 +521,23 @@ def build_shed(coll, M):
         window(g, c, M, b)
     # side walls
     for s in (-1, 1):
-        g.box((s * (HALF_W + 0.15), (FRONT + BACK) / 2 + 0.2, ROOF / 2), (0.3, BACK - FRONT + 0.8, ROOF), M["iron_dark"])
+        if s < 0:
+            g.box((s * (HALF_W + 0.15), (FRONT + BACK) / 2 + 0.2, ROOF / 2), (0.3, BACK - FRONT + 0.8, ROOF), M["iron_dark"])
+        else:
+            # the east end: the opening of the inner shutter into the main hall (story_hall.INNER)
+            yo0, yo1, ho = H.INNER
+            ya, yb = FRONT - 0.2, BACK + 0.6
+            g.box((HALF_W + 0.15, (ya + yo0) / 2, ROOF / 2), (0.3, yo0 - ya, ROOF), M["iron_dark"])
+            g.box((HALF_W + 0.15, (yo1 + yb) / 2, ROOF / 2), (0.3, yb - yo1, ROOF), M["iron_dark"])
+            g.box((HALF_W + 0.15, (yo0 + yo1) / 2, (ho + ROOF) / 2), (0.3, yo1 - yo0, ROOF - ho), M["iron_dark"])
+            g.box((HALF_W - 0.1, (yo0 + yo1) / 2, ho + 0.25), (0.4, yo1 - yo0 + 0.4, 0.5), M["steel"])          # the drum
+            for yy in (yo0, yo1):
+                g.box((HALF_W - 0.05, yy, ho / 2), (0.15, 0.12, ho), M["steel"])
         for z in (0.6, 3.6):
+            if s > 0:
+                for (ya, yb) in ((FRONT - 0.1, H.INNER[0]), (H.INNER[1], BACK + 0.5)):
+                    g.box((HALF_W - 0.02, (ya + yb) / 2, z), (0.06, yb - ya, 0.12), M["steel"])
+                continue
             g.box((s * (HALF_W - 0.02), (FRONT + BACK) / 2 + 0.2, z), (0.06, BACK - FRONT + 0.6, 0.12), M["steel"])
     # roof: the underside sheet and the roof top, whole (the crack, its torn lips and the storm light
     # through it are added in the game, on the line the drop falls from)
@@ -735,6 +753,9 @@ def build_yard(coll, M):
             if -18.0 < x < 12.0 and y < 36:            # a road through the stacks, leading the eye to the shed
                 x += 6.6
                 continue
+            if 10.0 < x < 70.0 and y < 32:              # the main hall and its dock
+                x += 6.6
+                continue
             if rnd.random() > 0.25:
                 stack = 1 + rnd.randrange(4)
                 for k in range(stack):
@@ -744,20 +765,20 @@ def build_yard(coll, M):
     for y in (-14.0, -21.0):
         x = -60.0
         while x < 60.0:
-            if abs(x) > 22 and rnd.random() > 0.3:
+            if abs(x) > 22 and not (10.0 < x < 70.0 and y > -16) and rnd.random() > 0.3:
                 for k in range(1 + rnd.randrange(3)):
                     container(g, Vector((x, y, k * 2.6)), rnd.uniform(-3, 3), rnd.choice(M["container"]), M)
             x += 6.6
     crane(g, -36.0, 21.0, M)
     crane(g, 34.0, 34.0, M)
     # crushed cars, stacked
-    for (bx, by) in ((-20.0, 3.5), (21.0, 4.0), (-30.0, -5.0)):
+    for (bx, by) in ((-20.0, 3.5), (-44.0, 8.0), (-30.0, -5.0)):
         for k in range(4):
             for j in range(2):
                 car(g, Vector((bx + j * 4.6 + rnd.uniform(-0.4, 0.4), by + rnd.uniform(-0.5, 0.5), k * 0.85)), rnd.uniform(-8, 8),
                     rnd.choice(M["car"]), M, squash=0.55)
     # light poles
-    for (lx, ly) in ((-14.0, 6.0), (16.0, 10.0), (-6.0, 24.0), (36.0, 4.0), (-40.0, 30.0), (4.0, -12.0), (-18.0, -10.0)):
+    for (lx, ly) in ((-14.0, 6.0), (8.0, 26.0), (-6.0, 24.0), (72.0, 6.0), (-40.0, 30.0), (4.0, -12.0), (-18.0, -10.0)):
         g.cyl((lx, ly, 5.0), 0.12, 10.0, M["steel_mid"], n=8)
         g.beam((lx, ly, 9.9), (lx + 1.2, ly, 10.1), 0.1, 0.1, M["steel_mid"])
         g.box((lx + 1.3, ly, 9.95), (0.7, 0.35, 0.18), M["steel"])
@@ -844,8 +865,9 @@ def lights():
     add("AREA", "FillRoof", (0, 0.8, 3.0), 30, (0.45, 0.55, 0.75), size=10.0, rot=(math.radians(180), 0, 0))
     # outside: the bay lamp and the pole lamps
     add("POINT", "BayLamp", (-1.5, BACK + 0.9, 6.1), 900, (1.0, 0.58, 0.22), size=0.3)
-    for (lx, ly) in ((-14.0, 6.0), (16.0, 10.0), (-6.0, 24.0), (36.0, 4.0), (-40.0, 30.0), (4.0, -12.0), (-18.0, -10.0)):
+    for (lx, ly) in ((-14.0, 6.0), (8.0, 26.0), (-6.0, 24.0), (72.0, 6.0), (-40.0, 30.0), (4.0, -12.0), (-18.0, -10.0)):
         add("POINT", "Pole", (lx + 1.3, ly, 9.6), 6000, (1.0, 0.56, 0.2), size=0.4)
+    H.hall_lights(add)
     w = bpy.data.worlds.new("Night")
     w.use_nodes = True
     w.node_tree.nodes["Background"].inputs[0].default_value = (0.012, 0.014, 0.028, 1)
@@ -858,8 +880,13 @@ def lightning_lights():
     above and behind, and the windows, the roof crack and the gap under the door blaze."""
     for ob in bpy.context.scene.objects:
         if ob.type == "LIGHT":
-            if ob.name.startswith(("Sodium", "Pole", "BayLamp")):
+            if ob.name.startswith(("Sodium", "Pole", "BayLamp", "HallLamp", "DockFlood", "OfficeLight", "ExitYard")):
                 ob.data.energy *= 0.5
+            elif ob.name in ("SkylightTorn",):
+                ob.data.energy *= 5.0
+            elif ob.name.startswith("Hall"):
+                ob.data.energy *= 2.4
+                ob.data.color = (0.7, 0.8, 1.0)
             elif ob.name == "Moon":
                 ob.data.energy = 9.0
                 ob.data.color = (0.78, 0.86, 1.0)
@@ -875,6 +902,15 @@ def lightning_lights():
         ld.size = WIN_W
         ob = bpy.data.objects.new("Strike", ld)
         ob.location = (cx, BACK + 1.2, (WIN_Z0 + WIN_Z1) / 2 + 0.6)
+        ob.rotation_euler = (math.radians(-60), 0, 0)
+        bpy.context.scene.collection.objects.link(ob)
+    for cx in (17.0, 23.0, 29.0, 35.0, 41.0, 47.0, 53.0, 59.0):                          # the hall's high windows
+        ld = bpy.data.lights.new("StrikeHall", "AREA")
+        ld.energy = 2600
+        ld.color = (0.8, 0.88, 1.0)
+        ld.size = 3.2
+        ob = bpy.data.objects.new("StrikeHall", ld)
+        ob.location = (cx, H.HALL_B + 1.4, 7.4)
         ob.rotation_euler = (math.radians(-60), 0, 0)
         bpy.context.scene.collection.objects.link(ob)
     w = bpy.context.scene.world
@@ -924,7 +960,7 @@ def stickman(pose_clip, frame, x, rot_z=0.0):
     return arm, frame
 
 
-def preview(shots):
+def preview(shots, name="story_set.png"):
     sc = bpy.context.scene
     sc.render.engine = "CYCLES"
     sc.cycles.samples = 24
@@ -955,7 +991,7 @@ def preview(shots):
         x, y = (i % cols) * 778, (i // cols) * 472
         sheet.paste(img, (x, y + 36))
         d.text((x + 8, y + 4), label, fill=(255, 210, 0), font=font)
-    sheet.save(os.path.join(PREVIEW, "story_set.png"))
+    sheet.save(os.path.join(PREVIEW, name))
 
 
 # ---------------------------------------------------------------- bake and export
@@ -1037,6 +1073,9 @@ def main():
     yard = build_yard(coll, M)
     ground = build_ground(coll, M)
     city = build_city(coll, M)
+    hall = H.build_hall(sys.modules[__name__], coll, M)
+    front = H.build_hall_front(sys.modules[__name__], coll, M)
+    inner = H.build_inner_shutter(sys.modules[__name__], coll, M)
     lights()
     if preview_only:
         shafts.hide_render = True
@@ -1048,11 +1087,25 @@ def main():
         cams.append(("GAMEPLAY  lane, left", shot_camera("G1", (-6, 2.4, -10.5), (-6, 1.1, 0), 32), 0))
         cams.append(("GAMEPLAY  lane, centre", shot_camera("G2", (2, 2.4, -10.5), (2, 1.1, 0), 32), 0))
         cams.append(("THE DOOR  breach angle", shot_camera("B", (5.5, 1.35, -5.4), (10.8, 1.1, 1.6), 38), 0))
+        if "--hall" in sys.argv:
+            front.hide_render = True                    # the game hides it from outside
+            cams = [
+                ("HALL  zone 1 loading bay (gameplay)", shot_camera("H1", (20.0, 2.4, -10.5), (20.0, 1.6, 0), 34), None),
+                ("HALL  zone 2 racking (gameplay)", shot_camera("H2", (32.0, 2.6, -10.5), (32.0, 2.0, 0), 34), None),
+                ("HALL  zone 3 mezzanine (gameplay)", shot_camera("H3", (44.0, 2.8, -10.5), (44.0, 2.2, 0), 34), None),
+                ("HALL  zone 4 crane bay (gameplay)", shot_camera("H4", (56.0, 2.6, -10.5), (56.0, 2.0, 0), 34), None),
+                ("HALL  inside, wide, from the shutter", shot_camera("H5", (15.5, 3.2, 0.5), (40.0, 4.0, 10.0), 50), None),
+                ("HALL  crane bay, low (the ending)", shot_camera("H6", (52.0, 0.6, -0.8), (58.0, 2.5, 6.0), 44), None),
+                ("OUTSIDE  the yard face", shot_camera("H7", (30.0, 6.0, 52.0), (36.0, 5.0, 10.0), 40), None),
+                ("OUTSIDE  the main door", shot_camera("H8", (72.0, 2.0, -6.0), (60.0, 3.0, 2.0), 40), None),
+            ]
+            preview(cams, "story_hall.png")
+            return
         preview(cams)
         return
-    for o in (interior, yard, ground, city, shutter, fan):
+    for o in (interior, yard, ground, city, shutter, fan, hall, front, inner):
         o.select_set(False)
-    for o in (interior, shutter, fan, yard, ground, city):
+    for o in (interior, shutter, fan, yard, ground, city, hall, front, inner):
         unwrap(o)
     bake(interior, 2048, 48)
     bake(shutter, 512, 32)
@@ -1060,19 +1113,23 @@ def main():
     bake(yard, 2048, 24)
     bake(ground, 1024, 16)
     bake(city, 1024, 8)
+    bake(hall, 4096, 24)
+    bake(front, 2048, 16)
+    bake(inner, 512, 24)
     # the same set in a lightning strike: everything blown cold white for a few frames
     lightning_lights()
     bake(interior, 2048, 32, "_Lightning")
     bake(shutter, 512, 16, "_Lightning")
     bake(yard, 2048, 16, "_Lightning")
     bake(ground, 1024, 12, "_Lightning")
+    bake(hall, 4096, 16, "_Lightning")
     marks = []
     for n, p in (("Mark_X", (10, 0, 0)), ("Mark_Y", (0, 10, 0)), ("Mark_Z", (0, 0, 10))):
         e = bpy.data.objects.new(n, None)
         e.location = p
         coll.objects.link(e)
         marks.append(e)
-    export([interior, shutter, fan, shafts, yard, ground, city] + marks)
+    export([interior, shutter, fan, shafts, yard, ground, city, hall, front, inner] + marks)
 
 
 if __name__ == "__main__":
