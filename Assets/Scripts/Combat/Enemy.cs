@@ -251,7 +251,22 @@ namespace ProjectInk
                 case State.Attack:
                     velocity.x = 0f;
                     if (!hitDone && body.Current != null && body.Current.hitTime >= 0f && body.Time >= body.Current.hitTime) ResolveAttack();
-                    if (body.Finished) { ReleaseToken(); state = State.Recover; stateTime = 0f; body.Play(IdleClip, 0.12f); }
+                    if (body.Finished && Foreman && comboLeft > 1)
+                    {
+                        // the next swing of the crowbar, straight on
+                        comboLeft--;
+                        attack = comboLeft == 2 ? AttackData.CrowbarB : AttackData.CrowbarC;
+                        FaceTowards(hero.transform.position.x);
+                        if (comboLeft == 1) { Tint(TelegraphColor, 0.15f); Sound.Play(Sfx.BruteHurt, 0.7f, Chest, 0.85f); }
+                        BeginAttack();
+                        break;
+                    }
+                    if (body.Finished)
+                    {
+                        ReleaseToken(); state = State.Recover; stateTime = 0f; body.Play(IdleClip, 0.12f);
+                        if (Foreman && comboLeft == 1) recoverFor = 1.15f;           // the third swing missed: he is open
+                        comboLeft = 0;
+                    }
                     break;
                 case State.Holding:
                     velocity.x = 0f;
@@ -664,7 +679,9 @@ namespace ProjectInk
         void Walk(float dirTimesSpeed)
         {
             velocity.x = dirTimesSpeed * walkSpeed;
-            if (body.CurrentName != "run") body.Play("run", 0.1f, false, 0.85f);
+            // the Foreman, badly hurt, drags a leg: a slower, heavier gait
+            float gait = Foreman && Health < maxHealth * 0.4f ? 0.62f : 0.85f;
+            if (body.CurrentName != "run") body.Play("run", 0.1f, false, gait);
         }
 
         void GoWait()
@@ -695,6 +712,25 @@ namespace ProjectInk
                     attack = AttackData.EnemyShot;
                     body.Play("gun_aim", 0.08f);
                     break;
+                case EnemyType.Brute when Foreman:
+                    {
+                        float rf = Random.value;
+                        if (!Enraged)
+                        {
+                            // the crowbar: mostly the three-swing combo, a boot now and then, the odd bear hug
+                            if (rf < 0.15f) attack = AttackData.EnemyGrab;
+                            else if (rf < 0.75f) { attack = AttackData.CrowbarA; comboLeft = 3; }
+                            else attack = AttackData.BruteKick;
+                            body.Play("sword_idle", 0.08f);
+                        }
+                        else
+                        {
+                            // bare hands: the bear hug, the headbutt, a boot, a two-fist smash
+                            attack = rf < 0.25f ? AttackData.EnemyGrab : rf < 0.55f ? AttackData.Headbutt : rf < 0.8f ? AttackData.BruteSmash : AttackData.BruteKick;
+                            body.Play("windup", 0.08f);
+                        }
+                        break;
+                    }
                 case EnemyType.Brute:
                     // the bear hug now and then: tap to break it
                     float r0 = Random.value;
@@ -787,10 +823,11 @@ namespace ProjectInk
             {
                 hero.TakeHit(new HitInfo
                 {
-                    damage = attack.damage,
+                    damage = attack.damage * DamageScale,
                     direction = Facing,
                     knockback = attack.knockback,
                     heavy = attack.heavy,
+                    knockdown = Foreman && attack.knockdown,
                     attacker = this
                 });
             }
@@ -975,7 +1012,7 @@ namespace ProjectInk
                 var head = transform.position + Vector3.up * 1.42f * transform.localScale.y;
                 StreakFx.Sparks(head + new Vector3(Mathf.Cos(a) * 0.4f, 0.05f, Mathf.Sin(a) * 0.4f), Vector3.up, 1, 0.8f);
             }
-            if (stateTime > (Enraged ? 1.8f : 2.4f)) { body.Play(IdleClip, 0.2f); GoWait(); }
+            if (stateTime > (Enraged && !Foreman ? 1.8f : 2.4f)) { body.Play(IdleClip, 0.2f); GoWait(); }
         }
 
         /// <summary>GROUND SLAM: he crouches, leaps and comes down on the spot the hero stood,
@@ -1067,6 +1104,14 @@ namespace ProjectInk
             state = State.Recover;           // slow to rise: the opening
             stateTime = 0f;
             recoverFor = 1.0f;
+            if (Foreman && Enraged)
+            {
+                // the end of his strength: hands on his knees, dragging in air
+                recoverFor = 1.8f;
+                if (body.Has("idle_loose")) body.Play("idle_loose", 0.2f);
+                Sound.Play(Sfx.Breath, 1f, Chest, 0.7f);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, "HE'S WINDED: HIT HIM!");
+            }
             velocity.x = 0f;
         }
 
@@ -1090,8 +1135,8 @@ namespace ProjectInk
             state = State.Enrage;
             stateTime = 0f;
             velocity.x = 0f;
-            walkSpeed = 2.7f;
-            windupSeconds = 0.42f;
+            walkSpeed = Foreman ? 2.3f : 2.7f;              // the Foreman is hurt: furious, not faster on his feet
+            windupSeconds = Foreman ? 0.48f : 0.42f;
             InkColor = EnragedColor;
             SetBaseColor(EnragedColor);
             FaceTowards(hero.transform.position.x);
@@ -1202,6 +1247,70 @@ namespace ProjectInk
             stateTime = 0f;
             nextSpecialAt = Time.time + 2f;
             body.Play("run", 0.1f, false, 0.85f);
+        }
+
+        // --- the Foreman (chapter 1): StoryForeman drives his phases; these are his habits
+        /// <summary>Chapter 1's boss: crowbar combos, a guard, he reads repeated moves, he tires.</summary>
+        public bool Foreman;
+        /// <summary>Blocks plain strikes from the front while he is not attacking (kick low, or punish his swing).</summary>
+        public bool Guard;
+        /// <summary>His blows hit this much harder (bare-handed and furious at the end).</summary>
+        public float DamageScale = 1f;
+        int comboLeft, sameKind, lastKind = -1, guardBlocks;
+        float lastKindAt;
+
+        public void SetMaxHealth(float hp) { maxHealth = hp; Health = hp; }
+        /// <summary>The rage, at the next moment he is free to take it.</summary>
+        public void QueueEnrage() { if (!Enraged) enragePending = true; }
+
+        /// <summary>The Foreman takes the hit on his guard, or reads it coming. Returns true if it never landed.</summary>
+        bool ForemanReads(HitInfo hit)
+        {
+            if (hit.attacker == null || hit.attacker != (Fighter)hero) return false;      // drums, boxes and falls always land
+            bool neutral = state == State.Wait || state == State.Approach || state == State.Advance;
+            bool fromFront = hit.direction == -Facing;
+            int kind = hit.low ? 1 : 0;
+            if (Time.time - lastKindAt > 1.6f) sameKind = 0;
+            sameKind = kind == lastKind ? sameKind + 1 : 1;
+            lastKind = kind;
+            lastKindAt = Time.time;
+            // a man who throws the same thing five times running is read: the fifth is caught and turned on him
+            if (sameKind >= 5 && fromFront && Grounded && (neutral || state == State.Recover || state == State.Hurt))
+            {
+                sameKind = 0;
+                CatchAndThrow(kind == 1);
+                return true;
+            }
+            if (Guard && neutral && fromFront && !hit.low && !hit.heavy)
+            {
+                guardBlocks++;
+                Sound.Play(Sfx.PipeHit, 0.8f, Chest, Random.Range(1.05f, 1.25f));
+                StreakFx.Sparks(Chest + Vector3.right * Facing * 0.5f, new Vector3(-hit.direction, 0.4f, -0.5f), 6, 3.5f);
+                body.Play(body.Has("block") ? "block" : "sword_idle", 0.04f);
+                velocity.x = hit.direction * 1.2f;
+                if (WaveDirector.Instance != null && (guardBlocks == 1 || guardBlocks % 6 == 0)) WaveDirector.Instance.AddStyle(0, "HE BLOCKS: KICK, OR DODGE HIS SWING AND PUNISH");
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>He catches the fist (or the leg), drags the hero in and throws him down.</summary>
+        void CatchAndThrow(bool leg)
+        {
+            ReleaseToken();
+            FaceTowards(hero.transform.position.x);
+            body.Play(AttackData.BruteSmash.clip, 0.03f, true, 1.2f);
+            state = State.Attack;
+            stateTime = 0f;
+            hitDone = true;
+            attack = AttackData.BruteSmash;
+            Sound.Play(Sfx.PunchHeavy, 1f, Chest);
+            Sound.Play(Sfx.BruteLaugh, 0.8f, Chest, 0.9f);
+            if (!hero.Invulnerable)
+                hero.TakeHit(new HitInfo { damage = 14f * DamageScale, direction = Facing, knockback = 9f, knockdown = true, heavy = true, attacker = this });
+            if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.2f, 0.2f);
+            if (TimeController.Instance != null) TimeController.Instance.HitStop(6);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, leg ? "HE READ THE KICK: MIX IT UP" : "HE READ YOU: MIX IT UP");
         }
 
         // --- the finale (posed frame by frame by the BossDirector)
@@ -1353,6 +1462,7 @@ namespace ProjectInk
             if (!Targetable && !hit.hitsDowned && !OnLedge) return;
             if (OnLedge) { DropFromLedge(); }
             if (ShieldBlocks(hit)) return;
+            if (Foreman && ForemanReads(hit)) return;
             bool armored = Boss && ((state == State.Charge && chargeRunning) || state == State.Slam || state == State.Stunned);
             if (!armored) ReleaseToken();
             float dmg = hit.damage;
@@ -1368,7 +1478,7 @@ namespace ProjectInk
                 if (!Alive) Sound.Play(brute ? Sfx.BruteDeath : Sfx.EnemyDeath, 1f, Chest);
                 else Sound.Play(brute ? Sfx.BruteHurt : Sfx.EnemyHurt, 1f, Chest);
             }
-            if (Boss && !Enraged && !enragePending && Health <= maxHealth * 0.5f) enragePending = true;
+            if (Boss && !Foreman && !Enraged && !enragePending && Health <= maxHealth * 0.5f) enragePending = true;   // the Foreman's rage is StoryForeman's call
             if (armored)
             {
                 // charging, slamming or dazed: he takes it without flinching

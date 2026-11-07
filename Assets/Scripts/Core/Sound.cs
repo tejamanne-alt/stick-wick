@@ -18,7 +18,7 @@ namespace ProjectInk
         RankUp, WaveClear, FloorClear, Defeat,
         // story mode (synthesised by tools/audio/make_story_sfx.py)
         Thunder, Drip, Splat, Tinnitus, Heartbeat, Static, Whispers, Drone, Latch, Splash, Breath, Wind, Piano, Rotor,
-        Chain, BodySplash, Crawl, Glint, KnifeGrab, FlashCut,
+        Chain, BodySplash, Crawl, Glint, KnifeGrab, FlashCut, PhoneBuzz, PhoneClick,
     }
 
     /// <summary>The mixer. Plays recorded takes with no immediate repeats, small pitch and

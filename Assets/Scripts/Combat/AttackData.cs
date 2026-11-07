@@ -63,6 +63,11 @@ namespace ProjectInk
         public static readonly AttackData EnemyGrab = new AttackData { clip = "grab_attack", damage = 0, reach = 1.0f, knockback = 0f, hitStopFrames = 3, shake = 0.06f };
         public static readonly AttackData EnemyShot = new AttackData { clip = "gun_shoot", damage = 12, reach = 14f, knockback = 3f, hitStopFrames = 3, shake = 0.1f, ranged = true };
         public static readonly AttackData BruteSmash = new AttackData { clip = "cross", damage = 22, reach = 1.3f, knockback = 9f, hitStopFrames = 6, shake = 0.22f, heavy = true };
+        // ---- the Foreman's crowbar: three swings, the third a heavy lunge that floors you (dodge it and he is open)
+        public static readonly AttackData CrowbarA = new AttackData { clip = "sword_a", damage = 12, reach = 1.4f, knockback = 3f, hitStopFrames = 4, shake = 0.12f };
+        public static readonly AttackData CrowbarB = new AttackData { clip = "sword_b", damage = 14, reach = 1.45f, knockback = 4f, hitStopFrames = 4, shake = 0.14f };
+        public static readonly AttackData CrowbarC = new AttackData { clip = "sword_c", damage = 22, reach = 1.6f, knockback = 9f, hitStopFrames = 7, shake = 0.24f, heavy = true, knockdown = true };
+        public static readonly AttackData Headbutt = new AttackData { clip = "cross", damage = 24, reach = 0.95f, knockback = 8f, hitStopFrames = 7, shake = 0.24f, heavy = true, knockdown = true };
         public static readonly AttackData BruteKick = new AttackData { clip = "front_kick", damage = 20, reach = 1.5f, knockback = 10f, hitStopFrames = 6, shake = 0.22f, heavy = true };
         public static readonly AttackData EnemySword = new AttackData { clip = "sword_b", damage = 14, reach = 1.4f, knockback = 4f, hitStopFrames = 4, shake = 0.12f };
         public static readonly AttackData EnemyJab = new AttackData { clip = "jab", damage = 7, reach = 1.0f, knockback = 2f, hitStopFrames = 3, shake = 0.08f };

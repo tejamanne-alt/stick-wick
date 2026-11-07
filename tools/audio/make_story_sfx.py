@@ -463,6 +463,40 @@ def flash_cut():
         save("flash_cut", room(y, 1.4, 0.2, 0.01, 2500), take)
 
 
+def phone_buzz():
+    """The dead man's phone vibrating on the wet concrete: a motor buzz (synthesis: it is a
+    motor) in two bursts, the case rattling against the floor, a little of the big room."""
+    for take, (f, bursts) in ((1, (162.0, 2)), (2, (171.0, 3))):
+        seg = []
+        for b in range(bursts):
+            n = int(0.42 * SR)
+            tt = np.arange(n) / SR
+            motor = np.sign(np.sin(2 * np.pi * f * tt)) * 0.5 + np.sin(2 * np.pi * f * 2 * tt) * 0.3
+            motor = bp(motor, 120, 1800, 2)
+            rattle = bp(rng.standard_normal(n), 900, 3200, 2) * (0.5 + 0.5 * np.sign(np.sin(2 * np.pi * f / 2 * tt)))
+            env = np.minimum(1.0, tt / 0.02) * np.minimum(1.0, (0.42 - tt) / 0.03)
+            seg.append((motor * 0.8 + rattle * 0.35) * env)
+            seg.append(np.zeros(int(0.22 * SR)))
+        y = lp(np.concatenate(seg), 4500, 2)
+        save("phone_buzz", room(y, 1.6, 0.18, 0.01, 3000), take, peak=0.7)
+
+
+def phone_click():
+    """The call picking up, and ending: a soft plastic click, then the line's tiny double tone."""
+    for take, tone in ((1, 0.0), (2, 1.0)):
+        n = int(0.5 * SR)
+        x = np.zeros(n)
+        k = bp(rng.standard_normal(int(0.012 * SR)), 1500, 6000, 2) * np.exp(-np.arange(int(0.012 * SR)) / (0.002 * SR))
+        x[:len(k)] += k
+        if tone:
+            for i, st in enumerate((0.08, 0.24)):
+                tt = np.arange(int(0.11 * SR)) / SR
+                beep = np.sin(2 * np.pi * 425 * tt) * np.minimum(1.0, tt / 0.005) * np.minimum(1.0, (0.11 - tt) / 0.01) * 0.25
+                a = int(st * SR)
+                x[a:a + len(beep)] += bp(beep, 300, 3400, 2)
+        save("phone_click", x, take, peak=0.5)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--oculus", default="/home/user/facebookincubator/meta-open-sound/corpora/oculus-audio-pack/ogg")
@@ -473,6 +507,6 @@ if __name__ == "__main__":
         sys.exit("need the two sound libraries: --oculus <...>/oculus-audio-pack/ogg --kit <...>/sounds")
     for name in ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", "static",
                  "whispers", "drone", "latch", "wind", "rotor", "piano",
-                 "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut"):
+                 "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click"):
         clear(name)
         globals()[name]()

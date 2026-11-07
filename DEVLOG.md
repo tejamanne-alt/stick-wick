@@ -1134,3 +1134,18 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - Jagged teeth stay in the frame. The baked glass was removed from the set: the pane is the game's own.
 - **Fix: the raised floors were not solid.** The forks, rack decks and mezzanine are now collider slabs; the mezzanine's runs back over the office. The stairs are a walkable slope. Before this, anyone stepping or climbing onto them dropped to the ground.
 - Scene version 36.
+
+### The Foreman in three phases; the ending redone with the phone call
+
+- **The Foreman** (`StoryForeman`, `Enemy` Foreman habits): 1.4× health, three phases marked at 66% and 33% on his bar.
+  - **I · The crowbar:** a guard (plain front punches bounce off when he isn't attacking) and three-swing crowbar combos. The third swing is red and floors you; if it misses he is open for 1.15 s.
+  - **II · The crane:** he runs for the crane's hanging control box and can't be hurt there. Two men come in, the hook swings every 3–5 s, and the crane drops loads of crates on red rings. Reach him and he lets go.
+  - **III · Bare hands:** enraged, no guard, 1.2× damage: headbutts and double slams. He is winded for 1.8 s after a slam, limps below 40% health and breathes hard.
+  - **Throughout:** he catches the fifth strike of the same kind in a row and throws you ("HE READ YOU: MIX IT UP").
+- **The ending** (`StoryEnding`):
+  - From the kneel on it is side on, in silhouette, against a lit curtain of rain under the torn skylight (`BuildBacklight`, `Rain`).
+  - The pistol is posed in world space (`PoseGun`), so in the struggle its barrel visibly turns from the hero to the Foreman.
+  - Removed: the photo of the girl, "his son" and "say hello to her". The Foreman's line is now "Five million reasons, friend."
+  - **New: the phone call.** The dead man's phone buzzes in the water. Its screen (`PhoneGUI`) shows a surveillance still of the hero: THE FERRYMAN · $5,000,000 · OPEN · CONFIRM KILL. The voice: "Is it done?" … "Ferryman. You were supposed to stay dead." … "The contract is open. Every gun in this city is coming for you."
+  - The memory line is now "Someone put you in the ground. You climbed out."
+- **New sounds:** `phone_buzz` (motor in bursts, case rattling on concrete) and `phone_click` (pick-up, and the hang-up tones).

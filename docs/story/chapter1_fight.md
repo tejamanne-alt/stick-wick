@@ -95,42 +95,51 @@ The fight is side-on, as in fight mode, with platforms at three heights. Each zo
 
 ## 4. The boss: THE FOREMAN
 
-The crew's boss, built on the existing Brute boss system (telegraphed specials in red, a health bar with a phase mark, an enraged second half), but with **bare hands and a crowbar** to fit the crew.
+The crew's boss, built on the Brute boss system, with **a crowbar, then bare hands**. He has 1.4× the Brute's health and three phases, marked on his bar at 66% and 33%.
 
-- **Arrival:** wave 7 thins out, the gantry crane groans into life overhead, and he walks in **riding the crane's hook** down onto the floor. His remaining men back away to the walls. Name card: **THE FOREMAN.**
-- **His moves:**
-  1. **Crowbar combo:** three heavy swings. Dodge the third and he's open.
-  2. **Bull charge:** dodge it and he runs into an oil drum or a column, stunned.
-  3. **Bear hug:** tap to break free.
-  4. **Hook swing** *(environment)*: he grabs the crane chain and swings the hook across the floor. Jump or duck, and it smashes whatever it hits (drums, crates).
-- **Phase 2 (enraged, at half health):** he throws the crowbar away and fights with his fists and the hook, faster, slamming twice.
-- **The last hit doesn't kill him.** He crashes down among the oil drums, beaten but alive, and the drama begins.
+- **Arrival:** wave 7 thins out, the gantry crane groans into life, and he rides its hook down onto the floor. Name card: **THE FOREMAN.**
+
+| Phase | Health | How he fights |
+|---|---|---|
+| **I · The crowbar** | 100–66% | **Guard up:** plain punches from the front bounce off while he is not attacking. Kick, hit him from behind, or dodge his swing and punish him. **Three-swing crowbar combo:** the third swing (red) floors you; dodge it and he is open for over a second. Also the bull charge, the ground slam and the bear hug. |
+| **II · The crane** | at 66% | He breaks off and runs for the crane's hanging control box at the far end, and he can't be hurt there. **Two of his men** come in. The **hook swings every 3–5 s**, and the crane **drops loads of crates** where you stand: a red ring, a rattle of chain, then the crash. Reach him and he lets go and fights again, guard up (or after about 28 s on his own). |
+| **III · Bare hands** | at 33% | He flings the crowbar away, enraged: no guard, **hits 20% harder**. Headbutt, bear hug, two-fist smash, double slams. **Winded:** after a slam he stands bent over for nearly 2 s, the opening. Hurt below 40%, he **limps** and you hear him breathing hard. |
+
+- **Through every phase he reads you.** The same kind of strike (punch or kick) five times running gets caught and thrown back at you: *"HE READ YOU: MIX IT UP."*
+- **The environment:** a charge into a standing drum stuns him; the hook sends drums rolling; crane loads crush his men too.
+- **The last hit doesn't kill him.** He crashes down under the torn skylight, beaten but alive, and the drama begins.
 
 ---
 
 ## 5. The ending: a directed scene (no player input)
 
-**Setting:** the crane bay, rain pouring through the torn skylight, the hook still swinging slowly, everything silent except the rain. Letterbox bars come in. Each line is a shot.
+**Setting:** the crane bay, under the torn skylight, where the yard floodlight pours through the rain. From the kneel to the shot, everything is **side on, in silhouette**: two black shapes against a lit curtain of falling rain. Stick figures read best that way, so this replaces the earlier close-ups.
 
 | # | Shot | What happens | Sound |
 |---|---|---|---|
-| 1 | **Slow motion, wide** | The final blow. He crashes back into the oil drums; the crowbar spins away across the wet floor. | The hit, then everything drops out; just rain. |
-| 2 | **Low and wide, across the floor** | Silence. The hero walks to him, step by step, and **drops to one knee** beside him, grabbing his collar. | Footsteps in water, breath. |
-| 3 | **Over the hero's shoulder, onto the boss** | **HIM:** *"Why are you trying to kill me?"* The boss, bloodied, laughs weakly. **BOSS:** *"You... really don't remember."* | Heartbeat, slow. |
-| 4 | **Reverse: the hero's face, close** | **HIM:** *"Tell me who I am. WHO SENT YOU?"* | Tinnitus begins, very faint. |
-| 5 | **Close on the boss** | **BOSS:** *"He'll never stop... not after what you did to his son."* *(The first hint of the chapter 5 truth.)* | |
-| 6 | **Insert, low, on the boss's hand** *(the audience sees it; the hero doesn't)* | His free hand slides inside his jacket. **A pistol.** | The heartbeat quickens. |
-| 7 | **Close: the muzzle in the foreground, the hero's face behind it, out of focus** | The gun is up at the hero's head. Time slows. **BOSS:** *"Say hello to her for me."* *(A hint of the wife: chapters 2 and 3.)* | The tinnitus rises. |
-| 8 | **Fast cuts, handheld** | Instinct. The hero grabs the wrist; they struggle, the barrel shaking between their faces, then turning... | Grunts, a metal click, the heartbeat racing. |
-| 9 | **BANG**, a white frame | The muzzle flash fills the screen. | The gunshot, then **total silence** and a high ring. |
-| 10 | **Slow motion, close** | The boss's eyes widen. The gun slips from his fingers into the water. Ink spreads under him in the rain. | Only the ringing and the rain coming back. |
-| 11 | **Insert** | As his hand falls, something slides from his jacket onto the wet floor: **a photo of a little girl.** He had someone too. *(It mirrors the hero's own daughter, chapter 4.)* | One piano note. |
-| 12 | **Wide, high** | The hero still kneels over him, very small in the huge empty hall. The crane hook creaks to a stop. | Rain. |
-| 13 | **Slow push in** | He stands up, backing away, staring at his hands, **shaking his head**. **HIM** (whispered): *"No... no... no..."* *"That wasn't... I didn't..."* | The piano motif, slow. |
-| 14 | **From behind, wide, through the open main door** | He turns and walks out through the big door into the rain and the floodlights of the yard. The helicopter's searchlight crosses the yard behind him. He doesn't look back. | Thunder, then the rotor far away. |
-| 15 | **Black** | **CHAPTER 1 COMPLETE · THE HITMAN.** Memory restored: *"You kill people. You are good at it."* Then the next chapter's card. | The drone fades out. |
+| 1 | Slow motion, wide | The final blow. He crashes down under the skylight. | The hit, then just rain. |
+| 2 | Low and wide | The hero walks to him and drops to one knee, grabbing his collar. | Footsteps in water, breath. |
+| 3 | **Silhouette**, side on | **HIM:** *"Why are you trying to kill me?"* **FOREMAN** (a weak laugh): *"You... really don't remember."* | Heartbeat. |
+| 4 | Silhouette, closer | **HIM:** *"Tell me who I am. WHO SENT YOU?"* **FOREMAN:** *"Nobody had to send us. Five million reasons, friend."* | Tinnitus, faint. |
+| 5 | Silhouette | The pistol comes up out of the dark into the hero's face, a black shape against the light. **FOREMAN:** *"Nothing personal."* | The hammer back. |
+| 6 | Silhouette, handheld | They struggle. The barrel shakes between them and turns, inch by inch, towards the Foreman. | Grunts, cloth, heartbeat. |
+| 7 | **BANG** | A white frame; the backlight flares. | The shot, then silence and a ring. |
+| 8 | Silhouette, slow | His arm drops; the gun slides into the water. | Rain coming back. |
+| 9 | Push in | The hero backs away, staring at his hands, shaking his head: *"No... no... no..."* *"That wasn't... I didn't..."* | Breath. |
+| 10 | Low, on the floor | **A phone buzzes** in the water beside the dead man, its screen lighting the wet concrete. | Vibration on concrete. |
+| 11 | He picks it up: **the screen** | **CONTRACT UPDATE**, a grainy surveillance still of his own face (the wound on his temple): **THE FERRYMAN · $5,000,000 · OPEN · CONFIRM KILL.** UNKNOWN, incoming call. | |
+| 12 | The call | **THE VOICE:** *"Is it done?"* Silence; he breathes. *"...Ferryman."* *"You were supposed to stay dead."* **HIM:** *"Who is this?"* **THE VOICE:** *"The contract is open. Every gun in this city is coming for you."* CALL ENDED. | A click; the line. |
+| 13 | Wide, high | He lets the phone fall. Very small in the huge empty hall. | Rain. |
+| 14 | From behind, wide | He walks out through the big door into the rain and the floodlights; the helicopter's searchlight crosses the yard. | Thunder, rotor. |
+| 15 | Black | **CHAPTER 1 COMPLETE · THE HITMAN.** Memory restored: *"Someone put you in the ground. You climbed out."* | |
 
-*Why it works:* the player has spent the chapter winning, so the ending takes that away. The kill isn't a victory; it's the loss of the only answer he had, and a new question (the photo, "his son", "her"). The wound on his head is still fresh, and now he has something worse.
+**What the player learns**
+- **The wound:** it wasn't an accident. Someone tried to kill him; the warehouse was meant to be his grave.
+- **What he was:** a man worth $5M, known by a codename, THE FERRYMAN.
+- **What drives the next chapters:** the contract is open, so every chapter brings new hunters.
+- **The man on the phone:** a voice only.
+
+Nothing about his wife or his daughter is revealed here; that is for chapters 2–4.
 
 ---
 
@@ -141,7 +150,7 @@ The crew's boss, built on the existing Brute boss system (telegraphed specials i
 3. **The new enemies:** Runner, Grabber, Door-man (behaviour, animations, how they read on screen).
 4. **The waves:** the seven waves above, tuned for rising difficulty.
 5. **The boss:** the Foreman's arrival on the crane hook, the crowbar combo, the hook swing, phase 2.
-6. **The ending:** new animations (kneeling over him, the gun struggle, the boss's death, the hero's "no... no...", walking out), the pistol and photo props, shot-by-shot staging, sound and subtitles.
+6. **The ending:** new animations (kneeling over him, the gun struggle, the boss's death, the hero's "no... no...", walking out), the pistol and phone props, the silhouette backlight, shot-by-shot staging, sound and subtitles.
 7. **Story wiring:** the prologue flows into the fight (through the shutter), and the chapter-complete card unlocks fight mode for this level.
 
 ---
@@ -150,5 +159,4 @@ The crew's boss, built on the existing Brute boss system (telegraphed specials i
 
 1. **Front wall:** fade it out during gameplay *(recommended)*, or put the camera inside the building?
 2. **Look:** the current baked, semi-stylised look, much more detailed *(recommended)*, or a more realistic, textured style (more art work, a bigger app)?
-3. **The boss's lines:** keep the hints about "his son" and "say hello to her", which plant chapters 5 and 2–3, or keep the boss vaguer?
-4. **The photo of the girl:** keep it as the final emotional beat, or leave it out?
+3. ~~The boss's lines and the photo~~ **Decided:** no photo, no hints about "his son" or "her". The reveal is the phone call (the open contract, THE FERRYMAN, the voice).
