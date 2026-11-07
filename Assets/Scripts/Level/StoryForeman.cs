@@ -166,6 +166,14 @@ namespace ProjectInk
                         Sound.Play(Sfx.MetalClang, 1f, hp);
                         if (cam != null) cam.Shake(0.25f, 0.25f);
                     }
+                    // and it sends any drum in its way rolling across the floor
+                    if (s < 4f && hp.y < 1.7f)
+                        foreach (var d in OilDrum.All)
+                            if (d != null && d.Available && Mathf.Abs(d.transform.position.x - hp.x) < 0.5f)
+                            {
+                                d.Kick(Mathf.Cos(s * 2.4f) >= 0f ? 1 : -1, null, 7f);
+                                Sound.Play(Sfx.MetalClang, 1f, hp, 0.9f);
+                            }
                     if (s > 6f) { hookSwingFrom = -1f; hookSwingAt = now + Random.Range(8f, 12f); }
                 }
             }

@@ -6,7 +6,11 @@
 - The boss: `StoryForeman.cs`.
 - The ending: `StoryEnding.cs`.
 
-Still to do from the kit: rolling oil drums, and boxes falling from the racks. It continues the prologue: wake-up → puddle → where am I → break-in → escape → knife → INSTINCT (the directed first fight) → *"YOU'VE DONE THIS BEFORE."*
+The kit:
+- **Oil drums:** `OilDrum.cs`. Kick one and it rolls, flattening everyone in its path. The Foreman's charge stuns him on one, and his hook sends them rolling.
+- **Falling boxes:** `RackSpill.cs`. Fling a man through a rack and its stock rains down on the bay.
+
+It continues the prologue: wake-up → puddle → where am I → break-in → escape → knife → INSTINCT (the directed first fight) → *"YOU'VE DONE THIS BEFORE."*
 
 Then, instead of the end card:
 

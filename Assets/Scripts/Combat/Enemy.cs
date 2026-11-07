@@ -304,6 +304,7 @@ namespace ProjectInk
             int wall = Integrate(dt);
             if (wall != 0 && IsDown && Mathf.Abs(velocity.x) > 4f && Mathf.Sign(velocity.x) == wall) WallSplat(wall);
             if (wall != 0 && state == State.Charge && chargeRunning && wall == (int)chargeDir) BeginStun(true);
+            if (state == State.Charge && chargeRunning) ChargeIntoDrum();
             UpdateTint();
         }
 
@@ -918,6 +919,22 @@ namespace ProjectInk
             recoverFor = 0.5f;
             velocity.x = chargeDir * 3f;
             body.Play(IdleClip, 0.15f);
+        }
+
+        /// <summary>A bull charge that meets a standing oil drum: he goes head first into it (dazed,
+        /// like hitting the wall) and the drum goes rolling on ahead of him.</summary>
+        void ChargeIntoDrum()
+        {
+            var p = transform.position;
+            foreach (var d in OilDrum.All)
+            {
+                if (d == null || !d.Available) continue;
+                float dx = (d.transform.position.x - p.x) * chargeDir;
+                if (dx < 0f || dx > 0.6f || Mathf.Abs(d.FloorY - p.y) > 0.5f) continue;
+                d.Kick((int)chargeDir, this, 7f);
+                BeginStun(true);
+                return;
+            }
         }
 
         /// <summary>Head first into the wall (or off the edge onto the floor below): dazed, stars

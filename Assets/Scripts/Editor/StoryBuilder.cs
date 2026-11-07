@@ -363,6 +363,54 @@ namespace ProjectInk.EditorTools
             var edge = PrototypeBuilder.Mat("StoryCrateEdge", "Unlit/Color", new Color(0.55f, 0.42f, 0.25f));
             foreach (var cx in new[] { 16.6f, 23.6f, 24.5f, 32.0f, 42.5f, 52.4f, 60.2f })
                 EnvironmentBuilder.Crate(kit, new Vector3(cx, 0f, 0f), 0.7f, wood, edge);
+
+            // oil drums to kick rolling down the floor (the crane bay has the most: the Foreman
+            // charges into them, and his swinging hook sends them flying)
+            var red = PrototypeBuilder.Mat("StoryDrumRed", "Unlit/Color", new Color(0.42f, 0.08f, 0.06f));
+            var blue = PrototypeBuilder.Mat("StoryDrumBlue", "Unlit/Color", new Color(0.1f, 0.18f, 0.36f));
+            var hoop = PrototypeBuilder.Mat("StoryDrumHoop", "Unlit/Color", new Color(0.62f, 0.6f, 0.56f));
+            var lid = PrototypeBuilder.Mat("StoryDrumLid", "Unlit/Color", new Color(0.2f, 0.2f, 0.22f));
+            int n = 0;
+            foreach (var dx in new[] { 18.4f, 47.4f, 53.6f, 57.8f })
+                Drum(kit, new Vector3(dx, 0f, 0f), n++ % 2 == 0 ? red : blue, hoop, lid);
+
+            // the pallet racks: fling a man through one and its stock comes down on the bay
+            foreach (var (x0, x1) in new[] { (WarehousePlan.Rack1X0, WarehousePlan.Rack1X1), (WarehousePlan.Rack2X0, WarehousePlan.Rack2X1) })
+            {
+                var r = new GameObject("RackSpill").AddComponent<RackSpill>();
+                r.transform.SetParent(kit, false);
+                r.transform.position = new Vector3((x0 + x1) * 0.5f, 0f, 0f);
+                r.x0 = x0; r.x1 = x1;
+                r.decks = new[] { WarehousePlan.RackY, 4.4f };
+            }
+        }
+
+        /// <summary>A 200-litre drum standing on the floor: the body, three pale hoops, the lid.</summary>
+        static void Drum(Transform parent, Vector3 floor, Material body, Material hoop, Material lid)
+        {
+            const float r = OilDrum.Radius, h = OilDrum.Height;
+            var root = new GameObject("OilDrum").transform;
+            root.SetParent(parent, false);
+            root.position = floor + Vector3.up * h * 0.5f;
+            Transform Cyl(string name, float y, float rad, float tall, Material m)
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                Object.DestroyImmediate(go.GetComponent<Collider>());
+                go.name = name;
+                go.transform.SetParent(root, false);
+                go.transform.localPosition = new Vector3(0f, y, 0f);
+                go.transform.localScale = new Vector3(rad * 2f, tall * 0.5f, rad * 2f);
+                var rr = go.GetComponent<Renderer>();
+                rr.sharedMaterial = m;
+                rr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                rr.receiveShadows = false;
+                return go.transform;
+            }
+            Cyl("Body", 0f, r, h, body);
+            foreach (var y in new[] { -h * 0.5f + 0.03f, -h * 0.17f, h * 0.17f, h * 0.5f - 0.03f })
+                Cyl("Hoop", y, r + 0.012f, 0.03f, hoop);
+            Cyl("Lid", h * 0.5f, r - 0.03f, 0.012f, lid);
+            root.gameObject.AddComponent<OilDrum>();
         }
 
         /// <summary>A light beam: two crossed quads from a narrow end (at the origin) to a wide end

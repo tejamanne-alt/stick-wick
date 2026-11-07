@@ -387,6 +387,8 @@ namespace ProjectInk
             foreach (var p in WeaponPickup.All.ToArray()) Destroy(p.gameObject);
             if (InkFx.Instance != null) InkFx.Instance.ClearStains();
             Crate.ResetAll();
+            OilDrum.ResetAll();
+            RackSpill.ResetAll();
             GlassPanel.ResetAll();
             ShowBanner($"CHAPTER {Floor}", 1.6f);
             CurrentPhase = Phase.Intro;

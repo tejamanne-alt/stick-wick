@@ -41,6 +41,8 @@ namespace ProjectInk
         bool facingSet;
 
         protected Vector3 velocity;
+        /// <summary>How fast the body is moving (props read it: a man flung through a rack shakes it).</summary>
+        public Vector3 Velocity => velocity;
         Renderer[] renderers;
         MaterialPropertyBlock block;
         Color baseColor = Color.black, tintColor;

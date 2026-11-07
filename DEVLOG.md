@@ -1113,3 +1113,18 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - Then CHAPTER 1 COMPLETE · THE HITMAN · MEMORY RESTORED: "You kill people. You are good at it."
   - The end card now says CHAPTER 2 · THE WIFE · COMING SOON.
 - The menu starts a fresh run (`StoryIntro.NewRun`). Scene version 34.
+
+### The hall's lighting and kit
+
+- **Lighting fix:** the hall was dark because the cut-away front walls were shading the lane in the bake. They now stay out of the lighting bake and only switch on for their own bake.
+- **Oil drums** (`OilDrum`):
+  - There are four: one in the loading bay, one under the mezzanine and two in the crane bay.
+  - Any strike with no one in the way kicks a drum over. It rolls along the floor, knocking down everyone in its path (DRUM ROLL!).
+  - It slows with each man it hits, slams off the zone's walls, then lies still until it is kicked again.
+  - A Foreman bull charge into a standing drum stuns him and sends the drum rolling on. His swinging hook knocks drums rolling too.
+- **Rack spills** (`RackSpill`, one per pallet rack):
+  - A man knocked flying low through a rack bay rattles the frame (RACK SLAM!). A moment later, 4–6 boxes tumble off its decks into the lane.
+  - Any man underneath is knocked flat (INCOMING!).
+  - Three spills per rack, with a settle time between them.
+- **Crate fix:** kicked crates no longer smash at once in the hall. They used the old room's ±12.6 m walls; they now use the arena they were kicked in.
+- Scene version 35.

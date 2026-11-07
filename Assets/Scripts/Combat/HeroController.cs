@@ -58,6 +58,7 @@ namespace ProjectInk
         readonly HashSet<Enemy> swingHit = new HashSet<Enemy>();
         Swingable holding;
         Crate pendingCrate;
+        OilDrum pendingDrum;
         float swingAng, swingVel, swingTurned;
         int wallDir;
         bool running;
@@ -1389,11 +1390,14 @@ namespace ProjectInk
             var t = PickTarget(side, Style == FightStyle.Knife ? 16f : targetRange);
 
             // a crate right there and no enemy in its way: kick it like a bowling ball
+            pendingCrate = null; pendingDrum = null;                // a kick cut short never fires later
             var crate = NearCrate(side);
-            if (crate != null && (t == null || Mathf.Abs(t.transform.position.x - transform.position.x) > 1.4f) && Grounded)
+            var drum = crate == null ? OilDrum.Near(transform.position, side) : null;     // or an oil drum: over it goes, rolling
+            if ((crate != null || drum != null) && (t == null || Mathf.Abs(t.transform.position.x - transform.position.x) > 1.4f) && Grounded)
             {
                 SetFacing(side);
                 pendingCrate = crate;
+                pendingDrum = drum;
                 StartAttack(AttackData.FrontKick, null, side, false);
                 return;
             }
@@ -2099,6 +2103,14 @@ namespace ProjectInk
         void ResolveHit()
         {
             hitDone = true;
+            if (pendingDrum != null)
+            {
+                pendingDrum.Kick(attackDir, this);
+                pendingDrum = null;
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(40, "KICK!");
+                Impact();
+                return;
+            }
             if (pendingCrate != null)
             {
                 pendingCrate.Kick(attackDir, this);

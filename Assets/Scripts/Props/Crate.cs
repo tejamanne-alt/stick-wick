@@ -62,7 +62,15 @@ namespace ProjectInk
                 }
             }
             float ground = Fighter.GroundY(transform.position);
-            if ((flightTime > 0.15f && transform.position.y - 0.3f <= ground) || Mathf.Abs(transform.position.x) > 12.6f) Smash();
+            if ((flightTime > 0.15f && transform.position.y - 0.3f <= ground) || OutOfArena()) Smash();
+        }
+
+        /// <summary>Past the walls of the fight it was kicked in (the hall runs far beyond the old room's ±12.6).</summary>
+        bool OutOfArena()
+        {
+            float x = transform.position.x;
+            if (kicker != null) return x < kicker.arenaMinX - 0.4f || x > kicker.arenaMaxX + 0.4f;
+            return Mathf.Abs(x - home.x) > 14f;
         }
 
         void Smash()
