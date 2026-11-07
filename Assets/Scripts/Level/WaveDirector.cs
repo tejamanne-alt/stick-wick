@@ -389,6 +389,7 @@ namespace ProjectInk
             Crate.ResetAll();
             OilDrum.ResetAll();
             RackSpill.ResetAll();
+            OfficeWindow.ResetAll();
             GlassPanel.ResetAll();
             ShowBanner($"CHAPTER {Floor}", 1.6f);
             CurrentPhase = Phase.Intro;

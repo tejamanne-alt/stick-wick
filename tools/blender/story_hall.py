@@ -403,7 +403,7 @@ def build_hall(S, coll, M):
         g.box((xx, oy0, mz + oh / 2), (w, 0.1, oh), M["block"])
     g.box(((ox0 + ox1) / 2, oy0, mz + 0.45), (ox1 - ox0, 0.1, 0.9), M["block"])
     g.box(((ox0 + ox1) / 2, oy0, mz + oh - 0.15), (ox1 - ox0, 0.1, 0.3), M["block"])
-    g.box(((ox0 + ox1) / 2, oy0 - 0.02, mz + 1.6), (ox1 - ox0 - 1.6, 0.012, 1.4), M["glass"])
+    # (the window's glass is the game's own, breakable: OfficeWindow. The opening is left clear here)
     g.box(((ox0 + ox1) / 2, oy1, mz + oh / 2), (ox1 - ox0, 0.1, oh), M["block"])
     for xx in (ox0, ox1):
         g.box((xx, (oy0 + oy1) / 2, mz + oh / 2), (0.1, oy1 - oy0, oh), M["block"])

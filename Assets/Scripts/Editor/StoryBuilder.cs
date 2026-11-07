@@ -364,6 +364,38 @@ namespace ProjectInk.EditorTools
             foreach (var cx in new[] { 16.6f, 23.6f, 24.5f, 32.0f, 42.5f, 52.4f, 60.2f })
                 EnvironmentBuilder.Crate(kit, new Vector3(cx, 0f, 0f), 0.7f, wood, edge);
 
+            // the raised floors are solid: the forks, the rack decks and the mezzanine (its deck runs
+            // back over the office, so a man thrown in there lands on it), and the stairs up to it
+            var floors = new GameObject("HallFloors").transform;
+            floors.SetParent(kit, false);
+            var plans = WarehousePlan.Platforms;
+            for (int i = 0; i < plans.Length; i++)
+            {
+                var pl = plans[i];
+                if (pl.y <= 0.01f) continue;
+                float back = pl.y >= WarehousePlan.MezzY - 0.01f ? 3.4f : 1.0f;
+                var slab = new GameObject("Floor" + i).transform;
+                slab.SetParent(floors, false);
+                slab.position = new Vector3((pl.x0 + pl.x1) * 0.5f, pl.y - 0.05f, (back - 0.85f) * 0.5f);
+                slab.gameObject.AddComponent<BoxCollider>().size = new Vector3(pl.x1 - pl.x0, 0.1f, back + 0.85f);
+                slab.gameObject.isStatic = true;
+            }
+            foreach (var st in WarehousePlan.Stairs)
+            {
+                float sdx = st.x1 - st.x0, sdy = st.y1 - st.y0, len = Mathf.Sqrt(sdx * sdx + sdy * sdy);
+                var ramp = new GameObject("StairSlope").transform;
+                ramp.SetParent(floors, false);
+                var dir = new Vector3(sdx, sdy, 0f) / len;
+                var nrm = new Vector3(-dir.y, dir.x, 0f);
+                if (nrm.y < 0f) nrm = -nrm;
+                ramp.position = new Vector3((st.x0 + st.x1) * 0.5f, (st.y0 + st.y1) * 0.5f, 0.2f) - nrm * 0.05f;
+                ramp.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(sdy, sdx) * Mathf.Rad2Deg);
+                ramp.gameObject.AddComponent<BoxCollider>().size = new Vector3(len, 0.1f, 1.4f);
+                ramp.gameObject.isStatic = true;
+            }
+
+            OfficeGlass(kit);
+
             // oil drums to kick rolling down the floor (the crane bay has the most: the Foreman
             // charges into them, and his swinging hook sends them flying)
             var red = PrototypeBuilder.Mat("StoryDrumRed", "Unlit/Color", new Color(0.42f, 0.08f, 0.06f));
@@ -383,6 +415,72 @@ namespace ProjectInk.EditorTools
                 r.x0 = x0; r.x1 = x1;
                 r.decks = new[] { WarehousePlan.RackY, 4.4f };
             }
+        }
+
+        /// <summary>The site office's window on the mezzanine: a pale pane with two glints (the set
+        /// bake leaves the opening clear), and the jagged teeth left in the frame once it breaks.</summary>
+        static void OfficeGlass(Transform parent)
+        {
+            var root = new GameObject("OfficeWindow").transform;
+            root.SetParent(parent, false);
+            var w = root.gameObject.AddComponent<OfficeWindow>();
+            float x0 = w.x0, x1 = w.x1, y0 = w.sill, y1 = w.head, z = w.z;
+            var paneMat = PrototypeBuilder.Mat("StoryOfficeGlass", "Sprites/Default", new Color(0.55f, 0.72f, 0.82f, 0.22f));
+            var glintMat = PrototypeBuilder.Mat("StoryOfficeGlint", "Sprites/Default", new Color(0.9f, 0.97f, 1f, 0.32f));
+            Renderer Quad(string name, Vector3 c, Vector2 size, float roll, Material m)
+            {
+                var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                Object.DestroyImmediate(q.GetComponent<Collider>());
+                q.name = name;
+                q.transform.SetParent(root, false);
+                q.transform.position = c;
+                q.transform.rotation = Quaternion.Euler(0f, 0f, roll);
+                q.transform.localScale = new Vector3(size.x, size.y, 1f);
+                var r = q.GetComponent<Renderer>();
+                r.sharedMaterial = m;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                r.receiveShadows = false;
+                return r;
+            }
+            float cx = (x0 + x1) * 0.5f, cy = (y0 + y1) * 0.5f;
+            var pane = Quad("Pane", new Vector3(cx, cy, z), new Vector2(x1 - x0, y1 - y0), 0f, paneMat);
+            var g1 = Quad("Glint", new Vector3(cx - 0.55f, cy + 0.1f, z - 0.005f), new Vector2(0.12f, 1.5f), -32f, glintMat);
+            var g2 = Quad("Glint", new Vector3(cx - 0.25f, cy + 0.05f, z - 0.005f), new Vector2(0.05f, 1.3f), -32f, glintMat);
+            w.whole = new[] { pane, g1, g2 };
+
+            // the teeth: jagged triangles growing in from every side of the frame
+            var v = new List<Vector3>(); var tri = new List<int>(); var col = new List<Color>();
+            var rnd = new System.Random(7);
+            float R(float a, float b) => a + (float)rnd.NextDouble() * (b - a);
+            void Tooth(Vector3 a, Vector3 b, Vector3 tip)
+            {
+                int k = v.Count;
+                v.Add(a); v.Add(b); v.Add(tip);
+                col.Add(Color.white); col.Add(Color.white); col.Add(new Color(1f, 1f, 1f, 0.7f));
+                tri.AddRange(new[] { k, k + 1, k + 2, k, k + 2, k + 1 });
+            }
+            for (float x = x0; x < x1 - 0.05f; x += R(0.18f, 0.42f))
+            {
+                float x2 = Mathf.Min(x1, x + R(0.15f, 0.4f));
+                Tooth(new Vector3(x, y0, z), new Vector3(x2, y0, z), new Vector3(R(x, x2), y0 + R(0.05f, 0.42f), z));
+                Tooth(new Vector3(x, y1, z), new Vector3(x2, y1, z), new Vector3(R(x, x2), y1 - R(0.04f, 0.3f), z));
+            }
+            for (float y = y0; y < y1 - 0.05f; y += R(0.2f, 0.45f))
+            {
+                float y2 = Mathf.Min(y1, y + R(0.15f, 0.4f));
+                Tooth(new Vector3(x0, y, z), new Vector3(x0, y2, z), new Vector3(x0 + R(0.04f, 0.35f), R(y, y2), z));
+                Tooth(new Vector3(x1, y, z), new Vector3(x1, y2, z), new Vector3(x1 - R(0.04f, 0.3f), R(y, y2), z));
+            }
+            var mesh = new Mesh { name = "WindowTeeth" };
+            mesh.SetVertices(v); mesh.SetTriangles(tri, 0); mesh.SetColors(col);
+            mesh.RecalculateBounds();
+            var teethGo = new GameObject("Teeth");
+            teethGo.transform.SetParent(root, false);
+            teethGo.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var tr = teethGo.AddComponent<MeshRenderer>();
+            tr.sharedMaterial = PrototypeBuilder.Mat("StoryOfficeTeeth", "Sprites/Default", new Color(0.62f, 0.78f, 0.88f, 0.55f));
+            tr.enabled = false;
+            w.teeth = new Renderer[] { tr };
         }
 
         /// <summary>A 200-litre drum standing on the floor: the body, three pale hoops, the lid.</summary>

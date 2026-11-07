@@ -1128,3 +1128,9 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - Three spills per rack, with a settle time between them.
 - **Crate fix:** kicked crates no longer smash at once in the hall. They used the old room's ±12.6 m walls; they now use the arena they were kicked in.
 - Scene version 35.
+- **Office glass** (`OfficeWindow`):
+  - Knock a man down hard on the mezzanine in front of the site office, and he is thrown back over the sill and through the window (THROUGH THE GLASS!).
+  - 34 shards blow out over the deck and down to the floor; he lands among the desks inside, dead.
+  - Jagged teeth stay in the frame. The baked glass was removed from the set: the pane is the game's own.
+- **Fix: the raised floors were not solid.** The forks, rack decks and mezzanine are now collider slabs; the mezzanine's runs back over the office. The stairs are a walkable slope. Before this, anyone stepping or climbing onto them dropped to the ground.
+- Scene version 36.
