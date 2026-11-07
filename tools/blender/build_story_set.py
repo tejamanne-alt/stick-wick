@@ -1108,6 +1108,9 @@ def main():
     for o in (interior, shutter, fan, yard, ground, city, hall, front, inner):
         unwrap(o)
     hall_only = "--hall-only" in sys.argv          # re-bake just the hall (the other bakes are kept; unwraps are deterministic)
+    # the camera-side walls are cut away whenever the lane is seen, so they must not shade it:
+    # bake everything as the old open set was lit, and only switch them on for their own bake
+    front.hide_render = True
     if not hall_only:
         bake(interior, 2048, 48)
         bake(shutter, 512, 32)
@@ -1116,7 +1119,9 @@ def main():
         bake(ground, 1024, 16)
         bake(city, 1024, 8)
     bake(hall, 4096, 24)
+    front.hide_render = False
     bake(front, 2048, 16)
+    front.hide_render = True
     bake(inner, 512, 24)
     # the same set in a lightning strike: everything blown cold white for a few frames
     lightning_lights()
