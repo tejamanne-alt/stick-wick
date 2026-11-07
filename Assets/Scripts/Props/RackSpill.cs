@@ -151,7 +151,7 @@ namespace ProjectInk
                         e.TakeHit(new HitInfo { damage = 16f, direction = d, knockback = 2.5f, knockdown = true, heavy = true });
                         Sound.Play(Sfx.Crate, 1f, p);
                         Sound.Play(Sfx.PunchHeavy, 0.7f, e.Chest);
-                        if (InkFx.Instance != null) InkFx.Instance.Splash(p, Vector3.up, 16, new Color(0.42f, 0.31f, 0.18f));
+                        if (InkFx.Instance != null) InkFx.Instance.Splash(p, Vector3.up, 16, new Color(0.42f, 0.42f, 0.42f));
                         if (WaveDirector.Instance != null) WaveDirector.Instance.OnEnvironmentKill(e, "INCOMING!", 140);
                         b.vel = new Vector3(-d * 1.5f, 3f, 0f);
                         break;
@@ -191,9 +191,9 @@ namespace ProjectInk
         {
             if (cardMat != null) return;
             var sh = Shader.Find("Unlit/Color");
-            cardMat = new Material(sh) { color = new Color(0.44f, 0.32f, 0.19f) };
-            tapeMat = new Material(sh) { color = new Color(0.66f, 0.56f, 0.38f) };
-            wrapMat = new Material(sh) { color = new Color(0.52f, 0.54f, 0.58f) };
+            cardMat = new Material(sh) { color = new Color(0.30f, 0.30f, 0.31f) };
+            tapeMat = new Material(sh) { color = new Color(0.64f, 0.64f, 0.64f) };
+            wrapMat = new Material(sh) { color = new Color(0.5f, 0.5f, 0.52f) };
         }
 
         public static void ResetAll()

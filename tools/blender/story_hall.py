@@ -64,17 +64,27 @@ def hall_materials(S, M):
         comb = nt.nodes.new("ShaderNodeCombineXYZ")
         br = nt.nodes.new("ShaderNodeTexBrick")
         br.inputs["Scale"].default_value = 1.0
-        br.inputs["Mortar Size"].default_value = 0.012
-        br.inputs["Brick Width"].default_value = 0.25
-        br.inputs["Row Height"].default_value = 0.075
-        br.inputs["Color1"].default_value = (0.30, 0.13, 0.08, 1)
-        br.inputs["Color2"].default_value = (0.22, 0.10, 0.07, 1)
-        br.inputs["Mortar"].default_value = (0.22, 0.21, 0.2, 1)
+        if getattr(S, "TOWER", False):
+            # the tower's walls: pale cast concrete in formwork panels, thin dark seams
+            br.offset = 0.0
+            br.inputs["Mortar Size"].default_value = 0.012
+            br.inputs["Brick Width"].default_value = 2.4
+            br.inputs["Row Height"].default_value = 1.2
+            br.inputs["Color1"].default_value = (0.40, 0.40, 0.41, 1)
+            br.inputs["Color2"].default_value = (0.35, 0.35, 0.36, 1)
+            br.inputs["Mortar"].default_value = (0.14, 0.14, 0.15, 1)
+        else:
+            br.inputs["Mortar Size"].default_value = 0.012
+            br.inputs["Brick Width"].default_value = 0.25
+            br.inputs["Row Height"].default_value = 0.075
+            br.inputs["Color1"].default_value = (0.30, 0.13, 0.08, 1)
+            br.inputs["Color2"].default_value = (0.22, 0.10, 0.07, 1)
+            br.inputs["Mortar"].default_value = (0.22, 0.21, 0.2, 1)
         noise = nt.nodes.new("ShaderNodeTexNoise")
         noise.inputs["Scale"].default_value = 0.6
         mixc = nt.nodes.new("ShaderNodeMixRGB")
         mixc.blend_type = "MULTIPLY"
-        mixc.inputs["Fac"].default_value = 0.55
+        mixc.inputs["Fac"].default_value = 0.35 if getattr(S, "TOWER", False) else 0.55
         nt.links.new(tc.outputs["Object"], sep.inputs[0])
         nt.links.new(sep.outputs["X"], add.inputs[0])
         nt.links.new(sep.outputs["Y"], add.inputs[1])
@@ -185,7 +195,11 @@ def column(S, g, M, x, y, h=EAVE):
     S.ibeam(g, (x, y, 0.0), h, M)
 
 
+TOWER = False          # set by build_story_set: the fight-mode tower's palette and light
+
+
 def lamp(g, M, x, y, z, working, cold=False):
+    working = working or TOWER                 # the tower's look: every lamp lit, a pool under each
     g.beam((x, y, EAVE), (x, y, z + 0.18), 0.015, 0.015, M["steel"])
     g.cyl((x, y, z + 0.08), 0.06, 0.18, M["steel_mid"], n=10)
     g.cyl((x, y, z), 0.42, 0.24, M["paint_green"], n=20, r2=0.07)
@@ -501,16 +515,21 @@ def build_inner_shutter(S, coll, M):
 def hall_lights(add):
     """The hall's light: moon through the windows and the torn skylight, a few lamps still on,
     the office strip light, floodlights outside the dock, a cold fill so fights read."""
-    add("AREA", "HallFill", (38.0, -5.0, 5.0), 2400, (0.32, 0.42, 0.8), size=30.0, rot=(math.radians(80), 0, 0))
-    add("AREA", "HallRoofFill", (38.0, 9.4, 8.5), 900, (0.45, 0.55, 0.75), size=30.0, rot=(math.radians(180), 0, 0))
+    # the tower's light is pools under lamps with dusk between them: the fills come down, the lamps go up
+    k = 1.0                                    # (kept at full: readability first; the lamps add the pools)
+    add("AREA", "HallFill", (38.0, -5.0, 5.0), 2400 * k, (0.32, 0.42, 0.8), size=30.0, rot=(math.radians(80), 0, 0))
+    add("AREA", "HallRoofFill", (38.0, 9.4, 8.5), 900 * k, (0.45, 0.55, 0.75), size=30.0, rot=(math.radians(180), 0, 0))
     for zx in (20.0, 32.0, 44.0, 56.0):                                                     # each zone's lane, readable
-        add("AREA", "HallLaneFill", (zx, -5.5, 5.5), 900, (0.36, 0.46, 0.82), size=10.0, rot=(math.radians(75), 0, 0))
+        add("AREA", "HallLaneFill", (zx, -5.5, 5.5), 900 * k, (0.36, 0.46, 0.82), size=10.0, rot=(math.radians(75), 0, 0))
         # and what stands behind it (racks, deck, back wall) lifted off black, so a black figure
         # up on a rack or the mezzanine still reads against it
         add("AREA", "HallWallWash", (zx, 11.0, 6.5), 1600, (0.42, 0.5, 0.78), size=11.0, rot=(math.radians(100), 0, 0))
     add("AREA", "SkylightTorn", ((TORN[0] + TORN[1]) / 2, 0.4, RIDGE - 0.4), 1400, (0.62, 0.72, 1.0), size=3.0)
-    for (x, y, z, warm) in ((18.0, 6.0, 6.0, True), (32.0, 2.6, 6.2, True), (53.0, 1.0, 6.3, True)):
-        s = add("SPOT", "HallLamp", (x, y, z), 1700, (1.0, 0.58, 0.24), size=0.15)
+    lamps = ((18.0, 6.0, 6.0, True), (32.0, 2.6, 6.2, True), (53.0, 1.0, 6.3, True))
+    if TOWER:
+        lamps += ((24.0, 1.2, 6.0, True), (44.0, 1.4, 6.4, True), (59.5, 2.0, 6.3, True))
+    for (x, y, z, warm) in lamps:
+        s = add("SPOT", "HallLamp", (x, y, z), 2600 if TOWER else 1700, (1.0, 0.58, 0.24), size=0.15)
         s.data.spot_size = math.radians(95)
         s.data.spot_blend = 0.7
     add("AREA", "OfficeLight", (47.8, 2.1, MEZZ[2] + 2.4), 300, (0.75, 0.88, 1.0), size=1.4, rot=(math.radians(180), 0, 0))

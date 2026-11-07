@@ -43,10 +43,52 @@ rnd = random.Random(7)
 
 MATS = {}
 
+# THE TOWER'S PALETTE (fight mode is the reference for the whole game): a black-and-white
+# world. Pale concrete walls, near-black steel, white edges where the colour paint was, every
+# other surface its own grey, and neutral light. Only the fighters carry colour.
+TOWER = True
+NEUTRAL = (0.95, 0.96, 1.0)          # the light: white, a breath cool, like the tower's lamps
+TONE = {                             # chosen greys (linear base colour) where plain luminance is wrong
+    "Concrete": 0.10, "ConcreteDark": 0.07,          # floors and slabs: dark, as in the tower
+    "Block": 0.36, "Mortar": 0.18,                   # block walls: pale
+    "Iron": 0.30, "IronDark": 0.12,                  # corrugated sheet
+    "PaintYellow": 0.62,                             # safety paint -> the tower's white edges and lips
+    "RackOrange": 0.55, "RackBlue": 0.035,           # rack beams white, uprights black steel
+    "PaintGreen": 0.03,                              # lamp shades black, as in the tower
+    "PaintRed": 0.10, "PaintBlue": 0.07, "Rust": 0.09,
+    "Wood": 0.17, "WoodDark": 0.09, "Cardboard": 0.26, "CardboardDark": 0.17, "Tarp": 0.07,
+    "CraneYellow": 0.32, "GraffitiRed": 0.14, "GraffitiWhite": 0.55, "ShrinkWrap": 0.42,
+    "Steel": 0.03, "SteelMid": 0.09, "CheckerPlate": 0.12, "Asphalt": 0.05, "Puddle": 0.015, "PuddleHall": 0.03,
+}
+
+
+def _tower_to_hall():
+    H.TOWER = TOWER
+
+
+def lum(c):
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+def tone(name, color):
+    if not TOWER:
+        return color
+    g = TONE.get(name, lum(color))
+    return (g, g, g * 1.02)
+
+
+def tone_emit(color):
+    if not TOWER:
+        return color
+    return NEUTRAL
+
 
 def mat(name, color, rough=0.8, emit=None, strength=0.0, metal=0.0, transparent=0.0):
     if name in MATS:
         return MATS[name]
+    color = tone(name, color)
+    if emit is not None:
+        emit = tone_emit(emit)
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
@@ -836,6 +878,10 @@ def build_city(coll, M):
 def lights():
     def add(kind, name, loc, energy, color, size=1.0, rot=None):
         ld = bpy.data.lights.new(name, kind)
+        if TOWER:
+            # neutral light at the same energy: the colour goes and the light gets whiter and
+            # brighter, as the tower is (the coloured fills used to swallow half of it)
+            color = NEUTRAL
         ld.energy = energy
         ld.color = color
         if kind == "AREA":
@@ -870,7 +916,7 @@ def lights():
     H.hall_lights(add)
     w = bpy.data.worlds.new("Night")
     w.use_nodes = True
-    w.node_tree.nodes["Background"].inputs[0].default_value = (0.012, 0.014, 0.028, 1)
+    w.node_tree.nodes["Background"].inputs[0].default_value = (0.014, 0.015, 0.017, 1) if TOWER else (0.012, 0.014, 0.028, 1)
     w.node_tree.nodes["Background"].inputs[1].default_value = 1.0
     bpy.context.scene.world = w
 
@@ -886,19 +932,19 @@ def lightning_lights():
                 ob.data.energy *= 5.0
             elif ob.name.startswith("Hall"):
                 ob.data.energy *= 2.4
-                ob.data.color = (0.7, 0.8, 1.0)
+                ob.data.color = NEUTRAL if TOWER else (0.7, 0.8, 1.0)
             elif ob.name == "Moon":
                 ob.data.energy = 9.0
-                ob.data.color = (0.78, 0.86, 1.0)
+                ob.data.color = NEUTRAL if TOWER else (0.78, 0.86, 1.0)
             elif ob.name in ("CrackLight", "DoorGap"):
                 ob.data.energy *= 6.0
             elif ob.name.startswith("Fill"):
                 ob.data.energy *= 2.2
-                ob.data.color = (0.7, 0.8, 1.0)
+                ob.data.color = NEUTRAL if TOWER else (0.7, 0.8, 1.0)
     for cx in WINDOWS:
         ld = bpy.data.lights.new("Strike", "AREA")
         ld.energy = 1600
-        ld.color = (0.8, 0.88, 1.0)
+        ld.color = NEUTRAL if TOWER else (0.8, 0.88, 1.0)
         ld.size = WIN_W
         ob = bpy.data.objects.new("Strike", ld)
         ob.location = (cx, BACK + 1.2, (WIN_Z0 + WIN_Z1) / 2 + 0.6)
@@ -907,7 +953,7 @@ def lightning_lights():
     for cx in (17.0, 23.0, 29.0, 35.0, 41.0, 47.0, 53.0, 59.0):                          # the hall's high windows
         ld = bpy.data.lights.new("StrikeHall", "AREA")
         ld.energy = 2600
-        ld.color = (0.8, 0.88, 1.0)
+        ld.color = NEUTRAL if TOWER else (0.8, 0.88, 1.0)
         ld.size = 3.2
         ob = bpy.data.objects.new("StrikeHall", ld)
         ob.location = (cx, H.HALL_B + 1.4, 7.4)
@@ -1064,6 +1110,7 @@ def main():
     preview_only = "--preview" in sys.argv
     os.makedirs(OUT, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    _tower_to_hall()
     coll = bpy.context.scene.collection
     M = materials()
     interior = build_shed(coll, M)
@@ -1079,6 +1126,7 @@ def main():
     lights()
     if preview_only:
         shafts.hide_render = True
+        front.hide_render = True                        # the game cuts the camera-side walls away
         cams = []
         cams.append(("SHOT 0  the yard", shot_camera("S0", (-10, 18, 40), (-2, 3, -60), 40), None))
         arm, _ = stickman("lie", 0, HERO_X)

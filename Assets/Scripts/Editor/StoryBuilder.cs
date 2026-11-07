@@ -149,7 +149,7 @@ namespace ProjectInk.EditorTools
             int n = src.Length / 2;
             var rnd = new System.Random(17);
             var iron = PrototypeBuilder.Mat("StoryTornIron", "Unlit/Color", new Color(0.075f, 0.07f, 0.068f));
-            var worn = PrototypeBuilder.Mat("StoryTornEdge", "Unlit/Color", new Color(0.34f, 0.29f, 0.25f));
+            var worn = PrototypeBuilder.Mat("StoryTornEdge", "Unlit/Color", new Color(0.30f, 0.30f, 0.30f));
             foreach (int side in new[] { -1, 1 })
             {
                 var v = new List<Vector3>(); var e = new List<Vector3>(); var tri = new List<int>(); var etri = new List<int>();
@@ -179,7 +179,7 @@ namespace ProjectInk.EditorTools
             stain.localPosition = new Vector3(mid.x, mid.y + 0.022f, (src[0].z + src[src.Length - 1].z) * 0.5f);
             stain.localRotation = Quaternion.Euler(90f, 0f, 0f);
             stain.localScale = new Vector3(0.9f, (src[src.Length - 1].z - src[0].z) + 0.6f, 1f);
-            stain.GetComponent<Renderer>().sharedMaterial = EnvironmentBuilder.TexMat("StoryCrackRust", "Sprites/Default", glowTex, Vector2.one, new Color(0.36f, 0.17f, 0.08f, 0.55f));
+            stain.GetComponent<Renderer>().sharedMaterial = EnvironmentBuilder.TexMat("StoryCrackRust", "Sprites/Default", glowTex, Vector2.one, new Color(0.16f, 0.16f, 0.17f, 0.55f));
         }
 
         static void Strip(Transform parent, string name, List<Vector3> v, List<int> tri, Material m)
@@ -213,8 +213,8 @@ namespace ProjectInk.EditorTools
             set.name = "StorySet";
             AlignAxes(set.transform);
             var shaftTex = EnvironmentBuilder.SaveTex("StoryShaft", ShaftTexture(64, 256), TextureWrapMode.Clamp);
-            var shaftMat = EnvironmentBuilder.TexMat("StoryShaftMat", "Legacy Shaders/Particles/Additive", shaftTex, Vector2.one, new Color(0.15f, 0.19f, 0.31f, 0.5f));
-            var searchMat = EnvironmentBuilder.TexMat("StorySearchBeam", "Legacy Shaders/Particles/Additive", shaftTex, Vector2.one, new Color(0.42f, 0.48f, 0.62f, 0.5f));
+            var shaftMat = EnvironmentBuilder.TexMat("StoryShaftMat", "Legacy Shaders/Particles/Additive", shaftTex, Vector2.one, new Color(0.21f, 0.21f, 0.22f, 0.5f));
+            var searchMat = EnvironmentBuilder.TexMat("StorySearchBeam", "Legacy Shaders/Particles/Additive", shaftTex, Vector2.one, new Color(0.5f, 0.5f, 0.52f, 0.5f));
             Transform fan = null;
             var swapR = new List<Renderer>(); var swapN = new List<Material>(); var swapF = new List<Material>();
             foreach (var r in set.GetComponentsInChildren<Renderer>(true))
@@ -260,11 +260,11 @@ namespace ProjectInk.EditorTools
             var floor = PrototypeBuilder.Box(room, "Ground", new Vector3(0, -2f, 10f), new Vector3(160, 4, 160), ground);
             floor.GetComponent<Renderer>().enabled = false;                 // the baked slab and yard are the visible floor
             var sprite = PrototypeBuilder.Mat("StoryVertex", "Sprites/Default", Color.white);
-            var crackMat = PrototypeBuilder.Mat("StoryCrack", "Unlit/Color", new Color(0.55f, 0.65f, 0.85f));
-            var moonMat = PrototypeBuilder.Mat("StoryMoonGap", "Unlit/Color", new Color(0.72f, 0.80f, 0.95f));
+            var crackMat = PrototypeBuilder.Mat("StoryCrack", "Unlit/Color", new Color(0.8f, 0.82f, 0.85f));
+            var moonMat = PrototypeBuilder.Mat("StoryMoonGap", "Unlit/Color", new Color(0.85f, 0.86f, 0.88f));
             var dropMat = EnvironmentBuilder.TexMat("StoryDroplet", "Sprites/Default", EnvironmentBuilder.SaveTex("StoryDroplet", DropTexture(128), TextureWrapMode.Clamp), Vector2.one, Color.white);
             var glowTex = EnvironmentBuilder.SaveTex("StoryGlow", EnvironmentBuilder.GlowTexture(128), TextureWrapMode.Clamp);
-            var puddleMat = EnvironmentBuilder.TexMat("StoryPuddle", "Sprites/Default", glowTex, Vector2.one, new Color(0.30f, 0.36f, 0.48f, 0.45f));
+            var puddleMat = EnvironmentBuilder.TexMat("StoryPuddle", "Sprites/Default", glowTex, Vector2.one, new Color(0.36f, 0.37f, 0.40f, 0.45f));
             // the storm seam in the roof (it flares with the lightning), under and on top
             var roofCrack = Crack(env, "RoofCrack", HeroStartX - 0.6f, RoofY - 0.03f, -0.7f, 1.9f, 0.035f, crackMat, 5);
             TornLips(roofCrack, glowTex);
@@ -322,7 +322,7 @@ namespace ProjectInk.EditorTools
             var red = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
             red.name = "HeliLight"; red.SetParent(env, false); red.localScale = Vector3.one * 2.2f;
             red.GetComponent<Renderer>().sharedMaterial = redMat;
-            var poolMat = EnvironmentBuilder.TexMat("StorySearchPool", "Legacy Shaders/Particles/Additive", glowTex, Vector2.one, new Color(0.45f, 0.52f, 0.7f, 0.5f));
+            var poolMat = EnvironmentBuilder.TexMat("StorySearchPool", "Legacy Shaders/Particles/Additive", glowTex, Vector2.one, new Color(0.55f, 0.55f, 0.57f, 0.5f));
             var pool = Vis(GameObject.CreatePrimitive(PrimitiveType.Quad).transform);
             pool.name = "SearchPool"; pool.SetParent(env, false); pool.rotation = Quaternion.Euler(90f, 0f, 0f); pool.localScale = new Vector3(9f, 6f, 1f);
             pool.GetComponent<Renderer>().sharedMaterial = poolMat;
@@ -339,6 +339,7 @@ namespace ProjectInk.EditorTools
 
             // ------------------------------------------------------------ the main hall's kit (LevelNav.WarehousePlan)
             HallKit(env);
+            TowerFeel(env);
 
             // ------------------------------------------------------------ spawn points: everyone comes through the shutter
             var door = new Vector3(ShutterX, 0f, BackZ + 0.5f);
@@ -359,8 +360,8 @@ namespace ProjectInk.EditorTools
             var steel = PrototypeBuilder.Mat("StoryBarSteel", "Unlit/Color", new Color(0.14f, 0.14f, 0.16f));
             var rim = PrototypeBuilder.Mat("StoryBarRim", "Unlit/Color", new Color(0.55f, 0.55f, 0.58f));
             EnvironmentBuilder.Bar(kit, new Vector3(WarehousePlan.BarX, WarehousePlan.MezzY + 2.35f, 0f), 9.0f, steel, rim);
-            var wood = PrototypeBuilder.Mat("StoryCrateWood", "Unlit/Color", new Color(0.30f, 0.21f, 0.12f));
-            var edge = PrototypeBuilder.Mat("StoryCrateEdge", "Unlit/Color", new Color(0.55f, 0.42f, 0.25f));
+            var wood = PrototypeBuilder.Mat("StoryCrateWood", "Unlit/Color", new Color(0.24f, 0.24f, 0.24f));
+            var edge = PrototypeBuilder.Mat("StoryCrateEdge", "Unlit/Color", new Color(0.52f, 0.52f, 0.52f));
             foreach (var cx in new[] { 16.6f, 23.6f, 24.5f, 32.0f, 42.5f, 52.4f, 60.2f })
                 EnvironmentBuilder.Crate(kit, new Vector3(cx, 0f, 0f), 0.7f, wood, edge);
 
@@ -398,10 +399,10 @@ namespace ProjectInk.EditorTools
 
             // oil drums to kick rolling down the floor (the crane bay has the most: the Foreman
             // charges into them, and his swinging hook sends them flying)
-            var red = PrototypeBuilder.Mat("StoryDrumRed", "Unlit/Color", new Color(0.42f, 0.08f, 0.06f));
-            var blue = PrototypeBuilder.Mat("StoryDrumBlue", "Unlit/Color", new Color(0.1f, 0.18f, 0.36f));
-            var hoop = PrototypeBuilder.Mat("StoryDrumHoop", "Unlit/Color", new Color(0.62f, 0.6f, 0.56f));
-            var lid = PrototypeBuilder.Mat("StoryDrumLid", "Unlit/Color", new Color(0.2f, 0.2f, 0.22f));
+            var red = PrototypeBuilder.Mat("StoryDrumRed", "Unlit/Color", new Color(0.21f, 0.21f, 0.22f));
+            var blue = PrototypeBuilder.Mat("StoryDrumBlue", "Unlit/Color", new Color(0.11f, 0.11f, 0.12f));
+            var hoop = PrototypeBuilder.Mat("StoryDrumHoop", "Unlit/Color", new Color(0.7f, 0.7f, 0.7f));
+            var lid = PrototypeBuilder.Mat("StoryDrumLid", "Unlit/Color", new Color(0.06f, 0.06f, 0.07f));
             int n = 0;
             foreach (var dx in new[] { 18.4f, 47.4f, 53.6f, 57.8f })
                 Drum(kit, new Vector3(dx, 0f, 0f), n++ % 2 == 0 ? red : blue, hoop, lid);
@@ -425,7 +426,7 @@ namespace ProjectInk.EditorTools
             root.SetParent(parent, false);
             var w = root.gameObject.AddComponent<OfficeWindow>();
             float x0 = w.x0, x1 = w.x1, y0 = w.sill, y1 = w.head, z = w.z;
-            var paneMat = PrototypeBuilder.Mat("StoryOfficeGlass", "Sprites/Default", new Color(0.55f, 0.72f, 0.82f, 0.22f));
+            var paneMat = PrototypeBuilder.Mat("StoryOfficeGlass", "Sprites/Default", new Color(0.78f, 0.80f, 0.84f, 0.2f));
             var glintMat = PrototypeBuilder.Mat("StoryOfficeGlint", "Sprites/Default", new Color(0.9f, 0.97f, 1f, 0.32f));
             Renderer Quad(string name, Vector3 c, Vector2 size, float roll, Material m)
             {
@@ -478,9 +479,137 @@ namespace ProjectInk.EditorTools
             teethGo.transform.SetParent(root, false);
             teethGo.AddComponent<MeshFilter>().sharedMesh = mesh;
             var tr = teethGo.AddComponent<MeshRenderer>();
-            tr.sharedMaterial = PrototypeBuilder.Mat("StoryOfficeTeeth", "Sprites/Default", new Color(0.62f, 0.78f, 0.88f, 0.55f));
+            tr.sharedMaterial = PrototypeBuilder.Mat("StoryOfficeTeeth", "Sprites/Default", new Color(0.75f, 0.77f, 0.8f, 0.55f));
             tr.enabled = false;
             w.teeth = new Renderer[] { tr };
+        }
+
+        /// <summary>The fight-mode tower's feel, carried into the story's warehouse and yard: the floor
+        /// is wet and really reflects (PlanarReflection + the WetFloor shader, strongest in the
+        /// puddles), the working lamps throw the tower's soft cones of light and glow, a low haze
+        /// lies over each zone's floor, and dust drifts in the light.</summary>
+        static void TowerFeel(Transform env)
+        {
+            var root = new GameObject("TowerFeel").transform;
+            root.SetParent(env, false);
+
+            // the wet floor: one plane over the store, the hall and the yard
+            var mask = EnvironmentBuilder.SaveTex("StoryWetMask", WetMask(256));
+            var wet = PrototypeBuilder.Mat("StoryWetFloor", "ProjectInk/WetFloor", Color.white);
+            wet.SetTexture("_WetTex", mask);
+            wet.SetFloat("_WetScale", 0.06f);
+            var floor = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Object.DestroyImmediate(floor.GetComponent<Collider>());
+            floor.name = "WetFloor";
+            floor.transform.SetParent(root, false);
+            floor.transform.position = new Vector3(10f, 0.004f, 0f);
+            floor.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            floor.transform.localScale = new Vector3(180f, 120f, 1f);
+            var fr = floor.GetComponent<Renderer>();
+            fr.sharedMaterial = wet;
+            fr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            fr.receiveShadows = false;
+            floor.AddComponent<PlanarReflection>();
+
+            // the lamps that still work: the tower's cone of light and glow under each
+            var coneTex = EnvironmentBuilder.SaveTex("StoryCone", EnvironmentBuilder.ConeTexture(128, 256), TextureWrapMode.Clamp);
+            var glowTex = EnvironmentBuilder.SaveTex("StoryGlow", EnvironmentBuilder.GlowTexture(128), TextureWrapMode.Clamp);
+            var coneMat = EnvironmentBuilder.TexMat("StoryLampCone", "Legacy Shaders/Particles/Additive", coneTex, Vector2.one, new Color(0.42f, 0.42f, 0.42f, 0.5f));
+            var glowMat = EnvironmentBuilder.TexMat("StoryLampGlow", "Legacy Shaders/Particles/Additive", glowTex, Vector2.one, new Color(0.55f, 0.55f, 0.55f, 0.5f));
+            foreach (var bulb in new[] { new Vector3(18f, 6.07f, 6.0f), new Vector3(24f, 6.07f, 1.2f), new Vector3(32f, 6.27f, 2.6f), new Vector3(44f, 6.47f, 1.4f), new Vector3(53f, 6.37f, 1.0f), new Vector3(59.5f, 6.37f, 2.0f), new Vector3(-0.4f, 5.17f, 0.4f) })
+            {
+                float len = bulb.y - 0.2f;
+                var cone = Quad(root, "LightCone", new Vector3(bulb.x, bulb.y - len * 0.5f, bulb.z + 0.3f), new Vector2(len * 0.85f, len), coneMat);
+                var glow = Quad(root, "LampGlow", bulb + Vector3.back * 0.05f, new Vector2(1.6f, 1.6f), glowMat);
+            }
+
+            // haze lying over the floor of the hall, and on the mezzanine
+            var hazeMat = EnvironmentBuilder.TexMat("StoryHaze", "Sprites/Default", null, Vector2.one, Color.white);
+            HazeStrip(root, "HallHaze", new Vector3(38f, 0f, 4.0f), 48f, 1.6f, hazeMat);
+            HazeStrip(root, "MezzHaze", new Vector3(45f, WarehousePlan.MezzY, 2.4f), 10f, 1.1f, hazeMat);
+            HazeStrip(root, "StoreHaze", new Vector3(0f, 0f, 2.6f), 26f, 1.2f, hazeMat);
+
+            // dust drifting in the light, along the hall
+            EnvironmentBuilder.Dust(root, new EnvironmentBuilder.Layout { halfW = 24f, roofY = 8f, wallZ = 6f }, glowTex);
+            var dust = root.Find("Dust");
+            if (dust != null) dust.position = new Vector3(38f, 4f, 1.5f);
+        }
+
+        static Transform Quad(Transform parent, string name, Vector3 pos, Vector2 size, Material m)
+        {
+            var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Object.DestroyImmediate(q.GetComponent<Collider>());
+            q.name = name;
+            q.transform.SetParent(parent, false);
+            q.transform.position = pos;
+            q.transform.localScale = new Vector3(size.x, size.y, 1f);
+            var r = q.GetComponent<Renderer>();
+            r.sharedMaterial = m;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            return q.transform;
+        }
+
+        /// <summary>A strip of low haze: pale at the floor, gone by `h` metres (vertex alpha).</summary>
+        static void HazeStrip(Transform parent, string name, Vector3 at, float w, float h, Material m)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = at;
+            var mesh = new Mesh { name = name };
+            mesh.vertices = new[] { new Vector3(-w / 2, 0, 0), new Vector3(w / 2, 0, 0), new Vector3(-w / 2, h, 0), new Vector3(w / 2, h, 0) };
+            var low = new Color(0.85f, 0.85f, 0.85f, 0.10f);
+            var high = new Color(0.85f, 0.85f, 0.85f, 0f);
+            mesh.colors = new[] { low, low, high, high };
+            mesh.uv = new[] { Vector2.zero, Vector2.right, Vector2.up, Vector2.one };
+            mesh.triangles = new[] { 0, 2, 1, 1, 2, 3 };
+            string path = $"Assets/Generated/{name}.asset";
+            AssetDatabase.DeleteAsset(path);
+            AssetDatabase.CreateAsset(mesh, path);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = m;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+
+        /// <summary>Where the floor is wet (red): damp everywhere a little, and puddles in the low
+        /// spots (soft-edged blobs from layered noise). Tiles seamlessly.</summary>
+        static Texture2D WetMask(int n)
+        {
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, true) { wrapMode = TextureWrapMode.Repeat };
+            var px = new Color[n * n];
+            for (int j = 0; j < n; j++)
+                for (int i = 0; i < n; i++)
+                {
+                    float u = (float)i / n, v = (float)j / n, f = 0f, amp = 0.5f;
+                    for (int o = 0; o < 4; o++)
+                    {
+                        int per = 4 << o;
+                        f += amp * TileNoise(u * per, v * per, per, o * 17);
+                        amp *= 0.5f;
+                    }
+                    float puddle = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.56f, 0.66f, f));
+                    px[j * n + i] = new Color(puddle, puddle, puddle, 1f);
+                }
+            tex.SetPixels(px);
+            tex.Apply();
+            return tex;
+        }
+
+        /// <summary>Value noise that wraps at `per` cells (so the mask tiles).</summary>
+        static float TileNoise(float x, float y, int per, int seed)
+        {
+            int x0 = Mathf.FloorToInt(x), y0 = Mathf.FloorToInt(y);
+            float fx = x - x0, fy = y - y0;
+            float H(int a, int b)
+            {
+                a = ((a % per) + per) % per; b = ((b % per) + per) % per;
+                uint hh = (uint)(a * 374761393 + b * 668265263 + seed * 1442695041);
+                hh = (hh ^ (hh >> 13)) * 1274126177u;
+                return ((hh ^ (hh >> 16)) & 0xffff) / 65535f;
+            }
+            float sx = fx * fx * (3f - 2f * fx), sy = fy * fy * (3f - 2f * fy);
+            return Mathf.Lerp(Mathf.Lerp(H(x0, y0), H(x0 + 1, y0), sx), Mathf.Lerp(H(x0, y0 + 1), H(x0 + 1, y0 + 1), sx), sy);
         }
 
         /// <summary>A 200-litre drum standing on the floor: the body, three pale hoops, the lid.</summary>
@@ -640,8 +769,8 @@ namespace ProjectInk.EditorTools
             root.SetParent(parent, false);
             root.position = new Vector3(x, 0f, 0f);
             var ring = RingMesh(0.05f, 0.03f, 0.0125f, 14, 6);
-            var mat = PrototypeBuilder.Mat("StoryChain", "Unlit/Color", new Color(0.19f, 0.12f, 0.08f));
-            var hi = PrototypeBuilder.Mat("StoryChainWorn", "Unlit/Color", new Color(0.33f, 0.24f, 0.17f));
+            var mat = PrototypeBuilder.Mat("StoryChain", "Unlit/Color", new Color(0.12f, 0.12f, 0.13f));
+            var hi = PrototypeBuilder.Mat("StoryChainWorn", "Unlit/Color", new Color(0.32f, 0.32f, 0.33f));
             const int n = 30;
             Vector3 P(float k) => new Vector3(0.28f * Mathf.Sin(k * 5.2f) + 0.12f * Mathf.Sin(k * 11f), 0f, Mathf.Lerp(-1.25f, 1.35f, k));
             for (int i = 0; i < n; i++)

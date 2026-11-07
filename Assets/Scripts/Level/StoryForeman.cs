@@ -234,7 +234,7 @@ namespace ProjectInk
                 go.name = "CranePendant";
                 pendant = go.transform;
                 pendant.localScale = new Vector3(0.2f, 0.34f, 0.14f);
-                if (unlit != null) go.GetComponent<Renderer>().material = new Material(unlit) { color = new Color(0.85f, 0.65f, 0.08f) };
+                if (unlit != null) go.GetComponent<Renderer>().material = new Material(unlit) { color = new Color(0.78f, 0.78f, 0.78f) };
                 var btn = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 Destroy(btn.GetComponent<Collider>());
                 btn.transform.SetParent(pendant, false);
@@ -263,8 +263,8 @@ namespace ProjectInk
             if (loadMat == null)
             {
                 var unlit = Shader.Find("Unlit/Color");
-                loadMat = new Material(unlit) { color = new Color(0.36f, 0.25f, 0.14f) };
-                bandMat = new Material(unlit) { color = new Color(0.12f, 0.1f, 0.08f) };
+                loadMat = new Material(unlit) { color = new Color(0.27f, 0.27f, 0.28f) };
+                bandMat = new Material(unlit) { color = new Color(0.07f, 0.07f, 0.08f) };
             }
             var root = new GameObject("CraneLoad").transform;
             foreach (var (pos, size) in new[] { (new Vector3(-0.32f, 0.3f, 0f), new Vector3(0.6f, 0.55f, 0.8f)), (new Vector3(0.32f, 0.3f, 0f), new Vector3(0.6f, 0.55f, 0.8f)), (new Vector3(0f, 0.82f, 0f), new Vector3(0.7f, 0.5f, 0.75f)) })
@@ -318,7 +318,7 @@ namespace ProjectInk
                     Sound.Play(Sfx.Boom, 0.9f, at);
                     Sound.Play(Sfx.Crate, 1f, at);
                     if (cam != null) cam.Shake(0.28f, 0.3f);
-                    if (InkFx.Instance != null) InkFx.Instance.Splash(at, Vector3.up, 26, new Color(0.42f, 0.3f, 0.18f));
+                    if (InkFx.Instance != null) InkFx.Instance.Splash(at, Vector3.up, 26, new Color(0.45f, 0.45f, 0.45f));
                     StreakFx.Ring(new Vector3(l.x, 0.02f, 0f), 1.4f, 0.3f, 0.08f);
                     var hc = hero.transform.position;
                     if (Mathf.Abs(hc.x - l.x) < 1.15f && hc.y < 1.2f && !hero.Invulnerable && !hero.IsDead)
@@ -354,7 +354,7 @@ namespace ProjectInk
             hook = go.transform;
             hook.localScale = new Vector3(0.32f, 0.42f, 0.26f);
             hookR = go.GetComponent<Renderer>();
-            if (unlit != null) hookR.material = new Material(unlit) { color = new Color(0.7f, 0.55f, 0.1f) };
+            if (unlit != null) hookR.material = new Material(unlit) { color = new Color(0.72f, 0.72f, 0.72f) };
             var claw = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Destroy(claw.GetComponent<Collider>());
             claw.transform.SetParent(hook, false);
@@ -394,7 +394,7 @@ namespace ProjectInk
             if (hookSwingFrom >= 0f)
             {
                 float u = now - hookSwingFrom;
-                hookR.material.color = u < 0.7f && Mathf.Repeat(u * 8f, 1f) < 0.5f ? new Color(1f, 0.15f, 0.1f) : new Color(0.7f, 0.55f, 0.1f);
+                hookR.material.color = u < 0.7f && Mathf.Repeat(u * 8f, 1f) < 0.5f ? new Color(1f, 0.15f, 0.1f) : new Color(0.72f, 0.72f, 0.72f);
                 if (u >= 0.7f)
                 {
                     float s = u - 0.7f;

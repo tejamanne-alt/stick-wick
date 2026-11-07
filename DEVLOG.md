@@ -1183,3 +1183,25 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - The phone screen now fits between the top bar and the words, laid out as fractions of its own height. Before, it covered the call's lines.
   - The fight's controls hint moves above a line of dialogue.
   - A layout mock is in `docs/previews/subtitles_layout.png`.
+
+### The story set in the fight-mode tower's look
+
+- **Palette** (`build_story_set.py`: `TOWER`, `tone`, `TONE`): the warehouse and the yard now use the tower's black-and-white world, and only the fighters carry colour.
+  - The hall's brick is pale cast concrete in formwork panels.
+  - The safety paint and the rack beams are the tower's white edges; the rack uprights and the steel are near-black.
+  - Containers, cars, drums, cardboard and stock are greys at their own brightness.
+  - Lamp shades are black.
+  - Every light is neutral white at the same strength (`NEUTRAL`), and the night sky is neutral.
+- **Light like the tower** (`story_hall.TOWER`): all six hall lamps are lit and stronger, so each zone has a pool of light. The fills stay at full strength (the hall's baked brightness is back to before: 90th percentile 13, previously 14), and the white light no longer loses half its energy to the old blue tints.
+- **Reflections:** the floor really reflects.
+  - `PlanarReflection` renders the scene mirrored in the floor's plane into a half-resolution texture.
+  - The `ProjectInk/WetFloor` shader lays it over the floor: faint on damp concrete, strong in the puddles (`StoryWetMask`), strongest at grazing angles, shivering with the rain.
+  - One plane covers the store, the hall and the yard.
+- **The tower's light effects** (`StoryBuilder.TowerFeel`): its additive cones of light and glows under every working lamp, a low haze over the hall, the mezzanine and the store, and dust drifting in the light.
+- **Props in greys:**
+  - crates use the tower's crate colours
+  - drums are dark grey with pale hoops
+  - fallen boxes, crane loads, the hook, the pendant and the chain are grey
+  - moonbeams, searchlight, crack light, puddles and office glass are neutral
+  - red stays only for warnings (telegraphs) and the helicopter's light
+- Scene version 37.
