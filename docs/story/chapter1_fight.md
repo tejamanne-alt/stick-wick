@@ -113,7 +113,7 @@ The crew's boss, built on the Brute boss system, with **a crowbar, then bare han
 
 ## 5. The ending: a directed scene (no player input)
 
-**Setting:** the crane bay, under the torn skylight, where the yard floodlight pours through the rain. From the kneel to the shot, everything is **side on, in silhouette**: two black shapes against a lit curtain of falling rain. Stick figures read best that way, so this replaces the earlier close-ups.
+**Setting:** the crane bay, under the torn skylight, where the yard floodlight pours through the rain. From the kneel to the shot, everything is **side on, in silhouette**: two black shapes against a curtain of light. Stick figures read best that way, so this replaces the earlier close-ups.
 
 | # | Shot | What happens | Sound |
 |---|---|---|---|

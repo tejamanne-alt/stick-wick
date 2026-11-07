@@ -1205,3 +1205,11 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - moonbeams, searchlight, crack light, puddles and office glass are neutral
   - red stays only for warnings (telegraphs) and the helicopter's light
 - Scene version 37.
+- **Rain only outside.** The one 70 m rain emitter predated the hall, which now stood under it. Rain now falls only in open yard, in three patches at the same density:
+  - behind the store (what the shutter opens onto)
+  - past the hall's far end (the walk-out)
+  - behind the hall
+  - The lit rain in the ending's backlight is gone; the light stays, as the floodlight through the torn skylight in the haze.
+  - Indoors the puddles stay, with only a faint stir on the water (`_Ripple` 0.0007).
+  - The drip from the roof crack in the prologue stays.
+  - Scene version 38.

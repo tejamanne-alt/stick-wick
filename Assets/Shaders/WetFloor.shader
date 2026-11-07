@@ -11,7 +11,7 @@ Shader "ProjectInk/WetFloor"
         _WetScale ("Wet mask tiling (per metre)", Float) = 0.08
         _Base ("Reflection on damp concrete", Range(0, 1)) = 0.14
         _Puddle ("Reflection in puddles", Range(0, 1)) = 0.62
-        _Ripple ("Rain ripple", Float) = 0.0035
+        _Ripple ("Ripple (a stir on the water)", Float) = 0.0007
     }
     SubShader
     {

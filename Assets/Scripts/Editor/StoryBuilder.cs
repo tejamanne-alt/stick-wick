@@ -498,6 +498,7 @@ namespace ProjectInk.EditorTools
             var wet = PrototypeBuilder.Mat("StoryWetFloor", "ProjectInk/WetFloor", Color.white);
             wet.SetTexture("_WetTex", mask);
             wet.SetFloat("_WetScale", 0.06f);
+            wet.SetFloat("_Ripple", 0.0007f);                     // indoors: still water, only the faintest stir
             var floor = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Object.DestroyImmediate(floor.GetComponent<Collider>());
             floor.name = "WetFloor";
@@ -699,22 +700,35 @@ namespace ProjectInk.EditorTools
             foreach (var t in new[] { mx, my, mz }) Object.DestroyImmediate(t.gameObject);
         }
 
+        /// <summary>The rain falls in the yard only, never under a roof: behind the store (it is what
+        /// the shutter opens onto), past the hall's far end (where he walks out at the end) and
+        /// behind the hall. Inside, the floor is wet and still: the puddles stay, nothing falls.</summary>
         static void Rain(Transform parent, Material mat)
         {
-            var go = new GameObject("RainOutside");
+            // (centre x, centre z, width, depth) of each patch of open yard, clear of both roofs:
+            // the store is x -14..14, z -1..2.6; the hall x 14.3..62, z -1.6..20.4
+            RainPatch(parent, mat, "RainBehindStore", -10.5f, 10.0f, 49f, 14f);
+            RainPatch(parent, mat, "RainPastTheHall", 76.0f, 7.5f, 27f, 35f);
+            RainPatch(parent, mat, "RainBehindHall", 38.0f, 26.0f, 48f, 9f);
+        }
+
+        static void RainPatch(Transform parent, Material mat, string name, float cx, float cz, float w, float d)
+        {
+            var go = new GameObject(name);
             go.transform.SetParent(parent, false);
-            go.transform.position = new Vector3(0f, 14f, 10f);
+            go.transform.position = new Vector3(cx, 14f, cz);
             var ps = go.AddComponent<ParticleSystem>();
             var main = ps.main;
             main.startLifetime = 1.4f;
             main.startSpeed = 14f;
             main.startSize = 0.03f;
-            main.startColor = new Color(0.72f, 0.80f, 1f, 0.35f);
-            main.maxParticles = 1800;
+            main.startColor = new Color(0.85f, 0.86f, 0.9f, 0.35f);
+            float rate = w * d * 0.8f;                                   // the same density everywhere
+            main.maxParticles = Mathf.CeilToInt(rate * 1.6f);
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.useUnscaledTime = false;
-            var em = ps.emission; em.rateOverTime = 1100f;
-            var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(70f, 14f, 0.5f);
+            var em = ps.emission; em.rateOverTime = rate;
+            var sh = ps.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(w, d, 0.5f);
             go.transform.rotation = Quaternion.Euler(95f, 0f, 0f);       // emits along local z: down, a little slanted by the wind
             var r = go.GetComponent<ParticleSystemRenderer>();
             r.renderMode = ParticleSystemRenderMode.Stretch;

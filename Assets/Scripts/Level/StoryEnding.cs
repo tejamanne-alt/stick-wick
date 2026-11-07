@@ -576,8 +576,7 @@ namespace ProjectInk
         readonly System.Collections.Generic.List<Transform> drops = new System.Collections.Generic.List<Transform>();
 
         /// <summary>A curtain of cold light behind the two of them (the floodlight through the torn
-        /// skylight, caught in the rain), falling rain in front of it: everything in front of it
-        /// reads as a black shape.</summary>
+        /// skylight, caught in the haze): everything in front of it reads as a black shape.</summary>
         void BuildBacklight(float x)
         {
             ClearBacklight();
@@ -605,22 +604,10 @@ namespace ProjectInk
             backMat = new Material(Shader.Find("Sprites/Default")) { mainTexture = tex };   // tintable: the shot brightens it
             q.GetComponent<Renderer>().material = backMat;
             backGlow = 1f;
-            // the rain, lit
-            var dropMat = new Material(Shader.Find("Sprites/Default")) { color = new Color(0.85f, 0.92f, 1f, 0.35f) };
-            for (int i = 0; i < 90; i++)
-            {
-                var d = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                Destroy(d.GetComponent<Collider>());
-                d.name = "LitRain";
-                d.transform.SetParent(backdrop, true);
-                d.transform.position = new Vector3(x + Random.Range(-2.6f, 2.6f), Random.Range(0f, 4.6f), Random.Range(1.2f, 2.6f));
-                d.transform.localScale = new Vector3(0.008f / backdrop.localScale.x, 0.32f / backdrop.localScale.y, 1f);
-                d.GetComponent<Renderer>().sharedMaterial = dropMat;
-                drops.Add(d.transform);
-            }
+            // (no rain falls in here: the light is the floodlight through the torn skylight, caught in the haze)
         }
 
-        /// <summary>The rain falls and the light breathes (called every frame of the lit shots).</summary>
+        /// <summary>The backlight breathes and the gun smoke drifts (called every frame of the lit shots).</summary>
         void Rain()
         {
             UpdateFlashSmoke();
