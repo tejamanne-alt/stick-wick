@@ -104,7 +104,7 @@ namespace ProjectInk
                     // a step back, then another: he does not want this
                     hero.SetFacing(1);
                     runX -= 0.6f * dt;
-                    if (AtE(0.1f)) { Say("HIM", "...No.", 0.9f); Sound.Play(Sfx.Breath, 0.8f); }
+                    if (AtE(0.1f)) { Say("YOU", "...No.", 0.9f); Sound.Play(Sfx.Breath, 0.8f); }
                 }
                 else
                 {
@@ -221,7 +221,7 @@ namespace ProjectInk
             }
             if (AtD(D_Rise + 0.5f)) { Lightning(1f, 1f, 0.05f); Sound.Play(Sfx.CineHit, 0.7f); if (cam != null) cam.Shake(0.12f, 0.3f); }
             if (AtD(D_Turn)) { hero.SetFacing(1); Sound.Play(Sfx.Cloth, 0.7f, null, 1.2f); }
-            if (AtD(D_Turn + 0.35f)) Say("HIM", "...My hands remember.", 2.2f);
+            if (AtD(D_Turn + 0.35f)) Say("YOU", "...My hands remember.", 2.2f);
             if (AtD(D_Turn + 0.9f)) Sound.Play(Sfx.Riser, 0.5f);
 
             // the men: walk up, stop short of him, and step back when he stands

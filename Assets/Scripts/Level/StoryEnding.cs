@@ -93,13 +93,13 @@ namespace ProjectInk
             System.Action close = () => { Rain(); EndShot(new Vector3(mx, 0.3f, -2.3f), new Vector3(mx, 0.52f, 0f), 30f); };
             yield return Hold(1.4f, wide);
 
-            Say("HIM", "Why are you trying to kill me?", 2.4f);
+            Say("YOU", "Why are you trying to kill me?", 2.4f);
             Sound.Play(Sfx.Heartbeat, 0.6f);
             yield return Hold(2.4f, wide);
             if (boss != null) Sound.Play(Sfx.BruteLaugh, 0.55f, boss.Chest, 0.8f);
             Say("THE FOREMAN", "You... really don't remember.", 2.4f);
             yield return Hold(2.4f, close);
-            Say("HIM", "Tell me who I am. WHO SENT YOU?", 2.4f);
+            Say("YOU", "Tell me who I am. WHO SENT YOU?", 2.4f);
             Sound.Play(Sfx.Tinnitus, 0.25f);
             yield return Hold(2.4f, close);
             Say("THE FOREMAN", "Nobody had to send us. Five million reasons, friend.", 3.0f);
@@ -287,7 +287,7 @@ namespace ProjectInk
             yield return Hold(0.9f, wide);
             if (hero.body.Has("look_hands")) hero.body.Play("look_hands", 0.3f, true, 0.7f);
             headYawOn = true;
-            Say("HIM", "No... no... no...", 2.6f);
+            Say("YOU", "No... no... no...", 2.6f);
             Sound.Play(Sfx.Breath, 0.9f, null, 0.9f);
             float tn = 0f;
             float stand = hero.transform.position.x;
@@ -296,7 +296,7 @@ namespace ProjectInk
                 tn += Time.unscaledDeltaTime;
                 headYaw = Mathf.Sin(tn * 3.2f) * 26f * Mathf.Clamp01(tn / 0.6f) * (1f - Mathf.Clamp01((tn - 3.6f) / 0.6f));
                 hero.CinePose(new Vector3(stand - 0.5f * Mathf.SmoothStep(0f, 1f, tn / 3f), 0f, 0f));      // backing away
-                if (tn > 2.6f && tn - Time.unscaledDeltaTime <= 2.6f) Say("HIM", "That wasn't... I didn't...", 1.8f);
+                if (tn > 2.6f && tn - Time.unscaledDeltaTime <= 2.6f) Say("YOU", "That wasn't... I didn't...", 1.8f);
                 Rain();
                 EndShot(new Vector3(mx - 0.3f, 0.9f, -3.0f + 0.4f * tn / 4.2f), HeadC() + Vector3.down * 0.4f, 32f);
                 yield return null;
@@ -357,7 +357,7 @@ namespace ProjectInk
             Say("THE VOICE", "You were supposed to stay dead.", 2.6f);
             Sound.Play(Sfx.Tinnitus, 0.3f);
             yield return Hold(2.6f, pov);
-            Say("HIM", "Who is this?", 1.8f);
+            Say("YOU", "Who is this?", 1.8f);
             yield return Hold(1.8f, pov);
             Say("THE VOICE", "The contract is open. Every gun in this city is coming for you.", 3.6f);
             yield return Hold(3.6f, pov);

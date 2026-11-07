@@ -68,8 +68,6 @@ namespace ProjectInk
         float blueUntil, blueStrength, glitchUntil, clearedAt = -1f;
         int flashFrames;
         float barsPx = Bar, promptAlpha, chipUntil, footAt;
-        string subSpeaker, subLine;
-        float subUntil;
         float walkFromX;
 
         void Awake() { Instance = this; }
@@ -761,7 +759,7 @@ namespace ProjectInk
                     float k = Mathf.InverseLerp(2.4f, 0.4f, men[i].transform.position.z);
                     men[i].SetBaseColor(Color.Lerp(new Color(0.015f, 0.015f, 0.02f), menColor[i], k * k));
                 }
-            if (AtB(2.7f)) Say("HIM", "Wait... who are you?", 1.25f);
+            if (AtB(2.7f)) Say("YOU", "Wait... who are you?", 1.25f);
             if (AtB(4.0f)) Say("THUG", "He's awake. Finish it.", 1.5f);
 
             // the camera: hero and door together, then back to the fight view
@@ -830,12 +828,6 @@ namespace ProjectInk
             }
         }
 
-        void Say(string who, string line, float seconds)
-        {
-            subSpeaker = who;
-            subLine = line;
-            subUntil = Time.unscaledTime + seconds;
-        }
 
         // ================================================================== the picture on top
 
@@ -916,14 +908,7 @@ namespace ProjectInk
             }
 
             // subtitles, in the lower bar
-            if (Time.unscaledTime < subUntil && !string.IsNullOrEmpty(subLine))
-            {
-                float y = h - Mathf.Max(bh, 70f * barK) * 0.5f - 26f;
-                subWho.normal.textColor = new Color(0.8f, 0.8f, 0.8f, 0.9f);
-                GUI.Label(new Rect(0, y - 6, w, 20), Spaced(subSpeaker), subWho);
-                sub.normal.textColor = Color.white;
-                GUI.Label(new Rect(0, y + 14, w, 34), subLine, sub);
-            }
+            DrawSubtitle(w, h, bh, barK);
 
             // the walk prompt
             if (phase == Phase.Walk && promptAlpha > 0.01f)

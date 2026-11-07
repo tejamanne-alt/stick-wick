@@ -1169,3 +1169,13 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - `shell_casing`: real brass on concrete
   - `gun_drop_water`
   - `phone_buzz` now uses a real phone vibrating on a table
+
+### Who is speaking
+
+- **One subtitle system for the whole story** (`StoryDialogue`, `docs/story/dialogue.md`):
+  - plain names from the player's side: YOU (was "HIM"), THUG, THE FOREMAN, VOICE ON THE PHONE, VOICE BEYOND THE SHUTTER
+  - one colour per kind of speaker: YOU is white with the red bar, enemies amber, a boss blood orange, off-screen voices cold blue with a signal mark
+  - a marker over the speaker's head, in his colour
+  - the subtitle panel slides towards the speaker
+  - every line sits on a dark panel with a coloured edge
+- The speaker is found automatically (the hero, the boss, or the nearest enemy) unless a line passes one.

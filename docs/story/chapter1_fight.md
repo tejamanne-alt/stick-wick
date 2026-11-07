@@ -119,8 +119,8 @@ The crew's boss, built on the Brute boss system, with **a crowbar, then bare han
 |---|---|---|---|
 | 1 | Slow motion, wide | The final blow. He crashes down under the skylight. | The hit, then just rain. |
 | 2 | Low and wide | The hero walks to him and drops to one knee, grabbing his collar. | Footsteps in water, breath. |
-| 3 | **Silhouette**, side on | **HIM:** *"Why are you trying to kill me?"* **FOREMAN** (a weak laugh): *"You... really don't remember."* | Heartbeat. |
-| 4 | Silhouette, closer | **HIM:** *"Tell me who I am. WHO SENT YOU?"* **FOREMAN:** *"Nobody had to send us. Five million reasons, friend."* | Tinnitus, faint. |
+| 3 | **Silhouette**, side on | **YOU:** *"Why are you trying to kill me?"* **FOREMAN** (a weak laugh): *"You... really don't remember."* | Heartbeat. |
+| 4 | Silhouette, closer | **YOU:** *"Tell me who I am. WHO SENT YOU?"* **FOREMAN:** *"Nobody had to send us. Five million reasons, friend."* | Tinnitus, faint. |
 | 5a | Insert, very close on his hand | His hand slides under his jacket; the pistol comes out, low, where only we see it. | Cloth dragged, the grip scraping free. A slow heartbeat starts. |
 | 5b | Close on the hero's face | He hasn't seen it. | A breath. |
 | 5c | Silhouette, slow motion | The pistol comes up out of the dark into the hero's face, a black shape against the light. | Heartbeat faster. |
@@ -134,7 +134,7 @@ The crew's boss, built on the Brute boss system, with **a crowbar, then bare han
 | 9 | Push in | The hero backs away, staring at his hands, shaking his head: *"No... no... no..."* *"That wasn't... I didn't..."* | Breath. |
 | 10 | Low, on the floor | **A phone buzzes** in the water beside the dead man, its screen lighting the wet concrete. | Vibration on concrete. |
 | 11 | He picks it up: **the screen** | **CONTRACT UPDATE**, a grainy surveillance still of his own face (the wound on his temple): **THE FERRYMAN · $5,000,000 · OPEN · CONFIRM KILL.** UNKNOWN, incoming call. | |
-| 12 | The call | **THE VOICE:** *"Is it done?"* Silence; he breathes. *"...Ferryman."* *"You were supposed to stay dead."* **HIM:** *"Who is this?"* **THE VOICE:** *"The contract is open. Every gun in this city is coming for you."* CALL ENDED. | A click; the line. |
+| 12 | The call | **VOICE ON THE PHONE:** *"Is it done?"* Silence; he breathes. *"...Ferryman."* *"You were supposed to stay dead."* **YOU:** *"Who is this?"* **VOICE ON THE PHONE:** *"The contract is open. Every gun in this city is coming for you."* CALL ENDED. | A click; the line. |
 | 13 | Wide, high | He lets the phone fall. Very small in the huge empty hall. | Rain. |
 | 14 | From behind, wide | He walks out through the big door into the rain and the floodlights; the helicopter's searchlight crosses the yard. | Thunder, rotor. |
 | 15 | Black | **CHAPTER 1 COMPLETE · THE HITMAN.** Memory restored: *"Someone put you in the ground. You climbed out."* | |
