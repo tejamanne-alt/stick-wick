@@ -1149,3 +1149,4 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - **New: the phone call.** The dead man's phone buzzes in the water. Its screen (`PhoneGUI`) shows a surveillance still of the hero: THE FERRYMAN · $5,000,000 · OPEN · CONFIRM KILL. The voice: "Is it done?" … "Ferryman. You were supposed to stay dead." … "The contract is open. Every gun in this city is coming for you."
   - The memory line is now "Someone put you in the ground. You climbed out."
 - **New sounds:** `phone_buzz` (motor in bursts, case rattling on concrete) and `phone_click` (pick-up, and the hang-up tones).
+- **Vibration setting:** the pause menu now has a VIBRATION ON/OFF button next to SOUND, saved like sound (`Haptics`). Every phone buzz goes through `Haptics.Vibrate()`, and turning it back on gives one buzz to confirm. The pause menu is now four rows: RESUME | MOVES, SOUND | VIBRATION, RESTART | HINTS, MAIN MENU.

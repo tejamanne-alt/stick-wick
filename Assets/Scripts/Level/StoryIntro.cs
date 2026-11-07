@@ -109,12 +109,7 @@ namespace ProjectInk
 
         Vector3 HeadC() => head != null ? head.position + head.up * 0.19f : hero.transform.position + Vector3.up * 1.2f;
 
-        static void Buzz()
-        {
-#if UNITY_ANDROID || UNITY_IOS
-            Handheld.Vibrate();
-#endif
-        }
+        static void Buzz() => Haptics.Vibrate();
 
         // ================================================================== the loop
 

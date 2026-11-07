@@ -837,7 +837,7 @@ namespace ProjectInk
         GUIStyle gTitle, gLine, gNice, gChalk, gBtn;
         Texture2D finger, gRing;
         bool helpOpen, pauseOpen;
-        Rect helpBtn, skipBtn, skipMoveBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, restartBtn, hintsBtn, menuBtn;
+        Rect helpBtn, skipBtn, skipMoveBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, vibrateBtn, restartBtn, hintsBtn, menuBtn;
 
         /// <summary>Open or close the pause screen (and stop the world, and its sound).</summary>
         void SetPause(bool on)
@@ -1231,7 +1231,8 @@ namespace ProjectInk
             }
         }
 
-        /// <summary>The pause screen: RESUME, MOVES (the help card), SOUND on/off, RESTART.</summary>
+        /// <summary>The pause screen: RESUME, MOVES (the help card), SOUND and VIBRATION on/off,
+        /// RESTART, HINTS, MAIN MENU.</summary>
         void PauseCard(float w, float h, bool repaint)
         {
             Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.7f));
@@ -1239,21 +1240,24 @@ namespace ProjectInk
             Fill(new Rect(w * 0.5f - 150, h * 0.12f + 104, 300, 1), new Color(1f, 1f, 1f, 0.5f));
             if (director != null)
                 Label(new Rect(0, h * 0.12f + 112, w, 30), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}   ·   {director.Score:N0}", new GUIStyle(gLine) { fontSize = 18 });
-            // three rows of big buttons, sized to fit whatever height is left
-            float bw = 300, gap = 16;
+            // four rows of big buttons, sized to fit whatever height is left
+            float bw = 300, gap = 14;
             float y = h * 0.12f + 150;
-            float bh = Mathf.Clamp((h - 16f - y - gap * 2f) / 3f, 44f, 58f);
-            resumeBtn = new Rect(w * 0.5f - bw - gap * 0.5f, y, bw, bh);
-            movesBtn = new Rect(w * 0.5f + gap * 0.5f, y, bw, bh);
-            soundBtn = new Rect(w * 0.5f - bw - gap * 0.5f, y + bh + gap, bw, bh);
-            restartBtn = new Rect(w * 0.5f + gap * 0.5f, y + bh + gap, bw, bh);
+            float bh = Mathf.Clamp((h - 16f - y - gap * 3f) / 4f, 40f, 58f);
+            float lx = w * 0.5f - bw - gap * 0.5f, rx = w * 0.5f + gap * 0.5f;
+            resumeBtn = new Rect(lx, y, bw, bh);
+            movesBtn = new Rect(rx, y, bw, bh);
+            soundBtn = new Rect(lx, y + bh + gap, bw, bh);
+            vibrateBtn = new Rect(rx, y + bh + gap, bw, bh);
             DrawButton(resumeBtn, "RESUME", 28);
             DrawButton(movesBtn, "MOVES", 24);
             DrawButton(soundBtn, Sound.Master > 0f ? "SOUND  ON" : "SOUND  OFF", 24);
-            DrawButton(restartBtn, "RESTART", 24);
+            DrawButton(vibrateBtn, Haptics.Enabled ? "VIBRATION  ON" : "VIBRATION  OFF", 24);
             // chalk-mark hints: AUTO retires each one once learned; ALWAYS keeps them all on
-            hintsBtn = new Rect(w * 0.5f - bw - gap * 0.5f, y + (bh + gap) * 2f, bw, bh);
-            menuBtn = new Rect(w * 0.5f + gap * 0.5f, y + (bh + gap) * 2f, bw, bh);
+            restartBtn = new Rect(lx, y + (bh + gap) * 2f, bw, bh);
+            hintsBtn = new Rect(rx, y + (bh + gap) * 2f, bw, bh);
+            menuBtn = new Rect(w * 0.5f - bw * 0.5f, y + (bh + gap) * 3f, bw, bh);
+            DrawButton(restartBtn, "RESTART", 24);
             DrawButton(hintsBtn, HintDirector.AlwaysShow ? "HINTS  ALWAYS" : "HINTS  AUTO", 24);
             DrawButton(menuBtn, "MAIN MENU", 24);
             if (!repaint) return;
@@ -1261,6 +1265,7 @@ namespace ProjectInk
             if (Pressed(resumeBtn)) SetPause(false);
             else if (Pressed(movesBtn)) { helpOpen = true; TimeController.Paused = true; }
             else if (Pressed(soundBtn)) Sound.SetMuted(Sound.Master > 0f);
+            else if (Pressed(vibrateBtn)) Haptics.Enabled = !Haptics.Enabled;
             else if (Pressed(restartBtn)) { SetPause(false); if (director != null) director.Restart(); }
             else if (Pressed(hintsBtn)) HintDirector.AlwaysShow = !HintDirector.AlwaysShow;
             else if (Pressed(menuBtn))
