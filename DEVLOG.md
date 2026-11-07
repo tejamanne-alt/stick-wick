@@ -1056,3 +1056,14 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - At 45 cm it hits the lens (`LensHit`), forced just before the cut if the timing runs short:
   - a wet tap and a jolt, the picture blurring
   - on the glass: the burst blob with its bright edge, beads thrown round it, runs sliding down, fading as his eyes start to open in shot 2
+
+### Shot 5: WHERE AM I (replaces THE LIGHT)
+- After the wound and the static he doesn't know who or where he is, so the shot is him looking round, cut between his face and what he sees:
+  1. close on his face as he lifts his head and turns past us
+  2. his POV, the hall to the left, drifting and soft
+  3. under his chin as he tips his head back against the rafters
+  4. his POV, up: the rafters, the fan, the crack, the room rolling over a heartbeat
+  5. a chain clinks behind him; his POV whips round in a blur to nothing
+  6. a wide low shot from far across the floor as he turns to the moonlight under the shutter, into shot 6
+- His facing follows a keyed path (`GazeYaw`). His head tips back via the head bone after the animator (`GazePitch`, `LateUpdate`).
+- The searchlight curtain is removed.

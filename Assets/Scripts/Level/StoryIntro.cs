@@ -165,8 +165,7 @@ namespace ProjectInk
                     barsPx = Mathf.MoveTowards(barsPx, 0f, dt * 200f);
                     break;
             }
-            if (crackR != null) crackR.material.color = Color.Lerp(crackColor, Color.white, Mathf.Max(Time.unscaledTime < blueUntil ? 0.8f : 0f, crackGlow));
-            if (phase != Phase.Cinematic || t < S5 || t >= S6) SearchCurtain(0f, 0f);
+            if (crackR != null) crackR.material.color = Time.unscaledTime < blueUntil ? Color.Lerp(crackColor, Color.white, 0.8f) : crackColor;
             if (beads != null && (phase != Phase.Cinematic || t >= S3)) CrackWater(Vector3.zero, 0f, 0f, false);
             if (crackTopR != null) crackTopR.material.color = Time.unscaledTime < blueUntil ? Color.white : crackColor;
             if (Time.unscaledTime > glitchUntil && StoryCameraFX.Instance != null && StoryCameraFX.Instance.Glitch > 0f && !(phase == Phase.Cinematic && t > S4 + 5.15f && t < S4 + 5.65f))
@@ -349,41 +348,81 @@ namespace ProjectInk
             }
             else if (t < S6)
             {
-                // SHOT 5: THE LIGHT. The helicopter from the yard is still out there, searching. Its
-                // searchlight crosses the roof: a hard white curtain drops through the crack and its
-                // strip sweeps across the floor towards him. He crouches into the dark; it stops at his
-                // feet, holds (a heartbeat, his black shape against the white floor), and slides away.
-                // He comes up looking for the way out: the moonlight under the shutter.
+                // SHOT 5: WHERE AM I. The static has passed and nothing came back with it. He looks
+                // round: the hall to his left, up into the rafters, round at a sound behind him (nothing),
+                // and at last, small in all that dark, towards the thin moonlight under the shutter.
+                // His face, then what he sees, cut against each other; his head really turns and tips.
                 float u = t - S5;
-                if (At(S5))
+                if (At(S5)) { if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f); Sound.Ambience(0.55f, 0.3f, 700f); }
+                if (At(S5 + 0.1f)) Sound.Play(Sfx.Breath, 0.7f);
+                if (At(S5 + 0.45f)) Sound.Play(Sfx.Cloth, 0.5f);
+                if (At(S5 + 1.15f)) Sound.Play(Sfx.Drip, 0.5f, new Vector3(home.x - 5f, 0f, 0f), 0.85f);
+                if (At(S5 + 2.2f)) Sound.Play(Sfx.Cloth, 0.4f);
+                if (At(S5 + 2.6f)) Sound.Play(Sfx.Heartbeat, 0.8f);
+                if (At(S5 + 3.0f)) Sound.Play(Sfx.Heartbeat, 0.9f);
+                if (At(S5 + 3.3f)) Sound.Play(Sfx.Chain, 0.4f, new Vector3(home.x, 1.5f, 2.4f));    // behind him
+                if (At(S5 + 3.42f)) Sound.Play(Sfx.Whoosh, 0.5f, null, 1.3f);
+                if (At(S5 + 3.5f)) Sound.Play(Sfx.Breath, 0.8f, null, 1.2f);
+                if (At(S5 + 4.1f)) Sound.Play(Sfx.Wind, 0.6f);
+                if (At(S5 + 4.3f)) Sound.Play(Sfx.Heartbeat, 0.6f);
+
+                // where he faces (degrees about up: 0 = towards the shutter) and how far his head tips back
+                float th = Key(GazeYaw, u), ph = Key(GazePitch, u);
+                hero.transform.rotation = Quaternion.Euler(0f, th, 0f);
+                headPitch = ph; headPitchOn = true;
+                var d = new Vector3(Mathf.Cos(th * Mathf.Deg2Rad), 0f, -Mathf.Sin(th * Mathf.Deg2Rad));
+                var gaze = Quaternion.AngleAxis(ph, Vector3.Cross(d, Vector3.up)) * d;
+                var eye = hc + d * 0.12f + Vector3.up * 0.03f;
+                var hp5 = hero.transform.position;
+                float blur = 0f;
+                if (u < 0.95f)
                 {
-                    if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f);
-                    Sound.Ambience(0.55f, 0.3f, 700f);
-                    Sound.Play(Sfx.Rotor, 0.8f);
+                    // his face, close, front three-quarter: he lifts his head and turns past us
+                    pos = hc + new Vector3(0.42f, 0.04f, -1.15f) + Sway(0.008f, 0.5f, 31f);
+                    look = hc + new Vector3(0f, -0.02f, 0f);
+                    fov = 30f; roll = -2f;
                 }
-                if (At(S5 + 0.9f)) Sound.Play(Sfx.Rotor, 1f, new Vector3(home.x + 4f, 6f, 0f));
-                if (At(S5 + 0.5f)) Sound.Play(Sfx.Drip, 0.5f, new Vector3(home.x - 3f, 0f, 0f), 0.9f);
-                if (At(S5 + 1.25f)) Sound.Play(Sfx.Whoosh, 0.35f, null, 0.6f);
-                if (At(S5 + 2.0f)) { if (hero.body.Has("duck")) hero.body.Play("duck", 0.35f, true, 0.6f); Sound.Play(Sfx.Cloth, 0.6f); }
-                if (At(S5 + 2.5f)) Sound.Play(Sfx.Heartbeat, 0.8f);
-                if (At(S5 + 3.1f)) Sound.Play(Sfx.Heartbeat, 0.9f);
-                if (At(S5 + 3.65f)) Sound.Play(Sfx.Heartbeat, 0.8f);
-                if (At(S5 + 4.0f)) { if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.5f); Sound.Play(Sfx.Breath, 0.8f); }
-                // the light: on as the beam crosses the crack, gone as it leaves
-                float on = Ease(1.1f, 1.6f, u) * (1f - Ease(3.7f, 4.3f, u));
-                float sweep = Ease(1.2f, 3.2f, u);                                   // in towards him...
-                float away = Ease(3.6f, 4.4f, u);                                     // ...and away
-                float stop = home.x + 0.55f;
-                float poolX = Mathf.Lerp(Mathf.Lerp(home.x + 4.2f, stop, sweep), home.x + 2.6f, away);
-                SearchCurtain(on, poolX);
-                // the camera: low and wide from the front, the curtain beyond him, creeping in; at the
-                // end it turns with his eyes to the shutter
-                float kc = Ease(S5, S5 + 3.5f, t);
-                pos = Vector3.Lerp(new Vector3(home.x - 3.1f, 0.55f, -4.1f), new Vector3(home.x - 1.55f, 0.36f, -2.35f), kc) + Sway(0.012f, 0.4f, 6f);
-                var near = Vector3.Lerp(new Vector3(home.x + 1.2f, 1.7f, 0.6f), new Vector3(home.x + 0.55f, 0.95f, 0.25f), kc);
-                look = Vector3.Lerp(near, new Vector3(home.x + 9f, 0.9f, 2.2f), Ease(S5 + 4.2f, S6, t));
-                fov = Mathf.Lerp(42f, 38f, kc);
-                roll = Mathf.Lerp(-3f, 0f, kc);
+                else if (u < 2.0f)
+                {
+                    // what he sees: the hall to his left, drifting, not quite in focus
+                    pos = eye;
+                    look = eye + gaze * 5f + Sway(0.25f, 0.35f, 32f);
+                    fov = 52f; roll = 2f * Mathf.Sin(u * 1.3f);
+                    blur = 0.32f;
+                }
+                else if (u < 2.6f)
+                {
+                    // under his chin as he tips his head back: his black shape against the rafters
+                    pos = hc + d * 0.55f + new Vector3(0f, -0.62f, -0.25f);
+                    look = hc + new Vector3(0f, 1.3f, 0f) - d * 0.2f;
+                    fov = 44f; roll = 4f;
+                }
+                else if (u < 3.4f)
+                {
+                    // what he sees up there: the rafters, the fan, the crack's glow; the room starts to turn
+                    pos = eye;
+                    look = eye + gaze * 5f + Sway(0.2f, 0.3f, 33f);
+                    fov = 56f; roll = Mathf.Lerp(0f, 16f, Ease(2.6f, 3.4f, u));
+                    blur = 0.25f + 0.2f * Mathf.Abs(Mathf.Sin(u * 5f));
+                }
+                else if (u < 3.95f)
+                {
+                    // a chain, behind him: he spins round (his eyes, whipping) and there is nothing
+                    pos = eye;
+                    look = eye + gaze * 5f;
+                    fov = 50f; roll = Mathf.Lerp(16f, 0f, Ease(3.4f, 3.75f, u));
+                    blur = u < 3.75f ? 0.9f * Mathf.Sin(Mathf.InverseLerp(3.4f, 3.75f, u) * Mathf.PI) : 0.12f;
+                }
+                else
+                {
+                    // wide, low, from far across the floor: small in all that dark, he turns to the light
+                    // under the shutter at the far end
+                    float kw = Ease(3.95f, 4.8f, u);
+                    pos = new Vector3(hp5.x - 4.6f + 0.6f * kw, 0.45f, -4.3f + 0.4f * kw);
+                    look = new Vector3(hp5.x + 2.6f, 0.95f, 0.8f);
+                    fov = 40f; roll = 0f;
+                }
+                StoryCameraFX.Set(blur, 0f);
             }
             else
             {
@@ -416,65 +455,32 @@ namespace ProjectInk
             cam.Scripted(pos, look, 1f, fov);
         }
 
-        /// <summary>The helicopter only exists in the opening shot (its red light blinks itself).</summary>
-        Transform curtain, curtainPool;
-        Mesh curtainMesh;
-        Material curtainMat, curtainPoolMat;
-        Color curtainTint, curtainPoolTint;
-        float crackGlow;
+        // shot 5: where he faces (u, degrees: 0 = towards the shutter, 180 = the hall to his left,
+        // 270 = the back wall) and how far his head tips back (u, degrees)
+        static readonly float[] GazeYaw = { 0f, 0f, 0.3f, 0f, 1.0f, 160f, 1.9f, 178f, 3.3f, 190f, 3.45f, 190f, 3.72f, 268f, 3.95f, 272f, 4.25f, 272f, 4.8f, 360f };
+        static readonly float[] GazePitch = { 0f, -12f, 0.4f, -2f, 1.9f, 2f, 2.25f, 48f, 3.2f, 58f, 3.4f, 8f, 4.8f, 0f };
+        float headPitch;
+        bool headPitchOn;
 
-        /// <summary>The searchlight falling through the roof crack: a slanted sheet of white light from
-        /// the crack (it runs in depth, across the lane) down to a strip on the floor at x = floorX,
-        /// with the crack itself blazing. `on` 0..1. Built the first time, from the searchlight's own
-        /// additive material.</summary>
-        void SearchCurtain(float on, float floorX)
+        /// <summary>Piecewise smooth interpolation through (x, value) pairs.</summary>
+        static float Key(float[] k, float x)
         {
-            crackGlow = on;
-            if (on <= 0.001f)
-            {
-                if (curtain != null && curtain.gameObject.activeSelf) { curtain.gameObject.SetActive(false); curtainPool.gameObject.SetActive(false); }
-                return;
-            }
-            if (curtain == null)
-            {
-                var src = searchlight != null ? searchlight.GetComponent<Renderer>() : null;
-                if (src == null || crack == null) return;
-                curtain = new GameObject("SearchCurtain").transform;
-                curtainMesh = new Mesh { name = "SearchCurtain" };
-                curtain.gameObject.AddComponent<MeshFilter>().sharedMesh = curtainMesh;
-                var r = curtain.gameObject.AddComponent<MeshRenderer>();
-                curtainMat = new Material(src.sharedMaterial);
-                r.sharedMaterial = curtainMat;
-                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                curtainTint = curtainMat.HasProperty("_TintColor") ? curtainMat.GetColor("_TintColor") : Color.white;
-                curtainPool = Instantiate(searchPool != null ? searchPool : curtain).transform;
-                curtainPool.name = "SearchCurtainPool";
-                var pr = curtainPool.GetComponent<Renderer>();
-                if (pr != null) { curtainPoolMat = new Material(pr.sharedMaterial); pr.sharedMaterial = curtainPoolMat; curtainPoolTint = curtainPoolMat.HasProperty("_TintColor") ? curtainPoolMat.GetColor("_TintColor") : Color.white; }
-            }
-            if (!curtain.gameObject.activeSelf) { curtain.gameObject.SetActive(true); curtainPool.gameObject.SetActive(true); }
-            float cx = crack.position.x, z0 = -0.7f, z1 = 1.9f, top = RoofY - 0.02f;
-            float flick = 0.92f + 0.08f * Mathf.PerlinNoise(Time.unscaledTime * 9f, 0.3f);    // rain through the beam
-            var v = new[]
-            {
-                new Vector3(cx, top, z0), new Vector3(cx, top, z1),
-                new Vector3(floorX, 0.02f, z1 + 0.35f), new Vector3(floorX, 0.02f, z0 - 0.35f),
-                // a second, softer sheet a hand's width over: the beam has a body, not a blade
-                new Vector3(cx + 0.08f, top, z0), new Vector3(cx + 0.08f, top, z1),
-                new Vector3(floorX + 0.45f, 0.02f, z1 + 0.5f), new Vector3(floorX + 0.45f, 0.02f, z0 - 0.5f),
-            };
-            curtainMesh.vertices = v;
-            curtainMesh.uv = new[] { new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 0) };
-            curtainMesh.triangles = new[] { 0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7 };
-            curtainMesh.RecalculateBounds();
-            if (curtainMat.HasProperty("_TintColor")) curtainMat.SetColor("_TintColor", new Color(curtainTint.r, curtainTint.g, curtainTint.b, curtainTint.a * on * flick * 1.4f));
-            curtainPool.position = new Vector3(floorX + 0.2f, 0.035f, 0.6f);
-            curtainPool.rotation = Quaternion.Euler(90f, 0f, 0f);
-            curtainPool.localScale = new Vector3(1.1f, 3.6f, 1f);
-            if (curtainPoolMat != null && curtainPoolMat.HasProperty("_TintColor"))
-                curtainPoolMat.SetColor("_TintColor", new Color(curtainPoolTint.r, curtainPoolTint.g, curtainPoolTint.b, Mathf.Min(1f, curtainPoolTint.a * on * 1.8f)));
+            if (x <= k[0]) return k[1];
+            for (int i = 0; i < k.Length - 2; i += 2)
+                if (x < k[i + 2]) return Mathf.Lerp(k[i + 1], k[i + 3], Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(k[i], k[i + 2], x)));
+            return k[k.Length - 1];
         }
 
+        /// <summary>After the animation: his head tipped back as far as the shot wants (shot 5).</summary>
+        void LateUpdate()
+        {
+            if (!headPitchOn || head == null || hero == null) return;
+            if (phase != Phase.Cinematic || t < S5 || t >= S6) { headPitchOn = false; return; }
+            var fwd = hero.transform.rotation * Vector3.right;
+            head.rotation = Quaternion.AngleAxis(headPitch, Vector3.Cross(fwd, Vector3.up)) * head.rotation;
+        }
+
+        /// <summary>The helicopter only exists in the opening shot (its red light blinks itself).</summary>
         void ShowSearch(bool on)
         {
             if (searchlight != null && searchlight.gameObject.activeSelf != on) searchlight.gameObject.SetActive(on);
