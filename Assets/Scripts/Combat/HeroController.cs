@@ -384,7 +384,7 @@ namespace ProjectInk
             if (dx < 0.2f || dx > (fromAir ? 1.9f : 2.6f)) return false;
             if (fromAir ? (p.y - e.y < -0.3f || p.y - e.y > 2.2f) : Mathf.Abs(e.y - p.y) > 0.3f) return false;
             float landX = e.x - side * ScissorsLand;
-            if (Mathf.Abs(landX) > arenaMaxX - 0.3f) return false;
+            if (landX > arenaMaxX - 0.3f || landX < arenaMinX + 0.3f) return false;
             float g = GroundY(new Vector3(landX, e.y + 0.4f, 0f), 0.4f);
             return Mathf.Abs(g - e.y) < 0.45f;
         }
@@ -2116,6 +2116,7 @@ namespace ProjectInk
                 knockdown = currentAttack.knockdown,
                 heavy = currentAttack.heavy,
                 lift = currentAttack.lift,
+                low = IsKickClip(currentAttack.clip),
                 attacker = this
             };
 

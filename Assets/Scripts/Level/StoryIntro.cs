@@ -37,11 +37,11 @@ namespace ProjectInk
         public HeroController hero;
         public WaveDirector director;
 
-        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, End }
+        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, End }
         Phase phase = Phase.Cinematic;
 
         /// <summary>The fight HUD steps aside while the story holds the screen.</summary>
-        public bool HideHud => phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
+        public bool HideHud => phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
 
         // the edit (real seconds)
         const float S1 = 4.2f, S2 = 6.8f, S3 = 10.8f, S4 = 15.6f, S5 = 22.2f, S6 = 27.0f, Control = 30.6f;
@@ -126,7 +126,8 @@ namespace ProjectInk
                 setUp = true;
                 HeadWound.Chapter = 1;                       // the warehouse: the night of the blow
                 if (!Retry) EscapeSeen = false;              // from the top: he has not found the knife yet
-                if (Retry) { BeginAtDoor(); }
+                if (HallCheckpoint >= 0) { BeginHall(HallCheckpoint, true); }      // a defeat in the hall: back to that zone
+                else if (Retry) { BeginAtDoor(); }
                 else
                 {
                     hero.CinePuppet();
@@ -152,6 +153,11 @@ namespace ProjectInk
                     UpdateEscape();
                     break;
                 case Phase.Duel: UpdateDuel(); break;
+                case Phase.ToHall:
+                    prevHallT = hallT; hallT += dt;
+                    UpdateToHall();
+                    break;
+                case Phase.Hall: UpdateHall(); break;
                 case Phase.Breach:
                     prevB = b; b += dt;
                     UpdateBreach();
@@ -821,9 +827,8 @@ namespace ProjectInk
             if (AtM(1.8f)) Sound.Play(Sfx.CineMassive, 0.7f);
             if (AtM(5.2f))
             {
-                phase = Phase.End;
-                Retry = false;
                 Sound.Play(Sfx.CineHit, 0.7f);
+                BeginToHall();                                     // the rest of the crew, beyond the inner shutter (StoryHall)
             }
         }
 
@@ -878,6 +883,7 @@ namespace ProjectInk
             if (phase == Phase.Memory) Memory(w, h);
             if (phase == Phase.Escape) EscapeGUI(w, h);
             if (phase == Phase.Duel || Time.unscaledTime - okAt < 0.4f) DuelGUI(w, h);
+            HallGUI(w, h);
 
             // lightning: two white frames, then a blue afterglow
             if (flashFrames > 0) { Fill(new Rect(0, 0, w, h), Color.white); if (repaint) flashFrames--; }

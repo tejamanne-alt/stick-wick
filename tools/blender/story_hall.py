@@ -501,11 +501,16 @@ def build_inner_shutter(S, coll, M):
 def hall_lights(add):
     """The hall's light: moon through the windows and the torn skylight, a few lamps still on,
     the office strip light, floodlights outside the dock, a cold fill so fights read."""
-    add("AREA", "HallFill", (38.0, -5.0, 5.0), 900, (0.32, 0.42, 0.8), size=30.0, rot=(math.radians(80), 0, 0))
-    add("AREA", "HallRoofFill", (38.0, 9.4, 8.5), 260, (0.45, 0.55, 0.75), size=30.0, rot=(math.radians(180), 0, 0))
+    add("AREA", "HallFill", (38.0, -5.0, 5.0), 2400, (0.32, 0.42, 0.8), size=30.0, rot=(math.radians(80), 0, 0))
+    add("AREA", "HallRoofFill", (38.0, 9.4, 8.5), 900, (0.45, 0.55, 0.75), size=30.0, rot=(math.radians(180), 0, 0))
+    for zx in (20.0, 32.0, 44.0, 56.0):                                                     # each zone's lane, readable
+        add("AREA", "HallLaneFill", (zx, -5.5, 5.5), 900, (0.36, 0.46, 0.82), size=10.0, rot=(math.radians(75), 0, 0))
+        # and what stands behind it (racks, deck, back wall) lifted off black, so a black figure
+        # up on a rack or the mezzanine still reads against it
+        add("AREA", "HallWallWash", (zx, 11.0, 6.5), 1600, (0.42, 0.5, 0.78), size=11.0, rot=(math.radians(100), 0, 0))
     add("AREA", "SkylightTorn", ((TORN[0] + TORN[1]) / 2, 0.4, RIDGE - 0.4), 1400, (0.62, 0.72, 1.0), size=3.0)
     for (x, y, z, warm) in ((18.0, 6.0, 6.0, True), (32.0, 2.6, 6.2, True), (53.0, 1.0, 6.3, True)):
-        s = add("SPOT", "HallLamp", (x, y, z), 900, (1.0, 0.58, 0.24), size=0.15)
+        s = add("SPOT", "HallLamp", (x, y, z), 1700, (1.0, 0.58, 0.24), size=0.15)
         s.data.spot_size = math.radians(95)
         s.data.spot_blend = 0.7
     add("AREA", "OfficeLight", (47.8, 2.1, MEZZ[2] + 2.4), 300, (0.75, 0.88, 1.0), size=1.4, rot=(math.radians(180), 0, 0))

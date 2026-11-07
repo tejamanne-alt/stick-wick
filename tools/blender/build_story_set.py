@@ -1107,21 +1107,24 @@ def main():
         o.select_set(False)
     for o in (interior, shutter, fan, yard, ground, city, hall, front, inner):
         unwrap(o)
-    bake(interior, 2048, 48)
-    bake(shutter, 512, 32)
-    bake(fan, 256, 16)
-    bake(yard, 2048, 24)
-    bake(ground, 1024, 16)
-    bake(city, 1024, 8)
+    hall_only = "--hall-only" in sys.argv          # re-bake just the hall (the other bakes are kept; unwraps are deterministic)
+    if not hall_only:
+        bake(interior, 2048, 48)
+        bake(shutter, 512, 32)
+        bake(fan, 256, 16)
+        bake(yard, 2048, 24)
+        bake(ground, 1024, 16)
+        bake(city, 1024, 8)
     bake(hall, 4096, 24)
     bake(front, 2048, 16)
     bake(inner, 512, 24)
     # the same set in a lightning strike: everything blown cold white for a few frames
     lightning_lights()
-    bake(interior, 2048, 32, "_Lightning")
-    bake(shutter, 512, 16, "_Lightning")
-    bake(yard, 2048, 16, "_Lightning")
-    bake(ground, 1024, 12, "_Lightning")
+    if not hall_only:
+        bake(interior, 2048, 32, "_Lightning")
+        bake(shutter, 512, 16, "_Lightning")
+        bake(yard, 2048, 16, "_Lightning")
+        bake(ground, 1024, 12, "_Lightning")
     bake(hall, 4096, 16, "_Lightning")
     marks = []
     for n, p in (("Mark_X", (10, 0, 0)), ("Mark_Y", (0, 10, 0)), ("Mark_Z", (0, 0, 10))):

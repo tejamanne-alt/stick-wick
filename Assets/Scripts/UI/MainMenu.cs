@@ -98,7 +98,7 @@ namespace ProjectInk
             float bw = Mathf.Min(360f, w * 0.38f), bh = 96f, gap = 30f, y = h * 0.62f;
             var story = new Rect(w * 0.5f - bw - gap * 0.5f, y, bw, bh);
             var fight = new Rect(w * 0.5f + gap * 0.5f, y, bw, bh);
-            if (Button(story, "STORY MODE", "PROLOGUE  ·  THE WAREHOUSE", true)) SceneManager.LoadScene("Story_Warehouse");
+            if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true)) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
             if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false)) SceneManager.LoadScene("Prototype");
             GUI.matrix = Matrix4x4.identity;
         }

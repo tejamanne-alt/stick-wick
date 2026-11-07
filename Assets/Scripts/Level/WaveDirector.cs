@@ -36,6 +36,9 @@ namespace ProjectInk
         static readonly string[] ChapterTitles = { "THE LOBBY", "KNIVES OUT", "PIPE DREAMS", "COLD STEEL", "LEAD RAIN" };
         static readonly Color GunColor = new Color(0.18f, 0.34f, 0.72f);
         static readonly Color BruteColor = new Color(0.40f, 0.04f, 0.07f);
+        static readonly Color RunnerColor = new Color(0.86f, 0.74f, 0.22f);     // quick and yellow
+        static readonly Color GrabberColor = new Color(0.28f, 0.36f, 0.16f);    // big, dull olive
+        static readonly Color DoorManColor = new Color(0.30f, 0.42f, 0.50f);    // slate, like his sheet of iron
 
         public enum Phase { Intro, Fighting, BetweenWaves, FloorClear, Dead }
         public Phase CurrentPhase { get; private set; } = Phase.Intro;
@@ -310,7 +313,7 @@ namespace ProjectInk
             if (point == null || enemyModel == null) return null;
             Vector3 pos = point.position + new Vector3(Random.Range(-0.4f, 0.4f), 0f, 0f);
             if (inc.kind == SpawnKind.Ceiling && hero != null)
-                pos.x = Mathf.Clamp(hero.transform.position.x + Random.Range(-2.5f, 2.5f), -11f, 11f);
+                pos.x = Mathf.Clamp(hero.transform.position.x + Random.Range(-2.5f, 2.5f), hero.arenaMinX + 1.5f, hero.arenaMaxX - 1.5f);
             var weapon = inc.type switch
             {
                 EnemyType.Swordsman => FightStyle.Sword,
@@ -322,6 +325,7 @@ namespace ProjectInk
             var go = FighterFactory.Build(enemyModel, moves, enemyMaterial, $"Enemy_{spawnSerial++}", false, trailMaterial, weapon, eyeMaterial);
             go.transform.position = pos;
             var e = go.GetComponent<Enemy>();
+            if (hero != null) { e.arenaMinX = hero.arenaMinX; e.arenaMaxX = hero.arenaMaxX; }      // the same walls as him (a zone of a long building)
             float scale = 1f + 0.12f * (Floor - 1);
             float hp = inc.type switch
             {
@@ -330,6 +334,9 @@ namespace ProjectInk
                 EnemyType.Gunner => 25f * scale,
                 EnemyType.Thrower => 25f * scale,
                 EnemyType.Piper => 38f * scale,
+                EnemyType.Runner => 15f * scale,
+                EnemyType.Grabber => 55f * scale,
+                EnemyType.DoorMan => 42f * scale,
                 _ => 30f * scale,
             };
             Color c = inc.type switch
@@ -339,6 +346,9 @@ namespace ProjectInk
                 EnemyType.Gunner => GunColor,
                 EnemyType.Thrower => ThrowerColor,
                 EnemyType.Piper => PiperColor,
+                EnemyType.Runner => RunnerColor,
+                EnemyType.Grabber => GrabberColor,
+                EnemyType.DoorMan => DoorManColor,
                 _ => BrawlerColors[Random.Range(0, BrawlerColors.Length)],
             };
             e.Init(hero, inc.kind, inc.type, hp, c, trailMaterial);
@@ -534,7 +544,7 @@ namespace ProjectInk
             StyleUntil = Time.unscaledTime + 1.2f;
         }
 
-        void ShowBanner(string text, float seconds)
+        public void ShowBanner(string text, float seconds)
         {
             Banner = text;
             BannerUntil = Time.unscaledTime + seconds;

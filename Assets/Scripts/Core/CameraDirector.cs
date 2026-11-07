@@ -113,6 +113,13 @@ namespace ProjectInk
 
         [Tooltip("Inner faces of the side walls: the camera never shows past them if it can help it.")]
         public float wallX = 13.0f;
+        /// <summary>A stretch of a long building the framing keeps to (a fight zone), instead of
+        /// the symmetric ±wallX; NaN for none.</summary>
+        public float boundMinX = float.NaN, boundMaxX = float.NaN;
+        public void SetBounds(float min, float max) { boundMinX = min; boundMaxX = max; }
+        public void ClearBounds() { boundMinX = boundMaxX = float.NaN; }
+        float WallLo => float.IsNaN(boundMinX) ? -wallX - 0.3f : boundMinX;
+        float WallHi => float.IsNaN(boundMaxX) ? wallX + 0.3f : boundMaxX;
         const float BodyHeight = 1.35f;     // feet to the top of the head, chibi scale
         readonly List<Transform> candidates = new List<Transform>();
 
@@ -130,7 +137,7 @@ namespace ProjectInk
             // the frame may show a strip of floor below and of roof above, but never past the side walls
             float floorY = -0.9f, roofY = Fighter.RoofY + 1.1f;
             // the furthest it may pull back: the whole building from wall to wall, and no further
-            float dMax = Mathf.Min((roofY - floorY) * 0.5f / tanV, (wallX + 0.3f) / tanH);
+            float dMax = Mathf.Min((roofY - floorY) * 0.5f / tanV, (WallHi - WallLo) * 0.5f / tanH);
             dMax = Mathf.Max(dMax, minDistance);
             float sx = tanH * SafeX, sy = tanV * SafeY;
 
@@ -159,7 +166,7 @@ namespace ProjectInk
             cy = Mathf.Clamp(cy, h.y + BodyHeight - hyTop, h.y + hyBot);
             // ... and never look past the building
             float halfW = dist * tanH, halfH = dist * tanV;
-            cx = halfW < wallX + 0.3f ? Mathf.Clamp(cx, -wallX - 0.3f + halfW, wallX + 0.3f - halfW) : 0f;
+            cx = halfW < (WallHi - WallLo) * 0.5f ? Mathf.Clamp(cx, WallLo + halfW, WallHi - halfW) : (WallLo + WallHi) * 0.5f;
             cy = halfH < (roofY - floorY) * 0.5f ? Mathf.Clamp(cy, floorY + halfH, roofY - halfH) : (floorY + roofY) * 0.5f;
             center = new Vector3(cx, cy, 0f);
         }

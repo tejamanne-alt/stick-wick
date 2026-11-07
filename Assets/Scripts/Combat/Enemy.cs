@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ProjectInk
 {
     public enum SpawnKind { LeftDoor, RightDoor, UpperDoor, Background, Ceiling }
-    public enum EnemyType { Brawler, Swordsman, Gunner, Brute, Thrower, Piper }
+    public enum EnemyType { Brawler, Swordsman, Gunner, Brute, Thrower, Piper, Runner, Grabber, DoorMan }
 
     /// <summary>An enemy. Comes in through a door (or drops from above), finds its way to the
     /// hero's floor (up the stairs, or leaping off the upper floor), circles at a distance and
@@ -124,6 +124,28 @@ namespace ProjectInk
             leapDown = type != EnemyType.Brute && Random.value < 0.7f;
             perchX = Random.Range(-2.8f, -0.6f);
             weaponMat = hero.weaponMaterial;
+            if (type == EnemyType.Runner)
+            {
+                // light and quick: darts in, one jab, darts out
+                transform.localScale = Vector3.one * 0.9f;
+                walkSpeed = 3.7f;
+                windupSeconds = 0.28f;
+                ringDistance = Random.Range(2.0f, 2.8f);
+            }
+            else if (type == EnemyType.Grabber)
+            {
+                // big and slow; gets hold of you so the others can hit you
+                transform.localScale = Vector3.one * 1.18f;
+                walkSpeed = 2.0f;
+                windupSeconds = 0.55f;
+                ringDistance = Random.Range(1.8f, 2.4f);
+            }
+            else if (type == EnemyType.DoorMan)
+            {
+                walkSpeed = 2.2f;
+                windupSeconds = 0.5f;
+                BuildShield();
+            }
             if (type == EnemyType.Brute)
             {
                 Boss = true;
@@ -237,6 +259,7 @@ namespace ProjectInk
                     if (!hero.IsGrabbedBy(this)) { ReleaseToken(); GoWait(); }
                     break;
                 case State.Recover:
+                    if (Type == EnemyType.Runner && stateTime < 0.45f) { Walk(-Mathf.Sign(dx) * 1.5f); break; }   // dart back out
                     if (Boss && recoverFor > 0.6f) velocity.x = Mathf.MoveTowards(velocity.x, 0f, 14f * dt);   // a slow get-up: the opening
                     else if (dist < Ring && !Ranged) Walk(-Mathf.Sign(dx) * 0.7f); else velocity.x = 0f;
                     if (stateTime > recoverFor) { recoverFor = 0.5f; GoWait(); }
@@ -684,6 +707,18 @@ namespace ProjectInk
                 case EnemyType.Piper:
                     attack = AttackData.EnemyPipe;
                     body.Play("sword_idle", 0.08f);
+                    break;
+                case EnemyType.Runner:
+                    attack = AttackData.EnemyJab;
+                    body.Play("windup", 0.05f);
+                    break;
+                case EnemyType.Grabber:
+                    attack = Random.value < 0.75f ? AttackData.EnemyGrab : AttackData.EnemyCross;
+                    body.Play("windup", 0.08f);
+                    break;
+                case EnemyType.DoorMan:
+                    attack = Random.value < 0.5f ? AttackData.EnemyJab : AttackData.EnemyCross;
+                    body.Play("windup", 0.08f);
                     break;
                 default:
                     int r = Random.Range(0, 4);
@@ -1164,7 +1199,74 @@ namespace ProjectInk
             Die();
         }
 
-        // --- henchmen
+        // --- the door-man: a sheet of corrugated iron held in front of him
+        Transform shield;
+        int shieldHits;
+        public bool Shielded => shield != null;
+
+        void BuildShield()
+        {
+            var sh = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Object.Destroy(sh.GetComponent<Collider>());
+            sh.name = "Shield";
+            shield = sh.transform;
+            shield.SetParent(transform, false);
+            shield.localPosition = new Vector3(0.42f, 1.0f, -0.05f);
+            shield.localRotation = Quaternion.Euler(0f, 35f, 4f);
+            shield.localScale = new Vector3(0.05f, 1.35f, 0.8f);
+            var r = sh.GetComponent<Renderer>();
+            var sm = Shader.Find("Unlit/Color");
+            if (sm != null) r.material = new Material(sm) { color = new Color(0.42f, 0.44f, 0.47f) };
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            // rust down the sheet, a ridge or two
+            for (int i = 0; i < 3; i++)
+            {
+                var rib = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Object.Destroy(rib.GetComponent<Collider>());
+                rib.transform.SetParent(shield, false);
+                rib.transform.localPosition = new Vector3(-0.6f, 0f, -0.3f + i * 0.3f);
+                rib.transform.localScale = new Vector3(0.6f, 1f, 0.06f);
+                var rr = rib.GetComponent<Renderer>();
+                if (sm != null) rr.material = new Material(sm) { color = i == 1 ? new Color(0.38f, 0.17f, 0.08f) : new Color(0.3f, 0.32f, 0.35f) };
+                rr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+        }
+
+        /// <summary>A strike from the front, high, that is not a heavy blow, clangs off the sheet.
+        /// Kicks and slides go under it, anything from behind gets round it, and heavy blows, throws
+        /// and crates (or enough clangs) tear it out of his hands.</summary>
+        bool ShieldBlocks(HitInfo hit)
+        {
+            if (shield == null || !Alive) return false;
+            bool fromFront = hit.direction == -Facing;
+            if (hit.heavy || hit.knockdown || projectile)
+            {
+                LoseShield(hit.direction);
+                return false;
+            }
+            if (!fromFront || hit.low) return false;
+            shieldHits++;
+            Sound.Play(Sfx.MetalClang, 0.8f, Chest, Random.Range(0.95f, 1.15f));
+            StreakFx.Sparks(Chest + Vector3.right * Facing * 0.45f, new Vector3(-hit.direction, 0.4f, -0.5f), 8, 4f);
+            velocity.x = hit.direction * 1.5f;
+            if (WaveDirector.Instance != null && shieldHits == 1) WaveDirector.Instance.AddStyle(0, "BLOCKED: KICK LOW!");
+            if (shieldHits >= 4) LoseShield(hit.direction);
+            return true;
+        }
+
+        void LoseShield(int dir)
+        {
+            if (shield == null) return;
+            var s = shield;
+            shield = null;
+            s.SetParent(null, true);
+            Sound.Play(Sfx.MetalClang, 1f, s.position, 0.8f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(60, "SHIELD BROKEN");
+            var fall = s.gameObject.AddComponent<ShieldFall>();
+            fall.velocity = new Vector3(dir * 3.5f, 3f, 0f);
+        }
+
+        // --- henchmen        // --- henchmen
         float fleeFromX;
 
         /// <summary>The boss is here: run for the exit. Hit one on the way out for COWARD!</summary>
@@ -1218,6 +1320,7 @@ namespace ProjectInk
             if (Untouchable || state == State.Dead) return;
             if (!Targetable && !hit.hitsDowned && !OnLedge) return;
             if (OnLedge) { DropFromLedge(); }
+            if (ShieldBlocks(hit)) return;
             bool armored = Boss && ((state == State.Charge && chargeRunning) || state == State.Slam || state == State.Stunned);
             if (!armored) ReleaseToken();
             float dmg = hit.damage;

@@ -78,6 +78,46 @@ namespace ProjectInk
         public static readonly (int from, int to, float x)[] ExtraWalks = { (6, 0, StairLowX0 - 0.4f) };
     }
 
+    /// <summary>The story warehouse: the store he wakes in (x -14..14) and through its inner
+    /// shutter the main hall (x 14..62, tools/blender/story_hall.py), in four zones: the
+    /// forklift's raised forks, two pallet racks across the lane, the mezzanine with its stairs
+    /// up from the left and a ledge at its right end. Shared by the scene builder and the game.</summary>
+    public static class WarehousePlan
+    {
+        public const float StoreHalf = 14.0f, HallX0 = 14.3f, HallX1 = 62.0f;
+        public const float ForkX0 = 19.6f, ForkX1 = 21.2f, ForkY = 1.62f;
+        public const float RackY = 2.2f, Rack1X0 = 27.0f, Rack1X1 = 31.0f, Rack2X0 = 33.0f, Rack2X1 = 37.0f;
+        public const float MezzX0 = 40.0f, MezzX1 = 50.0f, MezzY = 3.4f, StairX0 = 37.6f;
+        public const float HoistX = 32.0f, BarX = 45.0f;
+        /// <summary>The fight zones along the hall: where each one's arena begins and ends.</summary>
+        public static readonly float[] ZoneX = { HallX0, 26.0f, 38.0f, 50.0f, HallX1 };
+
+        public static readonly Platform[] Platforms =
+        {
+            new Platform(-StoreHalf, StairX0 - 0.1f, 0f, false),     // 0 the floor: store, loading bay, racking
+            new Platform(ForkX0, ForkX1, ForkY),                       // 1 the forklift's forks
+            new Platform(Rack1X0, Rack1X1, RackY),                     // 2 rack 1
+            new Platform(Rack2X0, Rack2X1, RackY),                     // 3 rack 2
+            new Platform(MezzX0, MezzX1, MezzY),                       // 4 the mezzanine
+            new Platform(StairX0 + 0.5f, HallX1, 0f, false),          // 5 the floor under the stairs and on to the crane bay
+        };
+
+        public static readonly Ledge[] Ledges =
+        {
+            new Ledge(ForkX0, ForkY, +1), new Ledge(ForkX1, ForkY, -1),
+            new Ledge(Rack1X0, RackY, +1), new Ledge(Rack1X1, RackY, -1),
+            new Ledge(Rack2X0, RackY, +1), new Ledge(Rack2X1, RackY, -1),
+            new Ledge(MezzX1, MezzY, -1),                              // up onto the mezzanine from the crane bay
+        };
+
+        public static readonly Stair[] Stairs =
+        {
+            new Stair(StairX0, 0f, MezzX0, MezzY, 0, 4),
+        };
+
+        public static readonly (int from, int to, float x)[] ExtraWalks = { (5, 0, StairX0 - 0.4f) };
+    }
+
     /// <summary>Route-finding across the building's levels. For every pair of platforms it
     /// knows how to get from one to the next: walk (they touch), climb (a ledge above whose
     /// foot is on this platform) or drop (through a one-way platform, landing on whatever is
@@ -111,6 +151,11 @@ namespace ProjectInk
             {
                 platforms = TowerPlan.Platforms; ledges = TowerPlan.Ledges;
                 stairs = TowerPlan.Stairs; extraWalks = TowerPlan.ExtraWalks;
+            }
+            else if (kind == LayoutKind.Warehouse)
+            {
+                platforms = WarehousePlan.Platforms; ledges = WarehousePlan.Ledges;
+                stairs = WarehousePlan.Stairs; extraWalks = WarehousePlan.ExtraWalks;
             }
             else { platforms = null; ledges = null; stairs = null; extraWalks = null; }
         }

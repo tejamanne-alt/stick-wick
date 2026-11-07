@@ -242,6 +242,9 @@ namespace ProjectInk.EditorTools
                 }
             }
             foreach (var c in set.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c);
+            // the camera-side walls are real, and cut away while the camera is outside them
+            foreach (var r in set.GetComponentsInChildren<Renderer>(true))
+                if (r.gameObject.name == "HallFront") r.gameObject.AddComponent<CutawayWall>().insideZ = -1.15f;
             if (fan != null)
             {
                 // the blades turn about the wall's normal (world z), round their own centre
@@ -334,11 +337,32 @@ namespace ProjectInk.EditorTools
             Rain(env, particle);
             Dust(env, particle);
 
+            // ------------------------------------------------------------ the main hall's kit (LevelNav.WarehousePlan)
+            HallKit(env);
+
             // ------------------------------------------------------------ spawn points: everyone comes through the shutter
             var door = new Vector3(ShutterX, 0f, BackZ + 0.5f);
             for (int i = 0; i < points.Length; i++)
                 points[i] = PrototypeBuilder.Point(spawnRoot, ((SpawnKind)i).ToString(), door);
             heroStart = new Vector3(HeroStartX, 0f, 0f);
+        }
+
+        /// <summary>The things in the hall the hero fights with: the monorail hoist's chain to swing
+        /// on between the racks, a pipe across the mezzanine to swing round, and crates on the floor
+        /// in every zone to kick into people.</summary>
+        static void HallKit(Transform env)
+        {
+            var kit = new GameObject("HallKit").transform;
+            kit.SetParent(env, false);
+            var chainMat = PrototypeBuilder.Mat("StoryHoistChain", "Sprites/Default", new Color(0.2f, 0.2f, 0.22f));
+            EnvironmentBuilder.Rope(kit, new Vector3(WarehousePlan.HoistX, 7.6f, 0f), 5.1f, chainMat);
+            var steel = PrototypeBuilder.Mat("StoryBarSteel", "Unlit/Color", new Color(0.14f, 0.14f, 0.16f));
+            var rim = PrototypeBuilder.Mat("StoryBarRim", "Unlit/Color", new Color(0.55f, 0.55f, 0.58f));
+            EnvironmentBuilder.Bar(kit, new Vector3(WarehousePlan.BarX, WarehousePlan.MezzY + 2.35f, 0f), 9.0f, steel, rim);
+            var wood = PrototypeBuilder.Mat("StoryCrateWood", "Unlit/Color", new Color(0.30f, 0.21f, 0.12f));
+            var edge = PrototypeBuilder.Mat("StoryCrateEdge", "Unlit/Color", new Color(0.55f, 0.42f, 0.25f));
+            foreach (var cx in new[] { 16.6f, 23.6f, 24.5f, 32.0f, 42.5f, 52.4f, 60.2f })
+                EnvironmentBuilder.Crate(kit, new Vector3(cx, 0f, 0f), 0.7f, wood, edge);
         }
 
         /// <summary>A light beam: two crossed quads from a narrow end (at the origin) to a wide end

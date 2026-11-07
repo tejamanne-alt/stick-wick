@@ -11,6 +11,7 @@ namespace ProjectInk
         public bool heavy;
         public bool hitsDowned;    // can hit an enemy that is already down (finishers, throws)
         public float lift;         // upward launch speed (the sword's rising cut), 0 = default
+        public bool low;           // a kick or a slide: goes under a held shield
         public Fighter attacker;
     }
 
