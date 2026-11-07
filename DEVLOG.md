@@ -1048,3 +1048,11 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - rust bled out round it
   - all children of the crack, so they move with it
 - Scene version 31.
+
+### The drop falls on you
+- In shot 1 the camera now sits exactly beneath the drop's point on the crack (`CrackPoint`) and looks straight up the line it falls. Before, it sat under his head, a few centimetres off, and looked slightly off vertical, so the drop slid sideways out of frame as it came.
+- Now it stays dead centre and only grows.
+- It lets go with a tiny tick (`DropRelease`, timed so it arrives just before the cut), and its air is heard close.
+- At 45 cm it hits the lens (`LensHit`), forced just before the cut if the timing runs short:
+  - a wet tap and a jolt, the picture blurring
+  - on the glass: the burst blob with its bright edge, beads thrown round it, runs sliding down, fading as his eyes start to open in shot 2

@@ -264,13 +264,23 @@ namespace ProjectInk
                 // SHOT 1: the roof fracture. Looking straight up, the camera turning slowly as the drop gathers.
                 if (At(S1)) { Sound.Ambience(0.9f, 0.55f, 800f); }
                 if (At(S1 + 0.3f)) Sound.Play(Sfx.Drip, 0.35f, null, 0.9f);
-                if (At(S1 + 1.4f)) Sound.Play(Sfx.Whoosh, 0.8f, null, 1.7f);
+                if (At(S1 + DropRelease)) Sound.Play(Sfx.Drip, 0.25f, null, 1.5f);          // the tiny tick as it lets go
+                if (At(S1 + DropRelease + 0.75f)) Sound.Play(Sfx.Whoosh, 0.35f, null, 1.9f);  // the air of it, close
                 float k = Ease(S1, S2, t);
-                pos = hc + new Vector3(0f, 0.35f + 0.12f * k, 0f) + Sway(0.006f, 0.4f, 2f);
-                look = new Vector3(hc.x, RoofY, hc.z + 0.25f);
+                // straight under the drop, looking straight up the line it will fall: it stays dead
+                // centre and only grows as it comes, until it lands on the lens
+                var a = CrackPoint(hc.z);
+                var sw = Sway(0.004f, 0.4f, 2f);
+                pos = new Vector3(a.x + sw.x, hc.y + 0.35f + 0.12f * k, a.z + sw.z);
+                look = new Vector3(a.x, RoofY, a.z + 0.04f);
                 fov = Mathf.Lerp(26f, 22f, k);
                 roll = Mathf.Lerp(0f, 12f, k);
-                PoseDrop(drop0, drop0R, hc, S1 + 0.2f, S1 + 1.4f, 9.8f, S2);
+                if (!dropHit)
+                {
+                    PoseDrop(drop0, drop0R, hc, S1 + 0.2f, S1 + DropRelease, 9.8f, S2);
+                    if (drop0R != null && drop0R.enabled && t > S1 + DropRelease && (drop0.position.y - pos.y < 0.45f || t > S2 - 0.06f)) LensHit();
+                }
+                else if (drop0R != null) drop0R.enabled = false;
                 CrackWater(hc, S1 + 0.05f, S1 + 0.75f, true);
             }
             else if (t < S3)
@@ -499,6 +509,61 @@ namespace ProjectInk
             }
             d.position = p;
             if (cam != null) d.rotation = Quaternion.LookRotation(p - cam.transform.position, cam.transform.up);
+        }
+
+        /// <summary>When the first drop lets go (story time after S1): timed so it reaches the lens
+        /// just before the cut to his eyes.</summary>
+        const float DropRelease = 1.2f;
+        bool dropHit;
+        float lensHitAt = -9f;
+
+        /// <summary>The drop lands on the lens: a wet tap, the picture blurs, water on the glass.</summary>
+        void LensHit()
+        {
+            dropHit = true;
+            lensHitAt = Time.unscaledTime;
+            if (drop0R != null) drop0R.enabled = false;
+            Sound.Play(Sfx.Splat, 0.7f, null, 1.25f);
+            Sound.Play(Sfx.Drip, 0.6f, null, 0.7f);
+            Buzz();
+            if (cam != null) cam.Shake(0.05f, 0.15f);
+            StoryCameraFX.Set(0.85f, 0f);
+        }
+
+        static readonly Vector4[] LensDrops =
+        {
+            new Vector4(-0.21f, -0.12f, 46f, 0.9f), new Vector4(0.18f, -0.2f, 30f, 0.7f), new Vector4(0.27f, 0.14f, 22f, 0.8f),
+            new Vector4(-0.3f, 0.18f, 26f, 0.6f), new Vector4(0.06f, 0.27f, 18f, 0.75f), new Vector4(-0.08f, -0.3f, 16f, 0.65f),
+            new Vector4(0.36f, -0.05f, 14f, 0.5f),
+        };
+
+        /// <summary>Water on the lens after the hit: the burst blob in the middle with its bright
+        /// edge, beads thrown round it, and a few runs sliding down; all fading as the eyes go.</summary>
+        void LensWater(float w, float h)
+        {
+            float k = (Time.unscaledTime - lensHitAt) / 1.1f;
+            if (k < 0f || k >= 1f) return;
+            var o = GUI.color;
+            float fade = 1f - k * k;
+            var c = new Vector2(w * 0.5f, h * 0.5f);
+            float big = Mathf.Lerp(w * 0.2f, w * 0.32f, Mathf.Sqrt(Mathf.Min(1f, k * 4f)));
+            GUI.color = new Color(0.8f, 0.86f, 1f, 0.22f * fade);
+            GUI.DrawTexture(new Rect(c.x - big, c.y - big * 0.9f, big * 2f, big * 1.8f), disc);
+            GUI.color = new Color(0.9f, 0.95f, 1f, 0.45f * fade);
+            GUI.DrawTexture(new Rect(c.x - big * 0.92f, c.y - big * 0.84f, big * 1.84f, big * 1.68f), ring);
+            foreach (var d in LensDrops)
+            {
+                float out1 = Mathf.Min(1f, k * 6f);
+                var p = c + new Vector2(d.x * w, d.y * h) * (0.6f + 0.4f * out1) + new Vector2(0f, k * k * 40f * d.w);
+                float r = d.z * (0.7f + 0.3f * out1);
+                GUI.color = new Color(0.85f, 0.9f, 1f, 0.3f * fade * d.w);
+                GUI.DrawTexture(new Rect(p.x - r, p.y - r, r * 2f, r * 2f), circle);
+                GUI.color = new Color(1f, 1f, 1f, 0.55f * fade * d.w);
+                GUI.DrawTexture(new Rect(p.x - r, p.y - r, r * 2f, r * 2f), ring);
+                // the run below it
+                Fill(new Rect(p.x - 1.5f, p.y + r * 0.8f, 3f, k * 110f * d.w), new Color(0.85f, 0.9f, 1f, 0.22f * fade));
+            }
+            GUI.color = o;
         }
 
         Vector3[] crackLine;
@@ -800,6 +865,7 @@ namespace ProjectInk
             {
                 if (t >= S3 && t < S4) Puddle(w, h, t - S3);
                 if (t < S1) Rain(w, h, 0.42f);
+                LensWater(w, h);
                 if (t >= S2 && t < S3) Eyes(w, h);
                 if (t >= S4 + 5.15f && t < S4 + 5.65f) Void(w, h);
             }
