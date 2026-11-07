@@ -67,6 +67,7 @@ namespace ProjectInk
         int spawned;
         float blueUntil, blueStrength, glitchUntil, clearedAt = -1f;
         int flashFrames;
+        float subBottom;                 // how much of the screen's bottom the bar and the words take
         float barsPx = Bar, promptAlpha, chipUntil, footAt;
         float walkFromX;
 
@@ -884,7 +885,9 @@ namespace ProjectInk
             }
 
             float bh = barsPx * barK;
-            if (bh > 0.5f) { Fill(new Rect(0, 0, w, bh), Color.black); Fill(new Rect(0, h - bh, w, bh), Color.black); }
+            float sb = SubtitleBand(w, repaint);                 // the bottom bar grows to hold a line of dialogue
+            if (bh > 0.5f) { Fill(new Rect(0, 0, w, bh), Color.black); Fill(new Rect(0, h - Mathf.Max(bh, sb), w, Mathf.Max(bh, sb)), Color.black); }
+            subBottom = Mathf.Max(bh, sb);
 
             if (phase == Phase.Cinematic)
             {
@@ -907,8 +910,6 @@ namespace ProjectInk
                 }
             }
 
-            // subtitles, in the lower bar
-            DrawSubtitle(w, h, bh, barK);
 
             // the walk prompt
             if (phase == Phase.Walk && promptAlpha > 0.01f)
@@ -926,7 +927,7 @@ namespace ProjectInk
             if (phase == Phase.Fight && Time.unscaledTime < chipUntil)
             {
                 float a = Mathf.Clamp01((chipUntil - Time.unscaledTime) / 0.6f);
-                var r = new Rect(w * 0.5f - 300, h - 66, 600, 40);
+                var r = new Rect(w * 0.5f - 300, h - 66 - (sb > 1f ? sb : 0f), 600, 40);      // above any line of dialogue
                 Fill(r, new Color(0f, 0f, 0f, 0.5f * a));
                 cap.alignment = TextAnchor.MiddleCenter;
                 cap.normal.textColor = new Color(1f, 1f, 1f, 0.9f * a);
@@ -935,6 +936,8 @@ namespace ProjectInk
             }
             ForemanGUI(w, h);
             EndingGUI(w, h);
+            // the words last: nothing in the story is drawn over them
+            if (phase != Phase.End && (cardAt < 0f)) DrawSubtitle(w, h, bh);
             if (phase == Phase.End) EndCard(w, h);
             GUI.matrix = Matrix4x4.identity;
         }

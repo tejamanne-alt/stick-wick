@@ -25,11 +25,21 @@ One system for every line of dialogue in story mode, in `StoryDialogue.cs`. Ever
 
 While someone is speaking, a small triangle in their colour floats over their head. It pulses once as each new line starts. In the silhouette scenes, where both men are black shapes, the marker is what tells them apart. Off-screen voices have no marker.
 
-## 4. The subtitle leans towards the speaker
+## 4. Where the words go: in the black, under the picture
 
-The subtitle's panel slides left or right to sit under the speaker (within the middle third of the screen). The eye goes from the words straight to the mouth. A speaker off screen, or out of shot, gets a centred panel.
+- **Bottom band:** subtitles live in the bottom band of the screen, never on top of the picture.
+  - In cinematics the letterbox bar grows to hold the line, then shrinks back.
+  - In gameplay (no bars), a soft dark fade rises from the bottom edge instead.
+- **Two rows, centred:**
+  - the speaker's name in their colour, with a short dash before it (a signal mark for off-screen voices)
+  - the line in white, wrapping onto two rows if long
+- **Leaning:** the two rows lean slightly towards the speaker (within the middle quarter of the screen).
+- **Drawn last:** nothing in the story can cover the subtitles.
+- **Everything else moves out of the way:**
+  - The controls hint in a fight moves up above the band.
+  - The phone screen in the ending sits between the top bar and the words, and is sized to fit.
 
-Every line sits on a dark panel, with a coloured bar down its left edge, so white text stays readable over rain, lightning and the bright backlight. Long lines wrap onto two rows.
+A mock of the layout (desktop, a 20:9 phone and a 4:3 tablet) is in `docs/previews/subtitles_layout.png`.
 
 ## Adding a new speaker
 

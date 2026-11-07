@@ -1179,3 +1179,7 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - the subtitle panel slides towards the speaker
   - every line sits on a dark panel with a coloured edge
 - The speaker is found automatically (the hero, the boss, or the nearest enemy) unless a line passes one.
+- **Subtitles moved into the black.** The bottom letterbox bar grows to hold each line; in gameplay a dark fade rises from the bottom instead. The name and line are centred in two rows, leaning towards the speaker, and drawn last so nothing covers them.
+  - The phone screen now fits between the top bar and the words, laid out as fractions of its own height. Before, it covered the call's lines.
+  - The fight's controls hint moves above a line of dialogue.
+  - A layout mock is in `docs/previews/subtitles_layout.png`.

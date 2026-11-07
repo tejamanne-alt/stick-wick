@@ -737,65 +737,76 @@ namespace ProjectInk
             return portrait;
         }
 
-        /// <summary>The phone in his hand, in front of everything: the contract on him, then the call.</summary>
+        /// <summary>The phone in his hand: the contract on him, then the call. It sits between the top
+        /// bar and the words at the bottom (the dialogue is never under it), and everything on its
+        /// screen is laid out as a fraction of its own height, so it reads at any size.</summary>
         void PhoneGUI(float w, float h)
         {
             if (phoneUi == 0) return;
             float t = Time.unscaledTime - phoneUiAt;
-            float pw = Mathf.Min(300f, w * 0.3f), ph = pw * 1.9f;
-            float shake = Mathf.Sin(Time.unscaledTime * 11f) * 1.5f;
-            float rise = phoneUi == 1 ? (1f - Mathf.SmoothStep(0f, 1f, t / 0.5f)) * 120f : phoneUi == 3 ? Mathf.SmoothStep(0f, 1f, (t - 0.9f) / 0.5f) * h : 0f;
-            var r = new Rect((w - pw) * 0.5f + shake, h * 0.5f - ph * 0.56f + rise, pw, ph);
-            Fill(new Rect(r.x - 8, r.y - 8, r.width + 16, r.height + 16), new Color(0.02f, 0.02f, 0.025f, 0.98f));     // the case
-            var sc = new Rect(r.x, r.y, r.width, r.height);
+            float bh = barsPx * (h / 720f);
+            float top = bh + 14f, bottom = h - Mathf.Max(subBottom, 118f) - 14f;   // room kept for a line of dialogue
+            float ph = Mathf.Min(bottom - top, 520f), pw = ph / 1.85f;
+            float shake = Mathf.Sin(Time.unscaledTime * 11f) * 1.2f;               // a hand holding it
+            float rise = phoneUi == 1 ? (1f - Mathf.SmoothStep(0f, 1f, t / 0.5f)) * (h - top) : phoneUi == 3 ? Mathf.SmoothStep(0f, 1f, (t - 0.9f) / 0.5f) * (h - top) : 0f;
+            var sc = new Rect((w - pw) * 0.5f + shake, top + rise, pw, ph);
+            float u = ph / 100f;                                                    // one percent of the screen's height
+
+            Fill(new Rect(sc.x - 7, sc.y - 7, sc.width + 14, sc.height + 14), new Color(0.02f, 0.02f, 0.025f, 0.98f));   // the case
             Fill(sc, new Color(0.05f, 0.06f, 0.08f, 1f));
-            var old = cap.alignment;
+            int capSize = cap.fontSize, bigSize = big.fontSize;
+            var capAlign = cap.alignment;
             cap.alignment = TextAnchor.MiddleCenter;
-            if (phoneUi == 1 || phoneUi == 2 || phoneUi == 3)
+
+            // the contract
+            cap.fontSize = Mathf.RoundToInt(3.6f * u);
+            cap.normal.textColor = new Color(1f, 1f, 1f, 0.55f);
+            GUI.Label(new Rect(sc.x, sc.y + 2f * u, sc.width, 5f * u), Spaced("CONTRACT UPDATE"), cap);
+            float imgH = 34f * u, imgW = imgH / 1.22f;
+            var img = new Rect(sc.center.x - imgW * 0.5f, sc.y + 8f * u, imgW, imgH);
+            GUI.DrawTexture(img, Portrait());
+            Fill(new Rect(img.x, img.y, img.width, Mathf.Max(2f, 0.4f * u)), new Color(0.8f, 0.06f, 0.07f));
+            cap.fontSize = Mathf.RoundToInt(4.4f * u);
+            cap.normal.textColor = Color.white;
+            GUI.Label(new Rect(sc.x, sc.y + 43f * u, sc.width, 6f * u), Spaced("THE FERRYMAN"), cap);
+            big.fontSize = Mathf.RoundToInt(9.5f * u);
+            big.normal.textColor = new Color(0.95f, 0.95f, 0.95f);
+            GUI.Label(new Rect(sc.x, sc.y + 49f * u, sc.width, 11f * u), "$5,000,000", big);
+            cap.fontSize = Mathf.RoundToInt(3.6f * u);
+            cap.normal.textColor = new Color(1f, 0.25f, 0.2f, 0.75f + 0.25f * Mathf.Sin(Time.unscaledTime * 6f));
+            GUI.Label(new Rect(sc.x, sc.y + 61f * u, sc.width, 5f * u), Spaced("OPEN") + "   ·   " + Spaced("CONFIRM KILL"), cap);
+
+            // the call, across the bottom of the screen
+            var bar = new Rect(sc.x + 4f * u * 0.5f, sc.y + 72f * u, sc.width - 4f * u, 24f * u);
+            Fill(bar, new Color(0.12f, 0.13f, 0.16f, 0.96f));
+            cap.fontSize = Mathf.RoundToInt(4.4f * u);
+            cap.normal.textColor = Color.white;
+            if (phoneUi == 1)
             {
-                // the message that came with the call: the contract
-                float pad = 14f, y = sc.y + 16f;
-                cap.normal.textColor = new Color(1f, 1f, 1f, 0.55f);
-                GUI.Label(new Rect(sc.x, y, sc.width, 22), Spaced("CONTRACT UPDATE"), cap);
-                y += 28f;
-                var img = new Rect(sc.x + pad * 2f, y, sc.width - pad * 4f, (sc.width - pad * 4f) * 1.2f);
-                GUI.DrawTexture(img, Portrait());
-                Fill(new Rect(img.x, img.y, img.width, 2), new Color(0.8f, 0.06f, 0.07f));
-                y = img.yMax + 10f;
-                cap.normal.textColor = Color.white;
-                GUI.Label(new Rect(sc.x, y, sc.width, 26), Spaced("THE FERRYMAN"), cap);
-                y += 28f;
-                big.fontSize = Mathf.RoundToInt(pw * 0.16f);
-                big.normal.textColor = new Color(0.95f, 0.95f, 0.95f);
-                GUI.Label(new Rect(sc.x, y, sc.width, pw * 0.2f), "$5,000,000", big);
-                big.fontSize = 72;
-                y += pw * 0.2f + 4f;
-                cap.normal.textColor = new Color(1f, 0.25f, 0.2f, 0.75f + 0.25f * Mathf.Sin(Time.unscaledTime * 6f));
-                GUI.Label(new Rect(sc.x, y, sc.width, 22), Spaced("OPEN  ·  CONFIRM KILL"), cap);
-                // the call, across the bottom
-                var bar = new Rect(sc.x + 10f, sc.yMax - 78f, sc.width - 20f, 64f);
-                Fill(bar, new Color(0.12f, 0.13f, 0.16f, 0.96f));
-                cap.normal.textColor = Color.white;
-                if (phoneUi == 1)
-                {
-                    GUI.Label(new Rect(bar.x, bar.y + 6, bar.width, 26), Spaced("UNKNOWN"), cap);
-                    cap.normal.textColor = new Color(1f, 1f, 1f, 0.5f + 0.5f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3f)));
-                    GUI.Label(new Rect(bar.x, bar.y + 32, bar.width, 24), "incoming call", cap);
-                }
-                else if (phoneUi == 2)
-                {
-                    int secs = Mathf.FloorToInt(t);
-                    GUI.Label(new Rect(bar.x, bar.y + 6, bar.width, 26), Spaced("UNKNOWN"), cap);
-                    cap.normal.textColor = new Color(0.4f, 0.9f, 0.5f);
-                    GUI.Label(new Rect(bar.x, bar.y + 32, bar.width, 24), $"{secs / 60:00}:{secs % 60:00}", cap);
-                }
-                else
-                {
-                    cap.normal.textColor = new Color(1f, 0.3f, 0.25f);
-                    GUI.Label(new Rect(bar.x, bar.y + 18, bar.width, 28), Spaced("CALL ENDED"), cap);
-                }
+                GUI.Label(new Rect(bar.x, bar.y + 2f * u, bar.width, 7f * u), Spaced("UNKNOWN"), cap);
+                cap.fontSize = Mathf.RoundToInt(3.6f * u);
+                cap.normal.textColor = new Color(1f, 1f, 1f, 0.5f + 0.5f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3f)));
+                GUI.Label(new Rect(bar.x, bar.y + 9f * u, bar.width, 5f * u), "incoming call", cap);
+                // answer (green) and decline (red), as a phone shows them
+                float r = 4.2f * u;
+                Fill(new Rect(bar.x + bar.width * 0.28f - r, bar.y + 15.5f * u, r * 2f, r * 1.2f), new Color(0.75f, 0.12f, 0.1f));
+                Fill(new Rect(bar.x + bar.width * 0.72f - r, bar.y + 15.5f * u, r * 2f, r * 1.2f), new Color(0.15f, 0.65f, 0.3f));
             }
-            cap.alignment = old;
+            else if (phoneUi == 2)
+            {
+                int secs = Mathf.FloorToInt(t);
+                GUI.Label(new Rect(bar.x, bar.y + 4f * u, bar.width, 7f * u), Spaced("UNKNOWN"), cap);
+                cap.normal.textColor = new Color(0.4f, 0.9f, 0.5f);
+                GUI.Label(new Rect(bar.x, bar.y + 12f * u, bar.width, 6f * u), $"{secs / 60:00}:{secs % 60:00}", cap);
+            }
+            else
+            {
+                cap.normal.textColor = new Color(1f, 0.3f, 0.25f);
+                GUI.Label(new Rect(bar.x, bar.y + 8f * u, bar.width, 8f * u), Spaced("CALL ENDED"), cap);
+            }
+            cap.fontSize = capSize;
+            big.fontSize = bigSize;
+            cap.alignment = capAlign;
         }
 
         /// <summary>The closing card, over black: chapter complete, and the memory it gave back.</summary>
