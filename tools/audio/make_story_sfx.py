@@ -463,9 +463,103 @@ def flash_cut():
         save("flash_cut", room(y, 1.4, 0.2, 0.01, 2500), take)
 
 
+def gunshot_indoor():
+    """One pistol shot in a big concrete warehouse, close: the supersonic crack (a synthesised
+    N-wave, since the libraries have no gun), a hard real impact for the body, a low thump in
+    the chest, then the building answering: slap-back off the far walls and a long dark tail."""
+    for take, (body, rr) in ((1, ("impacts/impact-medium-hard", 1.0)), (2, ("impacts/impact-heavy-hard", 0.94))):
+        n = int(0.012 * SR)
+        nw = np.zeros(n)
+        a = int(0.0004 * SR)
+        nw[:a] = 1.0
+        nw[a:2 * a] = -0.9
+        burst = rng.standard_normal(n) * np.exp(-np.arange(n) / (0.0018 * SR))
+        crack = hp(nw * 0.9 + burst * 0.7, 700, 2)
+        crack = lp(crack, 12000, 2)
+        b = lp(shelf_dark(pitch(trim(kit(body)), rr), 4500, 0.4), 7000, 2)
+        snap = hp(trim(oc("METLImpt_MetalHitSurface_OS_04")), 2500, 2)[:int(0.08 * SR)]
+        thump = lp(trim(kit("booms-and-bass/boom-hit-strong")), 170, 2)
+        rumble = lp(trim(kit("cinematic-hits/cinematic-thunder-big")), 320, 2)
+        dry = mix((crack, 1.0, 0.0), (b, 0.75, 0.001), (fades(snap, 0.0005, 0.03), 0.3, 0.0), (thump, 0.9, 0.0), (rumble, 0.22, 0.04))
+        dry = np.tanh(dry * 1.6) / np.tanh(1.6)                              # driven hard: the air itself clips
+        echoes = mix((dry, 1.0, 0.0), (lp(dry, 2200, 2), 0.32, 0.11), (lp(dry, 1400, 2), 0.2, 0.26), (lp(dry, 900, 2), 0.12, 0.43), (lp(dry, 700, 2), 0.07, 0.62))
+        save("gunshot_indoor", room(echoes, 3.4, 0.5, 0.02, 2200), take, peak=0.95)
+
+
+def gun_draw():
+    """The pistol coming out from under his jacket: cloth dragged, the grip scraping free, a
+    small knock of metal against a button."""
+    for take, c in ((1, "CLOTHMvmt_ClothingMovement_OS_02"), (2, "CLOTHMvmt_MovementWithGear_OS_03")):
+        cl = fades(lp(shelf_dark(trim(oc(c))[:int(0.7 * SR)], 3000, 0.5), 7000, 2), 0.01, 0.2)
+        sl = fades(lp(trim(kit("foley/foley-plastic-slide")), 6000, 2)[:int(0.5 * SR)], 0.01, 0.12)
+        tick = lp(pitch(trim(oc("METLImpt_MetalObjDrop_OS_02")), 1.4), 7000, 2)[:int(0.12 * SR)]
+        y = mix((cl, 1.0, 0.0), (sl, 0.6, 0.18), (fades(tick, 0.0005, 0.05), 0.25, 0.55))
+        save("gun_draw", room(y, 1.6, 0.14, 0.01, 2800), take, peak=0.7)
+
+
+def gun_cock():
+    """The hammer drawn back, very close: a first click as it starts, the heavy clack as it
+    sets."""
+    first = [trim(kit("mechanical/mechanical-latch-light")), trim(kit("mechanical/mechanical-switch-light"))]
+    second = [trim(kit("mechanical/mechanical-ratchet-light")), trim(kit("mechanical/mechanical-latch-heavy"))]
+    for take in (1, 2):
+        c1 = fades(lp(pitch(first[take - 1], 1.25), 9000, 2)[:int(0.1 * SR)], 0.0005, 0.04)
+        c2 = fades(lp(pitch(second[take - 1], 1.1), 8000, 2)[:int(0.16 * SR)], 0.0005, 0.06)
+        y = mix((c1, 0.6, 0.0), (c2, 1.0, 0.13 if take == 1 else 0.17))
+        save("gun_cock", room(y, 1.4, 0.1, 0.008, 3500), take, peak=0.8)
+
+
+def shell_casing():
+    """The spent brass bouncing on the concrete afterwards (real casings), heard through the
+    ringing: bright, small, a long way down."""
+    for take in (1, 2, 3):
+        x = trim(oc(f"BLLTShel_ShellCasingConcrete_OS_0{take}"))
+        x = shelf_dark(x, 6000, 0.3)
+        save("shell_casing", room(x, 2.0, 0.24, 0.015, 3500), take, peak=0.6)
+
+
+def gun_drop_water():
+    """The pistol slipping out of a dead hand into the puddle: metal on concrete under water."""
+    sp = trim(kit("everyday-props/props-splash"))
+    for take, d in ((1, "METLImpt_MetalObjDrop_OS_01"), (2, "METLImpt_MetalObjDrop_OS_03")):
+        m = lp(pitch(trim(oc(d)), 0.9), 5000, 2)
+        w = lp(shelf_dark(fades(pitch(sp, 1.15), 0.001, 0.15), 2500, 0.6), 5000, 2)
+        y = mix((m, 0.8, 0.0), (w, 0.7, 0.004))
+        save("gun_drop_water", room(y, 1.8, 0.22, 0.015, 2600), take, peak=0.7)
+
+
+def struggle():
+    """Two men locked over a gun: clothes wrenched, the gun's metal knocking, breath through
+    teeth. Low and close, a bed under the grunts."""
+    src = oc("HMNBrth_MaleBreathing_OS_01")
+    for take in (1, 2):
+        parts = []
+        for i in range(6):
+            c = trim(oc(f"CLOTHMvmt_MovementWithGear_OS_0{(i + take) % 4 + 1}"))[:int(0.45 * SR)]
+            parts.append((fades(lp(shelf_dark(c, 2800, 0.5), 6500, 2), 0.01, 0.12), 0.8, 0.32 * i + rng.uniform(0, 0.08)))
+        for i in range(3):
+            m = hp(trim(oc(f"METLImpt_MetalHitSurface_OS_0{i + 1}")), 1800, 2)[:int(0.06 * SR)]
+            parts.append((fades(m, 0.0005, 0.03), 0.18, 0.4 + 0.55 * i + rng.uniform(0, 0.1)))
+        b = src[int((0.1 + 0.4 * take) * SR):int((0.7 + 0.4 * take) * SR)]
+        b = lp(shelf_dark(fades(pitch(b, 1.25), 0.02, 0.1), 2200, 0.7), 4500, 2)
+        parts += [(b, 0.6, 0.2), (b, 0.5, 1.1)]
+        save("struggle", room(mix(*parts), 1.4, 0.12, 0.01, 2600), take, peak=0.75)
+
+
+def death_breath():
+    """His last breath out: long, slow, wet in the throat, falling away."""
+    src = oc("HMNBrth_MaleBreathing_OS_01")
+    for take, (a, b) in ((1, (0.0, 1.02)), (2, (0.52, 1.58))):
+        x = fades(src[int(a * SR):int(b * SR)], 0.05, 0.4)
+        x = lp(shelf_dark(pitch(x, 0.72), 1800, 0.75), 3200, 2)
+        x = x * np.linspace(1.0, 0.25, len(x))
+        save("death_breath", room(x, 1.6, 0.16, 0.01, 2200), take, peak=0.55)
+
+
 def phone_buzz():
-    """The dead man's phone vibrating on the wet concrete: a motor buzz (synthesis: it is a
-    motor) in two bursts, the case rattling against the floor, a little of the big room."""
+    """The dead man's phone vibrating on the wet concrete: a real phone on a hard surface,
+    darkened and placed in the room, with a motor layer under it to carry the low end."""
+    real = trim(kit("phone/phone-vibrate-table"))
     for take, (f, bursts) in ((1, (162.0, 2)), (2, (171.0, 3))):
         seg = []
         for b in range(bursts):
@@ -478,6 +572,8 @@ def phone_buzz():
             seg.append((motor * 0.8 + rattle * 0.35) * env)
             seg.append(np.zeros(int(0.22 * SR)))
         y = lp(np.concatenate(seg), 4500, 2)
+        r = lp(shelf_dark(pitch(real, 1.0 if take == 1 else 0.95), 4000, 0.4), 7000, 2)
+        y = mix((r, 1.0, 0.0), (y, 0.35, 0.0))
         save("phone_buzz", room(y, 1.6, 0.18, 0.01, 3000), take, peak=0.7)
 
 
@@ -507,6 +603,7 @@ if __name__ == "__main__":
         sys.exit("need the two sound libraries: --oculus <...>/oculus-audio-pack/ogg --kit <...>/sounds")
     for name in ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", "static",
                  "whispers", "drone", "latch", "wind", "rotor", "piano",
-                 "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click"):
+                 "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click", "gunshot_indoor", "gun_draw", "gun_cock", "shell_casing",
+                 "gun_drop_water", "struggle", "death_breath"):
         clear(name)
         globals()[name]()

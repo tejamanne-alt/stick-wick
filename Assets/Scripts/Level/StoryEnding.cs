@@ -106,68 +106,179 @@ namespace ProjectInk
             Sound.Play(Sfx.Heartbeat, 0.8f);
             yield return Hold(3.0f, close);
 
-            // ---------------------------------------------------------------- 4 the gun, up out of the dark
+            // ---------------------------------------------------------------- 4a the draw: his hand, going under the jacket (only we see it)
+            heartBpm = 62f; nextBeat = Time.unscaledTime;
+            if (boss != null) boss.PuppetPlay("lie_gun", 0.9f, 0.35f);
+            Sound.Play(Sfx.GunDraw, 1f);
             BuildGun();
-            Sound.Play(Sfx.Cloth, 0.6f);
-            Sound.Play(Sfx.Heartbeat, 1f, null, 1.1f);
-            if (boss != null) boss.PuppetPlay("lie_gun", 0.25f, 0.6f);
+            float td = 0f;
+            while (td < 1.4f)
+            {
+                td += Time.unscaledDeltaTime;
+                var hand = HandOf(boss, landX);
+                PoseGun(hand, Vector3.Slerp(new Vector3(0.3f, -1f, 0f), Vector3.right, Mathf.SmoothStep(0f, 1f, td / 1.4f)));
+                Heart(); Rain();
+                EndShot(hand + new Vector3(-0.1f, 0.1f, -0.85f), hand, 24f);
+                yield return null;
+            }
+
+            // ---------------------------------------------------------------- 4b his face: he has not seen it
+            Sound.Play(Sfx.Breath, 0.5f, null, 0.95f);
+            yield return Hold(1.1f, () =>
+            {
+                var hand = HandOf(boss, landX);
+                PoseGun(hand, Vector3.right + Vector3.up * 0.2f);
+                Heart(); Rain();
+                EndShot(HeadC() + new Vector3(0.05f, 0.02f, -0.75f), HeadC(), 28f);
+            });
+
+            // ---------------------------------------------------------------- 4c the gun comes up into his face
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.45f, 2.6f, 0.2f, 0.3f);
+            heartBpm = 95f;
             float tg = 0f;
-            while (tg < 1.6f)
+            while (tg < 1.5f)
             {
                 tg += Time.unscaledDeltaTime;
                 var hand = HandOf(boss, landX);
-                PoseGun(hand, Vector3.Slerp(Vector3.right, HeadC() - hand, Mathf.SmoothStep(0f, 1f, tg / 1.2f)));
+                PoseGun(hand, Vector3.Slerp(Vector3.right + Vector3.up * 0.2f, HeadC() - hand, Mathf.SmoothStep(0f, 1f, tg / 1.1f)));
+                Heart();
                 wide();
                 yield return null;
             }
-            Sound.Play(Sfx.Latch, 0.6f, null, 1.8f);                       // the hammer back
-            Say("THE FOREMAN", "Nothing personal.", 1.8f);
-            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.4f, 1.6f, 0.05f, 0.3f);
-            yield return Hold(1.8f, () => { var hand = HandOf(boss, landX); PoseGun(hand, HeadC() - hand); close(); });
 
-            // ---------------------------------------------------------------- 5 the struggle: the barrel turns, inch by inch
-            if (hero.body.Has("kneel_grip")) hero.body.Play("kneel_grip", 0.06f, true, 1.4f);
-            Sound.Play(Sfx.HeroEffort, 1f);
-            Sound.Play(Sfx.EnemyEffort, 1f, null, 0.8f);
-            float ts = 0f;
-            while (ts < 2.0f)
+            // ---------------------------------------------------------------- 4d the hammer: the gun in profile against the light
+            Sound.Play(Sfx.GunCock, 1f);
+            Say("THE FOREMAN", "Nothing personal.", 1.9f);
+            heartBpm = 120f;
+            yield return Hold(1.6f, () =>
             {
-                ts += Time.unscaledDeltaTime;
                 var hand = HandOf(boss, landX);
-                var grip = HeroHand();
-                float turn = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((ts - 0.5f) / 1.3f));
-                var at = Vector3.Lerp(hand, grip, 0.45f) + new Vector3(Random.Range(-0.025f, 0.025f), Random.Range(-0.02f, 0.02f), 0f) * (1f + ts);
-                var toHero = HeadC() - at;
-                var toBoss = (boss != null ? boss.Chest : new Vector3(landX, 0.4f, 0f)) - at;
-                PoseGun(at, Vector3.Slerp(toHero, toBoss, turn) + Random.insideUnitSphere * 0.08f);
-                var shake = new Vector3(Random.Range(-0.03f, 0.03f), Random.Range(-0.02f, 0.02f), 0f) * (1f + ts);
-                Rain();
-                EndShot(new Vector3(mx, 0.3f, -2.6f + ts * 0.2f) + shake, new Vector3(mx, 0.55f, 0f) + shake * 0.5f, 30f);
-                if (Random.value < 0.06f) Sound.Play(Sfx.Cloth, 0.6f, null, Random.Range(0.9f, 1.2f));
-                backGlow = 1f + Mathf.Sin(ts * 23f) * 0.08f;
+                PoseGun(hand, HeadC() - hand);
+                Heart(); Rain();
+                var gp = gun != null ? gun.position : hand;
+                EndShot(gp + new Vector3(-0.05f, 0.04f, -0.62f), gp + (HeadC() - gp) * 0.35f, 24f);
+            });
+
+            // ---------------------------------------------------------------- 4e his eyes: the world closes in to the barrel
+            Sound.Ambience(0.3f, 0.04f, 900f);
+            heartBpm = 150f;
+            yield return Hold(0.9f, () =>
+            {
+                var hand = HandOf(boss, landX);
+                PoseGun(hand, HeadC() - hand);
+                Heart(); Rain();
+                EndShot(HeadC() + new Vector3(0.18f, -0.02f, -0.5f), HeadC(), 22f);
+            });
+
+            // ---------------------------------------------------------------- 5a instinct: he grabs the wrist
+            if (hero.body.Has("kneel_grip")) hero.body.Play("kneel_grip", 0.04f, true, 1.6f);
+            Sound.Play(Sfx.PunchLight, 1f);
+            Sound.Play(Sfx.Cloth, 1f, null, 1.2f);
+            Sound.Play(Sfx.HeroEffort, 1f);
+            Sound.Play(Sfx.Struggle, 1f);
+            heartBpm = 175f;
+            float tgrab = 0f;
+            while (tgrab < 0.35f)
+            {
+                tgrab += Time.unscaledDeltaTime;
+                float k = Mathf.SmoothStep(0f, 1f, tgrab / 0.35f);
+                var hand = HandOf(boss, landX);
+                PoseGun(Vector3.Lerp(hand, Vector3.Lerp(hand, HeroHand(), 0.45f), k), HeadC() - hand);
+                Heart(); Rain();
+                EndShot(Vector3.Lerp(HeadC() + new Vector3(0.18f, -0.02f, -0.5f), new Vector3(mx, 0.32f, -2.4f), k), Vector3.Lerp(HeadC(), new Vector3(mx, 0.55f, 0f), k), Mathf.Lerp(22f, 30f, k));
                 yield return null;
             }
 
-            // ---------------------------------------------------------------- 6 BANG
-            flashFrames = 4;
-            backGlow = 2.2f;
-            Sound.Play(Sfx.GunBody, 1f);
-            Sound.Play(Sfx.GunTail, 1f);
-            Buzz();
-            if (cam != null) cam.Shake(0.2f, 0.2f);
-            Sound.Ambience(0.25f, 0.05f, 600f);                            // the world goes away
-            Sound.Play(Sfx.Tinnitus, 1f);
-            if (InkFx.Instance != null && boss != null) InkFx.Instance.Splash(boss.Chest, new Vector3(1f, 0.4f, 0f), 30, boss.InkColor);
-            yield return Hold(0.25f, wide);
+            // ---------------------------------------------------------------- 5b the struggle: fast cuts, the barrel shaking between their faces
+            float ts = 0f;
+            int lastCut = -1;
+            float gruntAt = 0.3f;
+            while (ts < 2.6f)
+            {
+                ts += Time.unscaledDeltaTime;
+                var hand = HandOf(boss, landX);
+                var at = Vector3.Lerp(hand, HeroHand(), 0.45f) + new Vector3(Random.Range(-0.03f, 0.03f), Random.Range(-0.025f, 0.025f), 0f) * (1f + ts);
+                var toHero = HeadC() - at;
+                var toBoss = (boss != null ? boss.Chest : new Vector3(landX, 0.4f, 0f)) - at;
+                PoseGun(at, Vector3.Slerp(toHero, toBoss, TurnCurve(ts)) + Random.insideUnitSphere * 0.1f);
+                var shake = new Vector3(Random.Range(-0.035f, 0.035f), Random.Range(-0.025f, 0.025f), 0f);
+                int cut = Mathf.FloorToInt(ts / 0.55f) % 4;
+                if (cut != lastCut) { lastCut = cut; Sound.Play(Sfx.Cloth, 0.7f, null, Random.Range(0.9f, 1.2f)); }
+                var gp = gun != null ? gun.position : at;
+                switch (cut)
+                {
+                    case 0: EndShot(new Vector3(mx, 0.32f, -2.4f) + shake, new Vector3(mx, 0.55f, 0f) + shake * 0.5f, 30f); break;   // the two of them
+                    case 1: EndShot(gp + new Vector3(0.02f, 0.06f, -0.55f) + shake * 0.6f, gp, 22f); break;                          // the gun between them
+                    case 2: EndShot(BossHead(boss, landX) + new Vector3(-0.1f, 0.1f, -0.7f) + shake, BossHead(boss, landX), 24f); break; // his teeth bared
+                    default: EndShot(HeadC() + new Vector3(0.15f, -0.05f, -0.6f) + shake, HeadC(), 24f); break;                     // his
+                }
+                if (ts > gruntAt) { gruntAt += Random.Range(0.45f, 0.75f); Sound.Play(Random.value < 0.5f ? Sfx.HeroEffort : Sfx.EnemyEffort, 0.8f, null, Random.Range(0.85f, 1f)); }
+                if (ts > 1.3f && ts - Time.unscaledDeltaTime <= 1.3f) Sound.Play(Sfx.Struggle, 0.9f);
+                backGlow = 1f + Mathf.Sin(ts * 23f) * 0.08f;
+                Heart(); Rain();
+                yield return null;
+            }
 
-            // ---------------------------------------------------------------- 7 he dies
-            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.2f, 2.0f, 0.02f, 0.5f);
+            // ---------------------------------------------------------------- 5c the turn: the barrel on his chest; the heart stops; no sound
+            heartBpm = 0f;
+            Sound.Ambience(0.05f, 0.0f, 400f);
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.12f, 1.4f, 0.05f, 0.3f);
+            Sound.Play(Sfx.Breath, 0.35f, null, 0.8f);
+            yield return Hold(1.0f, () =>
+            {
+                var hand = HandOf(boss, landX);
+                var at = Vector3.Lerp(hand, HeroHand(), 0.45f);
+                var toBoss = (boss != null ? boss.Chest : new Vector3(landX, 0.4f, 0f)) - at;
+                PoseGun(at, toBoss);
+                Rain();
+                var gp = gun != null ? gun.position : at;
+                EndShot(gp + new Vector3(0.0f, 0.05f, -0.75f), gp + toBoss * 0.4f, 26f);
+            });
+
+            // ---------------------------------------------------------------- 6 BANG
+            flashFrames = 3;
+            backGlow = 2.5f;
+            MuzzleFlash();
+            Sound.Play(Sfx.GunshotIndoor, 1f);
+            Sound.Play(Sfx.GunBody, 0.5f);
+            Buzz();
+            if (cam != null) cam.Shake(0.35f, 0.3f);
+            Sound.Ambience(0.15f, 0.03f, 500f);                            // the world goes away
+            Sound.Play(Sfx.Tinnitus, 1f);
+            Sound.PlayLater(Sfx.ShellCasing, 0.7f, 0.8f);                  // the brass, ringing on the concrete, through the ringing
+            if (InkFx.Instance != null && boss != null) InkFx.Instance.Splash(boss.Chest, new Vector3(1f, 0.4f, 0f), 30, boss.InkColor);
+            yield return Hold(0.3f, wide);
+
+            // ---------------------------------------------------------------- 7 he dies: slowly, in the smoke
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.2f, 2.4f, 0.02f, 0.6f);
             if (hero.body.Has("kneel_hold")) hero.body.Play("kneel_hold", 0.5f);
-            if (boss != null) boss.PuppetPlay("lie", 1.2f);
-            DropGun();
-            for (int i = 0; i < 4 && boss != null; i++)
-                if (InkFx.Instance != null) InkFx.Instance.Stain(boss.transform.position + Vector3.right * (0.2f * i - 0.3f), boss.InkColor, 0.8f + 0.4f * i, false);
-            yield return Hold(3.0f, () => { backGlow = Mathf.MoveTowards(backGlow, 1f, Time.unscaledDeltaTime * 2f); wide(); });
+            if (boss != null) boss.PuppetPlay("lie", 1.6f);
+            float tdie = 0f;
+            bool dropped = false, breathed = false, stirred = false;
+            while (tdie < 4.2f)
+            {
+                tdie += Time.unscaledDeltaTime;
+                if (!breathed && tdie > 0.6f) { breathed = true; Sound.Play(Sfx.DeathBreath, 0.9f); }
+                if (!dropped && tdie > 1.3f)
+                {
+                    dropped = true;
+                    DropGun();
+                    Sound.Play(Sfx.GunDropWater, 0.9f);
+                }
+                else if (!dropped && gun != null)
+                {
+                    var hand = HandOf(boss, landX);
+                    PoseGun(hand, Vector3.Slerp(Vector3.right, new Vector3(0.4f, -1f, 0f), tdie / 1.3f));
+                }
+                // the ink spreading out from under him into the rain water
+                if (boss != null && InkFx.Instance != null && Random.value < 0.08f && tdie < 3f)
+                    InkFx.Instance.Stain(boss.transform.position + Vector3.right * Random.Range(-0.5f, 0.4f), boss.InkColor, 0.6f + tdie * 0.35f, false);
+                if (!stirred && tdie > 2.4f) { stirred = true; Sound.Ambience(0.7f, 0.12f, 2500f); }   // the rain comes back, slowly
+                backGlow = Mathf.MoveTowards(backGlow, 1f, Time.unscaledDeltaTime * 1.5f);
+                Rain();
+                EndShot(new Vector3(mx, 0.28f, -3.6f + tdie * 0.18f), new Vector3(mx, 0.55f, 0f), 34f - tdie * 1.2f);
+                yield return null;
+            }
 
             // ---------------------------------------------------------------- 8 no... no... no...
             Sound.Ambience(1.2f, 0.25f, 22000f);
@@ -377,6 +488,86 @@ namespace ProjectInk
             gun = null;
         }
 
+        // ---------------------------------------------------------------- the heartbeat, the turn, the flash, the smoke
+
+        float heartBpm, nextBeat;
+
+        /// <summary>His heart, louder and faster as the gun comes up (0 bpm: it stops).</summary>
+        void Heart()
+        {
+            if (heartBpm <= 0f || Time.unscaledTime < nextBeat) return;
+            Sound.Play(Sfx.Heartbeat, Mathf.Clamp(0.35f + heartBpm / 260f, 0.35f, 1f), null, 1f + (heartBpm - 60f) / 600f);
+            nextBeat = Time.unscaledTime + 60f / heartBpm;
+        }
+
+        /// <summary>How far the barrel has turned from the hero (0) to the Foreman (1) in the struggle:
+        /// a little away, back at him, then over, inch by inch.</summary>
+        static float TurnCurve(float t)
+        {
+            float[] kt = { 0f, 0.6f, 1.0f, 1.6f, 2.1f, 2.6f };
+            float[] kv = { 0f, 0.18f, 0.04f, 0.45f, 0.8f, 1f };
+            for (int i = 1; i < kt.Length; i++)
+                if (t <= kt[i]) return Mathf.Lerp(kv[i - 1], kv[i], Mathf.SmoothStep(0f, 1f, (t - kt[i - 1]) / (kt[i] - kt[i - 1])));
+            return 1f;
+        }
+
+        Transform flashQuad;
+        float flashOff;
+        readonly System.Collections.Generic.List<(Transform tr, Vector3 v, float born)> smoke = new System.Collections.Generic.List<(Transform, Vector3, float)>();
+        Material smokeMat;
+
+        /// <summary>The muzzle flash (two frames of hot white-gold at the barrel) and the smoke
+        /// that curls up out of it through the light.</summary>
+        void MuzzleFlash()
+        {
+            if (gun == null) return;
+            var tip = gun.position + gun.forward * 0.38f;
+            var tex = Radial(64, false);
+            var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Destroy(q.GetComponent<Collider>());
+            q.name = "MuzzleFlash";
+            flashQuad = q.transform;
+            flashQuad.position = tip + Vector3.back * 0.05f;
+            flashQuad.localScale = new Vector3(0.75f, 0.45f, 1f);
+            flashQuad.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(gun.forward.y, gun.forward.x) * Mathf.Rad2Deg);
+            q.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default")) { mainTexture = tex, color = new Color(1f, 0.88f, 0.6f, 1f) };
+            flashOff = Time.unscaledTime + 0.07f;
+            smokeMat = new Material(Shader.Find("Sprites/Default")) { mainTexture = tex, color = new Color(0.75f, 0.78f, 0.82f, 0.22f) };
+            for (int i = 0; i < 18; i++)
+            {
+                var p = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                Destroy(p.GetComponent<Collider>());
+                p.name = "GunSmoke";
+                p.transform.position = tip + Random.insideUnitSphere * 0.03f;
+                p.transform.localScale = Vector3.one * 0.06f;
+                p.GetComponent<Renderer>().sharedMaterial = smokeMat;
+                var v = gun.forward * Random.Range(0.1f, 0.5f) + new Vector3(Random.Range(-0.05f, 0.05f), Random.Range(0.08f, 0.22f), 0f);
+                smoke.Add((p.transform, v, Time.unscaledTime + i * 0.05f));
+            }
+        }
+
+        void UpdateFlashSmoke()
+        {
+            if (flashQuad != null && Time.unscaledTime > flashOff) { Destroy(flashQuad.gameObject); flashQuad = null; }
+            float dt = Time.unscaledDeltaTime;
+            for (int i = smoke.Count - 1; i >= 0; i--)
+            {
+                var (tr, v, born) = smoke[i];
+                if (tr == null) { smoke.RemoveAt(i); continue; }
+                float age = Time.unscaledTime - born;
+                if (age < 0f) { tr.gameObject.SetActive(false); continue; }
+                tr.gameObject.SetActive(true);
+                if (age > 5f) { Destroy(tr.gameObject); smoke.RemoveAt(i); continue; }
+                v *= 1f - 0.8f * dt;                                       // the push dies; it hangs and rises
+                v.y += 0.03f * dt;
+                v.x += Mathf.Sin(age * 2.3f + i) * 0.02f * dt;               // curling
+                tr.position += v * dt;
+                tr.localScale = Vector3.one * (0.06f + age * 0.11f);
+                smoke[i] = (tr, v, born);
+            }
+            if (smokeMat != null && smoke.Count > 0) smokeMat.color = new Color(0.75f, 0.78f, 0.82f, 0.2f);
+        }
+
         // ---------------------------------------------------------------- the light behind them: rain under the torn skylight
 
         Transform backdrop;
@@ -432,6 +623,7 @@ namespace ProjectInk
         /// <summary>The rain falls and the light breathes (called every frame of the lit shots).</summary>
         void Rain()
         {
+            UpdateFlashSmoke();
             if (backdrop == null) return;
             float dt = Time.unscaledDeltaTime;
             foreach (var d in drops)
@@ -447,6 +639,9 @@ namespace ProjectInk
 
         void ClearBacklight()
         {
+            foreach (var sm in smoke) if (sm.tr != null) Destroy(sm.tr.gameObject);
+            smoke.Clear();
+            if (flashQuad != null) { Destroy(flashQuad.gameObject); flashQuad = null; }
             if (backdrop != null) Destroy(backdrop.gameObject);
             backdrop = null;
             drops.Clear();

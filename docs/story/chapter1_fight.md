@@ -121,10 +121,16 @@ The crew's boss, built on the Brute boss system, with **a crowbar, then bare han
 | 2 | Low and wide | The hero walks to him and drops to one knee, grabbing his collar. | Footsteps in water, breath. |
 | 3 | **Silhouette**, side on | **HIM:** *"Why are you trying to kill me?"* **FOREMAN** (a weak laugh): *"You... really don't remember."* | Heartbeat. |
 | 4 | Silhouette, closer | **HIM:** *"Tell me who I am. WHO SENT YOU?"* **FOREMAN:** *"Nobody had to send us. Five million reasons, friend."* | Tinnitus, faint. |
-| 5 | Silhouette | The pistol comes up out of the dark into the hero's face, a black shape against the light. **FOREMAN:** *"Nothing personal."* | The hammer back. |
-| 6 | Silhouette, handheld | They struggle. The barrel shakes between them and turns, inch by inch, towards the Foreman. | Grunts, cloth, heartbeat. |
-| 7 | **BANG** | A white frame; the backlight flares. | The shot, then silence and a ring. |
-| 8 | Silhouette, slow | His arm drops; the gun slides into the water. | Rain coming back. |
+| 5a | Insert, very close on his hand | His hand slides under his jacket; the pistol comes out, low, where only we see it. | Cloth dragged, the grip scraping free. A slow heartbeat starts. |
+| 5b | Close on the hero's face | He hasn't seen it. | A breath. |
+| 5c | Silhouette, slow motion | The pistol comes up out of the dark into the hero's face, a black shape against the light. | Heartbeat faster. |
+| 5d | Extreme close: the gun in profile against the light | The hammer goes back. **FOREMAN:** *"Nothing personal."* | The hammer: a click, then the heavy clack. |
+| 5e | His eyes | The world closes in to the barrel. | Rain and room drop away, muffled; the heart races. |
+| 6a | Whip to the two-shot | Instinct: he grabs the wrist. | A slap of hand on wrist, cloth, a grunt. |
+| 6b | Fast cuts every half second | The two of them, the gun shaking between them, the Foreman's bared teeth, the hero's face. The barrel swings away, comes back at the hero, then turns, inch by inch. | Clothes wrenched, the gun's metal knocking, breath through teeth, grunts, the heart at full race. |
+| 6c | Close on the gun, extreme slow motion | The barrel is on the Foreman's chest. | **The heart stops. Everything goes silent** but one breath. |
+| 7 | **BANG** | A white frame, the backlight flares, the muzzle flash; smoke curls up out of the barrel through the light. | An indoor pistol shot: the crack, the thump in the chest, the hall answering with slap-back echoes and a long tail. Then a high ring, the world muffled. Through it, the brass casing bouncing on the concrete. |
+| 8 | Silhouette, slow push in | His last breath out. The gun slips from his fingers into the water. The ink spreads out from under him into the rain water. | The death breath; the pistol hitting the puddle; the rain slowly coming back. |
 | 9 | Push in | The hero backs away, staring at his hands, shaking his head: *"No... no... no..."* *"That wasn't... I didn't..."* | Breath. |
 | 10 | Low, on the floor | **A phone buzzes** in the water beside the dead man, its screen lighting the wet concrete. | Vibration on concrete. |
 | 11 | He picks it up: **the screen** | **CONTRACT UPDATE**, a grainy surveillance still of his own face (the wound on his temple): **THE FERRYMAN · $5,000,000 · OPEN · CONFIRM KILL.** UNKNOWN, incoming call. | |
