@@ -289,22 +289,31 @@ namespace ProjectInk
                 if (At(S2 + 0.8f)) Sound.Play(Sfx.Heartbeat, 0.5f);
                 if (At(S2 + 1.5f)) Lightning(0.3f, 0.4f, 0.6f);
                 if (At(S2 + 2.4f)) Sound.Play(Sfx.Heartbeat, 0.6f);
-                if (At(10.2f))
-                {
-                    splatAt = Time.unscaledTime;
-                    Sound.Play(Sfx.Splat, 1f);
-                    cam.Shake(0.2f, 0.25f);
-                    Buzz();
-                    if (drop1R != null) drop1R.enabled = false;
-                }
                 if (drop0R != null) drop0R.enabled = false;
-                // the head lolls a little: the eyes drift as he breathes
-                pos = hc + new Vector3(0f, 0.1f, 0f) + Sway(0.02f, 0.3f, 3f);
-                look = new Vector3(hc.x + 0.5f, RoofY, hc.z + 0.2f) + Sway(0.25f, 0.2f, 4f);
-                fov = 64f;
-                if (t < 10.2f) PoseDrop(drop1, drop1R, hc, 9.5f, 9.5f, 26.5f, 10.2f);
+                // his eyes drift as he breathes, then find the second drop gathering on the crack and
+                // hold on it, straight up its line: it falls into his eye
+                var a2 = CrackPoint(hc.z);
+                float find = Ease(8.9f, 9.4f, t);
+                var drift = Sway(0.02f, 0.3f, 3f) * (1f - find);
+                pos = Vector3.Lerp(hc + new Vector3(0f, 0.1f, 0f), new Vector3(a2.x, hc.y + 0.1f, a2.z), find) + drift;
+                look = Vector3.Lerp(new Vector3(hc.x + 0.5f, RoofY, hc.z + 0.2f) + Sway(0.25f, 0.2f, 4f), new Vector3(a2.x, RoofY, a2.z + 0.04f), find);
+                fov = Mathf.Lerp(64f, 50f, find);
+                if (!drop1Hit)
+                {
+                    PoseDrop(drop1, drop1R, hc, 9.05f, 9.47f, 26.5f, 10.3f);
+                    if (drop1R != null && drop1R.enabled && t > 9.47f && (drop1.position.y - pos.y < 0.45f || t >= 10.2f))
+                    {
+                        drop1Hit = true;
+                        splatAt = Time.unscaledTime;
+                        drop1R.enabled = false;
+                        LensSplash(1f);
+                        if (cam != null) cam.Shake(0.15f, 0.2f);
+                    }
+                }
+                else if (drop1R != null) drop1R.enabled = false;
                 CrackWater(hc, 0f, 0f, true);                                       // still beading on the seam above him
-                float blur = t < 10.36f ? Mathf.Lerp(1f, 0.72f, Ease(S2, 10.2f, t)) : 0f;
+                float blur = t < 10.36f ? Mathf.Lerp(Mathf.Lerp(1f, 0.72f, Ease(S2, 8.9f, t)), 0.22f, Ease(8.9f, 9.5f, t)) : 0f;   // he focuses on it
+                if (drop1Hit && Time.unscaledTime - splatAt < 0.3f) blur = 0.9f;
                 StoryCameraFX.Set(blur, StoryCameraFX.Instance != null ? StoryCameraFX.Instance.Glitch : 0f);
             }
             else if (t < S4)
@@ -498,7 +507,7 @@ namespace ProjectInk
             if (!r.enabled) return;
             // it hangs from the crack itself: on its jagged line, right at its underside
             var a = CrackPoint(hc.z);
-            float s = Mathf.Lerp(0.012f, 0.05f, Ease(form, release, t)) * 1.28f;
+            float s = Mathf.Lerp(0.016f, 0.065f, Ease(form, release, t)) * 1.28f;
             Vector3 p;
             if (t < release)
             {
@@ -527,12 +536,20 @@ namespace ProjectInk
         void LensHit()
         {
             dropHit = true;
-            lensHitAt = Time.unscaledTime;
             if (drop0R != null) drop0R.enabled = false;
-            Sound.Play(Sfx.Splat, 0.7f, null, 1.25f);
-            Sound.Play(Sfx.Drip, 0.6f, null, 0.7f);
-            Buzz();
+            LensSplash(0.7f);
             if (cam != null) cam.Shake(0.05f, 0.15f);
+        }
+
+        bool drop1Hit;
+
+        /// <summary>A drop landing on the lens (on his eye): a wet tap, a blur, water on the glass.</summary>
+        void LensSplash(float vol)
+        {
+            lensHitAt = Time.unscaledTime;
+            Sound.Play(Sfx.Splat, vol, null, 1.25f);
+            Sound.Play(Sfx.Drip, 0.6f * vol, null, 0.7f);
+            Buzz();
             StoryCameraFX.Set(0.85f, 0f);
         }
 
@@ -871,7 +888,7 @@ namespace ProjectInk
             {
                 if (t >= S3 && t < S4) Puddle(w, h, t - S3);
                 if (t < S1) Rain(w, h, 0.42f);
-                LensWater(w, h);
+                if (t < S3) LensWater(w, h);
                 if (t >= S2 && t < S3) Eyes(w, h);
                 if (t >= S4 + 5.15f && t < S4 + 5.65f) Void(w, h);
             }
@@ -971,21 +988,6 @@ namespace ProjectInk
             GUI.DrawTexture(new Rect(0, lidH, w, 60), lid);                                         // a soft edge
             GUI.DrawTexture(new Rect(0, h - lidH, w, lidH), Texture2D.whiteTexture);
             GUI.DrawTextureWithTexCoords(new Rect(0, h - lidH - 60, w, 60), lid, new Rect(0, 1, 1, -1));
-            float s = Time.unscaledTime - splatAt;
-            if (s >= 0f && s < 0.45f)
-            {
-                float k = s / 0.45f;
-                GUI.color = new Color(0.9f, 0.95f, 1f, (1f - k) * 0.9f);
-                float r0 = Mathf.Lerp(60f, 420f, Mathf.Sqrt(k));
-                GUI.DrawTexture(new Rect(w * 0.5f - r0, h * 0.45f - r0, r0 * 2f, r0 * 2f), disc);
-                for (int i = 0; i < 12; i++)
-                {
-                    float a = i * 30f * Mathf.Deg2Rad + 0.3f;
-                    float d = Mathf.Lerp(30f, 380f, k) * (0.7f + 0.3f * Mathf.Sin(i * 7.1f));
-                    float sz = 26f * (1f - k) + 6f;
-                    GUI.DrawTexture(new Rect(w * 0.5f + Mathf.Cos(a) * d - sz, h * 0.45f + Mathf.Sin(a) * d - sz, sz * 2f, sz * 2f), circle);
-                }
-            }
             GUI.color = old;
         }
 

@@ -41,23 +41,23 @@ namespace ProjectInk.EditorTools
                     float inside = Mathf.Clamp01((1f - d) * r + 0.5f);
                     if (inside <= 0f) { tex.SetPixel(i, j, new Color(1f, 1f, 1f, 0f)); continue; }
                     // the body: water, barely there, a touch of the cold light it carries
-                    Color col = new Color(0.78f, 0.86f, 0.97f);
-                    float a = 0.05f + 0.06f * (1f - d * d);
+                    Color col = new Color(0.8f, 0.87f, 0.98f);
+                    float a = 0.14f + 0.1f * (1f - d * d);                          // enough body to follow as it falls
                     // the light above, through the lens: inverted and soft, a straight band low across it
                     float band = G(dy + 0.2f, 0.12f) * G(dx, 0.55f);
-                    col = Color.Lerp(col, new Color(0.92f, 0.95f, 1f), band * 0.8f); a = Mathf.Max(a, 0.36f * band);
+                    col = Color.Lerp(col, new Color(0.95f, 0.97f, 1f), band * 0.9f); a = Mathf.Max(a, 0.55f * band);
                     // the edge: water bends the dark room in from round the sides, so it darkens towards the rim
                     float edge = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.6f, 0.97f, d));
                     col = Color.Lerp(col, new Color(0.06f, 0.07f, 0.1f), edge * 0.75f); a = Mathf.Lerp(a, 0.42f, edge * 0.8f);
                     // light caught on the lit side only: a thin crescent, upper left
                     float lit = Mathf.Clamp01((-dx + dy) * 0.9f);
-                    float rim = G(d - 0.965f, 0.025f) * lit * lit;
-                    col = Color.Lerp(col, new Color(0.92f, 0.96f, 1f), rim); a = Mathf.Max(a, 0.8f * rim);
+                    float rim = G(d - 0.955f, 0.04f) * (0.35f + 0.65f * lit * lit);
+                    col = Color.Lerp(col, new Color(0.94f, 0.97f, 1f), rim); a = Mathf.Max(a, 0.9f * rim);
                     // the bright caustic at the bottom: the lens focusing the light it caught
                     float cres = G(d - 0.8f, 0.08f) * Mathf.Clamp01(-dy * 1.3f) * Mathf.Clamp01(1f - Mathf.Abs(dx) * 1.2f);
                     col = Color.Lerp(col, Color.white, cres * 0.7f); a = Mathf.Max(a, 0.45f * cres);
                     // one small sharp highlight, up on the lit side, near the edge
-                    float hl = Mathf.Clamp01(G(dx + 0.42f, 0.06f) * G(dy - 0.5f, 0.05f) * 1.2f);
+                    float hl = Mathf.Clamp01(G(dx + 0.4f, 0.09f) * G(dy - 0.48f, 0.075f) * 1.3f);
                     col = Color.Lerp(col, Color.white, hl); a = Mathf.Max(a, hl);
                     col.a = a * inside;
                     tex.SetPixel(i, j, col);

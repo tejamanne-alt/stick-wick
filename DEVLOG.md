@@ -1067,3 +1067,9 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   6. a wide low shot from far across the floor as he turns to the moonlight under the shutter, into shot 6
 - His facing follows a keyed path (`GazeYaw`). His head tips back via the head bone after the animator (`GazePitch`, `LateUpdate`).
 - The searchlight curtain is removed.
+
+### The second drop is real; the drop is visible
+- After the blinks a second drop lands between his eyes. It was drawn as a cartoon burst: a white disc and twelve dots flying out like a firework. Removed.
+- Now his eyes, drifting, find the drop gathering on the crack and hold on it, straight up its fall line. He comes into focus on it, and it falls into his eye: the same lens hit as shot 1 (`LensSplash`). His lids snap shut and reopen on water on the glass.
+- The drop was nearly invisible against the dark roof. It now has more body, a brighter lit edge, a stronger highlight, a clearer refracted band, and a little more size, so it can be followed all the way down.
+- Scene version 32.
