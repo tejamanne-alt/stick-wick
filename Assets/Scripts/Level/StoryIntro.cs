@@ -65,7 +65,7 @@ namespace ProjectInk
         float dustAt;
         const float BackZ = 2.6f;
         int spawned;
-        float blueUntil, blueStrength, splatAt = -9f, glitchUntil, clearedAt = -1f;
+        float blueUntil, blueStrength, glitchUntil, clearedAt = -1f;
         int flashFrames;
         float barsPx = Bar, promptAlpha, chipUntil, footAt;
         string subSpeaker, subLine;
@@ -290,30 +290,15 @@ namespace ProjectInk
                 if (At(S2 + 1.5f)) Lightning(0.3f, 0.4f, 0.6f);
                 if (At(S2 + 2.4f)) Sound.Play(Sfx.Heartbeat, 0.6f);
                 if (drop0R != null) drop0R.enabled = false;
-                // his eyes drift as he breathes, then find the second drop gathering on the crack and
-                // hold on it, straight up its line: it falls into his eye
-                var a2 = CrackPoint(hc.z);
-                float find = Ease(8.9f, 9.4f, t);
-                var drift = Sway(0.02f, 0.3f, 3f) * (1f - find);
-                pos = Vector3.Lerp(hc + new Vector3(0f, 0.1f, 0f), new Vector3(a2.x, hc.y + 0.1f, a2.z), find) + drift;
-                look = Vector3.Lerp(new Vector3(hc.x + 0.5f, RoofY, hc.z + 0.2f) + Sway(0.25f, 0.2f, 4f), new Vector3(a2.x, RoofY, a2.z + 0.04f), find);
-                fov = Mathf.Lerp(64f, 50f, find);
-                if (!drop1Hit)
-                {
-                    PoseDrop(drop1, drop1R, hc, 9.05f, 9.47f, 26.5f, 10.3f);
-                    if (drop1R != null && drop1R.enabled && t > 9.47f && (drop1.position.y - pos.y < 0.45f || t >= 10.2f))
-                    {
-                        drop1Hit = true;
-                        splatAt = Time.unscaledTime;
-                        drop1R.enabled = false;
-                        LensSplash(1f);
-                        if (cam != null) cam.Shake(0.15f, 0.2f);
-                    }
-                }
-                else if (drop1R != null) drop1R.enabled = false;
+                if (drop1R != null) drop1R.enabled = false;
+                if (At(10.25f)) Sound.Play(Sfx.Breath, 0.85f, null, 1.1f);                    // he comes to
+                // his eyes drift up at the roof as he breathes, settling as they open and clear
+                float settle = Ease(9.4f, S3, t);
+                pos = hc + new Vector3(0f, 0.1f, 0f) + Sway(0.02f, 0.3f, 3f) * (1f - 0.6f * settle);
+                look = new Vector3(hc.x + 0.5f, RoofY, hc.z + 0.2f) + Sway(0.25f, 0.2f, 4f) * (1f - 0.6f * settle);
+                fov = 64f;
                 CrackWater(hc, 0f, 0f, true);                                       // still beading on the seam above him
-                float blur = t < 10.36f ? Mathf.Lerp(Mathf.Lerp(1f, 0.72f, Ease(S2, 8.9f, t)), 0.22f, Ease(8.9f, 9.5f, t)) : 0f;   // he focuses on it
-                if (drop1Hit && Time.unscaledTime - splatAt < 0.3f) blur = 0.9f;
+                float blur = Mathf.Lerp(Mathf.Lerp(1f, 0.72f, Ease(S2, 9.0f, t)), 0f, Ease(9.4f, 10.5f, t));   // clearing as they open
                 StoryCameraFX.Set(blur, StoryCameraFX.Instance != null ? StoryCameraFX.Instance.Glitch : 0f);
             }
             else if (t < S4)
@@ -540,8 +525,6 @@ namespace ProjectInk
             LensSplash(0.7f);
             if (cam != null) cam.Shake(0.05f, 0.15f);
         }
-
-        bool drop1Hit;
 
         /// <summary>A drop landing on the lens (on his eye): a wet tap, a blur, water on the glass.</summary>
         void LensSplash(float vol)
@@ -967,7 +950,7 @@ namespace ProjectInk
 
         // ---- shot 2: eyelids, vignette, the splat
 
-        static readonly float[] LidKeys = { 6.8f, 0f, 7.35f, 0.32f, 7.6f, 0.32f, 7.85f, 0.04f, 8.3f, 0.5f, 8.7f, 0.5f, 9.0f, 0.08f, 9.5f, 0.72f, 10.2f, 0.78f, 10.24f, 0f, 10.36f, 0f, 10.55f, 1f };
+        static readonly float[] LidKeys = { 6.8f, 0f, 7.35f, 0.32f, 7.6f, 0.32f, 7.85f, 0.04f, 8.3f, 0.5f, 8.7f, 0.5f, 9.0f, 0.08f, 9.5f, 0.72f, 10.0f, 0.8f, 10.45f, 1f };
 
         static float Lids(float x)
         {

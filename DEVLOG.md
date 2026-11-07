@@ -1073,3 +1073,7 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - Now his eyes, drifting, find the drop gathering on the crack and hold on it, straight up its fall line. He comes into focus on it, and it falls into his eye: the same lens hit as shot 1 (`LensSplash`). His lids snap shut and reopen on water on the glass.
 - The drop was nearly invisible against the dark roof. It now has more body, a brighter lit edge, a stronger highlight, a clearer refracted band, and a little more size, so it can be followed all the way down.
 - Scene version 32.
+
+### No second drop
+- Shot 2 is just his eyes: heavy blinks, then they open steadily and the picture clears into focus (the blur goes to nothing by 10.5), with a breath as he comes to. Then the cut to the face in the puddle.
+- The second drop, its lens hit and the snap-shut blink are gone. The eyelid keys now end fully open at 10.45.
