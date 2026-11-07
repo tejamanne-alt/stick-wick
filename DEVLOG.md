@@ -1150,3 +1150,4 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - The memory line is now "Someone put you in the ground. You climbed out."
 - **New sounds:** `phone_buzz` (motor in bursts, case rattling on concrete) and `phone_click` (pick-up, and the hang-up tones).
 - **Vibration setting:** the pause menu now has a VIBRATION ON/OFF button next to SOUND, saved like sound (`Haptics`). Every phone buzz goes through `Haptics.Vibrate()`, and turning it back on gives one buzz to confirm. The pause menu is now four rows: RESUME | MOVES, SOUND | VIBRATION, RESTART | HINTS, MAIN MENU.
+- **Temporary test shortcut:** the main menu has a TEST · SKIP TO THE BOSS button under the two modes. It starts story mode straight in the crane bay with the Foreman arriving (knife in hand), using the same checkpoint path as a defeat by him. It is controlled by `MainMenu.DevShortcuts`; set that false before release.

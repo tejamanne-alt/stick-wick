@@ -100,8 +100,27 @@ namespace ProjectInk
             var fight = new Rect(w * 0.5f + gap * 0.5f, y, bw, bh);
             if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true)) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
             if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false)) SceneManager.LoadScene("Prototype");
+            // TEMPORARY, for testing: straight into chapter 1's boss fight (set DevShortcuts false to remove)
+            if (DevShortcuts)
+            {
+                var dev = new Rect(w * 0.5f - 130, y + bh + 22, 260, 40);
+                Fill(dev, new Color(1f, 0.75f, 0.1f, dev.Contains(Event.current.mousePosition) ? 0.22f : 0.12f));
+                btnSub.normal.textColor = new Color(1f, 0.8f, 0.3f, 0.9f);
+                GUI.Label(dev, "TEST  ·  SKIP TO THE BOSS", btnSub);
+                if (GUI.Button(dev, GUIContent.none, GUIStyle.none))
+                {
+                    StoryIntro.NewRun();
+                    StoryIntro.EscapeSeen = true;                 // as if he had come all the way: the knife found
+                    StoryIntro.HallCheckpoint = 3;                // the crane bay ...
+                    StoryIntro.BossReached = true;                // ... with the Foreman already on his way down
+                    SceneManager.LoadScene("Story_Warehouse");
+                }
+            }
             GUI.matrix = Matrix4x4.identity;
         }
+
+        /// <summary>Testing shortcuts on the menu (SKIP TO THE BOSS). Off for release.</summary>
+        public const bool DevShortcuts = true;
 
         bool Button(Rect r, string label, string sub, bool accent)
         {
