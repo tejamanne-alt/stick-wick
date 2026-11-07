@@ -1,6 +1,12 @@
 # Chapter 1: The Hitman. The warehouse fight (design for review)
 
-**Status:** design only, nothing built yet. It continues the prologue: wake-up → puddle → where am I → break-in → escape → knife → INSTINCT (the directed first fight) → *"YOU'VE DONE THIS BEFORE."*
+**Status:** built (first pass, not yet played in Unity).
+- The hall: `tools/blender/story_hall.py`.
+- The fight: `StoryHall.cs`.
+- The boss: `StoryForeman.cs`.
+- The ending: `StoryEnding.cs`.
+
+Still to do from the kit: rolling oil drums, and boxes falling from the racks. It continues the prologue: wake-up → puddle → where am I → break-in → escape → knife → INSTINCT (the directed first fight) → *"YOU'VE DONE THIS BEFORE."*
 
 Then, instead of the end card:
 

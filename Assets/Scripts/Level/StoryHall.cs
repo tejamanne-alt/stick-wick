@@ -19,7 +19,7 @@ namespace ProjectInk
         public static int HallCheckpoint = -1;
 
         /// <summary>From the menu: the chapter from the top (no checkpoint, no retry state).</summary>
-        public static void NewRun() { HallCheckpoint = -1; Retry = false; EscapeSeen = false; }
+        public static void NewRun() { HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; }
 
         struct Spawn { public EnemyType type; public SpawnKind kind; public Spawn(EnemyType t, SpawnKind k) { type = t; kind = k; } }
 
@@ -170,6 +170,7 @@ namespace ProjectInk
                 Sound.Tension(true);
                 Sound.Ambience(0.6f, 0.4f, 1200f);
                 barsPx = 0f;
+                if (z == Waves.Length - 1 && BossReached) BossArrives();     // a defeat by the Foreman: back to him, not the wave before
             }
         }
 
@@ -203,6 +204,7 @@ namespace ProjectInk
         void UpdateHall()
         {
             if (!hallReady || hero.IsDead) return;
+            if (bossT >= 0f) { UpdateBoss(); return; }                // the Foreman's floor: no more waves
             hallMen.RemoveAll(e => e == null || !e.Alive);
             var waves = Waves[zone];
             if (zoneState == ZoneState.Fighting)
@@ -274,13 +276,5 @@ namespace ProjectInk
             }
         }
 
-        /// <summary>The boss (the Foreman: task in progress). Until he is built the chapter closes here.</summary>
-        void BossArrives()
-        {
-            HallCheckpoint = -1;
-            phase = Phase.End;
-            Retry = false;
-            Sound.Tension(false);
-        }
     }
 }

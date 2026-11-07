@@ -320,6 +320,7 @@ namespace ProjectInk
                 EnemyType.Gunner => FightStyle.Gun,
                 EnemyType.Thrower => FightStyle.Knife,
                 EnemyType.Piper => FightStyle.Pipe,
+                EnemyType.Brute => BossWeapon,
                 _ => FightStyle.Fists,
             };
             var go = FighterFactory.Build(enemyModel, moves, enemyMaterial, $"Enemy_{spawnSerial++}", false, trailMaterial, weapon, eyeMaterial);
@@ -352,7 +353,7 @@ namespace ProjectInk
                 _ => BrawlerColors[Random.Range(0, BrawlerColors.Length)],
             };
             e.Init(hero, inc.kind, inc.type, hp, c, trailMaterial);
-            if (inc.type == EnemyType.Brute && BossDirector.Instance == null) BossIntro(e);
+            if (inc.type == EnemyType.Brute && BossDirector.Instance == null && !StoryBoss) BossIntro(e);
             return e;
         }
 
@@ -543,6 +544,11 @@ namespace ProjectInk
             StyleText = label;
             StyleUntil = Time.unscaledTime + 1.2f;
         }
+
+        /// <summary>The story's own boss (its entrance is the story's): what he carries, and no
+        /// fight-mode intro.</summary>
+        public static FightStyle BossWeapon = FightStyle.Fists;
+        public static bool StoryBoss;
 
         public void ShowBanner(string text, float seconds)
         {

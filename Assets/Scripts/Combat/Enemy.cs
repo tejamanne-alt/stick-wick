@@ -1059,6 +1059,16 @@ namespace ProjectInk
         {
             enragePending = false;
             Enraged = true;
+            // a weapon in his hand (the Foreman's crowbar) is flung away: fists from here on
+            foreach (var t in GetComponentsInChildren<Transform>())
+                if (t.name == "Pipe" && t.gameObject.activeInHierarchy)
+                {
+                    t.SetParent(null, true);
+                    var fall = t.gameObject.AddComponent<ShieldFall>();
+                    fall.velocity = new Vector3(-Facing * 4f, 5f, 0f);
+                    Sound.Play(Sfx.PipeHit, 1f, t.position, 0.8f);
+                    break;
+                }
             ReleaseToken();
             state = State.Enrage;
             stateTime = 0f;
@@ -1097,7 +1107,7 @@ namespace ProjectInk
         /// finale cinematic takes over. Returns true if it caught the blow.</summary>
         bool FinalBlow(float dmg, HitInfo hit)
         {
-            if (!Boss || finaleTriggered || Health - dmg > 0f || BossDirector.Instance == null) return false;
+            if (!Boss || finaleTriggered || Health - dmg > 0f || (BossDirector.Instance == null && StoryFinale == null)) return false;
             finaleTriggered = true;
             Health = 1f;
             ReleaseToken();
@@ -1111,9 +1121,14 @@ namespace ProjectInk
             body.Play("hit_front", 0.03f, true, 0.6f);
             Tint(Color.white, 0.1f);
             Sound.Play(Sfx.BruteHurt, 1f, Chest, 0.75f);
-            BossDirector.Instance.BeginFinale(this);
+            if (BossDirector.Instance != null) BossDirector.Instance.BeginFinale(this);
+            else StoryFinale(this, hit);
             return true;
         }
+
+        /// <summary>A story scene that takes the boss's last blow instead of the fight-mode finale
+        /// (chapter 1: the Foreman goes down alive, and the ending begins).</summary>
+        public static System.Action<Enemy, HitInfo> StoryFinale;
 
         // --- the entrance (driven by the BossDirector)
         public void BeginBossIntro()

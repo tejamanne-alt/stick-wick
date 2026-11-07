@@ -344,6 +344,34 @@
       "hitFrame": -1
     },
     {
+      "name": "kneel_hold",
+      "frames": 48,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "kneel_grip",
+      "frames": 8,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "lie_up",
+      "frames": 48,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "lie_gun",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
       "name": "idle",
       "frames": 35,
       "fps": 30,

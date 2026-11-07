@@ -37,11 +37,11 @@ namespace ProjectInk
         public HeroController hero;
         public WaveDirector director;
 
-        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, End }
+        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, Ending, End }
         Phase phase = Phase.Cinematic;
 
         /// <summary>The fight HUD steps aside while the story holds the screen.</summary>
-        public bool HideHud => phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
+        public bool HideHud => phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
 
         // the edit (real seconds)
         const float S1 = 4.2f, S2 = 6.8f, S3 = 10.8f, S4 = 15.6f, S5 = 22.2f, S6 = 27.0f, Control = 30.6f;
@@ -474,7 +474,10 @@ namespace ProjectInk
         /// <summary>After the animation: his head tipped back as far as the shot wants (shot 5).</summary>
         void LateUpdate()
         {
-            if (!headPitchOn || head == null || hero == null) return;
+            if (head == null || hero == null) return;
+            // the ending: his head turning side to side (no... no...)
+            if (headYawOn) head.rotation = Quaternion.AngleAxis(headYaw, Vector3.up) * head.rotation;
+            if (!headPitchOn) return;
             if (phase != Phase.Cinematic || t < S5 || t >= S6) { headPitchOn = false; return; }
             var fwd = hero.transform.rotation * Vector3.right;
             head.rotation = Quaternion.AngleAxis(headPitch, Vector3.Cross(fwd, Vector3.up)) * head.rotation;
@@ -950,6 +953,8 @@ namespace ProjectInk
                 GUI.Label(r, EscapeSeen ? "TAP HIGH  STAB    ·    TAP LOW  KICK    ·    SWIPE SIDEWAYS  DODGE" : "TAP HIGH  PUNCH    ·    TAP LOW  KICK    ·    SWIPE SIDEWAYS  DODGE", cap);
                 cap.alignment = TextAnchor.MiddleLeft;
             }
+            ForemanGUI(w, h);
+            EndingGUI(w, h);
             if (phase == Phase.End) EndCard(w, h);
             GUI.matrix = Matrix4x4.identity;
         }
@@ -1176,12 +1181,12 @@ namespace ProjectInk
             Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.92f));
             big.fontSize = 64;
             big.normal.textColor = Color.white;
-            GUI.Label(new Rect(0, h * 0.26f, w, 80), Spaced("PROLOGUE COMPLETE"), big);
+            GUI.Label(new Rect(0, h * 0.26f, w, 80), Spaced("CHAPTER 1 COMPLETE"), big);
             Fill(new Rect(w * 0.5f - 160, h * 0.26f + 84, 320, 3), new Color(0.8f, 0.06f, 0.07f));
             cap.alignment = TextAnchor.MiddleCenter;
             cap.fontSize = 22;
             cap.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
-            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), Spaced("CHAPTER 1") + "     THE HITMAN     " + Spaced("COMING SOON"), cap);
+            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), Spaced("CHAPTER 2") + "     THE WIFE     " + Spaced("COMING SOON"), cap);
             cap.alignment = TextAnchor.MiddleLeft;
             cap.fontSize = 20;
             var again = new Rect(w * 0.5f - 300, h * 0.62f, 280, 62);

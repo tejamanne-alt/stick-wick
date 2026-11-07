@@ -582,6 +582,28 @@ ESCAPE_CLIPS = {
         (0, PRONE_KNIFE), (12, PUSH_UP), (24, KNEEL_KNIFE), (32, KNEEL_KNIFE), (44, KNIFE_STANCE)]),
 }
 STORY_CLIPS.update(ESCAPE_CLIPS)
+
+# --- the ending (chapter 1): kneeling over the beaten Foreman; the Foreman down, propped on his
+# elbows, then with the gun up at the hero's face
+KNEEL_HOLD = pose(STRAIGHT, spine=168, chest=160, head=156, upperarm_L=22, forearm_L=60, upperarm_R=74, forearm_R=96, hand_R=90,
+                  thigh_L=84, shin_L=0, thigh_R=0, shin_R=-90)
+KNEEL_GRIP = pose(KNEEL_HOLD, chest=156, head=150, upperarm_L=66, forearm_L=86, upperarm_R=60, forearm_R=80)
+LIE_UP = rotated(pose(STRAIGHT, spine=176, chest=150, head=140, upperarm_L=-40, forearm_L=-90, upperarm_R=-30, forearm_R=-80,
+                      thigh_L=8, shin_L=-4, thigh_R=-4, shin_R=-12), 90, dz=-0.78)
+LIE_GUN = rotated(pose(STRAIGHT, spine=176, chest=154, head=146, upperarm_L=-40, forearm_L=-90, upperarm_R=108, forearm_R=96, hand_R=96,
+                       thigh_L=8, shin_L=-4, thigh_R=-4, shin_R=-12), 90, dz=-0.78)
+ENDING_CLIPS = {
+    "kneel_hold": dict(frames=48, loop=True, hit=None, keys=[        # on one knee, his fist in the man's collar
+        (0, KNEEL_HOLD), (24, pose(KNEEL_HOLD, chest=158, head=153)), (48, KNEEL_HOLD)]),
+    "kneel_grip": dict(frames=8, loop=True, hit=None, keys=[         # both hands on the gun hand, shaking
+        (0, KNEEL_GRIP), (4, pose(KNEEL_GRIP, upperarm_L=60, forearm_L=92, upperarm_R=66, forearm_R=74)), (8, KNEEL_GRIP)]),
+    "lie_up": dict(frames=48, loop=True, hit=None, keys=[            # down, propped on his elbows, breathing hard
+        (0, LIE_UP), (24, rotated(pose(STRAIGHT, spine=176, chest=154, head=144, upperarm_L=-40, forearm_L=-90, upperarm_R=-30, forearm_R=-80,
+                                       thigh_L=8, shin_L=-4, thigh_R=-4, shin_R=-12), 90, dz=-0.78)), (48, LIE_UP)]),
+    "lie_gun": dict(frames=12, loop=False, hit=None, keys=[          # the gun comes up from his side
+        (0, LIE_UP), (6, LIE_GUN), (12, LIE_GUN)]),
+}
+STORY_CLIPS.update(ENDING_CLIPS)
 CLIPS.update(STORY_CLIPS)
 
 

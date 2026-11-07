@@ -1077,3 +1077,39 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 ### No second drop
 - Shot 2 is just his eyes: heavy blinks, then they open steadily and the picture clears into focus (the blur goes to nothing by 10.5), with a breath as he comes to. Then the cut to the face in the puddle.
 - The second drop, its lens hit and the snap-shut blink are gone. The eyelid keys now end fully open at 10.45.
+
+### Chapter 1: the warehouse fight, the Foreman, the ending (first pass)
+- **The hall** (`tools/blender/story_hall.py`): a complete building through the inner shutter, 48 × 22 m, 12 m to the ridge.
+  - Brick walls with high steel windows (some broken or boarded), a truss roof with skylights (one torn), columns, pipes, graffiti.
+  - Outside: the yard face with its lettering, docks and floodlights, and the open main door.
+  - Four zones:
+    1. the loading bay: dock doors, trailer, pallets, roll cages, the forklift with its forks raised over the lane
+    2. the racking aisle: two racks across the lane, more receding, the monorail hoist
+    3. the mezzanine: steel deck, stairs, the lit site office, the workshop under it
+    4. the crane bay: gantry crane, presses, coils, drums, the puddle under the torn skylight
+  - Lit for fighting: a lane fill and a wall wash per zone. Baked with a lightning version.
+  - The store got its missing front wall. Front walls (`HallFront`) are cut away by `CutawayWall` whenever the camera is outside them.
+- **Navigation** (`LevelNav.WarehousePlan`):
+  - the forks (1.62 m), both racks (2.2 m) and the mezzanine (3.4 m)
+  - stairs up at 37.6, a climb ledge at the mezzanine's far end
+  - the hoist chain as a rope swing, the swing bar over the mezzanine, crates in every zone
+- **Zones** (`StoryHall`):
+  - The arena, the enemies' walls and the camera lock to the zone (`CameraDirector.SetBounds`: asymmetric bounds), and the doors move for each zone.
+  - Seven waves with caps. **GO →** when a zone is clear; the next zone closes behind him.
+  - A death restarts at the zone (`HallCheckpoint`).
+  - The way in is a cinematic: voices beyond the shutter, he heaves it up, the hall opens and the first of them come.
+- **New enemies:**
+  - **Runner:** small and fast, one jab and he darts out.
+  - **Grabber:** big, mostly grabs; tap to break free.
+  - **Door-man:** a corrugated sheet that blocks high strikes from the front. Kicks, slides, hits from behind and heavy blows get through; four blocks or one heavy blow tear it away.
+  - Hero hits carry `low` for kicks.
+- **The Foreman** (`StoryForeman`):
+  - Rides the crane hook down out of the dark and lands with a crash; roar and name card.
+  - The brute's specials with a crowbar, flung away when enraged.
+  - The hook swings across the floor every so often, telegraphed in red.
+  - His own health bar.
+  - His last blow goes to the ending (`Enemy.StoryFinale`). A defeat by him restarts at him.
+- **The ending** (`StoryEnding`): the 15 shots of the design, with new clips `kneel_hold`, `kneel_grip`, `lie_up`, `lie_gun`. His head shakes "no" via a head-bone override. The photo is drawn at runtime.
+  - Then CHAPTER 1 COMPLETE · THE HITMAN · MEMORY RESTORED: "You kill people. You are good at it."
+  - The end card now says CHAPTER 2 · THE WIFE · COMING SOON.
+- The menu starts a fresh run (`StoryIntro.NewRun`). Scene version 34.
