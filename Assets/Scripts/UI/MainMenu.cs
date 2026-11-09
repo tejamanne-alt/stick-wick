@@ -100,31 +100,96 @@ namespace ProjectInk
             var fight = new Rect(w * 0.5f + gap * 0.5f, y, bw, bh);
             if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true)) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
             if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false)) SceneManager.LoadScene("Prototype");
-            // TEMPORARY, for testing: straight into chapter 1's boss fight (set DevShortcuts false to remove)
+            // TEMPORARY, for testing: jump straight to any checkpoint (set DevShortcuts false to remove)
             if (DevShortcuts)
             {
-                var dev = new Rect(w * 0.5f - 270, y + bh + 22, 260, 40);
-                var dev2 = new Rect(w * 0.5f + 10, y + bh + 22, 260, 40);
-                Fill(dev2, new Color(1f, 0.75f, 0.1f, dev2.Contains(Event.current.mousePosition) ? 0.22f : 0.12f));
+                var dev = new Rect(w * 0.5f - 150, y + bh + 22, 300, 40);
+                Fill(dev, new Color(1f, 0.75f, 0.1f, dev.Contains(Event.current.mousePosition) || testOpen ? 0.24f : 0.12f));
                 btnSub.normal.textColor = new Color(1f, 0.8f, 0.3f, 0.9f);
-                GUI.Label(dev2, "TEST  ·  CHAPTER 2  ·  THE BANK", btnSub);
-                if (GUI.Button(dev2, GUIContent.none, GUIStyle.none)) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Bank"); }
-                Fill(dev, new Color(1f, 0.75f, 0.1f, dev.Contains(Event.current.mousePosition) ? 0.22f : 0.12f));
-                btnSub.normal.textColor = new Color(1f, 0.8f, 0.3f, 0.9f);
-                GUI.Label(dev, "TEST  ·  SKIP TO THE BOSS", btnSub);
-                if (GUI.Button(dev, GUIContent.none, GUIStyle.none))
-                {
-                    StoryIntro.NewRun();
-                    StoryIntro.EscapeSeen = true;                 // as if he had come all the way: the knife found
-                    StoryIntro.HallCheckpoint = 3;                // the crane bay ...
-                    StoryIntro.BossReached = true;                // ... with the Foreman already on his way down
-                    SceneManager.LoadScene("Story_Warehouse");
-                }
+                GUI.Label(dev, "TEST  ·  CHECKPOINTS", btnSub);
+                if (GUI.Button(dev, GUIContent.none, GUIStyle.none)) testOpen = !testOpen;
+                if (testOpen) TestPanel(w, h);
             }
             GUI.matrix = Matrix4x4.identity;
         }
 
-        /// <summary>Testing shortcuts on the menu (SKIP TO THE BOSS). Off for release.</summary>
+        bool testOpen;
+
+        /// <summary>Every place in the story you can jump to, to test it without playing up to it.</summary>
+        static readonly (string chapter, string label, System.Action go)[] Checkpoints =
+        {
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Opening", () => Ch1(() => { })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "At the shutter (the walk)", () => Ch1(() => { StoryIntro.Retry = true; })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 1  ·  Loading bay", () => Ch1(() => Hall(0))),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 2  ·  Racking aisle", () => Ch1(() => Hall(1))),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 3  ·  Mezzanine", () => Ch1(() => Hall(2))),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 4  ·  Crane bay", () => Ch1(() => Hall(3))),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "The Foreman (the fight)", () => Ch1(() => { Hall(3); StoryIntro.BossReached = true; })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Ending  ·  boss beaten", () => Ch1(() => { StoryIntro.EscapeSeen = true; StoryIntro.TestEnding = 1; })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Ending  ·  the key on the body", () => Ch1(() => { StoryIntro.EscapeSeen = true; StoryIntro.TestEnding = 2; })),
+            ("CHAPTER 2  ·  THE BANK", "Start  ·  the street", () => Ch2(0)),
+            ("CHAPTER 2  ·  THE BANK", "At the counter", () => Ch2(1)),
+            ("CHAPTER 2  ·  THE BANK", "The vault  ·  two keys", () => Ch2(2)),
+            ("CHAPTER 2  ·  THE BANK", "The box  ·  passports, ring, memory", () => Ch2(3)),
+            ("CHAPTER 2  ·  THE BANK", "Walk out", () => Ch2(4)),
+        };
+
+        static void Ch1(System.Action setUp)
+        {
+            StoryIntro.NewRun();
+            setUp();
+            SceneManager.LoadScene("Story_Warehouse");
+        }
+
+        static void Hall(int zone)
+        {
+            StoryIntro.EscapeSeen = true;
+            StoryIntro.HallCheckpoint = zone;
+        }
+
+        static void Ch2(int at)
+        {
+            StoryIntro.NewRun();
+            StoryIntro.BankFrom = at;
+            SceneManager.LoadScene("Story_Bank");
+        }
+
+        void TestPanel(float w, float h)
+        {
+            float pw = Mathf.Min(760f, w - 40f), rowH = 34f;
+            int rows = Checkpoints.Length + 2;
+            float ph = rows * rowH + 60f;
+            var r = new Rect((w - pw) * 0.5f, Mathf.Max(10f, (h - ph) * 0.5f), pw, ph);
+            Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.75f));
+            Fill(r, new Color(0.08f, 0.08f, 0.09f, 0.98f));
+            Fill(new Rect(r.x, r.y, r.width, 3), new Color(1f, 0.75f, 0.1f, 0.9f));
+            btnSub.normal.textColor = new Color(1f, 0.8f, 0.3f, 0.95f);
+            GUI.Label(new Rect(r.x, r.y + 8, pw, 30), "TEST  ·  CHECKPOINTS   (testing only)", btnSub);
+            float yy = r.y + 46f;
+            string last = null;
+            foreach (var c in Checkpoints)
+            {
+                if (c.chapter != last)
+                {
+                    last = c.chapter;
+                    btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.55f);
+                    GUI.Label(new Rect(r.x + 20, yy, pw - 40, rowH), Spaced(c.chapter), btnSub);
+                    yy += rowH;
+                }
+                var row = new Rect(r.x + 40, yy + 2, pw - 80, rowH - 4);
+                Fill(row, new Color(1f, 1f, 1f, row.Contains(Event.current.mousePosition) ? 0.14f : 0.05f));
+                btnSub.normal.textColor = Color.white;
+                GUI.Label(row, c.label, btnSub);
+                if (GUI.Button(row, GUIContent.none, GUIStyle.none)) { testOpen = false; c.go(); }
+                yy += rowH;
+            }
+            var close = new Rect(r.xMax - 44, r.y + 6, 36, 30);
+            btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.7f);
+            GUI.Label(close, "X", btnSub);
+            if (GUI.Button(close, GUIContent.none, GUIStyle.none)) testOpen = false;
+        }
+
+        /// <summary>Testing shortcuts on the menu (TEST · CHECKPOINTS). Off for release.</summary>
         public const bool DevShortcuts = true;
 
         bool Button(Rect r, string label, string sub, bool accent)

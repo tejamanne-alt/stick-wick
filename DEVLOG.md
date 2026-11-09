@@ -1271,3 +1271,7 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - The deduction: "So that's why I'm still breathing... They wanted what's in that box." The decision: "Whoever sent you is going after it. Then I'll get there first."
   - Chapter 2 opens on the race ("I have to get to that box before they do.").
   - The coat beat is gone.
+- **Test checkpoints** (`docs/story/test_checkpoints.md`): the menu's single test button now opens a list of checkpoints.
+  - Chapter 1: opening, the shutter, each hall zone, the Foreman fight, the ending with the boss already beaten (no fight), and the ending from the search of the body.
+  - Chapter 2: start, counter, vault, box, walk out.
+  - The pieces: `StoryTest.JumpToEnding`, `StoryEnding.EndingFrom`, and the bank's `BankFrom`/`TestState` (the bank's sequence is now in blocks that can be entered mid-way).

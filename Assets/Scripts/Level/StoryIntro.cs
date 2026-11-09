@@ -123,7 +123,8 @@ namespace ProjectInk
                 setUp = true;
                 HeadWound.Chapter = 1;                       // the warehouse: the night of the blow
                 if (!Retry) EscapeSeen = false;              // from the top: he has not found the knife yet
-                if (HallCheckpoint >= 0) { BeginHall(HallCheckpoint, true); }      // a defeat in the hall: back to that zone
+                if (TestEnding > 0) { JumpToEnding(); }                         // TEST: straight into the ending
+                else if (HallCheckpoint >= 0) { BeginHall(HallCheckpoint, true); }      // a defeat in the hall: back to that zone
                 else if (Retry) { BeginAtDoor(); }
                 else
                 {

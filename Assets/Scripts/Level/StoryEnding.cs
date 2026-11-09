@@ -22,6 +22,9 @@ namespace ProjectInk
         string cardLine;
         float cardAt = -1f;
 
+        /// <summary>TEST checkpoints: 2 starts the ending at the search of the dead man.</summary>
+        public static int EndingFrom;
+
         void BeginEnding(Enemy boss)
         {
             Enemy.StoryFinale = null;
@@ -36,6 +39,32 @@ namespace ProjectInk
             Sound.Tension(false);
             hero.CinePuppet();
             float bx = boss != null ? boss.transform.position.x : hero.transform.position.x + 1.6f;
+            // he comes down under the torn skylight, in the column of rain the floodlight pours through
+            float landX = Mathf.Clamp(bx + 1.4f * Mathf.Sign(bx - hero.transform.position.x), 54.8f, 57.6f);
+            float mx = landX - 0.5f;
+            System.Action wide = () => { Rain(); EndShot(new Vector3(mx, 0.28f, -3.6f), new Vector3(mx, 0.6f, 0f), 34f); };
+            System.Action close = () => { Rain(); EndShot(new Vector3(mx, 0.3f, -2.3f), new Vector3(mx, 0.52f, 0f), 30f); };
+            if (EndingFrom >= 2)
+            {
+                // TEST checkpoint: straight to the search of the dead man (he lies under the skylight; the hero stands over him)
+                EndingFrom = 0;
+                if (boss != null)
+                {
+                    boss.Puppet();
+                    boss.SetFacing(1);
+                    boss.PuppetPose(new Vector3(landX, 0f, 0f));
+                    boss.PuppetPlay("lie", 0f);
+                    for (int i = 0; i < 4; i++)
+                        if (InkFx.Instance != null) InkFx.Instance.Stain(new Vector3(landX + 0.2f * i - 0.3f, 0f, 0f), boss.InkColor, 0.8f + 0.4f * i, false);
+                }
+                hero.SetFacing(1);
+                hero.CinePose(new Vector3(landX - 1.6f, 0f, 0f));
+                if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0f);
+                barsPx = 70f;
+                Sound.Ambience(1.2f, 0.25f, 22000f);
+            }
+            else
+            {
             // ---------------------------------------------------------------- 1 the final blow
             if (boss != null)
             {
@@ -46,8 +75,6 @@ namespace ProjectInk
             if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.25f, 1.6f, 0.02f, 0.4f);
             Sound.Play(Sfx.Finisher, 1f);
             Sound.Play(Sfx.SlowmoIn, 0.6f);
-            // he comes down under the torn skylight, in the column of rain the floodlight pours through
-            float landX = Mathf.Clamp(bx + 1.4f * Mathf.Sign(bx - hero.transform.position.x), 54.8f, 57.6f);
             float t0 = 0f;
             var bp0 = boss != null ? boss.transform.position : new Vector3(landX, 0f, 0f);
             while (t0 < 1.7f)
@@ -86,11 +113,8 @@ namespace ProjectInk
             Sound.Play(Sfx.Breath, 0.8f);
 
             // ---------------------------------------------------------------- 3 from here on, side on: two black shapes against the light
-            float mx = landX - 0.5f;
             BuildBacklight(mx);
             if (boss != null) boss.SetBaseColor(new Color(0.02f, 0.02f, 0.025f));       // the light takes his colour away
-            System.Action wide = () => { Rain(); EndShot(new Vector3(mx, 0.28f, -3.6f), new Vector3(mx, 0.6f, 0f), 34f); };
-            System.Action close = () => { Rain(); EndShot(new Vector3(mx, 0.3f, -2.3f), new Vector3(mx, 0.52f, 0f), 30f); };
             yield return Hold(1.4f, wide);
 
             Say("YOU", "Why are you trying to kill me?", 2.4f);
@@ -302,6 +326,7 @@ namespace ProjectInk
                 yield return null;
             }
             headYawOn = false;
+            }
 
             // ================================================================ THE KEY, ON THE DEAD MAN
             // (docs/story/chapter2_bank.md: they searched him when they dumped him, and the Foreman kept

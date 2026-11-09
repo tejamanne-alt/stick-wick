@@ -49,6 +49,12 @@ namespace ProjectInk
             barsPx = 92f;
             SpawnBankPeople();
             BuildBankProps();
+            var tableAt = new Vector3(TableX, TableY + 0.13f, TableZ);
+            int startAt = BankFrom;
+            BankFrom = 0;
+
+            if (startAt <= 0)
+            {
 
             // ------------------------------------------------------------ B1 the street at dawn
             Sound.Play(Sfx.Wind, 0.5f);
@@ -167,6 +173,11 @@ namespace ProjectInk
             hero.SetFacing(1);
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f);
 
+            }
+
+            if (startAt <= 1)
+            {
+            if (startAt == 1) TestState(1);
             // ------------------------------------------------------------ B7 through the glass
             System.Action overShoulder = () => EndShot(new Vector3(TellerX - 0.9f, 1.75f, -0.9f), Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)), 32f);
             Say("CLERK", "Good morning. How can I help you?", 2.4f, HeadT(clerk));
@@ -238,6 +249,11 @@ namespace ProjectInk
             Say("YOU", "...Of course I did.", 1.8f);
             yield return Hold(2.0f, twoShot);
 
+            }
+
+            if (startAt <= 2)
+            {
+            if (startAt == 2) TestState(2);
             // ------------------------------------------------------------ B11 two keys: the bank's and his (dual control)
             // they step up to the wall of boxes, side by side
             {
@@ -305,7 +321,6 @@ namespace ProjectInk
             if (hisKey != null) hisKey.gameObject.SetActive(false);
             if (emptySlot != null) emptySlot.gameObject.SetActive(true);
             // he carries it, both hands, to the table in the viewing booth, and sets it down
-            var tableAt = new Vector3(TableX, TableY + 0.13f, TableZ);
             if (harrow != null)
             {
                 harrow.SetFacing(1);
@@ -385,6 +400,11 @@ namespace ProjectInk
             yield return Hold(3.0f, () => EndShot(Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)) + new Vector3(1.3f, 0.1f, -1.6f), Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)), 30f));
             if (phoneProp != null) phoneProp.gameObject.SetActive(false);
 
+            }
+
+            if (startAt <= 3)
+            {
+            if (startAt == 3) TestState(3);
             // ------------------------------------------------------------ B13 alone. Play: open it
             hero.CinePose(new Vector3(TableX - 0.85f, 0f, 0f));
             hero.SetFacing(1);
@@ -476,8 +496,11 @@ namespace ProjectInk
             bankUi = 0;
             Sound.Play(Sfx.Cloth, 0.6f);
 
+            }
+            if (startAt == 4) TestState(4);
+
             // ------------------------------------------------------------ B20 play: back out through the lobby
-            depositBox.gameObject.SetActive(false);
+            if (depositBox != null) depositBox.gameObject.SetActive(false);
             hero.CinePose(new Vector3(21.5f, 0f, 0f));
             hero.SetFacing(-1);
             Sound.Ambience(0.03f, 0.75f, 5000f);
@@ -513,6 +536,38 @@ namespace ProjectInk
             cardTitle = "THE RING";
             yield return RealWait(6.0f);
             phase = Phase.End;
+        }
+
+        /// <summary>TEST checkpoints: the bank as it is at that point of the story.</summary>
+        void TestState(int at)
+        {
+            barsPx = 92f;
+            Sound.Ambience(0.03f, 0.75f, 5000f);
+            if (doorL != null) doorL.localRotation = Quaternion.Euler(0f, -78f, 0f);
+            if (doorR != null) doorR.localRotation = Quaternion.Euler(0f, 78f, 0f);
+            if (guard != null) { guard.PuppetPose(new Vector3(1.8f, 0f, 1.4f)); guard.SetFacing(-1); guard.PuppetPlay("idle", 0f); }
+            hero.SetFacing(1);
+            if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0f);
+            switch (at)
+            {
+                case 1: hero.CinePose(new Vector3(TellerX - 0.3f, 0f, 0f)); break;
+                case 2:
+                    hero.CinePose(new Vector3(TableX - 1.2f, 0f, 0f));
+                    if (harrow != null) { harrow.PuppetPose(new Vector3(TableX + 0.1f, 0f, 0.35f)); harrow.SetFacing(-1); harrow.PuppetPlay("idle_loose", 0f); }
+                    break;
+                case 3:
+                    hero.CinePose(new Vector3(TableX - 0.85f, 0f, 0f));
+                    if (harrow != null) harrow.gameObject.SetActive(false);
+                    if (depositBox != null) depositBox.position = new Vector3(TableX, TableY + 0.13f, TableZ);
+                    if (emptySlot != null) emptySlot.gameObject.SetActive(true);
+                    Sound.Ambience(0.0f, 0.4f, 3000f);
+                    break;
+                case 4:
+                    if (harrow != null) harrow.gameObject.SetActive(false);
+                    if (emptySlot != null) emptySlot.gameObject.SetActive(true);
+                    WearRing();
+                    break;
+            }
         }
 
         // ---------------------------------------------------------------- the people of the bank
