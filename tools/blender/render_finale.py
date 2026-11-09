@@ -80,8 +80,9 @@ def v3_blow():
     MY.thug(swing, (-0.45, 0.6, 0), facing=1)
     F.box((0.05, 0.55, 1.55), (0.7, 0.05, 0.05), F.flat(0.4), rot=(0, 0.7, 0))      # the pipe, coming down
     walk = B.pose(B.STRAIGHT, thigh_L=25, shin_L=10, thigh_R=-15, shin_R=20, upperarm_L=-15, upperarm_R=15)
-    voss(walk, (1.6, 1.9, 0), facing=1)                                              # and him, walking away, not looking back
-    F.camera((0.4, -2.8, 1.1), (0.0, 0.6, 1.05), 50, roll=-9)
+    F.box((1.75, 2.2, 1.1), (1.1, 0.05, 2.2), F.halo(1.0, 1.4, "Doorway"))           # an open door, bright, far off
+    voss(walk, (1.6, 1.9, 0), facing=1)                                             # and him, walking away into it, not looking back
+    F.camera((0.45, -3.4, 1.15), (0.55, 0.9, 1.05), 52, roll=-9)
 
 
 SHOTS = [v1_out, v2_phone, v3_blow]
