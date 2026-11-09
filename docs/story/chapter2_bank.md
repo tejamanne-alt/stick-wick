@@ -4,25 +4,29 @@ Same look as the rest of the game: the tower's black-and-white palette. The bank
 
 ---
 
-## Chapter 1, new ending (after the shot and "No... no... no...")
+## Chapter 1, new ending: the key, on the dead man (after the shot and "No... no... no...")
 
-The phone call is gone from here (see `story_arc.md`).
+**Why it is realistic:** when the crew dumped him in the warehouse they searched him, as criminals would, and the Foreman kept what they found for his boss: the key, with his orders folded round it. So the key costs him something: he has to go through the pockets of the man he has just killed. And it explains everything that follows:
+- why they kept him alive
+- why the bank has a flag on the box
+- why the clerk makes a call
+- why chapter 2 is a race
 
 | # | Shot | What happens | Sound |
 |---|---|---|---|
-| E1 | Wide, silhouette; then close on his face | He stands over the dead man. **YOU:** *"Who were you...? Who am I?"* | Rain on the roof, his breath. |
-| E2 | Wide; he looks round the empty hall | **YOU:** *"There has to be something here. Anything."* | |
-| E3 | **Lightning**, then an insert, low | In the flash: **a long black coat** over the oil drums by the press. | Thunder, a drip. |
-| E4 | Close, his face | **YOU:** *"...What's that?"* | |
-| E5 | Low, behind him | He walks to it. | Footsteps in water. |
-| E6 | Over the coat; then close on the collar | **YOU:** *"A coat..."* *"Blood on the collar. Mine."* | Heartbeat. |
-| E7 | He kneels and lifts it; close on his face | **YOU:** *"It looks like mine."* A flash cut: **YOU:** *"No... it IS mine. They took it off me before they dumped me here."* | Cloth, a flash-cut hit. |
-| E8 | Close, his hands at the pockets | **YOU:** *"Let me check what I can find."* The first pocket: *"Empty..."* The second: **a matchbook, CAFE NOIR · OPEN LATE** (full screen). *"A matchbook. 'Cafe Noir'... Means nothing to me."* (It is the cafe on the bank's street in chapter 2.) | Cloth, paper. |
-| E9 | The lining | **YOU:** *"Wait. There's something in the lining..."* | Metal in cloth. |
-| E10 | **The key, full screen** | **MERIDIAN TRUST · SAFE DEPOSIT · Nº 417**. **YOU:** *"What is this...?"* *"A key. Too small for a door."* *"Safe deposit... box four-one-seven. It's a locker key."* *"Meridian Trust. A bank."* | A piano note, heartbeat. |
-| E11 | Closer and closer on his face | **YOU:** *"Whoever I was... I locked something away there."* *"Something worth hiding. Maybe the reason they want me dead."* *"Then that's where I'm going."* | A drone, far thunder. |
-| E12 | From behind, wide | He folds the coat over his arm and walks out through the big door into the rain and the searchlight. | Thunder, rotor. |
-| E13 | Black | **CHAPTER 1 COMPLETE · THE HITMAN.** Memory restored: *"You kill people. You are good at it."* Then **CONTINUE → CHAPTER 2 · THE BANK**. | |
+| E1 | Close on his face | **YOU:** *"Who were you...? Who am I?"* | Rain on the roof, his breath. |
+| E2 | Low, past the body | He looks down at the dead man. **YOU:** *"You knew me. You knew exactly who I am."* *"Maybe you're carrying something that does too."* | |
+| E3 | Low and wide | He goes back to the body and kneels beside it. | Footsteps in water, cloth. |
+| E4 | Over the body; close on his hands in the jacket | The outer pockets. **YOU:** *"Cigarettes... a lighter. Nothing."* Then a matchbook, **CAFE NOIR · OPEN LATE**, full screen (the cafe on the bank's street, their meeting place). *"A matchbook. 'Cafe Noir'... open late."* | Cloth, paper. |
+| E5 | Lightning | In the flash, the bulge of the inside pocket. **YOU:** *"Inside pocket... wait."* | Thunder; metal and paper. |
+| E6 | **The key, full screen** | **MERIDIAN TRUST · SAFE DEPOSIT · Nº 417.** **YOU:** *"A key..."* A flash cut (his own hand turning it): *"No... that's MY key."* *"They searched me when they dumped me here. And he kept it."* *"Safe deposit... box four-one-seven. Meridian Trust. A bank."* | Piano note, heartbeat, flash-cut hit. |
+| E7 | **The note, full screen** | A torn, folded scrap in someone else's hand: ***"Get what's in 417 before the contract closes. Then finish him."*** He reads it aloud. | A drone; heartbeat. |
+| E8 | Closer and closer on his face | **YOU:** *"So that's why I'm still breathing."* *"They didn't want me dead. Not yet."* *"They wanted what's in that box."* | |
+| E9 | Low, as he rises over the body | **YOU:** *"Whoever sent you is going after it."* *"Then I'll get there first."* | Thunder. |
+| E10 | From behind, wide | He walks out through the big door into the rain and the searchlight. | Thunder, rotor. |
+| E11 | Black | **CHAPTER 1 COMPLETE · THE HITMAN.** Memory restored: *"You kill people. You are good at it."* Then **CONTINUE → CHAPTER 2 · THE BANK**. | |
+
+In chapter 2 the race is set up at once: at the bank's carved mark, *"The same mark as the key. This is the place."* *"I have to get to that box before they do."*
 
 ---
 

@@ -71,11 +71,12 @@ namespace ProjectInk
             ShowKey(false);
             Sound.Play(Sfx.FlashCut, 0.4f);
             float t2 = 0f;
-            while (t2 < 3.0f)
+            while (t2 < 5.6f)
             {
                 t2 += Time.unscaledDeltaTime;
-                float k = Mathf.SmoothStep(0f, 1f, t2 / 3f);
+                float k = Mathf.SmoothStep(0f, 1f, t2 / 5.6f);
                 if (t2 > 0.9f && t2 - Time.unscaledDeltaTime <= 0.9f) Say("YOU", "The same mark as the key. This is the place.", 2.4f);
+                if (t2 > 3.3f && t2 - Time.unscaledDeltaTime <= 3.3f) Say("YOU", "I have to get to that box before they do.", 2.4f);
                 EndShot(Vector3.Lerp(new Vector3(-7f, 4.6f, 0.4f), new Vector3(-5.2f, 5.0f, 0.2f), k), new Vector3(0f, 5.3f, 0f), 34f);
                 yield return null;
             }

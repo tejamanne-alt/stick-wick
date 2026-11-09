@@ -14,6 +14,33 @@ namespace ProjectInk
 
         void ShowKey(bool on) => keyUiTarget = on ? 1f : 0f;
 
+        float noteUi, noteUiTarget;
+        Font noteHand;
+        void ShowNote(bool on) => noteUiTarget = on ? 1f : 0f;
+
+        /// <summary>The Foreman's orders, folded in with the key: a torn scrap, in someone else's hand.</summary>
+        void NoteGUI(float w, float h)
+        {
+            noteUi = Mathf.MoveTowards(noteUi, noteUiTarget, Time.unscaledDeltaTime * 2f);
+            if (noteUi <= 0.001f) return;
+            float a = noteUi;
+            float bh = barsPx * (h / 720f);
+            float nh = Mathf.Min(h - bh * 2f - 110f, 270f), nw = nh * 1.55f;
+            var r = new Rect((w - nw) * 0.5f + Mathf.Sin(Time.unscaledTime * 0.7f) * 2f, (h - nh) * 0.5f - 12f, nw, nh);
+            var m = GUI.matrix;
+            GUIUtility.RotateAroundPivot(-2.5f, r.center);
+            Fill(new Rect(r.x - 3, r.y - 3, r.width + 6, r.height + 6), new Color(0f, 0f, 0f, 0.7f * a));
+            Fill(r, new Color(0.84f, 0.83f, 0.8f, a));
+            Fill(new Rect(r.x, r.y + nh * 0.5f, nw, 1.5f), new Color(0.6f, 0.6f, 0.58f, a));          // the fold
+            for (int i = 0; i < 4; i++)                                                                  // ruled lines
+                Fill(new Rect(r.x + nw * 0.06f, r.y + nh * (0.3f + i * 0.17f), nw * 0.88f, 1f), new Color(0.7f, 0.7f, 0.72f, 0.6f * a));
+            if (noteHand == null) noteHand = Resources.Load<Font>("Fonts/PermanentMarker-Regular");
+            var style = new GUIStyle(sub) { font = noteHand != null ? noteHand : sub.font, fontSize = Mathf.RoundToInt(nh * 0.11f), alignment = TextAnchor.MiddleLeft, wordWrap = true };
+            style.normal.textColor = new Color(0.1f, 0.1f, 0.12f, a);
+            GUI.Label(new Rect(r.x + nw * 0.08f, r.y + nh * 0.08f, nw * 0.86f, nh * 0.84f), "Get what's in 417 before the contract closes.\nThen finish him.", style);
+            GUI.matrix = m;
+        }
+
         float matchUi, matchUiTarget;
         void ShowMatches(bool on) => matchUiTarget = on ? 1f : 0f;
 

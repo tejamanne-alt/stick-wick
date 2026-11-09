@@ -1264,3 +1264,10 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - **The front doors:** the baked revolving door (an opaque block) is gone. Two glass leaves in bronze frames are locked overnight. The guard walks to them, turns the key, drops the floor bolt, pushes both leaves open and holds one. "Morning, sir." He follows the hero in to his post.
   - **Box 417, by dual control, as a real bank does it:** Harrow's guard key in first, then the hero's key, "Together"; both keys are shown turning. Harrow draws the box out (the slot left empty), carries it in both hands to the viewing table and sets it down beside a bell. "Ring the bell when you're finished." Then he leaves him alone.
   - The bank set was rebaked without the counter glass and the revolving door.
+- **The key is found on the Foreman's body** (`StoryEnding` beats 9–14, `NoteGUI`). The crew searched him when they dumped him, and the Foreman kept the key for his boss.
+  - He kneels and goes through the dead man's pockets: cigarettes, then the CAFE NOIR matchbook, then (in a lightning flash) the inside pocket.
+  - His key: "No... that's MY key. They searched me when they dumped me here."
+  - The boss's note, torn and handwritten: "Get what's in 417 before the contract closes. Then finish him."
+  - The deduction: "So that's why I'm still breathing... They wanted what's in that box." The decision: "Whoever sent you is going after it. Then I'll get there first."
+  - Chapter 2 opens on the race ("I have to get to that box before they do.").
+  - The coat beat is gone.
