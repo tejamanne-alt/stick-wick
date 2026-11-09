@@ -330,7 +330,6 @@ def build_s1(coll, M):
     K.bench(f, 35.0, 5.5, 0, M)
     K.bike_rack(f, 39.5, 41.0, 5.5, M)
     K.bicycle(f, 39.55, 5.15, 90, M, lean=0)
-    K.tree(f, 44.0, 4.8, M, h=6.5)
     return g.finish(coll)
 
 
@@ -360,7 +359,7 @@ def stall(f, x, M, k):
     for s in range(7):
         mm = M["cloth_a"] if (s + k) % 2 == 0 else M["cloth_b"]
         f.box((x - 1.4 + s * 0.4 + 0.2, y - 0.1, 2.55), (0.4, 1.9, 0.03), mm, rot=(-14, 0, 0))
-        f.lathe((x - 1.4 + s * 0.4 + 0.2, y - 1.04, 2.2), [(0.0, 0.0), (0.19, 0.02), (0.2, 0.14), (0.0, 0.14)], mm, n=8, axis="y")
+        f.wallshape([(math.cos(t * math.pi / 6) * 0.2, -math.sin(t * math.pi / 6) * 0.14) for t in range(7)], -0.01, 0.01, mm, c=(x - 1.4 + s * 0.4 + 0.2, y - 1.02, 2.33))
     f.rod((x + 0.9, y - 0.75, 2.3), (x + 0.9, y - 0.75, 1.75), 0.006, M["iron"], 3)               # a hanging scale
     f.lathe((x + 0.9, y - 0.75, 1.55), [(0.0, 0.0), (0.09, 0.0), (0.09, 0.2), (0.0, 0.2)], M["white_band"], n=12)
     f.lathe((x + 0.9, y - 0.75, 1.48), [(0.0, 0.0), (0.16, 0.06), (0.0, 0.07)], M["chrome"], n=12)
@@ -547,7 +546,7 @@ def arches(g, M):
                 f.beam((c, 0.33, 2.6), (c + math.cos(a) * R, 0.33, 2.6 + math.sin(a) * R), 0.04, 0.03, M["frame_dark"])
             f.text(("CARS  ·  REPAIRS", "STORAGE  12")[0 if c < 80 else 1], (c, 0.3, 1.9), 0.18, M["white_paint"], kind="sign")
         else:
-            f.box((c, 0.45, 1.6), (3.4, 0.05, 3.2), M["lamp_glass_lit"])
+            f.box((c, 0.45, 1.6), (3.4, 0.05, 3.2), M["window_day"])
             for xx in (c - 1.1, c, c + 1.1):
                 f.box((xx, 0.4, 1.6), (0.06, 0.06, 3.2), M["frame_dark"])
             for zz in (0.9, 1.9):

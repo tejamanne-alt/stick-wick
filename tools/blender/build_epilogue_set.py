@@ -490,12 +490,17 @@ def angel(g, M, c, yaw=0.0, s=1.0):
 
 
 def yew(g, M, c, h):
+    """An old churchyard yew: a short thick trunk, a dense dark column of foliage, rounded, ragged."""
     x, y, z = c
-    g.cyl((x, y, z + 0.6), 0.25, 1.2, M["bark"], n=8)
-    for k in range(6):
-        t = k / 5
-        r = h * (0.38 - 0.22 * t) * rnd.uniform(0.85, 1.1)
-        K.ball(g, (x + rnd.uniform(-0.4, 0.4), y + rnd.uniform(-0.4, 0.4), z + h * (0.28 + 0.62 * t)), r, M["yew"], sub=1, squash=(1, 1, 0.9), jitter=0.3, seed=x + k)
+    g.cyl((x, y, z + 0.7), 0.32, 1.4, M["bark"], n=8, r2=0.24)
+    r0 = h * 0.3
+    g.cyl((x, y, z + h * 0.48), r0, h * 0.75, M["yew"], n=12, r2=r0 * 0.55)
+    g.cyl((x, y, z + h * 0.9), r0 * 0.6, h * 0.22, M["yew"], n=12, r2=r0 * 0.08)
+    for k in range(7):
+        t = k / 6
+        a = k * 2.4
+        rr = r0 * (1.0 - 0.55 * t)
+        K.ball(g, (x + math.cos(a) * rr * 0.75, y + math.sin(a) * rr * 0.75, z + h * (0.2 + 0.68 * t)), rr * 0.55, M["yew"], sub=1, squash=(1, 1, 1.3), jitter=0.3, seed=x + k)
 
 
 def dry_wall(g, M, pts, h, m):

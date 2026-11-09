@@ -1075,7 +1075,8 @@ def awning(f, x0, x1, z, depth, M, text, striped=True):
     for k in range(n):
         m = (M["cloth_a"] if k % 2 == 0 else M["cloth_b"]) if striped else M["cloth_b"]
         f.box((x0 + (k + 0.5) * sw, -depth / 2, z - 0.35), (sw, math.hypot(depth, 0.7), 0.025), m, rot=(-ang, 0, 0))
-        f.lathe((x0 + (k + 0.5) * sw, -depth - 0.01, z - 0.95), [(0.0, 0.0), (sw * 0.48, 0.02), (sw * 0.5, 0.18), (0.0, 0.18)], m, n=8, axis="y")
+        f.wallshape([(math.cos(t * math.pi / 6) * sw * 0.5, -math.sin(t * math.pi / 6) * sw * 0.32) for t in range(7)], -depth - 0.02, -depth, m,
+                    c=(x0 + (k + 0.5) * sw, 0, z - 0.95))                                        # the scallops
     f.box(((x0 + x1) / 2, -depth - 0.01, z - 0.82), (x1 - x0, 0.02, 0.26), M["cloth_b"])
     if text:
         f.text(text, ((x0 + x1) / 2, -depth - 0.025, z - 0.82), 0.16, M["white_paint"], kind="serif")
