@@ -11,7 +11,7 @@
 | 2b | **The Street** (chapter 2's second half) | Straight out of the bank, the black car's men are waiting ("The box. Hand it over."). Four blocks of street fighting (the bank front, the market, under the railway with its trains, the crossroads) and THE DRIVER: a boxer, then a tire iron, then he drives his car at him. On the ground: "You'll find out at home. We got there first." (docs/story/chapter2_street.md) | That someone got to his home first. |
 | 3 | **Home** (docs/story/chapter3_home.md, built) | The family photo on his desk (him, Elena, their daughter): happy memories. Then he finds Elena's body, and remembers how she died. Rage. A fight inside the house. He ties the level boss to a chair and tortures him with electric shocks; the man never talks, and dies. | **His daughter.** Elena is dead. |
 | 4 | **The Backyard** (docs/story/chapter4_backyard.md, built) | Bloody footprints lead to the play area: slide, swings. Her favourite ribbon by the swing; he remembers the kidnapping ("PAPA!"). *"I will find you wherever you are in the world and bring you back. TRUST ME, my sweetheart!"* A fight in the play area. The mini-boss, broken, gives up the address. | **His daughter is alive**, taken to the fortress. |
-| 6 | **The Hilltop Fortress** | The full gang, level by level, up the hill. | |
+| 5 | **The Hilltop Fortress** (docs/story/chapter5_fortress.md, built) | The full gang, level by level, up the hill. | |
 | 7 | **The Antagonist** | The drama, then the one-on-one, and the words that close the story. | The truth. |
 
 **The phone call** (VOICE ON THE PHONE: "You were supposed to stay dead... the contract is open") is not in chapter 1 any more. It is kept for a later beat: the tortured boss's phone ringing in chapter 4 suits it best.

@@ -157,6 +157,13 @@ namespace ProjectInk
             ("CHAPTER 4  ·  THE BACKYARD", "The fight (garden to car park)", () => Backyard(3)),
             ("CHAPTER 4  ·  THE BACKYARD", "The Handler (the fight)", () => Backyard(4)),
             ("CHAPTER 4  ·  THE BACKYARD", "The address  ·  the hill", () => Backyard(5)),
+            ("CHAPTER 5  ·  THE FORTRESS", "The storm  ·  the arrival", () => Fortress(0)),
+            ("CHAPTER 5  ·  THE FORTRESS", "The rock stair", () => Fortress(1)),
+            ("CHAPTER 5  ·  THE FORTRESS", "The gate  ·  the trap", () => Fortress(2)),
+            ("CHAPTER 5  ·  THE FORTRESS", "The courtyard", () => Fortress(3)),
+            ("CHAPTER 5  ·  THE FORTRESS", "The blackout", () => Fortress(4)),
+            ("CHAPTER 5  ·  THE FORTRESS", "The Warden (the fight)", () => Fortress(5)),
+            ("CHAPTER 5  ·  THE FORTRESS", "The tower", () => Fortress(6)),
         };
 
         static void Ch1(System.Action setUp)
@@ -177,6 +184,13 @@ namespace ProjectInk
             StoryIntro.NewRun();
             StoryIntro.BankFrom = at;
             SceneManager.LoadScene("Story_Bank");
+        }
+
+        static void Fortress(int at)
+        {
+            StoryIntro.NewRun();
+            StoryIntro.FortressFrom = at;
+            SceneManager.LoadScene("Story_Fortress");
         }
 
         static void Backyard(int at)

@@ -37,11 +37,11 @@ namespace ProjectInk
         public HeroController hero;
         public WaveDirector director;
 
-        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, Ending, End, Bank, Street, Home, Park }
+        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, Ending, End, Bank, Street, Home, Park, Fortress }
         Phase phase = Phase.Cinematic;
 
         /// <summary>The fight HUD steps aside while the story holds the screen.</summary>
-        public bool HideHud => chapter == 2 || (chapter == 3 && (barsPx > 1f || driverStage >= 5)) || (chapter == 4 && (barsPx > 1f || cleanerStage >= 5 || hClimbing)) || (chapter == 5 && (barsPx > 1f || handlerStage >= 5)) || phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
+        public bool HideHud => chapter == 2 || (chapter == 3 && (barsPx > 1f || driverStage >= 5)) || (chapter == 4 && (barsPx > 1f || cleanerStage >= 5 || hClimbing)) || (chapter == 5 && (barsPx > 1f || handlerStage >= 5)) || (chapter == 6 && (barsPx > 1f || wardenStage >= 5)) || phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
 
         // the edit (real seconds)
         const float S1 = 4.2f, S2 = 6.8f, S3 = 10.8f, S4 = 15.6f, S5 = 22.2f, S6 = 27.0f, Control = 30.6f;
@@ -72,7 +72,7 @@ namespace ProjectInk
         float walkFromX;
 
         void Awake() { Instance = this; }
-        void OnDestroy() { if (Instance == this) Instance = null; }
+        void OnDestroy() { if (Instance == this) Instance = null; HeroController.Did -= OnFortHit; }
 
         void Start()
         {
@@ -95,7 +95,7 @@ namespace ProjectInk
             runSpeed = hero.runSpeed;
             StoryCameraFX.Set(0f, 0f);
             string sceneName = SceneManager.GetActiveScene().name;
-            chapter = sceneName == "Story_Bank" ? 2 : sceneName == "Story_Street" ? 3 : sceneName == "Story_Home" ? 4 : sceneName == "Story_Backyard" ? 5 : 1;      // 4: chapter 3, home
+            chapter = sceneName == "Story_Bank" ? 2 : sceneName == "Story_Street" ? 3 : sceneName == "Story_Home" ? 4 : sceneName == "Story_Backyard" ? 5 : sceneName == "Story_Fortress" ? 6 : 1;      // 4: chapter 3, home
             HeroController.RageScale = 1f;
             Enemy.RageFear = false;
             CutawayWall.ShowAll = false;      // 3: the street, chapter 2's second half
@@ -125,6 +125,7 @@ namespace ProjectInk
             if (!setUp && chapter == 3) { setUp = true; BeginStreet(); }
             if (!setUp && chapter == 4) { setUp = true; BeginHome(); }
             if (!setUp && chapter == 5) { setUp = true; BeginBackyard(); }
+            if (!setUp && chapter == 6) { setUp = true; BeginFortress(); }
             if (!setUp)
             {
                 setUp = true;
@@ -166,6 +167,7 @@ namespace ProjectInk
                 case Phase.Street: UpdateStreet(); break;
                 case Phase.Home: UpdateHome(); break;
                 case Phase.Park: UpdatePark(); break;
+                case Phase.Fortress: UpdateFortress(); break;
                 case Phase.Breach:
                     prevB = b; b += dt;
                     UpdateBreach();
@@ -953,6 +955,7 @@ namespace ProjectInk
             if (chapter == 3) StreetGUI(w, h);
             if (chapter == 4) HomeGUI(w, h);
             if (chapter == 5) ParkGUI(w, h);
+            if (chapter == 6) FortressGUI(w, h);
             EndingGUI(w, h);
             BlackoutGUI(w, h);
             // the words last: nothing in the story is drawn over them
@@ -1179,7 +1182,7 @@ namespace ProjectInk
         }
 
         /// <summary>The chapter just finished, as the player knows it (the street is chapter 2's second half).</summary>
-        string ChapterDone => chapter >= 5 ? "CHAPTER 4 COMPLETE" : chapter >= 4 ? "CHAPTER 3 COMPLETE" : chapter >= 2 ? "CHAPTER 2 COMPLETE" : "CHAPTER 1 COMPLETE";
+        string ChapterDone => chapter >= 6 ? "CHAPTER 5 COMPLETE" : chapter >= 5 ? "CHAPTER 4 COMPLETE" : chapter >= 4 ? "CHAPTER 3 COMPLETE" : chapter >= 2 ? "CHAPTER 2 COMPLETE" : "CHAPTER 1 COMPLETE";
 
         void EndCard(float w, float h)
         {
@@ -1191,7 +1194,8 @@ namespace ProjectInk
             cap.alignment = TextAnchor.MiddleCenter;
             cap.fontSize = 22;
             cap.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
-            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), chapter >= 5 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 5") + "  ·  THE FORTRESS     " + Spaced("COMING SOON")
+            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), chapter >= 6 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 6") + "  ·  THE LAST ROOF     " + Spaced("COMING SOON")
+                                                              : chapter >= 5 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 5") + "  ·  THE FORTRESS"
                                                               : chapter >= 4 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 4") + "  ·  THE BACKYARD"
                                                               : chapter >= 2 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 3") + "  ·  HOME"
                                                               : Spaced("NEXT") + "     " + Spaced("CHAPTER 2") + "  ·  THE BANK", cap);
@@ -1207,7 +1211,8 @@ namespace ProjectInk
             if (chapter == 1 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Bank"); }
             if (chapter >= 2 && chapter <= 3 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Home"); }
             if (chapter == 4 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Backyard"); }
-            if (chapter >= 5) { btn.normal.textColor = new Color(1f, 1f, 1f, 0.4f); GUI.Label(next, Spaced("CHAPTER 5 COMING SOON"), btn); btn.normal.textColor = Color.white; }
+            if (chapter == 5 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Fortress"); }
+            if (chapter >= 6) { btn.normal.textColor = new Color(1f, 1f, 1f, 0.4f); GUI.Label(next, Spaced("CHAPTER 6 COMING SOON"), btn); btn.normal.textColor = Color.white; }
             btn.fontSize = 24;
             if (GUI.Button(again, Spaced("PLAY AGAIN"), btn)) { Retry = false; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
             if (GUI.Button(menu, Spaced("MAIN MENU"), btn)) { Retry = false; SceneManager.LoadScene("Menu"); }

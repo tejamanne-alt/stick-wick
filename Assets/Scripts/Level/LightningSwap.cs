@@ -15,6 +15,8 @@ namespace ProjectInk
 
         float struckAt = -10f, length;
         bool lit;
+        /// <summary>The strike's light is up this frame (the blackout lets it through).</summary>
+        public bool Lit => lit;
         LineRenderer[] bolt;
         float boltUntil;
 

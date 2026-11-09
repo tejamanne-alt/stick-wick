@@ -34,6 +34,13 @@
 | | The fight | `BackyardFrom = 3`: the garden → the playground → the pond → the car park. |
 | | **The Handler** | `BackyardFrom = 4`: the van, his three phases (the grip, the knuckles, cornered). |
 | | **The address** | `BackyardFrom = 5`: "Kessel Hill. The old fort." Then the hill, and the end of chapter 4. |
+| 5 · The Fortress | The storm | `FortressFrom = 0`: the title on a lightning flash, the fortress from the air, him on the road (boot, profile, ribbon), the guards on the walls, then the cliff road fight. |
+| | The rock stair | `FortressFrom = 1`: the climb (a truck, a silhouette on a strike, a pedestal up). |
+| | The gate | `FortressFrom = 2`: the drawbridge fight, then the trap (the portcullis slams down in slow motion). |
+| | The courtyard | `FortressFrom = 3`: the first courtyard fight under the floodlights. |
+| | **The blackout** | `FortressFrom = 4`: lightning hits the pole, the generator bursts, then the fight in the dark (lit only by the flashes). |
+| | **The Warden** | `FortressFrom = 5`: the hall reveal, his three phases (the chain, the chandeliers falling, bare hands), then "PAPA!" from above. |
+| | The tower | `FortressFrom = 6`: the man and the child on the gallery, "Come up, old friend.", the end of chapter 5. |
 
 **For every new chapter:** add its checkpoints here and to `MainMenu.Checkpoints`. At least: its start, each fight zone, its boss fight, its ending after the boss, and every story beat worth replaying on its own. The entry points live in `StoryTest.cs` (and a `TestState` per chapter, like the bank's).
 

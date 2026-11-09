@@ -93,18 +93,7 @@ namespace ProjectInk
                 parkSwing = pivot;
             }
             vanDoors = Find("VanDoors");
-            torchMat = new Material(Shader.Find("Legacy Shaders/Particles/Additive")) { color = new Color(0.35f, 0.35f, 0.35f, 0.5f) };
-            // a soft beam: bright at the torch, widening and fading
-            var beam = new Texture2D(64, 128, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
-            for (int y = 0; y < 128; y++)
-                for (int x = 0; x < 64; x++)
-                {
-                    float v = y / 127f, half = 0.12f + 0.38f * v, d = Mathf.Abs(x / 63f - 0.5f);
-                    float a = Mathf.Clamp01(1f - d / half) * (1f - v) * (1f - v);
-                    beam.SetPixel(x, y, new Color(1f, 1f, 1f, a));
-                }
-            beam.Apply();
-            torchMat.mainTexture = beam;
+            EnsureTorchMat();
         }
 
         /// <summary>Her ribbon, round his wrist: a small red band, from here on.</summary>
@@ -123,9 +112,27 @@ namespace ProjectInk
             wristBand = c.transform;
         }
 
+        void EnsureTorchMat()
+        {
+            if (torchMat != null) return;
+            torchMat = new Material(Shader.Find("Legacy Shaders/Particles/Additive")) { color = new Color(0.35f, 0.35f, 0.35f, 0.5f) };
+            // a soft beam: bright at the torch, widening and fading
+            var beam = new Texture2D(64, 128, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            for (int y = 0; y < 128; y++)
+                for (int x = 0; x < 64; x++)
+                {
+                    float v = y / 127f, half = 0.12f + 0.38f * v, d = Mathf.Abs(x / 63f - 0.5f);
+                    float a = Mathf.Clamp01(1f - d / half) * (1f - v) * (1f - v);
+                    beam.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                }
+            beam.Apply();
+            torchMat.mainTexture = beam;
+        }
+
         /// <summary>A torch in a man's hand: a pale cone ahead of him.</summary>
         void GiveTorch(Enemy e)
         {
+            EnsureTorchMat();
             var hand = e.body != null ? e.body.Bone("hand.R") : null;
             if (hand == null) return;
             var q = GameObject.CreatePrimitive(PrimitiveType.Quad);

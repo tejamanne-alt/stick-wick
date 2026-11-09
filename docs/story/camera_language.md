@@ -22,3 +22,6 @@ The cutscene moves are in `Assets/Scripts/Core/CineCam.cs`: each is a pure funct
 | LowAngleArc | A threat; a boss | H14: the Cleaner steps out |
 | LateralReveal | What's behind the wall | H8: past the kitchen doorway: Elena |
 | **Held frame** | Dialogue that needs stillness | H16–H18: the kitchen two-shot, over the shoulder, the man in the chair |
+
+## Coverage (from chapter 5)
+Each beat is cut from several angles, as a film would be: an establishing shot, a medium, a close-up or an insert, the reverse (what he sees), and a high or low angle for power or threat. `StoryFortress.Cut(secs, shot, sway)` holds one shot with a little handheld sway (the rain, the wind); a beat is a run of cuts. Big moments are cut on a lightning strike (`Strike()`), and the fight's big hits get a strike, slow motion and a kill-cam arc.
