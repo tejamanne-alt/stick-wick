@@ -696,6 +696,48 @@
       "hitFrame": -1
     },
     {
+      "name": "sit_drive",
+      "frames": 60,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "sit_drive_talk",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "talk_walkie",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "kneel_grave",
+      "frames": 60,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "push_swing",
+      "frames": 48,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "hold_hand",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
       "name": "idle",
       "frames": 35,
       "fps": 30,

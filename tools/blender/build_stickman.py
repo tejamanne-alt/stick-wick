@@ -970,6 +970,33 @@ HOME_CLIPS = {
 }
 CLIPS.update(HOME_CLIPS)
 
+# story v2 (docs/story/story_v2.md): the drive up the hill, the walkie, the grave, the swing
+SIT_DRIVE = pose(STRAIGHT, spine=172, chest=168, head=174, upperarm_L=58, forearm_L=96, upperarm_R=58, forearm_R=96,
+                 thigh_L=88, shin_L=4, thigh_R=88, shin_R=4, dz=-0.34)              # in a car seat, both hands on the wheel
+V2_CLIPS = {
+    "sit_drive": dict(frames=60, loop=True, hit=None, keys=[
+        (0, SIT_DRIVE), (30, pose(SIT_DRIVE, upperarm_L=62, forearm_L=92, head=172)), (60, SIT_DRIVE)]),
+    "sit_drive_talk": dict(frames=40, loop=True, hit=None, keys=[             # one hand on the wheel, the walkie at his mouth
+        (0, pose(SIT_DRIVE, upperarm_R=36, forearm_R=168, head=178)), (20, pose(SIT_DRIVE, upperarm_R=38, forearm_R=166, head=176)),
+        (40, pose(SIT_DRIVE, upperarm_R=36, forearm_R=168, head=178))]),
+    "talk_walkie": dict(frames=40, loop=True, hit=None, keys=[                # standing, the walkie at his mouth
+        (0, pose(LOOSE, upperarm_R=34, forearm_R=168, head=170)), (20, pose(LOOSE, upperarm_R=36, forearm_R=166, head=168, chest=174)),
+        (40, pose(LOOSE, upperarm_R=34, forearm_R=168, head=170))]),
+    "kneel_grave": dict(frames=60, loop=True, hit=None, keys=[                # on one knee at the stone, a hand on it
+        (0, pose(KNEEL, chest=160, head=146, upperarm_R=72, forearm_R=84, upperarm_L=20, forearm_L=30)),
+        (30, pose(KNEEL, chest=158, head=142, upperarm_R=72, forearm_R=84, upperarm_L=20, forearm_L=30)),
+        (60, pose(KNEEL, chest=160, head=146, upperarm_R=72, forearm_R=84, upperarm_L=20, forearm_L=30))]),
+    "push_swing": dict(frames=48, loop=True, hit=None, keys=[                 # pushing a swing: reach, push, let go
+        (0, pose(LOOSE, upperarm_L=50, forearm_L=70, upperarm_R=50, forearm_R=70, chest=176)),
+        (14, pose(LOOSE, upperarm_L=84, forearm_L=88, upperarm_R=84, forearm_R=88, chest=166, spine=172, thigh_L=20, shin_L=0, thigh_R=-14)),
+        (28, pose(LOOSE, upperarm_L=60, forearm_L=76, upperarm_R=60, forearm_R=76, chest=172)),
+        (48, pose(LOOSE, upperarm_L=50, forearm_L=70, upperarm_R=50, forearm_R=70, chest=176))]),
+    "hold_hand": dict(frames=40, loop=True, hit=None, keys=[                  # standing, his hand down and out, holding a small one
+        (0, pose(LOOSE, upperarm_L=-4, forearm_L=24, head=164)), (20, pose(LOOSE, upperarm_L=-2, forearm_L=26, head=162)),
+        (40, pose(LOOSE, upperarm_L=-4, forearm_L=24, head=164))]),
+}
+CLIPS.update(V2_CLIPS)
+
 
 # ---------------------------------------------------------------- build
 def reset_scene():
