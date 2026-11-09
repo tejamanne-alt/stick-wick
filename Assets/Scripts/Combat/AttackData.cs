@@ -14,6 +14,35 @@ namespace ProjectInk
         public float shake;
         public float lift;    // launches the victim upwards
         public bool iai;      // the draw-cut: dashes through everyone in line, the cut lands a beat later
+        public string react;  // how the man hit reacts (a clip name), empty = hit_front / hit_back
+        public string name;   // a named combo's finisher: shown when it lands
+
+        /// <summary>The same move as the last of a named string: it floors him, and its name is shown.</summary>
+        public AttackData Finisher(string label)
+        {
+            var a = this;
+            a.knockdown = true; a.heavy = true; a.name = label;
+            a.damage *= 1.25f; a.knockback = UnityEngine.Mathf.Max(a.knockback, 6f);
+            a.hitStopFrames += 2; a.shake += 0.05f;
+            return a;
+        }
+
+        // ---- CONTACT (story mode): grounded strikes from karate, boxing and muay thai
+        public static readonly AttackData SJab = new AttackData { clip = "jab", damage = 8, reach = 0.95f, knockback = 1.2f, hitStopFrames = 2, shake = 0.04f, react = "hit_front" };
+        public static readonly AttackData SCross = new AttackData { clip = "cross", damage = 11, reach = 1.0f, knockback = 2f, hitStopFrames = 3, shake = 0.06f, react = "hit_chin" };
+        public static readonly AttackData LeadHook = new AttackData { clip = "lead_hook", damage = 12, reach = 0.9f, knockback = 2f, hitStopFrames = 4, shake = 0.08f, react = "hit_chin" };
+        public static readonly AttackData OiZuki = new AttackData { clip = "oi_zuki", damage = 13, reach = 1.15f, knockback = 3f, hitStopFrames = 4, shake = 0.09f, heavy = true, react = "hit_body" };
+        public static readonly AttackData GyakuZuki = new AttackData { clip = "gyaku_zuki", damage = 14, reach = 1.0f, knockback = 3f, hitStopFrames = 4, shake = 0.1f, heavy = true, react = "hit_body" };
+        public static readonly AttackData Elbow = new AttackData { clip = "elbow", damage = 15, reach = 0.75f, knockback = 2.5f, hitStopFrames = 5, shake = 0.12f, heavy = true, react = "hit_chin" };
+        public static readonly AttackData BackFist = new AttackData { clip = "back_fist", damage = 9, reach = 0.95f, knockback = 1.5f, hitStopFrames = 3, shake = 0.06f, react = "hit_front" };
+        public static readonly AttackData PalmStrike = new AttackData { clip = "palm_strike", damage = 18, reach = 0.85f, knockback = 3.5f, hitStopFrames = 6, shake = 0.14f, heavy = true, react = "stumble_back" };
+        public static readonly AttackData HammerFist = new AttackData { clip = "hammer_fist", damage = 18, reach = 0.9f, knockback = 1f, hitStopFrames = 6, shake = 0.14f, heavy = true, react = "hit_body" };
+        public static readonly AttackData LowKick = new AttackData { clip = "low_kick", damage = 10, reach = 1.15f, knockback = 1.5f, hitStopFrames = 4, shake = 0.08f, react = "hit_legs" };
+        public static readonly AttackData MaeGeri = new AttackData { clip = "mae_geri", damage = 13, reach = 1.2f, knockback = 4f, hitStopFrames = 4, shake = 0.1f, heavy = true, react = "hit_body" };
+        public static readonly AttackData Mawashi = new AttackData { clip = "mawashi_geri", damage = 16, reach = 1.25f, knockback = 4f, hitStopFrames = 5, shake = 0.12f, heavy = true, react = "hit_chin" };
+        public static readonly AttackData SideKick = new AttackData { clip = "side_kick", damage = 18, reach = 1.3f, knockback = 6f, hitStopFrames = 5, shake = 0.14f, heavy = true, react = "stumble_back" };
+        public static readonly AttackData SBackKick = new AttackData { clip = "back_kick", damage = 16, reach = 1.25f, knockback = 5f, hitStopFrames = 5, shake = 0.12f, heavy = true, behind = true, react = "hit_body" };
+        public static readonly AttackData Clothesline = new AttackData { clip = "clothesline", damage = 20, reach = 1.0f, knockback = 0f, hitStopFrames = 7, shake = 0.2f, heavy = true, name = "CLOTHESLINE" };
 
         public static readonly AttackData Jab = new AttackData { clip = "jab", damage = 8, reach = 0.95f, knockback = 1.5f, hitStopFrames = 2, shake = 0.04f };
         public static readonly AttackData Cross = new AttackData { clip = "cross", damage = 11, reach = 1.0f, knockback = 2.5f, hitStopFrames = 3, shake = 0.06f };

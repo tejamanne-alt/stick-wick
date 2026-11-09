@@ -425,8 +425,7 @@
       "frames": 16,
       "fps": 30,
       "loop": false,
-      "hitFrame": 6,
-      "endShift": 0.2211
+      "hitFrame": 6
     },
     {
       "name": "parry",
@@ -454,8 +453,7 @@
       "frames": 10,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1,
-      "endShift": -0.0589
+      "hitFrame": -1
     },
     {
       "name": "block_low",
@@ -512,8 +510,7 @@
       "frames": 26,
       "fps": 30,
       "loop": false,
-      "hitFrame": 13,
-      "endShift": 0.0884
+      "hitFrame": 13
     },
     {
       "name": "hip_throw_v",
@@ -528,8 +525,7 @@
       "frames": 28,
       "fps": 30,
       "loop": false,
-      "hitFrame": 15,
-      "endShift": 0.0737
+      "hitFrame": 15
     },
     {
       "name": "shoulder_throw_v",
@@ -559,8 +555,7 @@
       "frames": 30,
       "fps": 30,
       "loop": false,
-      "hitFrame": 16,
-      "endShift": 0.0737
+      "hitFrame": 16
     },
     {
       "name": "body_slam_v",
@@ -590,8 +585,7 @@
       "frames": 26,
       "fps": 30,
       "loop": false,
-      "hitFrame": 8,
-      "endShift": 0.7
+      "hitFrame": 8
     },
     {
       "name": "spear_v",
@@ -606,8 +600,7 @@
       "frames": 22,
       "fps": 30,
       "loop": false,
-      "hitFrame": 8,
-      "endShift": 0.0884
+      "hitFrame": 8
     },
     {
       "name": "sweep_v",
@@ -630,8 +623,7 @@
       "frames": 18,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1,
-      "endShift": -0.0737
+      "hitFrame": -1
     },
     {
       "name": "hit_legs",
@@ -645,16 +637,14 @@
       "frames": 16,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1,
-      "endShift": -0.1621
+      "hitFrame": -1
     },
     {
       "name": "stumble_back",
       "frames": 24,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1,
-      "endShift": -0.5158
+      "hitFrame": -1
     },
     {
       "name": "dazed",

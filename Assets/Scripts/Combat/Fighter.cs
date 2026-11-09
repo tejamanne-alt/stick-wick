@@ -12,6 +12,7 @@ namespace ProjectInk
         public bool hitsDowned;    // can hit an enemy that is already down (finishers, throws)
         public float lift;         // upward launch speed (the sword's rising cut), 0 = default
         public bool low;           // a kick or a slide: goes under a held shield
+        public string react;       // the clip the man hit plays (hit_body, hit_legs, hit_chin...); empty = the default
         public Fighter attacker;
     }
 

@@ -1281,3 +1281,11 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - 38 hand-keyed clips: strikes (elbow, back fist, palm heel, low kick, hammer fist, headbutt, clinch knee, clothesline), parries and blocks, the clinch, judo throws (hip throw, shoulder throw, sweep), pro-wrestling slams (suplex, body slam, DDT, spear), and new hit reactions. Paired moves come as attacker + `_v` victim clips; `endShift` tells the game where the thrown man lands.
 - No rain after the warehouse: chapter 2's rain sound is now silent (the puddles stay), and the docs record the rule.
 - See docs/design/move_library.md.
+
+## CONTACT combat (story mode), part 2: the hero
+- Grounded story movement: a 3.3 m/s jog, a short hop, a quick step-in instead of a dash, a step back instead of flips, no wall runs, no springboard or death-from-above dives, no giant swing.
+- Named strings from the new clips (boxing, karate, muay thai), each finisher labelled. A dazed man or one bent double gets a context finisher, and a man behind you gets a back kick.
+- Parry: a tap into a bare-handed swing knocks it aside and leaves him dazed for the follow-up. The head scissors now happen only on a dazed man (no more dice roll).
+- Clinch: swipe at a man or walk into him. From there, knees and a headbutt, a leg sweep, hip and shoulder throws, a suplex or body slam, a DDT, a shove; brutes are too heavy until worn down. Spear and clothesline work from range. Paired clips put the thrown man where he lands (endShift), and he gets up the way he fell.
+- Hit reactions match the blow: body shots fold him, low kicks buckle the leg, chin shots snap the head back, heavy ones stagger him back.
+- ContactHints teach each move at the moment it's possible, until it's learned.

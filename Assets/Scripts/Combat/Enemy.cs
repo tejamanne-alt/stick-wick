@@ -15,7 +15,7 @@ namespace ProjectInk
     /// pipes. Brawlers sometimes grab and hold the hero. Some climb by hanging from the ledge.
     /// Enemies can be thrown as projectiles (human bowling) or carried in a giant swing.
     /// Each has its own colour, which it leaves behind.</summary>
-    public class Enemy : Fighter
+    public partial class Enemy : Fighter
     {
         public static readonly List<Enemy> All = new List<Enemy>();
         public static readonly Queue<GameObject> Corpses = new Queue<GameObject>();
@@ -281,13 +281,19 @@ namespace ProjectInk
                     break;
                 case State.Hurt:
                     velocity.x = Mathf.MoveTowards(velocity.x, 0f, 20f * dt);
-                    if (stateTime > 0.35f) GoWait();
+                    UpdateHurtContact();
+                    if (stateTime > hurtFor) { hurtFor = 0.35f; GoWait(); }
                     break;
                 case State.Down:
                     if (Grounded) velocity.x = Mathf.MoveTowards(velocity.x, 0f, 14f * dt);
                     if (Grounded && stateTime > 1.0f)
                     {
-                        if (Alive) { state = State.GetUp; stateTime = 0f; body.Play("getup", 0.1f); }
+                        if (Alive)
+                        {
+                            state = State.GetUp; stateTime = 0f;
+                            body.Play(body.Has(getupClip) ? getupClip : "getup", 0.1f, true, getupSpeed);
+                            getupClip = "getup"; getupSpeed = 1f;
+                        }
                         else Die();
                     }
                     break;
@@ -1502,7 +1508,7 @@ namespace ProjectInk
                 state = State.Hurt;
                 stateTime = 0f;
                 bool fromFront = hit.direction == -Facing;
-                body.Play(fromFront ? "hit_front" : "hit_back", 0.03f);
+                if (!(fromFront && ContactReact(hit.react))) body.Play(fromFront ? "hit_front" : "hit_back", 0.03f);
             }
         }
 

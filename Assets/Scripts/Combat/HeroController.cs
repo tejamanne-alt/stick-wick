@@ -22,9 +22,9 @@ namespace ProjectInk
     /// under its guard; dodge towards a wall = wall flip; swipe down with empty hands = duck
     /// (knives and shots pass over); tap as a knife arrives = catch it and throw it back;
     /// grabbed = tap to break free with a reversal throw. Full Flow = Rampage.</summary>
-    public class HeroController : Fighter
+    public partial class HeroController : Fighter
     {
-        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors, Dive }
+        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors, Dive, Clinch }
 
         public float targetRange = 9f;
         public float gunRange = 14f;
@@ -98,6 +98,7 @@ namespace ProjectInk
 
         void Start()
         {
+            if (Contact && GetComponent<ContactHints>() == null) gameObject.AddComponent<ContactHints>();
             body.Play(IdleClip, 0f);
             Invoke(nameof(CheckBody), 0.3f);
         }
@@ -722,7 +723,7 @@ namespace ProjectInk
 
         // ------------------------------------------------------------------ sound
 
-        bool IsKickClip(string c) => c != null && (c.Contains("kick") || c == "knee" || c == "stomp" || c == "slide_kick");
+        bool IsKickClip(string c) => c != null && (c.Contains("kick") || c.Contains("geri") || c.Contains("knee") || c == "stomp" || c == "slide_kick" || c == "sweep");
 
         void SwingSound()
         {
@@ -799,6 +800,7 @@ namespace ProjectInk
         /// <summary>Lock a hero who is already standing (the short replay intro).</summary>
         public void CineLock()
         {
+            if (state == State.Clinch) EndClinch();
             CinematicLock = true;
             cineFrozen = false;
             // a run in progress stops here: no sliding, no run cycle on the spot
@@ -807,7 +809,7 @@ namespace ProjectInk
         }
 
         /// <summary>A cutscene moves him by hand: no input, no physics (the boss finale).</summary>
-        public void CinePuppet() { CinematicLock = true; cineFrozen = true; velocity = Vector3.zero; }
+        public void CinePuppet() { if (state == State.Clinch) EndClinch(); CinematicLock = true; cineFrozen = true; velocity = Vector3.zero; }
         public void CinePose(Vector3 at) { transform.position = at; velocity = Vector3.zero; }
         public void CineTrails(bool on) => SetTrails(on);
 
@@ -900,6 +902,7 @@ namespace ProjectInk
                 case State.WallRun: UpdateWallRun(dt); break;
                 case State.Scissors: UpdateScissors(); break;
                 case State.Dive: UpdateDive(dt); break;
+                case State.Clinch: UpdateClinch(dt); break;
                 case State.Dead: break;
             }
             if (state != State.Dead) TryPickup();
@@ -907,7 +910,7 @@ namespace ProjectInk
             if (state != State.Dash && state != State.Dodge && state != State.ToLedge && state != State.Air && !running &&
                 !(state == State.Attack && currentAttack.clip == "slide_kick") && Grounded)
                 velocity.x = Mathf.MoveTowards(velocity.x, 0f, 30f * dt);
-            bool scripted = state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar || state == State.Scissors ||
+            bool scripted = state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar || state == State.Scissors || state == State.Clinch ||
                             (state == State.WallRun && stateTime < 0.25f);
             if (!scripted) Integrate(dt);
             // ran off an edge with someone below: dive on them
@@ -1031,6 +1034,7 @@ namespace ProjectInk
         void EnterIdle()
         {
             edgeThrow = false;
+            if (clinchFoe != null) { var f = clinchFoe; clinchFoe = null; clinchMove = null; if (f.Held) f.ReleaseHeld(); }
             state = State.Idle;
             stateTime = 0f;
             body.Play(IdleClip, 0.12f);
@@ -1050,7 +1054,8 @@ namespace ProjectInk
             {
                 // run: the stick sets the speed; the run cycle speeds up with it
                 SetFacing(a > 0 ? 1 : -1);
-                velocity.x = a * runSpeed;
+                if (Contact && WalkIntoClinch(a > 0 ? 1 : -1)) return;           // walk into him: take hold
+                velocity.x = a * (Contact ? Mathf.Min(runSpeed, ContactRun) : runSpeed);
                 if (!running || body.CurrentName != "run") body.Play("run", 0.12f, false, Mathf.Lerp(0.8f, 1.5f, Mathf.Abs(a)));
                 else body.SetSpeed(Mathf.Lerp(0.8f, 1.5f, Mathf.Abs(a)));
                 running = true;
@@ -1379,7 +1384,7 @@ namespace ProjectInk
         void Strike(int side, bool kick = false)
         {
             if (InRampage) { RampageStrike(side); return; }
-            if (state == State.Idle && Time.time - lastAttackEnd > comboWindow) { comboStep = 0; closeStep = 0; punchStep = 0; kickStep = 0; }
+            if (state == State.Idle && Time.time - lastAttackEnd > comboWindow) { comboStep = 0; closeStep = 0; punchStep = 0; kickStep = 0; ResetString(); }
             comboLabel = null;
 
             // a knife flying in from that side: catch it and send it back
@@ -1389,6 +1394,9 @@ namespace ProjectInk
             if (Style == FightStyle.Gun && !kick) { GunStrike(side); return; }   // kicks work with any weapon in hand
 
             var t = PickTarget(side, Style == FightStyle.Knife ? 16f : targetRange);
+            if (Contact && t != null && Mathf.Abs(t.transform.position.y - transform.position.y) > 1.0f) t = null;   // no leaps between floors
+            if (ContactBare && !kick && TryParry(t, side)) return;
+            if (ContactBare && !kick && TryClothesline(t, side)) return;
 
             // a crate right there and no enemy in its way: kick it like a bowling ball
             pendingCrate = null; pendingDrum = null;                // a kick cut short never fires later
@@ -1409,7 +1417,7 @@ namespace ProjectInk
                                 Mathf.Abs(t.transform.position.y - transform.position.y) < 1.0f;
             if (downed != null && !someoneClose && (Style == FightStyle.Fists || Style == FightStyle.Knife))
             {
-                if (comboStep++ % 2 == 0 && Enemy.All.Count > 1) BeginGiantSwing(downed, side);
+                if (!Contact && comboStep++ % 2 == 0 && Enemy.All.Count > 1) BeginGiantSwing(downed, side);
                 else BeginStomp(downed, side);
                 return;
             }
@@ -1423,10 +1431,10 @@ namespace ProjectInk
             // situational moves, the building and its objects first
             if (TryHandStomp(side)) return;
             if (TryOverTheEdge(t, side)) return;
-            if (TrySpringboard(t, side)) return;
-            if (t != null && t.transform.position.y < transform.position.y - 1.8f && TryDeathFromAbove(t)) return;
-            // the head scissors takedown, when the situation calls for it
-            if (TryHeadScissors(t, side, kick)) return;
+            if (!Contact && TrySpringboard(t, side)) return;
+            if (!Contact && t != null && t.transform.position.y < transform.position.y - 1.8f && TryDeathFromAbove(t)) return;
+            // the head scissors takedown: in story mode, only on a man out on his feet (no dice)
+            if ((!Contact || (t != null && t.Dazed && kick)) && TryHeadScissors(t, side, kick)) return;
 
             bool armed = !kick && (Style == FightStyle.Sword || Style == FightStyle.Pipe || Style == FightStyle.Knife);
             var combo = Style == FightStyle.Sword ? AttackData.SwordCombo : AttackData.PipeCombo;
@@ -1434,6 +1442,7 @@ namespace ProjectInk
             {
                 SetFacing(side);
                 if (!kick && Style == FightStyle.Knife) { StartAttack(AttackData.KnifeStab, null, side, false); return; }
+                if (ContactFists || (Contact && kick && Style != FightStyle.Gun)) { var air = ContactMove(kick, null, false); comboLabel = air.name; StartAttack(air, null, side, false); return; }
                 StartAttack(armed ? combo[comboStep++ % combo.Length] : NextInString(kick, null), null, side, false);
                 return;
             }
@@ -1445,7 +1454,13 @@ namespace ProjectInk
 
 
             AttackData move;
-            if (dy > 1.4f || dy < -1.4f)
+            if (ContactFists || (Contact && kick && Style != FightStyle.Gun))
+            {
+                move = ContactMove(kick, t, behindClose);
+                comboLabel = move.name;
+                counter = false;
+            }
+            else if (dy > 1.4f || dy < -1.4f)
                 move = Style == FightStyle.Sword ? AttackData.SwordLeap : AttackData.FlyingKick;
             else if (armed && (Style == FightStyle.Sword || Style == FightStyle.Pipe))
             {
@@ -1560,10 +1575,10 @@ namespace ProjectInk
                 return;
             }
 
-            // running into a wall: up it and off in a corkscrew
+            // running into a wall: up it and off in a corkscrew (not in story mode: nobody runs up walls)
             int towards = AxisDir != 0 ? AxisDir : Facing;
             float wallX = towards > 0 ? arenaMaxX : arenaMinX;
-            if (Mathf.Abs(wallX - p.x) < 1.4f)
+            if (!Contact && Mathf.Abs(wallX - p.x) < 1.4f)
             {
                 wallDir = towards;
                 SetFacing(towards);
@@ -1579,7 +1594,7 @@ namespace ProjectInk
             // a plain jump
             state = State.Air;
             stateTime = 0f;
-            velocity.y = jumpSpeed;
+            velocity.y = Contact ? ContactJump : jumpSpeed;           // story: a short, heavy hop
             Grounded = false;
             body.Play("jump", 0.05f);
             Sound.Play(Sfx.Footstep, 1.4f, transform.position);
@@ -1991,7 +2006,7 @@ namespace ProjectInk
                 {
                     state = State.Dash;
                     stateTime = 0f;
-                    body.Play("run", 0.05f, false, 1.7f);
+                    body.Play("run", 0.05f, false, Contact ? 1.1f : 1.7f);     // story: a few quick steps in, not a dash
                     return;
                 }
             }
@@ -2004,10 +2019,10 @@ namespace ProjectInk
             float goal = target.transform.position.x - attackDir * Reach(currentAttack) * 0.92f;
             velocity.x = 0f;
             var p = transform.position;
-            p.x = Mathf.MoveTowards(p.x, goal, dashSpeed * (Style == FightStyle.Sword ? 1.35f : 1f) * dt);
+            p.x = Mathf.MoveTowards(p.x, goal, (Contact ? ContactStep : dashSpeed * (Style == FightStyle.Sword ? 1.35f : 1f)) * dt);
             transform.position = p;
-            if (Style == FightStyle.Sword) Ghosts(0.045f, 0.35f);
-            if (Mathf.Abs(p.x - goal) < 0.05f || stateTime > 0.6f) BeginSwing();
+            if (Style == FightStyle.Sword && !Contact) Ghosts(0.045f, 0.35f);
+            if (Mathf.Abs(p.x - goal) < 0.05f || stateTime > (Contact ? 0.65f : 0.6f)) BeginSwing();
         }
 
         void BeginSwing()
@@ -2015,12 +2030,12 @@ namespace ProjectInk
             state = State.Attack;
             stateTime = 0f;
             bool swordClip = Style == FightStyle.Sword && currentAttack.clip != null && currentAttack.clip.StartsWith("sword");
-            bool quick = currentAttack.clip == "jab" || currentAttack.clip == "cross" || currentAttack.clip == "hook";
+            bool quick = currentAttack.clip == "jab" || currentAttack.clip == "cross" || currentAttack.clip == "hook" || currentAttack.clip == "lead_hook" || currentAttack.clip == "back_fist";
             body.Play(currentAttack.clip, swordClip || quick ? 0.03f : 0.05f, true, swordClip && !currentAttack.iai ? 1.2f : quick ? 1.15f : 1f);
             SetTrails(!currentAttack.ranged);
             if (currentAttack.iai) BeginIai();
             if (!currentAttack.ranged) SwingSound();
-            if (currentAttack.clip == "slide_kick") velocity.x = attackDir * 11f;
+            if (currentAttack.clip == "slide_kick") velocity.x = attackDir * (Contact ? 7f : 11f);
             if (currentAttack.clip == "flying_kick" || currentAttack.clip == "sword_leap")
             {
                 // the animation already jumps; physics carries the hero to another floor
@@ -2130,6 +2145,7 @@ namespace ProjectInk
                 heavy = currentAttack.heavy,
                 lift = currentAttack.lift,
                 low = IsKickClip(currentAttack.clip),
+                react = currentAttack.react,
                 attacker = this
             };
 
@@ -2310,6 +2326,7 @@ namespace ProjectInk
 
         void Dodge(int dir)
         {
+            if (Contact) { ContactDodge(dir); return; }
             Tell("dodge");
             pendingExecution = null;
             throwPending = false;
@@ -2404,6 +2421,7 @@ namespace ProjectInk
         public bool GetGrabbed(Enemy by)
         {
             if (Invulnerable || state == State.Grabbed || state == State.Swing || !Grounded) return false;
+            if (state == State.Clinch) EndClinch();
             grabber = by;
             grabTaps = 0;
             grabTick = 0f;
@@ -2463,6 +2481,7 @@ namespace ProjectInk
         public override void TakeHit(HitInfo hit)
         {
             if (Invulnerable) return;
+            if (state == State.Clinch) EndClinch();          // hit from behind: he lets go
             Health = Mathf.Max(0f, Health - hit.damage);
             ComboCount = 0;
             comboStep = 0;

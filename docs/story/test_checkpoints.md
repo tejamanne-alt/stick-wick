@@ -17,3 +17,21 @@
 | | Walk out | `BankFrom = 4`: the ring on, back through the lobby. |
 
 **For every new chapter:** add its checkpoints here and to `MainMenu.Checkpoints`. At least: its start, each fight zone, its boss fight, its ending after the boss, and every story beat worth replaying on its own. The entry points live in `StoryTest.cs` (and a `TestState` per chapter, like the bank's).
+
+## CONTACT combat: what to try (any hall checkpoint in chapter 1)
+Use **Hall 1** (knife in hand) or **Hall 2**. On first meeting, the fight shows a COMBOS card, and a hint appears the first couple of times a parry or a grab is possible.
+- **Movement:** he jogs (no sprint), hops low, and never runs up walls or flips. A swipe away is a short step back.
+- **Strings** (P = tap high, K = tap low; on keys, A/D punch and Z/X kick): `P P P P`, `K K K`, `P P K`, `K P P`, `P K P`, `P P P K`. The finisher's name shows when it lands, and it floors the man.
+- **Parry:** tap at a bare-handed man just as he swings (red flash, close in). His punch goes aside, his head snaps back and he is dazed. Your next tap high is PALM TO THE CHIN; a tap low is a head scissors.
+- **Grab:** swipe at a man in arm's reach (Q/E), or walk into him. In the clinch:
+  - tap high: knee, knee, then headbutt
+  - tap low: sweep
+  - swipe at him: hip throw
+  - swipe away: shoulder throw
+  - swipe up (W): suplex, or a body slam if he is worn down
+  - swipe down (S): DDT
+  - tap behind you: shove him off
+  - do nothing: after about 2.4 s he breaks free.
+- **A big man (brute):** a lift is refused with TOO HEAVY until he's down to 40% health. Knees and the sweep always work.
+- **From range:** swipe at a man 1.6–3 m away for a SPEAR; punch while running into him for a CLOTHESLINE.
+- **Check:** thrown men land where the animation puts them (no snapping back), get up the way they fell (a DDT means face down), and a man you're holding is let go if someone else hits you.

@@ -649,9 +649,9 @@ CONTACT_CLIPS = {
         (3, pose(spine=182, chest=190, head=180, upperarm_R=58, forearm_R=196, upperarm_L=60, forearm_L=150,
                  thigh_L=32, shin_L=0, thigh_R=-22, shin_R=-12)),
         (5, pose(spine=166, chest=152, head=160, upperarm_R=100, forearm_R=258, upperarm_L=40, forearm_L=140,
-                 thigh_L=42, shin_L=-2, thigh_R=-34, shin_R=-14, dx=0.08)),
+                 thigh_L=42, shin_L=-2, thigh_R=-34, shin_R=-14)),
         (8, pose(spine=166, chest=154, head=160, upperarm_R=98, forearm_R=250, upperarm_L=40, forearm_L=140,
-                 thigh_L=42, shin_L=-2, thigh_R=-34, shin_R=-14, dx=0.08)),
+                 thigh_L=42, shin_L=-2, thigh_R=-34, shin_R=-14)),
         (14, GUARD)]),
     "back_fist": dict(frames=12, loop=False, hit=4, keys=[        # lead-hand snap, the knuckles flicked out
         (0, GUARD),
@@ -663,9 +663,9 @@ CONTACT_CLIPS = {
         (0, GUARD),
         (2, pose(spine=172, chest=168, upperarm_R=14, forearm_R=96, hand_R=150, dz=-0.06)),
         (5, pose(spine=168, chest=158, head=170, upperarm_R=108, forearm_R=124, hand_R=176, upperarm_L=34,
-                 forearm_L=130, thigh_L=40, shin_L=0, thigh_R=-30, shin_R=-10, dx=0.06)),
+                 forearm_L=130, thigh_L=40, shin_L=0, thigh_R=-30, shin_R=-10)),
         (8, pose(spine=168, chest=160, head=170, upperarm_R=104, forearm_R=126, hand_R=176, upperarm_L=34,
-                 forearm_L=130, thigh_L=40, shin_L=0, thigh_R=-30, shin_R=-10, dx=0.06)),
+                 forearm_L=130, thigh_L=40, shin_L=0, thigh_R=-30, shin_R=-10)),
         (13, GUARD)]),
     "low_kick": dict(frames=16, loop=False, hit=6, keys=[         # rear-leg kick into the thigh, shin first
         (0, GUARD),
@@ -688,7 +688,7 @@ CONTACT_CLIPS = {
         (0, CLINCH_A),
         (2, pose(CLINCH_A, spine=186, chest=194, head=200, upperarm_L=90, forearm_L=110, upperarm_R=84, forearm_R=104)),
         (4, pose(CLINCH_A, spine=160, chest=144, head=124, upperarm_L=80, forearm_L=60, upperarm_R=74, forearm_R=56,
-                 thigh_L=40, dx=0.08)),
+                 thigh_L=40)),
         (7, pose(CLINCH_A, spine=164, chest=150, head=132, upperarm_L=82, forearm_L=70, upperarm_R=76, forearm_R=66)),
         (12, GUARD)]),
     "clinch_knee": dict(frames=14, loop=False, hit=6, keys=[      # muay thai: pull the head down onto the knee
@@ -705,10 +705,10 @@ CONTACT_CLIPS = {
         (3, pose(spine=184, chest=190, upperarm_R=-30, forearm_R=-20, upperarm_L=60, forearm_L=120,
                  thigh_L=40, shin_L=-4, thigh_R=-20, shin_R=-30)),
         (6, pose(spine=168, chest=158, head=168, upperarm_R=94, forearm_R=94, upperarm_L=20, forearm_L=60,
-                 thigh_L=46, shin_L=0, thigh_R=-40, shin_R=-14, dx=0.22)),
+                 thigh_L=46, shin_L=0, thigh_R=-40, shin_R=-14)),
         (9, pose(spine=166, chest=156, head=166, upperarm_R=88, forearm_R=96, upperarm_L=10, forearm_L=50,
-                 thigh_L=40, shin_L=0, thigh_R=-36, shin_R=-14, dx=0.3)),
-        (16, pose(GUARD, dx=0.3))]),
+                 thigh_L=40, shin_L=0, thigh_R=-36, shin_R=-14)),
+        (16, GUARD)]),
 
     # ---------------- defence
     "parry": dict(frames=10, loop=False, hit=2, keys=[            # lead hand slaps the punch across and down
@@ -724,8 +724,8 @@ CONTACT_CLIPS = {
         (0, BLOCK_HI), (12, pose(BLOCK_HI, chest=164, head=162, dz=-0.06)), (24, BLOCK_HI)]),
     "block_hit": dict(frames=10, loop=False, hit=None, keys=[     # a blow lands on the guard: pushed back a step
         (0, BLOCK_HI),
-        (2, pose(BLOCK_HI, spine=186, chest=188, head=176, thigh_L=16, thigh_R=-30, dx=-0.08)),
-        (10, pose(BLOCK_HI, dx=-0.08))]),
+        (2, pose(BLOCK_HI, spine=186, chest=188, head=176, thigh_L=16, thigh_R=-30)),
+        (10, pose(BLOCK_HI))]),
     "block_low": dict(frames=8, loop=False, hit=None, keys=[      # elbows down over the ribs
         (0, GUARD), (2, BLOCK_LO), (8, BLOCK_LO)]),
     "catch_kick": dict(frames=14, loop=False, hit=3, keys=[       # traps the kicking leg under the arm
@@ -743,7 +743,7 @@ CONTACT_CLIPS = {
     "clinch_v": dict(frames=24, loop=True, hit=None, keys=[       # held: head pulled down, hands on his arms
         (0, CLINCH_V), (12, pose(CLINCH_V, chest=154, head=134, upperarm_L=80, upperarm_R=60)), (24, CLINCH_V)]),
     "clinch_enter": dict(frames=8, loop=False, hit=3, keys=[      # hands shoot in and lock behind his neck
-        (0, GUARD), (3, pose(CLINCH_A, dx=0.1, upperarm_L=104, forearm_L=110, upperarm_R=98, forearm_R=104)),
+        (0, GUARD), (3, pose(CLINCH_A, upperarm_L=104, forearm_L=110, upperarm_R=98, forearm_R=104)),
         (8, CLINCH_A)]),
     "shove": dict(frames=12, loop=False, hit=4, keys=[            # break the clinch: both palms into his chest
         (0, CLINCH_A),
@@ -763,14 +763,14 @@ CONTACT_CLIPS = {
     "hip_throw": dict(frames=26, loop=False, hit=13, keys=[       # o-goshi: in under him, over the hip, down
         (0, CLINCH_A),
         (4, pose(spine=160, chest=146, head=150, upperarm_L=100, forearm_L=80, upperarm_R=70, forearm_R=110,
-                 thigh_L=46, shin_L=-30, thigh_R=20, shin_R=-50, dz=-0.18, dx=0.12)),
+                 thigh_L=46, shin_L=-30, thigh_R=20, shin_R=-50, dz=-0.18)),
         (8, pose(spine=130, chest=118, head=126, upperarm_L=60, forearm_L=10, upperarm_R=40, forearm_R=70,
-                 thigh_L=40, shin_L=-16, thigh_R=-12, shin_R=-34, dz=-0.12, dx=0.12)),
+                 thigh_L=40, shin_L=-16, thigh_R=-12, shin_R=-34, dz=-0.12)),
         (13, pose(spine=128, chest=112, head=118, upperarm_L=20, forearm_L=-10, upperarm_R=20, forearm_R=20,
-                  thigh_L=50, shin_L=-20, thigh_R=-20, shin_R=-40, dz=-0.16, dx=0.12)),
+                  thigh_L=50, shin_L=-20, thigh_R=-20, shin_R=-40, dz=-0.16)),
         (18, pose(spine=140, chest=126, head=132, upperarm_L=24, forearm_L=4, upperarm_R=24, forearm_R=30,
-                  thigh_L=44, shin_L=-16, thigh_R=-20, shin_R=-36, dz=-0.12, dx=0.12)),
-        (26, pose(GUARD, dx=0.12))]),
+                  thigh_L=44, shin_L=-16, thigh_R=-20, shin_R=-36, dz=-0.12)),
+        (26, GUARD)]),
     "hip_throw_v": dict(frames=26, loop=False, hit=13, keys=[     # loaded on his hip, wheeled over, flat on the back
         (0, CLINCH_V),
         (4, pose(CLINCH_V, spine=150, chest=134, head=120, thigh_L=40, shin_L=-10, thigh_R=-10, shin_R=-20, dx=0.1)),
@@ -782,14 +782,14 @@ CONTACT_CLIPS = {
     "shoulder_throw": dict(frames=28, loop=False, hit=15, keys=[  # seoi-nage: over the shoulder, behind him
         (0, CLINCH_A),
         (5, pose(spine=150, chest=136, head=150, upperarm_L=140, forearm_L=200, upperarm_R=110, forearm_R=190,
-                 thigh_L=60, shin_L=-40, thigh_R=30, shin_R=-70, dz=-0.3, dx=0.1)),
+                 thigh_L=60, shin_L=-40, thigh_R=30, shin_R=-70, dz=-0.3)),
         (10, pose(spine=112, chest=100, head=110, upperarm_L=60, forearm_L=30, upperarm_R=50, forearm_R=20,
-                  thigh_L=60, shin_L=-30, thigh_R=10, shin_R=-60, dz=-0.24, dx=0.1)),
+                  thigh_L=60, shin_L=-30, thigh_R=10, shin_R=-60, dz=-0.24)),
         (15, pose(spine=104, chest=92, head=100, upperarm_L=-10, forearm_L=-40, upperarm_R=-20, forearm_R=-40,
-                  thigh_L=56, shin_L=-24, thigh_R=0, shin_R=-50, dz=-0.24, dx=0.1)),
+                  thigh_L=56, shin_L=-24, thigh_R=0, shin_R=-50, dz=-0.24)),
         (21, pose(spine=150, chest=140, head=148, upperarm_L=10, forearm_L=40, upperarm_R=0, forearm_R=30,
-                  thigh_L=40, shin_L=-10, thigh_R=-14, shin_R=-36, dz=-0.1, dx=0.1)),
-        (28, pose(GUARD, dx=0.1))]),
+                  thigh_L=40, shin_L=-10, thigh_R=-14, shin_R=-36, dz=-0.1)),
+        (28, GUARD)]),
     "shoulder_throw_v": dict(frames=28, loop=False, hit=15, keys=[  # heels over head, lands behind the thrower
         (0, CLINCH_V),
         (5, pose(CLINCH_V, spine=140, chest=120, head=110, thigh_L=30, shin_L=-20, thigh_R=-30, shin_R=-40, dx=0.36)),
@@ -830,14 +830,14 @@ CONTACT_CLIPS = {
     "body_slam": dict(frames=30, loop=False, hit=16, keys=[       # scoop him up across the chest, slam him down
         (0, CLINCH_A),
         (5, pose(spine=150, chest=136, head=150, upperarm_L=60, forearm_L=40, upperarm_R=50, forearm_R=30,
-                 thigh_L=60, shin_L=-40, thigh_R=20, shin_R=-70, dz=-0.32, dx=0.1)),
+                 thigh_L=60, shin_L=-40, thigh_R=20, shin_R=-70, dz=-0.32)),
         (11, pose(spine=186, chest=192, head=186, upperarm_L=130, forearm_L=150, upperarm_R=120, forearm_R=140,
-                  thigh_L=22, shin_L=-4, thigh_R=-14, shin_R=-14, dx=0.1)),
+                  thigh_L=22, shin_L=-4, thigh_R=-14, shin_R=-14)),
         (16, pose(spine=140, chest=122, head=128, upperarm_L=60, forearm_L=30, upperarm_R=50, forearm_R=20,
-                  thigh_L=60, shin_L=-30, thigh_R=-20, shin_R=-60, dz=-0.26, dx=0.1)),
+                  thigh_L=60, shin_L=-30, thigh_R=-20, shin_R=-60, dz=-0.26)),
         (22, pose(spine=150, chest=134, head=140, upperarm_L=40, forearm_L=20, upperarm_R=30, forearm_R=10,
-                  thigh_L=56, shin_L=-24, thigh_R=-20, shin_R=-56, dz=-0.22, dx=0.1)),
-        (30, pose(GUARD, dx=0.1))]),
+                  thigh_L=56, shin_L=-24, thigh_R=-20, shin_R=-56, dz=-0.22)),
+        (30, GUARD)]),
     "body_slam_v": dict(frames=30, loop=False, hit=16, keys=[     # lifted flat, held high, dropped on his back
         (0, CLINCH_V),
         (5, pose(CLINCH_V, chest=140, head=120, dx=0.12)),
@@ -872,13 +872,13 @@ CONTACT_CLIPS = {
     "spear": dict(frames=26, loop=False, hit=8, keys=[            # shoulder low into his middle, drive him down
         (0, GUARD),
         (4, pose(spine=120, chest=108, head=120, upperarm_L=60, forearm_L=90, upperarm_R=50, forearm_R=80,
-                 thigh_L=80, shin_L=-20, thigh_R=-20, shin_R=-60, dz=-0.3, dx=0.15)),
+                 thigh_L=80, shin_L=-20, thigh_R=-20, shin_R=-60, dz=-0.3)),
         (8, pose(spine=106, chest=98, head=110, upperarm_L=90, forearm_L=70, upperarm_R=84, forearm_R=64,
-                 thigh_L=40, shin_L=-40, thigh_R=-50, shin_R=-70, dz=-0.36, dx=0.55)),
+                 thigh_L=40, shin_L=-40, thigh_R=-50, shin_R=-70, dz=-0.36)),
         (13, pose(PRONE, chest=100, head=120, upperarm_L=80, forearm_L=60, upperarm_R=74, forearm_R=56,
-                  thigh_L=-60, shin_L=-120, thigh_R=-80, shin_R=-110, dz=-0.66, dx=0.95)),
-        (19, pose(PUSH_UP, dz=-0.48, dx=0.95)),
-        (26, pose(GUARD, dx=0.95))]),
+                  thigh_L=-60, shin_L=-120, thigh_R=-80, shin_R=-110, dz=-0.66)),
+        (19, pose(PUSH_UP, dz=-0.48)),
+        (26, GUARD)]),
     "spear_v": dict(frames=26, loop=False, hit=8, keys=[          # folded in half and driven onto his back
         (0, GUARD),
         (8, pose(spine=150, chest=126, head=150, upperarm_L=110, forearm_L=150, upperarm_R=100, forearm_R=140,
@@ -889,12 +889,12 @@ CONTACT_CLIPS = {
     "sweep": dict(frames=22, loop=False, hit=8, keys=[            # o-soto-gari: chest to chest, reap the leg
         (0, CLINCH_A),
         (4, pose(spine=168, chest=156, head=160, upperarm_L=100, forearm_L=100, upperarm_R=96, forearm_R=96,
-                 thigh_L=40, shin_L=-6, thigh_R=60, shin_R=0, dx=0.12)),
+                 thigh_L=40, shin_L=-6, thigh_R=60, shin_R=0)),
         (8, pose(spine=150, chest=136, head=140, upperarm_L=80, forearm_L=60, upperarm_R=76, forearm_R=56,
-                 thigh_L=36, shin_L=-10, thigh_R=-62, shin_R=-50, dx=0.12)),
+                 thigh_L=36, shin_L=-10, thigh_R=-62, shin_R=-50)),
         (13, pose(spine=150, chest=134, head=138, upperarm_L=50, forearm_L=30, upperarm_R=46, forearm_R=26,
-                  thigh_L=46, shin_L=-20, thigh_R=-30, shin_R=-50, dz=-0.1, dx=0.12)),
-        (22, pose(GUARD, dx=0.12))]),
+                  thigh_L=46, shin_L=-20, thigh_R=-30, shin_R=-50, dz=-0.1)),
+        (22, GUARD)]),
     "sweep_v": dict(frames=22, loop=False, hit=8, keys=[          # the leg taken: feet in the air, down on his back
         (0, CLINCH_V),
         (5, pose(CLINCH_V, spine=186, chest=196, head=196)),
@@ -914,10 +914,10 @@ CONTACT_CLIPS = {
     "hit_body": dict(frames=18, loop=False, hit=None, keys=[      # folded over the fist, arms in
         (0, GUARD),
         (2, pose(spine=148, chest=122, head=134, upperarm_L=20, forearm_L=110, upperarm_R=10, forearm_R=104,
-                 thigh_L=40, shin_L=-24, thigh_R=-10, shin_R=-34, dz=-0.1, dx=-0.08)),
+                 thigh_L=40, shin_L=-24, thigh_R=-10, shin_R=-34, dz=-0.1)),
         (8, pose(spine=150, chest=128, head=140, upperarm_L=16, forearm_L=104, upperarm_R=8, forearm_R=100,
-                 thigh_L=40, shin_L=-24, thigh_R=-10, shin_R=-34, dz=-0.1, dx=-0.1)),
-        (18, pose(GUARD, dx=-0.1))]),
+                 thigh_L=40, shin_L=-24, thigh_R=-10, shin_R=-34, dz=-0.1)),
+        (18, GUARD)]),
     "hit_legs": dict(frames=16, loop=False, hit=None, keys=[      # the kicked leg buckles
         (0, GUARD),
         (2, pose(spine=170, chest=166, head=170, thigh_L=50, shin_L=-50, thigh_R=-20, shin_R=-30,
@@ -927,19 +927,19 @@ CONTACT_CLIPS = {
     "hit_chin": dict(frames=16, loop=False, hit=None, keys=[      # head snapped back, a step to catch himself
         (0, GUARD),
         (2, pose(spine=192, chest=202, head=232, upperarm_L=110, forearm_L=150, upperarm_R=-10, forearm_R=30,
-                 thigh_L=20, shin_L=-4, thigh_R=-24, shin_R=-14, dx=-0.06)),
+                 thigh_L=20, shin_L=-4, thigh_R=-24, shin_R=-14)),
         (6, pose(spine=188, chest=194, head=206, upperarm_L=80, forearm_L=130, upperarm_R=0, forearm_R=40,
-                 thigh_L=-10, shin_L=-16, thigh_R=14, shin_R=-6, dx=-0.18)),
-        (16, pose(GUARD, dx=-0.22))]),
+                 thigh_L=-10, shin_L=-16, thigh_R=14, shin_R=-6)),
+        (16, GUARD)]),
     "stumble_back": dict(frames=24, loop=False, hit=None, keys=[  # rocked: two staggering steps back, arms out
         (0, GUARD),
         (3, pose(spine=196, chest=206, head=212, upperarm_L=130, forearm_L=160, upperarm_R=-40, forearm_R=0,
-                 thigh_L=20, shin_L=-6, thigh_R=-30, shin_R=-20, dx=-0.15)),
+                 thigh_L=20, shin_L=-6, thigh_R=-30, shin_R=-20)),
         (9, pose(spine=190, chest=196, head=200, upperarm_L=100, forearm_L=140, upperarm_R=-10, forearm_R=40,
-                 thigh_L=-20, shin_L=-24, thigh_R=30, shin_R=-4, dx=-0.42)),
+                 thigh_L=-20, shin_L=-24, thigh_R=30, shin_R=-4)),
         (15, pose(spine=186, chest=190, head=190, upperarm_L=80, forearm_L=120, upperarm_R=0, forearm_R=60,
-                  thigh_L=24, shin_L=-6, thigh_R=-24, shin_R=-20, dx=-0.62)),
-        (24, pose(GUARD, dx=-0.7))]),
+                  thigh_L=24, shin_L=-6, thigh_R=-24, shin_R=-20)),
+        (24, GUARD)]),
     "dazed": dict(frames=40, loop=True, hit=None, keys=[          # out on his feet: hands low, swaying
         (0, DAZED_A), (20, DAZED_B), (40, DAZED_A)]),
     "kneel_hurt": dict(frames=40, loop=True, hit=None, keys=[     # down on one knee, a hand on the ground
