@@ -1213,3 +1213,36 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - Indoors the puddles stay, with only a faint stir on the water (`_Ripple` 0.0007).
   - The drip from the roof crack in the prologue stays.
   - Scene version 38.
+
+## Chapter 1's new last beat, and Chapter 2: The Bank
+
+- **Story arc** (`docs/story/story_arc.md`): the seven levels and what each reveals. **Shot list** (`docs/story/chapter2_bank.md`).
+- **Chapter 1 now ends on his coat** (`StoryEnding`, `StoryKey`).
+  - In a lightning flash he sees his long black coat over the drums. He lifts it; a flash cut tells him it's his.
+  - In the inside pocket is a key on a leather tag, shown full screen: MERIDIAN TRUST · SAFE DEPOSIT · Nº 417. He says "Meridian Trust...".
+  - The coat goes over his arm and he walks out.
+  - The card's memory line is back to "You kill people. You are good at it.", with **CONTINUE → CHAPTER 2**.
+  - The phone call is kept (`PhoneGUI`) for a later chapter.
+- **Chapter 2: The Bank** (scene `Story_Bank`, `LayoutKind.Bank`, `BankBuilder`, `StoryBank.cs` as StoryIntro's chapter 2):
+  - **The set** (`tools/blender/build_bank_set.py`, in the tower palette): a wet morning street with shops, the black car at the far curb, and the bank.
+    - The front: a stone portico with MERIDIAN TRUST cut in the entablature and the bank's mark (a keyhole in a shield) over the doors.
+    - Inside: a marble lobby (clock at nine, pendant globes, teller windows behind glass, a velvet rope, benches), a corridor through a barred gate, the round vault door standing open, and the wall of numbered boxes.
+    - The front wall is cut away while the camera is outside it. The marble and the wet sidewalk reflect, sharing one mirror render (`PlanarReflection.shareWith`). Lamp cones, morning shafts, haze and dust as in the tower.
+  - **B1–B22:**
+    - the title over the street
+    - a match cut from the key to the mark in stone
+    - the clock strikes nine
+    - you walk to the doors, then to the counter
+    - "Box four-seventeen", and the clerk's screen flags the box
+    - Harrow leads him through the gate and the round door
+    - two keys turn and the box comes out
+    - the clerk's call ("He's here.")
+    - you open the box: three passports (three names, his face), the ring ("E. — always"), the memory, "...Elena.", the ring put on
+    - the envelope in her hand ("For when you need to come home. — E. · 14 ALDER LANE"), "...Home."
+    - you walk out, and across the road the black car's door opens
+    - CHAPTER 2 COMPLETE · THE RING
+  - The bank's people are grey figures (puppets): the clerk, Harrow, the guard and two waiting customers.
+- **Memory stills** (`tools/blender/render_memories.py`, in `Resources/Story/Memories`): the altar, the first dance, the kitchen, the sea, her face. They're soft high-key black and white, made with the game's own figures (Elena a white figure with dark eyes, hair, a dress and a veil).
+- **Subtitles:** HER · A MEMORY is an off-screen voice.
+- **Menu:** a test button for CHAPTER 2 · THE BANK, next to SKIP TO THE BOSS.
+- Scene version 39.

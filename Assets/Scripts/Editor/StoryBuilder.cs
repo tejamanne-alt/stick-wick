@@ -536,7 +536,7 @@ namespace ProjectInk.EditorTools
             if (dust != null) dust.position = new Vector3(38f, 4f, 1.5f);
         }
 
-        static Transform Quad(Transform parent, string name, Vector3 pos, Vector2 size, Material m)
+        internal static Transform Quad(Transform parent, string name, Vector3 pos, Vector2 size, Material m)
         {
             var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Object.DestroyImmediate(q.GetComponent<Collider>());
@@ -552,7 +552,7 @@ namespace ProjectInk.EditorTools
         }
 
         /// <summary>A strip of low haze: pale at the floor, gone by `h` metres (vertex alpha).</summary>
-        static void HazeStrip(Transform parent, string name, Vector3 at, float w, float h, Material m)
+        internal static void HazeStrip(Transform parent, string name, Vector3 at, float w, float h, Material m)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -575,7 +575,7 @@ namespace ProjectInk.EditorTools
 
         /// <summary>Where the floor is wet (red): damp everywhere a little, and puddles in the low
         /// spots (soft-edged blobs from layered noise). Tiles seamlessly.</summary>
-        static Texture2D WetMask(int n)
+        internal static Texture2D WetMask(int n)
         {
             var tex = new Texture2D(n, n, TextureFormat.RGBA32, true) { wrapMode = TextureWrapMode.Repeat };
             var px = new Color[n * n];
@@ -671,7 +671,7 @@ namespace ProjectInk.EditorTools
         /// <summary>The set is modelled in Blender (x along the lane, y the depth, z up). Three marker
         /// empties tell us where those axes landed after the FBX import; turn and (if needed) mirror the
         /// root so Blender x = Unity x, Blender y = Unity z, Blender z = Unity y, at 1:1.</summary>
-        static void AlignAxes(Transform root)
+        internal static void AlignAxes(Transform root)
         {
             root.position = Vector3.zero;
             root.rotation = Quaternion.identity;

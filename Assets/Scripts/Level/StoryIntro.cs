@@ -37,11 +37,11 @@ namespace ProjectInk
         public HeroController hero;
         public WaveDirector director;
 
-        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, Ending, End }
+        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, Ending, End, Bank }
         Phase phase = Phase.Cinematic;
 
         /// <summary>The fight HUD steps aside while the story holds the screen.</summary>
-        public bool HideHud => phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
+        public bool HideHud => chapter == 2 || phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
 
         // the edit (real seconds)
         const float S1 = 4.2f, S2 = 6.8f, S3 = 10.8f, S4 = 15.6f, S5 = 22.2f, S6 = 27.0f, Control = 30.6f;
@@ -94,7 +94,9 @@ namespace ProjectInk
             home = hero.transform.position;
             runSpeed = hero.runSpeed;
             StoryCameraFX.Set(0f, 0f);
-            Sound.Ambience(2.4f, 0.2f, 22000f);
+            chapter = SceneManager.GetActiveScene().name == "Story_Bank" ? 2 : 1;
+            if (chapter == 2) { HeadWound.Chapter = 2; Sound.Ambience(0.12f, 0.55f, 22000f); }
+            else Sound.Ambience(2.4f, 0.2f, 22000f);
             FindEscapeProps();
         }
 
@@ -115,6 +117,7 @@ namespace ProjectInk
         void Update()
         {
             if (hero == null) return;
+            if (!setUp && chapter == 2) { setUp = true; BeginBank(); }
             if (!setUp)
             {
                 setUp = true;
@@ -935,6 +938,7 @@ namespace ProjectInk
                 cap.alignment = TextAnchor.MiddleLeft;
             }
             ForemanGUI(w, h);
+            if (chapter == 2) BankGUI(w, h);
             EndingGUI(w, h);
             // the words last: nothing in the story is drawn over them
             if (phase != Phase.End && (cardAt < 0f)) DrawSubtitle(w, h, bh);
@@ -1164,12 +1168,13 @@ namespace ProjectInk
             Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.92f));
             big.fontSize = 64;
             big.normal.textColor = Color.white;
-            GUI.Label(new Rect(0, h * 0.26f, w, 80), Spaced("CHAPTER 1 COMPLETE"), big);
+            GUI.Label(new Rect(0, h * 0.26f, w, 80), Spaced(chapter == 2 ? "CHAPTER 2 COMPLETE" : "CHAPTER 1 COMPLETE"), big);
             Fill(new Rect(w * 0.5f - 160, h * 0.26f + 84, 320, 3), new Color(0.8f, 0.06f, 0.07f));
             cap.alignment = TextAnchor.MiddleCenter;
             cap.fontSize = 22;
             cap.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
-            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), Spaced("NEXT") + "     " + Spaced("CHAPTER 2") + "  ·  THE BANK", cap);
+            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), chapter == 2 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 3") + "  ·  THE STREET     " + Spaced("COMING SOON")
+                                                              : Spaced("NEXT") + "     " + Spaced("CHAPTER 2") + "  ·  THE BANK", cap);
             cap.alignment = TextAnchor.MiddleLeft;
             cap.fontSize = 20;
             var next = new Rect(w * 0.5f - 300, h * 0.56f, 600, 66);
@@ -1179,7 +1184,8 @@ namespace ProjectInk
             Fill(new Rect(next.x, next.yMax - 3, next.width, 3), new Color(0.8f, 0.06f, 0.07f));
             Fill(again, new Color(1f, 1f, 1f, 0.1f)); Fill(menu, new Color(1f, 1f, 1f, 0.1f));
             btn.normal.textColor = Color.white;
-            if (GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Bank"); }
+            if (chapter == 1 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Bank"); }
+            if (chapter == 2) { btn.normal.textColor = new Color(1f, 1f, 1f, 0.4f); GUI.Label(next, Spaced("CHAPTER 3 COMING SOON"), btn); btn.normal.textColor = Color.white; }
             btn.fontSize = 24;
             if (GUI.Button(again, Spaced("PLAY AGAIN"), btn)) { Retry = false; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
             if (GUI.Button(menu, Spaced("MAIN MENU"), btn)) { Retry = false; SceneManager.LoadScene("Menu"); }

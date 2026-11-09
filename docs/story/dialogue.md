@@ -11,6 +11,8 @@ One system for every line of dialogue in story mode, in `StoryDialogue.cs`. Ever
 | **THE FOREMAN** | The chapter's boss. Later bosses use their own titles. |
 | **VOICE ON THE PHONE** | The man behind the contract. Heard, never seen. |
 | **VOICE BEYOND THE SHUTTER** | Someone speaking from off screen. |
+| **HER · A MEMORY** | Elena, heard in a memory (an off-screen voice: cold blue). |
+| **CLERK**, **HARROW** | Other people speaking on screen (amber, like his enemies; grey figures). |
 
 ## 2. A colour for each kind of speaker, the same all game
 

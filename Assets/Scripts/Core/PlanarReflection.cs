@@ -14,6 +14,8 @@ namespace ProjectInk
         public int downsample = 2;
         [Tooltip("Push the clip plane a hair below the floor so feet meet their reflection.")]
         public float clipOffset = 0.02f;
+        [Tooltip("Other floors in the same plane that show this reflection too (one mirror render feeds them all).")]
+        public Renderer[] shareWith;
 
         const int WaterLayer = 4;
         Camera mirror;
@@ -85,6 +87,8 @@ namespace ProjectInk
             mirror.Render();
             GL.invertCulling = invert;
             mat.SetTexture(ReflId, rt);
+            if (shareWith != null)
+                foreach (var r in shareWith) if (r != null) r.material.SetTexture(ReflId, rt);
         }
 
         static Vector4 CameraSpacePlane(Camera c, Vector3 pos, Vector3 normal, float offset)

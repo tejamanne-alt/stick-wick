@@ -20,11 +20,12 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 38;
+        public const int SceneVersion = 39;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
         public const string StoryScenePath = "Assets/Scenes/Story_Warehouse.unity";
+        public const string BankScenePath = "Assets/Scenes/Story_Bank.unity";
         public const string MenuScenePath = "Assets/Scenes/Menu.unity";
 
         /// <summary>The main scene: the tower.</summary>
@@ -56,6 +57,7 @@ namespace ProjectInk.EditorTools
         {
             Build(LayoutKind.Tower, ScenePath, false);
             Build(LayoutKind.Warehouse, StoryScenePath, false);
+            Build(LayoutKind.Bank, BankScenePath, false);
             BuildMenu();
             File.WriteAllText(VersionFile, SceneVersion.ToString());
             AssetDatabase.ImportAsset(VersionFile);
@@ -63,6 +65,7 @@ namespace ProjectInk.EditorTools
             {
                 new EditorBuildSettingsScene(MenuScenePath, true),
                 new EditorBuildSettingsScene(StoryScenePath, true),
+                new EditorBuildSettingsScene(BankScenePath, true),
                 new EditorBuildSettingsScene(ScenePath, true),
             };
             AssetDatabase.SaveAssets();
@@ -130,11 +133,17 @@ namespace ProjectInk.EditorTools
             var spawnRoot = new GameObject("SpawnPoints").transform;
             var points = new Transform[5];
             Vector3 heroStart;
-            bool story = kind == LayoutKind.Warehouse;
+            bool bank = kind == LayoutKind.Bank;
+            bool story = kind == LayoutKind.Warehouse || bank;
             if (kind == LayoutKind.Hall)
             {
                 layout.roofY = 6.8f;
                 BuildHall(room, ground, arch, trail, spawnRoot, points, out heroStart);
+            }
+            else if (bank)
+            {
+                layout.roofY = BankBuilder.RoofY;
+                BankBuilder.Build(room, spawnRoot, points, out heroStart);
             }
             else if (story)
             {
@@ -157,8 +166,8 @@ namespace ProjectInk.EditorTools
                 // the man in the warehouse: narrowed eyes and the scar at his temple
                 hero.eyeOpenY = 0.034f;
                 StoryBuilder.AddScar(heroGo, eyeMat);
-                hero.arenaMinX = -StoryBuilder.HalfW + 0.6f;
-                hero.arenaMaxX = StoryBuilder.HalfW - 0.6f;
+                hero.arenaMinX = bank ? BankBuilder.StreetX0 : -StoryBuilder.HalfW + 0.6f;
+                hero.arenaMaxX = bank ? BankBuilder.VaultX1 : StoryBuilder.HalfW - 0.6f;
             }
 
             var systems = new GameObject("Systems");

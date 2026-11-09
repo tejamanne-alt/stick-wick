@@ -9,7 +9,7 @@ namespace ProjectInk.EditorTools
     {
         void OnPreprocessModel()
         {
-            if (!assetPath.StartsWith("Assets/Art/Story/")) return;
+            if (!assetPath.StartsWith("Assets/Art/Story/") && !assetPath.StartsWith("Assets/Art/Bank/")) return;
             var m = (ModelImporter)assetImporter;
             m.importAnimation = false;
             m.importCameras = false;
@@ -22,7 +22,7 @@ namespace ProjectInk.EditorTools
 
         void OnPreprocessTexture()
         {
-            if (!assetPath.StartsWith("Assets/Art/Story/")) return;
+            if (!assetPath.StartsWith("Assets/Art/Story/") && !assetPath.StartsWith("Assets/Art/Bank/")) return;
             var t = (TextureImporter)assetImporter;
             t.wrapMode = UnityEngine.TextureWrapMode.Clamp;
             t.mipmapEnabled = true;

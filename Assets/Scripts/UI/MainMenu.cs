@@ -103,7 +103,12 @@ namespace ProjectInk
             // TEMPORARY, for testing: straight into chapter 1's boss fight (set DevShortcuts false to remove)
             if (DevShortcuts)
             {
-                var dev = new Rect(w * 0.5f - 130, y + bh + 22, 260, 40);
+                var dev = new Rect(w * 0.5f - 270, y + bh + 22, 260, 40);
+                var dev2 = new Rect(w * 0.5f + 10, y + bh + 22, 260, 40);
+                Fill(dev2, new Color(1f, 0.75f, 0.1f, dev2.Contains(Event.current.mousePosition) ? 0.22f : 0.12f));
+                btnSub.normal.textColor = new Color(1f, 0.8f, 0.3f, 0.9f);
+                GUI.Label(dev2, "TEST  ·  CHAPTER 2  ·  THE BANK", btnSub);
+                if (GUI.Button(dev2, GUIContent.none, GUIStyle.none)) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Bank"); }
                 Fill(dev, new Color(1f, 0.75f, 0.1f, dev.Contains(Event.current.mousePosition) ? 0.22f : 0.12f));
                 btnSub.normal.textColor = new Color(1f, 0.8f, 0.3f, 0.9f);
                 GUI.Label(dev, "TEST  ·  SKIP TO THE BOSS", btnSub);
