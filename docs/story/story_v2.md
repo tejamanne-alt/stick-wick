@@ -177,19 +177,35 @@ Dusk. Keep the house, the fights and the Cleaner. The order changes so the grief
 Card: **CHAPTER 3 · THE DAUGHTER.** *"They always come home."*
 
 ### CHAPTER 4 · THE BACKYARD: *"Is she alive?"*
-Night. Keep the set, the fights and the Handler. The fix: **he doesn't remember the kidnapping; he reads it, then he hears her.**
+Night. Keep the set, the fights and the Handler. The fix: **he doesn't remember the kidnapping; he reads it, then he hears her, then he misses her by seconds.**
+
+**Last night (never shown live; read from the clues):**
+1. Elena saw them first. On the back step she pushed the walkie into Maya's pocket: *"Run to the slide. Hide, like we practised. I'll find you."*
+2. Silas shot Elena at the back door; Maya heard it from the garden.
+3. Maya ran through the broken back gate into the playground and hid under the slide.
+4. The Handler's men searched with torches; the walkie crackled in her pocket and gave her away.
+5. They dragged her to the white van in the car park. On the way she pulled the ribbon from her hair and dropped it by the swings ("Mama said leave a trail").
+6. The van stayed near the house: Voss's order was *"He'll follow her trail. Let him see her."*
+
+**Tonight:**
 
 | # | Shot | What happens / is said | Player |
 |---|---|---|---|
-| 4.1 | (as built) the footprints; a low truck beside him | Scuffs, a dropped shoe, tyre marks by the gate. Each **TAP** shows a grey still labelled **WHAT HAPPENED HERE** (taken_1–4, retitled): she ran, she hid under the slide, a hand, the van. **YOU:** "She hid. Good girl. She hid like I'd have taught her." | **TAP** 3 clues. |
-| 4.2 | (as built) the ribbon in the grass, a crane down | **YOU:** "...She left a trail." (Elena, a memory: "If you're ever lost, leave a trail, sweetheart.") | **DRAG** the ribbon free; he ties it round his wrist (the vow, as built). |
-| 4.3 | The swing; static. Then the walkie on the seat crackles | **MAYA (on the walkie):** "...Papa? Papa, is that you? Over." | **HOLD** to talk. |
-| 4.4 | Close on him, the walkie at his mouth | **CHOOSE:** "Maya, I'm here." / "Are you hurt?" / "Where are you?" **MAYA:** "I'm in a big castle. There's a tower with a giant telescope. The man with the cane is nice but I don't like him." "Mama said you'd come." **YOU:** "I'm coming, sweetheart. Keep it hidden. Over." Then a man's voice near her: "Who are you talking to?" Static. | **CHOOSE** |
-| 4.5 | (as built) torches at the fence; the fights; THE HANDLER | **HANDLER**, mid-fight: "I set up your jobs for ten years! You owe me a thank you!" | (fight) |
-| 4.6 | (as built) the Handler against the van | **HANDLER:** "Kessel Hill. The old fort, the one with the observatory." "He's not going to hurt her. He wants you back, don't you see? He made you. He wants his son back." **YOU:** "I'm not his son." | |
-| 4.7 | (as built) the tilt up to the fortress; the pull-away | | |
+| 4.1 | (as built) the footprints; a low truck beside him | Three clues, each a grey still labelled **WHAT HAPPENED HERE** (taken_1–3, retitled): scuffs by the gate (*she ran*), the gap under the slide (*she hid*), a dropped torch and drag marks (*they found her*). **YOU:** "She hid. Good girl... She hid exactly the way I'd have taught her." | **TAP** 3 clues. |
+| 4.2 | (as built) the ribbon in the grass, a crane down | **HER · A MEMORY:** "If you're ever lost, leave a trail, sweetheart." He ties it round his wrist. **YOU:** "I will find you, wherever you are. Trust me, my sweetheart." | **DRAG** the ribbon free. |
+| 4.3 | Static on him; the walkie in his pocket crackles | **MAYA (walkie):** "...Papa? Papa, is that you? Over." | **HOLD** to talk. |
+| 4.4 | Close on him, the walkie at his mouth | **CHOOSE:** "Maya, I'm here." / "Are you hurt?" / "Where are you?" **MAYA:** "I'm in a van. It smells of petrol. I can see the swings through the window." **YOU:** "Stay down. Keep it hidden. I'm coming. Over." A man's voice near her: "Who are you talking to?" Static. | **CHOOSE** |
+| 4.5 | A whip pan down the park: the van's headlights come on at the far end | | |
+| 4.6 | (as built) torches at the fence (a pan) | Voss's order to them (a THUG repeats it): "Take the book off him. Break his legs. Bring him to me." | |
+| 4.7 | (as built) four stretches: the garden, the playground, the pond bridge, the car park; **the van always in sight at the far end** | Between zones, the walkie, more scared each time: **MAYA:** "Papa, they're starting the engine!" | (fight) |
+| 4.8 | The car park; slow motion: the van pulling away, Maya's small hand pressed to the back window (taken_4, now live); he runs after it; a long lens as it goes up the hill road | **MAYA (walkie, breaking up):** "Papa... I can't... hear y—" Static. The music drops out. | **MASH** to run after it (it always gets away). |
+| 4.9 | (as built) THE HANDLER: he stayed to finish it and take the book | **HANDLER:** "I set up your jobs for ten years! You owe me a thank you!" | (fight) |
+| 4.10 | (as built) the Handler against the van's empty bay | **HANDLER:** "Kessel Hill. The old fort, with the observatory. That's where she's going." "He's not going to hurt her. He wants you back. He pulled you off the street at nineteen. You were more his son than Silas ever was... and you just killed Silas." **YOU:** "I'm not his son." | |
+| 4.11 | (as built) the tilt up from the ribbon on his wrist to the fortress, storm clouds gathering; the pull-away | **YOU:** "I'm coming, sweetheart." | |
 
 Card: **CHAPTER 4 · THE PROMISE.** *"I will find you, wherever you are."*
+
+**Why the walkie works:** a toy walkie's range is short. It reaches her while the van is in the park, cuts out as the van leaves, and works again in chapter 5 once he's on the hill.
 
 ### CHAPTER 5 · THE FORTRESS: *"Who am I now?"*
 The storm. Keep everything built: the road, the gate, the trap, the courtyard, the blackout, the Warden, the tower, the roof. Changes:
