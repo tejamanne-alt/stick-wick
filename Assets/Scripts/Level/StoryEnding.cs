@@ -303,78 +303,56 @@ namespace ProjectInk
             }
             headYawOn = false;
 
-            // ---------------------------------------------------------------- 9 a phone, buzzing in the water beside the dead man
-            var phoneAt = new Vector3(landX + 0.35f, 0.012f, -0.35f);
-            BuildPhone(phoneAt);
-            for (int b = 0; b < 2; b++)
-            {
-                Sound.Play(Sfx.PhoneBuzz, 1f, phoneAt);
-                float tb = 0f;
-                while (tb < 1.5f)
-                {
-                    tb += Time.unscaledDeltaTime;
-                    PhoneBuzzing(tb < 1.1f);
-                    Rain();
-                    EndShot(phoneAt + new Vector3(-0.45f, 0.22f, -0.5f), phoneAt, 34f);
-                    yield return null;
-                }
-            }
-            // he goes to it, kneels, picks it up
-            if (hero.body.Has("walk")) hero.body.Play("walk", 0.2f, true, 0.7f);
-            float hx1 = hero.transform.position.x, tk = 0f;
-            while (tk < 1.0f)
-            {
-                tk += Time.unscaledDeltaTime;
-                hero.CinePose(new Vector3(Mathf.Lerp(hx1, landX - 0.4f, Mathf.SmoothStep(0f, 1f, tk)), 0f, 0f));
-                PhoneBuzzing(true);
-                wide();
-                yield return null;
-            }
-            hero.CinePose(new Vector3(landX - 0.4f, 0f, 0f));
-            if (hero.body.Has("kneel_hold")) hero.body.Play("kneel_hold", 0.3f);
-            Sound.Play(Sfx.PhoneBuzz, 1f, phoneAt);
-            yield return Hold(0.7f, () => { PhoneBuzzing(true); wide(); });
-            if (phone != null) phone.gameObject.SetActive(false);
-
-            // ---------------------------------------------------------------- 10 the screen: his own face, and a price on it
-            phoneUi = 1; phoneUiAt = Time.unscaledTime;
-            Sound.Play(Sfx.PhoneBuzz, 0.8f);
-            yield return Hold(3.6f, () => { Rain(); EndShot(HeadC() + new Vector3(-0.2f, 0.1f, -0.9f), HeadC() + Vector3.down * 0.25f, 30f); });
-
-            // ---------------------------------------------------------------- 11 the call
-            phoneUi = 2; phoneUiAt = Time.unscaledTime;
-            Sound.Play(Sfx.PhoneClick, 0.9f);
-            Sound.Play(Sfx.Static, 0.12f);
-            System.Action pov = () => { Rain(); EndShot(HeadC() + new Vector3(-0.2f, 0.1f, -0.9f), HeadC() + Vector3.down * 0.25f, 30f); };
-            yield return Hold(0.6f, pov);
-            Say("THE VOICE", "Is it done?", 2.2f);
-            yield return Hold(2.2f, pov);
-            Sound.Play(Sfx.Heartbeat, 0.7f);
-            Sound.Play(Sfx.Breath, 0.5f, null, 0.9f);
-            yield return Hold(1.8f, pov);                                 // he says nothing. The line hears him breathe
-            Say("THE VOICE", "...Ferryman.", 1.8f);
-            yield return Hold(1.8f, pov);
-            Say("THE VOICE", "You were supposed to stay dead.", 2.6f);
-            Sound.Play(Sfx.Tinnitus, 0.3f);
-            yield return Hold(2.6f, pov);
-            Say("YOU", "Who is this?", 1.8f);
-            yield return Hold(1.8f, pov);
-            Say("THE VOICE", "The contract is open. Every gun in this city is coming for you.", 3.6f);
-            yield return Hold(3.6f, pov);
-            phoneUi = 3; phoneUiAt = Time.unscaledTime;
-            Sound.Play(Sfx.PhoneClick, 0.9f);
-            yield return Hold(1.4f, pov);
-            phoneUi = 0;
-            // the phone drops into the water at his knee
-            if (phone != null)
-            {
-                phone.position = new Vector3(landX - 0.25f, 0.012f, -0.3f);
-                phone.gameObject.SetActive(true);
-                phoneGlow = 0.35f;
-            }
-            Sound.Play(Sfx.Splash, 0.5f, null, 1.4f);
+            // ---------------------------------------------------------------- 9 lightning: in the flash, his coat
+            // (the phone call that used to be here waits for a later chapter: docs/story/story_arc.md)
+            float coatX = Mathf.Max(landX - 2.7f, 51.2f);
+            var coat = BuildCoat(new Vector3(coatX, 0f, 0.75f));
+            yield return Hold(1.2f, wide);
+            Lightning(1f, 0.9f, 0.5f);
+            backGlow = 2.0f;
+            yield return Hold(0.5f, () => { backGlow = Mathf.MoveTowards(backGlow, 1f, Time.unscaledDeltaTime * 2f); wide(); });
             ClearBacklight();
             if (boss != null) boss.SetBaseColor(boss.InkColor);
+            // insert: the coat on the drums, sodden, dark at the collar
+            Sound.Play(Sfx.Drip, 0.6f);
+            yield return Hold(1.8f, () => EndShot(new Vector3(coatX - 0.9f, 0.45f, 0.1f), new Vector3(coatX, 0.75f, 0.75f), 34f));
+
+            // ---------------------------------------------------------------- 10 he goes to it and lifts it: he knows it
+            hero.SetFacing(coatX < hero.transform.position.x ? -1 : 1);
+            if (hero.body.Has("walk")) hero.body.Play("walk", 0.25f, true, 0.7f);
+            float cx0 = hero.transform.position.x, tc = 0f, standAt = coatX + 0.75f;
+            while (tc < 2.2f)
+            {
+                tc += Time.unscaledDeltaTime;
+                hero.CinePose(new Vector3(Mathf.Lerp(cx0, standAt, Mathf.SmoothStep(0f, 1f, tc / 2.1f)), 0f, 0f));
+                if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.6f; Sound.Play(Sfx.Footstep, 0.6f, hero.transform.position, 0.8f); }
+                EndShot(new Vector3(coatX + 0.4f, 1.0f, -3.2f), new Vector3(coatX + 0.4f, 0.9f, 0.4f), 36f);
+                yield return null;
+            }
+            hero.SetFacing(-1);
+            if (hero.body.Has("kneel_hold")) hero.body.Play("kneel_hold", 0.3f);
+            Sound.Play(Sfx.Cloth, 1f);
+            yield return Hold(0.7f, () => EndShot(new Vector3(coatX + 0.3f, 0.8f, -2.4f), new Vector3(coatX, 0.6f, 0.5f), 34f));
+            CarryCoat(coat);
+            if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.4f);
+            // he knows it: a cut of it hanging by a door somewhere warm
+            Sound.Play(Sfx.FlashCut, 0.8f);
+            Sound.Play(Sfx.Heartbeat, 0.7f);
+            flashFrames = 2;
+            yield return Hold(1.4f, () => EndShot(HeadC() + new Vector3(-0.35f, 0.0f, -1.1f), HeadC() + Vector3.down * 0.35f, 32f));
+
+            // ---------------------------------------------------------------- 11 the inside pocket: a key
+            Sound.Play(Sfx.Cloth, 0.8f, null, 1.2f);
+            Sound.Play(Sfx.KnifeGrab, 0.35f, null, 1.6f);                  // small metal in the lining
+            yield return Hold(1.0f, () => EndShot(HeadC() + new Vector3(0.2f, -0.45f, -0.9f), HeadC() + Vector3.down * 0.55f, 30f));
+            ShowKey(true);
+            Sound.Play(Sfx.Piano, 0.5f);
+            Sound.Play(Sfx.Heartbeat, 0.6f, null, 0.9f);
+            yield return Hold(1.6f, () => EndShot(HeadC() + new Vector3(0.2f, -0.45f, -0.9f), HeadC() + Vector3.down * 0.55f, 30f));
+            Say("YOU", "Meridian Trust...", 2.4f);
+            yield return Hold(3.0f, () => EndShot(HeadC() + new Vector3(0.2f, -0.45f, -0.9f), HeadC() + Vector3.down * 0.55f, 30f));
+            ShowKey(false);
+            yield return Hold(0.7f, () => EndShot(HeadC() + new Vector3(0.2f, -0.2f, -1.2f), HeadC() + Vector3.down * 0.3f, 32f));
 
             // ---------------------------------------------------------------- 12 wide, high: small in the empty hall
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.8f);
@@ -409,7 +387,7 @@ namespace ProjectInk
 
             // ---------------------------------------------------------------- 14 black: chapter complete
             cardAt = Time.unscaledTime;
-            cardLine = "Someone put you in the ground. You climbed out.";
+            cardLine = "You kill people. You are good at it.";
             yield return RealWait(6.0f);
             ShowSearch(false);
             Retry = false;
@@ -634,6 +612,56 @@ namespace ProjectInk
             drops.Clear();
         }
 
+        // ---------------------------------------------------------------- his coat
+
+        Transform coatRoot;
+
+        /// <summary>His long black coat, thrown over a drum by the crew that dumped him: sodden,
+        /// dark at the collar.</summary>
+        Transform BuildCoat(Vector3 at)
+        {
+            var unlit = Shader.Find("Unlit/Color");
+            var root = new GameObject("HisCoat").transform;
+            root.position = at;
+            Transform Part(PrimitiveType t, string n, Vector3 lp, Vector3 ls, Vector3 rot, Color c, Transform parent)
+            {
+                var g = GameObject.CreatePrimitive(t);
+                Destroy(g.GetComponent<Collider>());
+                g.name = n;
+                g.transform.SetParent(parent, false);
+                g.transform.localPosition = lp;
+                g.transform.localScale = ls;
+                g.transform.localRotation = Quaternion.Euler(rot);
+                g.GetComponent<Renderer>().material = new Material(unlit) { color = c };
+                return g.transform;
+            }
+            Part(PrimitiveType.Cylinder, "Drum", new Vector3(0f, 0.44f, 0f), new Vector3(0.58f, 0.44f, 0.58f), Vector3.zero, new Color(0.2f, 0.2f, 0.21f), root);
+            var coat = new GameObject("Coat").transform;
+            coat.SetParent(root, false);
+            coat.localPosition = new Vector3(0f, 0.9f, 0f);
+            var black = new Color(0.035f, 0.035f, 0.04f);
+            Part(PrimitiveType.Cube, "Back", new Vector3(0.18f, -0.28f, 0f), new Vector3(0.05f, 0.62f, 0.5f), new Vector3(0f, 0f, -12f), black, coat);
+            Part(PrimitiveType.Cube, "Front", new Vector3(-0.2f, -0.24f, 0.02f), new Vector3(0.05f, 0.56f, 0.46f), new Vector3(0f, 0f, 14f), black, coat);
+            Part(PrimitiveType.Cube, "Top", new Vector3(0f, 0.01f, 0f), new Vector3(0.4f, 0.04f, 0.5f), Vector3.zero, black, coat);
+            Part(PrimitiveType.Cube, "Sleeve", new Vector3(-0.22f, -0.42f, -0.24f), new Vector3(0.09f, 0.6f, 0.1f), new Vector3(8f, 0f, 6f), black, coat);
+            Part(PrimitiveType.Cube, "Collar", new Vector3(0.12f, 0.03f, 0.18f), new Vector3(0.14f, 0.05f, 0.16f), Vector3.zero, new Color(0.16f, 0.03f, 0.03f), coat);   // his blood, dried dark
+            coatRoot = root;
+            return root;
+        }
+
+        /// <summary>He lifts the coat off the drum and folds it over his arm.</summary>
+        void CarryCoat(Transform root)
+        {
+            var coat = root != null ? root.Find("Coat") : null;
+            if (coat == null) return;
+            var arm = hero.body != null ? (hero.body.Bone("forearm.L") ?? hero.body.Bone("hand.L")) : null;
+            if (arm == null) { coat.gameObject.SetActive(false); return; }
+            coat.SetParent(arm, false);
+            coat.localPosition = new Vector3(0f, 0.12f, 0f);
+            coat.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            coat.localScale = new Vector3(0.7f, 0.55f, 0.5f) / Mathf.Max(0.01f, arm.lossyScale.x);
+        }
+
         // ---------------------------------------------------------------- the phone
 
         Transform phone;
@@ -800,6 +828,7 @@ namespace ProjectInk
         void EndingGUI(float w, float h)
         {
             PhoneGUI(w, h);
+            KeyGUI(w, h);
             if (cardAt < 0f || phase == Phase.End) return;
             float t = Time.unscaledTime - cardAt;
             float a = Mathf.Clamp01(t / 1.0f);

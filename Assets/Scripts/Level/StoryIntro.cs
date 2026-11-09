@@ -1169,15 +1169,21 @@ namespace ProjectInk
             cap.alignment = TextAnchor.MiddleCenter;
             cap.fontSize = 22;
             cap.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
-            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), Spaced("CHAPTER 2") + "     THE WIFE     " + Spaced("COMING SOON"), cap);
+            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), Spaced("NEXT") + "     " + Spaced("CHAPTER 2") + "  ·  THE BANK", cap);
             cap.alignment = TextAnchor.MiddleLeft;
             cap.fontSize = 20;
-            var again = new Rect(w * 0.5f - 300, h * 0.62f, 280, 62);
-            var menu = new Rect(w * 0.5f + 20, h * 0.62f, 280, 62);
-            Fill(again, new Color(1f, 1f, 1f, 0.12f)); Fill(menu, new Color(1f, 1f, 1f, 0.12f));
+            var next = new Rect(w * 0.5f - 300, h * 0.56f, 600, 66);
+            var again = new Rect(w * 0.5f - 300, h * 0.56f + 80, 290, 54);
+            var menu = new Rect(w * 0.5f + 10, h * 0.56f + 80, 290, 54);
+            Fill(next, new Color(1f, 1f, 1f, 0.16f));
+            Fill(new Rect(next.x, next.yMax - 3, next.width, 3), new Color(0.8f, 0.06f, 0.07f));
+            Fill(again, new Color(1f, 1f, 1f, 0.1f)); Fill(menu, new Color(1f, 1f, 1f, 0.1f));
             btn.normal.textColor = Color.white;
+            if (GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Bank"); }
+            btn.fontSize = 24;
             if (GUI.Button(again, Spaced("PLAY AGAIN"), btn)) { Retry = false; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
             if (GUI.Button(menu, Spaced("MAIN MENU"), btn)) { Retry = false; SceneManager.LoadScene("Menu"); }
+            btn.fontSize = 30;
         }
 
         // ---- shot 0: rain over the lens
