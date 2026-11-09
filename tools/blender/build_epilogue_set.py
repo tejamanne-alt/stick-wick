@@ -88,8 +88,8 @@ def mats():
     M["cone"] = mat("ConeWhite", (0.7, 0.7, 0.7), 0.5)
     M["road"] = K.mottled("DawnAsphalt", 0.075, 0.3, scale=0.4, var=0.4)
     M["verge"] = K.mottled("DawnVerge", 0.12, 0.7, scale=0.3, var=0.6)
-    M["cliff"] = D.rock("DawnCliff", 0.30, "xz")
-    M["scree"] = D.rock("DawnScree", 0.26, "xy")
+    M["cliff"] = K.strata_rock("DawnCliff", 0.32, "xz", 0.5)
+    M["scree"] = K.strata_rock("DawnScree", 0.28, "xy", 0.8)
     M["line"] = mat("RoadLine", (0.62, 0.62, 0.62), 0.5)
     M["grass"] = K.mottled("WetGrass", 0.14, 0.45, scale=0.5, var=0.55)
     M["grass_far"] = K.mottled("FarGrass", 0.17, 0.8, scale=0.05, var=0.5)
@@ -189,10 +189,10 @@ def flowers(g, M, c, n=9, r=0.12, h=0.35, wrap=True):
         rr = r * math.sqrt(rnd.random())
         top = Vector((cx + math.cos(a) * rr * 1.6, cy + math.sin(a) * rr * 1.6, cz + h * rnd.uniform(0.75, 1.1)))
         g.beam((cx + math.cos(a) * rr * 0.3, cy + math.sin(a) * rr * 0.3, cz), tuple(top), 0.006, 0.006, M["stem"])
-        K.ball(g, tuple(top), 0.028, M["petal"], sub=1, squash=(1.2, 1.2, 0.7))
+        g.cyl(tuple(top), 0.022, 0.03, M["petal"], n=6, r2=0.012)
         for p in range(5):
-            b = p / 5 * math.tau
-            K.ball(g, (top.x + math.cos(b) * 0.03, top.y + math.sin(b) * 0.03, top.z - 0.005), 0.02, M["petal"], sub=1, squash=(1.3, 0.8, 0.4))
+            b = p / 5 * math.tau + k
+            g.box((top.x + math.cos(b) * 0.028, top.y + math.sin(b) * 0.028, top.z - 0.004), (0.04, 0.026, 0.006), M["petal"], rot=(0, 18, math.degrees(b)))
         if k % 3 == 0:
             g.box((top.x * 0.5 + cx * 0.5, top.y * 0.5 + cy * 0.5, cz + h * 0.45), (0.06, 0.012, 0.025), M["stem"], rot=(0, 30, math.degrees(a)))
     if wrap:
@@ -610,6 +610,10 @@ def build_stones(coll, M):
             y = ry + rnd.uniform(-0.12, 0.12)
             p = (o.x + x, o.y + y, ground_b(o.x + x, o.y + y) - 0.03)
             lean = rnd.uniform(-7, 7) if old else rnd.uniform(-1.5, 1.5)
+            if kind in (6, 8):                                                        # lying graves follow the slope
+                slope = (ground_b(o.x + x, o.y + y) - ground_b(o.x + x, o.y + y - 1.9)) / 1.9
+                lean = math.degrees(math.atan(slope))
+                p = (p[0], p[1], p[2] - 0.04)
             headstone(g, M, p, kind, scale=rnd.uniform(0.85, 1.15), lean=lean, old=old, yaw=rnd.uniform(-4, 4))
             x += rnd.uniform(1.5, 2.1)
     for (ax, ay, yaw) in ((-12.4, 4.2, 6.0), (15.2, 11.9, -8.0), (-21.0, 14.6, 4.0)):
@@ -877,8 +881,6 @@ def build_garden(coll, M):
         t = (k + 0.5) / 6
         x, y = o.x + 1.2 + (SWING.x - 1.2) * t, o.y + 6.4 + (SWING.y + 1.6 - 6.4) * t
         g.cyl((x, y, 0.02), 0.25, 0.04, M["paving"], n=12)
-    for (px, py, r) in ((o.x + 2.5, o.y + 8.0, 0.6), (o.x - 3.0, o.y + 7.4, 0.45), (o.x + 7.0, o.y + 9.0, 0.35)):
-        g.cyl((px, py, 0.056), r, 0.004, M["puddle"], n=18)
     # chalk on the patio: a sun, a hopscotch (Maya's)
     g.torus((o.x + 5.0, o.y + 8.2, 0.054), 0.35, 0.02, M["tape_w"], n1=20, n2=3)
     for k in range(10):
@@ -955,7 +957,7 @@ def build_garden(coll, M):
     bx, by = o.x + 5.5, o.y + 2.5
     g.cyl((bx, by, 0.4), 0.1, 0.8, M["coping"], n=10)
     g.cyl((bx, by, 0.85), 0.35, 0.1, M["coping"], n=16, r2=0.3)
-    g.cyl((bx, by, 0.9), 0.28, 0.01, M["puddle"], n=16)
+    g.cyl((bx, by, 0.9), 0.28, 0.01, M["water"] if "water" in M else M["oil"], n=16)
     tx, ty = o.x - 2.6, o.y + 8.3
     g.cyl((tx, ty, 0.72), 0.5, 0.03, M["fence_x"], n=18)
     g.cyl((tx, ty, 0.36), 0.03, 0.72, M["steel_mid"], n=6)
@@ -986,7 +988,8 @@ def build_garden(coll, M):
                                                                           (o.x + x0 + 2.0, o.x + x0 + 3.4, 3.3, 4.5), (o.x + x0 + 9.0, o.x + x0 + 10.4, 3.3, 4.5)], M["brick_x"])
         for (a, b, z0, z1) in ((o.x + x0 + 2.0, o.x + x0 + 3.4, 1.0, 2.2), (o.x + x0 + 6.0, o.x + x0 + 6.9, 0.15, 2.2), (o.x + x0 + 2.0, o.x + x0 + 3.4, 3.3, 4.5), (o.x + x0 + 9.0, o.x + x0 + 10.4, 3.3, 4.5)):
             g.box(((a + b) / 2, o.y + y0 + 0.2, (z0 + z1) / 2), (b - a, 0.1, z1 - z0), M["win"] if z0 > 0.5 else M["door"])
-        g.box(((o.x * 2 + x0 + x1) / 2, o.y + 15.0, 6.9), (x1 - x0, 11.0, 0.2), M["roof"], rot=(math.degrees(math.atan2(2.6, 5.0)), 0, 0))
+        for sg in (-1, 1):
+            g.box(((o.x * 2 + x0 + x1) / 2, o.y + 15.0 - sg * 2.6, 6.95), (x1 - x0, 5.9, 0.14), M["roof"], rot=(-sg * 27.5, 0, 0))
         g.box(((o.x * 2 + x0 + x1) / 2, o.y + 15.0, 2.8), (x1 - x0, 9.6, 5.6), M["brick_x"])
         K.sheet(g, o.x + x0, o.x + x1, o.y - 9.5, o.y + y0, lambda x, y: -0.02, M["grass_far"], res=4.0)
     for k in range(9):                                                                 # the houses across the back
@@ -1073,9 +1076,10 @@ def lights():
     for o in (A, B, C):
         K.add_light("AREA", "SkyFill", (o.x, o.y - 40.0, 30.0), 2.2e4, size=80.0, rot=(math.radians(55), 0, 0), color=(0.96, 0.97, 1.0))
     # the hall: the morning through the back door, the kitchen's lamp, the fanlight
-    K.add_light("AREA", "DoorLight", (C.x + 1.0, C.y + HY0 - 1.4, 1.6), 180, size=1.4, rot=(math.radians(-80), 0, 0), color=warm)
+    K.aim(K.add_light("AREA", "DoorLight", (C.x + 1.0, C.y + HY0 - 2.5, 2.0), 220, size=1.2, color=warm), (C.x + 1.0, C.y + HY0 + 4.0, 0.6))
+    K.add_light("AREA", "HallFill", (C.x + 1.0, C.y + HY0 + 4.5, CEIL - 0.05), 30, size=1.5, color=warm)
     K.add_light("POINT", "KitchenLamp", (C.x + 4.0, C.y + HY0 + 2.7, CEIL - 0.6), 70, size=0.3, color=warm)
-    K.add_light("POINT", "HallLamp", (C.x + 1.0, C.y + CAB_Y, CEIL - 0.6), 25, size=0.3, color=warm)
+    K.add_light("POINT", "HallLamp", (C.x + 1.0, C.y + CAB_Y, CEIL - 0.6), 45, size=0.3, color=warm)
     K.add_light("AREA", "Fanlight", (C.x + 0.9, C.y + HY1 - 0.5, 2.4), 25, size=0.8, rot=(math.radians(80), 0, 0))
     w = bpy.data.worlds.new("Dawn")
     w.use_nodes = True

@@ -63,9 +63,9 @@ BRIDGE_X0, BRIDGE_X1 = 71.5, 92.5
 VAN_X, VAN_Y, VAN_L = 128.2, 2.9, 5.4          # the van: centre on the ground, length (its back faces the park)
 VAN_BACK = VAN_X - VAN_L / 2
 BARRIER_X = 134.6
-LAMPS = [(37.0, -1.75), (49.0, -1.75), (61.0, -1.75), (69.0, -1.75), (96.0, -1.75), (56.5, 4.7), (88.0, 9.6)]
+LAMPS = [(37.0, -1.75), (49.0, -1.75), (61.0, -1.75), (69.0, -1.75), (82.0, -1.6), (96.0, -1.75), (56.5, 4.7), (88.0, 9.6)]
 LAMP_H = 3.7
-CAR_LAMPS = [(115.0, -2.3), (124.0, 7.6)]
+CAR_LAMPS = [(110.5, 10.0), (124.0, 10.0)]
 CAR_LAMP_H = 6.4
 HILL_C, HILL_H, HILL_R = (250.0, 40.0), 30.0, (68.0, 56.0)   # Kessel Hill: its crown, height, half extents
 FORT_Z = HILL_H - 1.0
@@ -156,6 +156,7 @@ def mats():
     M["curtain"] = D.flat("ParkCurtain", 0.3, emit=1.2)
     M["globe"] = D.flat("ParkLampGlobe", 1.0, emit=18.0)
     M["sodium"] = D.flat("ParkSodium", 1.0, emit=24.0)
+    M["fairy"] = D.flat("ParkFairyLight", 1.0, emit=14.0)
     M["water"] = D.flat("ParkWater", 0.012, rough=0.04)
     M["puddle"] = D.flat("ParkPuddle", 0.012, rough=0.03)
     M["reed"] = D.flat("ParkReed", 0.07, rough=0.9)
@@ -184,7 +185,7 @@ def mats():
     M["sky"] = D.flat("ParkNightSky", 0.02, emit=0.06)
     M["moon"] = D.flat("ParkMoon", 1.0, emit=7.0)
     M["cloud"] = speckle("ParkStormCloud", 0.05, scale=1.0, grain=4.0, contrast=0.6, rough=1.0, plane="xz")
-    M["cloud_lit"] = D.flat("ParkCloudGlow", 0.12, emit=0.35)
+    M["cloud_lit"] = D.flat("ParkCloudGlow", 0.1, emit=0.16)
     M["hill"] = D.rock("ParkHill", 0.045, "xy")
     M["hill_side"] = D.rock("ParkHill", 0.045, "xz")
     M["fort"] = D.stone("ParkFortStone", 0.1, 0.05, "xz", block=(1.6, 0.7))
@@ -375,10 +376,12 @@ def pine(g, x, y, h, M, z=0.0):
 
 def hedge(g, x0, x1, y, h, d, M, z=0.0):
     """A clipped hedge: a run of overlapping lumpy masses."""
-    n = max(1, int((x1 - x0) / (h * 0.9)))
+    g.box(((x0 + x1) / 2, y, z + h * 0.42), (x1 - x0 - h * 0.3, d * 0.8, h * 0.84), M["hedge"])
+    n = max(2, int((x1 - x0) / (h * 0.55)))
     for k in range(n):
-        x = x0 + (x1 - x0) * (k + 0.5) / n
-        blob(g, (x, y, z + h * 0.5), h * 0.5, M["hedge"], s=((x1 - x0) / n / h * 1.3, d / h, 1.0), rough=0.18)
+        x = x0 + (x1 - x0) * (k + rnd.uniform(0.2, 0.8)) / n
+        r = h * rnd.uniform(0.32, 0.5)
+        blob(g, (x, y + rnd.uniform(-0.15, 0.15) * d, z + h - r * rnd.uniform(0.6, 1.0)), r, M["hedge"], s=(rnd.uniform(1.1, 1.6), d / h * 1.1, rnd.uniform(0.7, 1.0)), rough=0.4)
 
 
 def bush(g, c, r, M):
@@ -1063,6 +1066,25 @@ def build_garden(coll, M):
     for k in range(14):
         a = k / 14 * math.pi * 1.6
         g.box((19.5 + math.cos(a) * 0.5, -2.9 + math.sin(a) * 0.3, 0.012), (0.08, 0.015, 0.015), M["play_pale"], rot=(0, 0, math.degrees(a) + 90))
+    # fairy lights strung along the back fence over her play area, sagging between the posts;
+    # solar lights on stakes along the stepping stones
+    for k in range(9):
+        xa, xb = 18.0 + k * 1.83, 18.0 + (k + 1) * 1.83
+        prev = None
+        for j in range(9):
+            t = j / 8
+            p = Vector((xa + (xb - xa) * t, 12.45, 1.95 - 0.28 * math.sin(t * math.pi)))
+            if prev is not None:
+                g.beam(prev[:], p[:], 0.006, 0.006, M["steel"])
+            if 0 < j < 8 and j % 2 == 0:
+                g.cyl((p.x, p.y - 0.02, p.z - 0.04), 0.022, 0.05, M["fairy"], n=6)
+            prev = p
+    for k in range(6):
+        t = (k + 0.5) / 6
+        x, y = 8.6 + t * 8.6 + 0.5, 2.0 + t * 5.8 + 0.4 * math.sin(t * 3.0) + 0.45
+        g.cyl((x, y, 0.15), 0.012, 0.3, M["steel"], n=4)
+        g.cyl((x, y, 0.33), 0.045, 0.06, M["fairy"], n=8)
+        g.cyl((x, y, 0.37), 0.05, 0.02, M["steel"], n=8)
     # the beds: along the back fence, the house's side, the front
     flower_bed(g, 8.0, 14.0, 11.4, 12.3, M)
     flower_bed(g, 19.0, 33.7, 11.2, 12.3, M)
@@ -1485,6 +1507,9 @@ def footbridge(g, M):
                 for j in range(1, 6):
                     g.box((xa + (xb - xa) * j / 6, s * 1.25, 0.28), (0.04, 0.04, 0.5), M["timber"])
             g.box(((xa + xb) / 2, 0.0, -0.3), (0.1, 2.3, 0.1), M["post"])                         # the cross beams
+    # the lamp at the middle: its own pile, braced to the parapet
+    g.cyl((82.0, -1.6, -0.45), 0.1, 0.9, M["post"], n=8)
+    g.beam((82.0, -1.6, 0.9), (82.0, -1.25, 0.95), 0.05, 0.05, M["steel"])
     # a plaque: ALDER PARK FOOTBRIDGE 1911
     g.box(((x0 + x1) / 2, -1.33, 0.78), (0.4, 0.02, 0.14), M["chrome"])
 
@@ -1528,7 +1553,7 @@ def build_pond(coll, M):
         x, y = POND_C[0] + math.cos(a) * POND_R[0] * 0.86, POND_C[1] + math.sin(a) * POND_R[1] * 0.86
         if abs(y) < 1.5:
             continue
-        D.boulder(g, (x, y, WATER_Z + 0.06), rnd.uniform(0.12, 0.26), M["concrete"])
+        blob(g, (x, y, WATER_Z + 0.06), rnd.uniform(0.12, 0.26), M["concrete"], s=(1.0, 1.0, 0.6), rough=0.3)
     # the willow on the far bank, its curtain of hanging strands; the lifebuoy on its post
     wx, wy = 84.5, 11.2
     tree(g, wx, wy, 8.5, M, leafy=0.2, mains=6)
@@ -2148,9 +2173,8 @@ def build_sky(coll, M):
         for k in range(n):
             c = (cx + bx + rnd.uniform(-22, 22), cy + by + rnd.uniform(-10, 10), HILL_H + bz + rnd.uniform(-4, 6))
             blob(g, c, rnd.uniform(7, 13), M["cloud"], s=(1.7, 1.2, 0.6), subdiv=2, rough=0.45)
-    for k in range(4):
-        c = (cx + rnd.uniform(-25, 25), cy + rnd.uniform(25, 45), HILL_H + rnd.uniform(42, 48))
-        blob(g, c, rnd.uniform(4, 6), M["cloud_lit"], s=(1.5, 1.2, 0.45), subdiv=1, rough=0.3)
+    for (bx, by, bz) in ((5, 44, 49), (-30, 34, 44)):                                              # lit from within, low in the banks
+        blob(g, (cx + bx, cy + by, HILL_H + bz), 9.0, M["cloud_lit"], s=(1.6, 1.2, 0.5), subdiv=2, rough=0.4)
     # thinner cloud over the town, drifting
     for k in range(18):
         c = (rnd.uniform(-80, 200), rnd.uniform(110, 165), rnd.uniform(60, 95))
@@ -2196,7 +2220,7 @@ def add_light(kind, name, loc, energy, size=1.0, rot=None):
 def lights():
     """Night after rain: a low moon behind the houses, the park lamps, the car park's sodium heads,
     the kitchen's light spilling out of the window and the open door."""
-    moon = add_light("SUN", "Moon", (0, 0, 50), 0.4)
+    moon = add_light("SUN", "Moon", (0, 0, 50), 0.6)
     moon.rotation_euler = (math.radians(58), 0, math.radians(165))
     for (x, y) in LAMPS:
         add_light("POINT", "ParkLamp", (x, y, LAMP_H + 0.25), 170, size=0.2)
@@ -2208,10 +2232,15 @@ def lights():
     add_light("AREA", "KitchenWindow", (0.25, 1.8, 1.5), 140, size=1.2, rot=(0, math.radians(-90), 0))
     add_light("AREA", "KitchenDoor", (0.25, -0.3, 1.1), 220, size=1.0, rot=(0, math.radians(-90), 0))
     add_light("POINT", "Landing", (1.5, 5.2, 3.9), 30, size=0.4)
+    for x in (20.0, 24.5, 29.0, 33.0):
+        add_light("POINT", "FairyLights", (x, 12.2, 1.8), 14, size=0.6)
+    for k in range(6):
+        t = (k + 0.5) / 6
+        add_light("POINT", "SolarLight", (8.6 + t * 8.6 + 0.5, 2.0 + t * 5.8 + 0.4 * math.sin(t * 3.0) + 0.45, 0.4), 1.2, size=0.05)
     add_light("POINT", "BarrierBox", (BARRIER_X - 1.6, SIGHT_Y + 3.3, 1.0), 12, size=0.2)
     add_light("POINT", "VanInside", (VAN_BACK + 0.9, VAN_Y, 1.1), 2.5, size=0.2)
     for x in (20.0, 65.0, 115.0):
-        add_light("AREA", "Fill", (x, -16.0, 7.0), 700, size=50.0, rot=(math.radians(74), 0, 0))
+        add_light("AREA", "Fill", (x, -16.0, 7.0), 900, size=50.0, rot=(math.radians(74), 0, 0))
     add_light("AREA", "BackFill", (60.0, -20.0, 24.0), 1600, size=140.0, rot=(math.radians(60), 0, 0))
     add_light("AREA", "HillFill", (200.0, -20.0, 40.0), 2200, size=120.0, rot=(math.radians(55), 0, math.radians(-30)))
     w = bpy.data.worlds.new("Night")
@@ -2288,7 +2317,7 @@ def main():
         d.parent = van
         d.matrix_parent_inverse = Matrix.Translation(-van.location)
     arm = build_barrier_arm(coll, M)
-    for o in (house, garden, play, pond, carpark, van, door_l, door_r):
+    for o in (house, van, door_l, door_r):                                                         # the big hard edges catch the light
         D.bevel(o, 0.012)
     parts = [house, garden, garden_g, play, lawn, pond, carpark, carpark_g, fore, back, hill, sky, swing, van, door_l, door_r, arm]
     tris = 0
@@ -2314,7 +2343,7 @@ def main():
             ("4.7  long lens: down the park to the van's window", S.shot_camera("P4", (SWING_X + 2.6, 1.45, SWING_Y), (VAN_BACK, 1.75, VAN_Y), 3.2), None),
             ("4.7  wide: the park, the van, Kessel Hill", S.shot_camera("P5", (SWING_X + 1.0, 1.6, SWING_Y), (150.0, 9.0, 12.0), 20), None),
             ("Y8  the playground (gameplay)", S.shot_camera("P6", (50.0, 2.0, -12.0), (50.0, 1.3, 1.0), 42), None),
-            ("4.5  the tall slide, the gap under it", S.shot_camera("P7", (SLIDE_X - 1.6, 0.7, SLIDE_Y - 3.2), (SLIDE_X + 0.2, 0.9, SLIDE_Y), 52), None),
+            ("4.5  the tall slide, the gap under it", S.shot_camera("P7", (SLIDE_X - 1.2, 0.6, SLIDE_Y - 2.4), (SLIDE_X + 0.1, 0.7, SLIDE_Y), 56), None),
             ("Y9  the pond, the footbridge (gameplay)", S.shot_camera("P8", (82.0, 2.0, -12.0), (82.0, 1.0, 1.0), 42), None),
             ("Y10  the car park, the van (gameplay)", S.shot_camera("P9", (118.0, 2.0, -12.0), (118.0, 1.3, 1.0), 42), None),
             ("4.11  the hill road, the van gone", S.shot_camera("P10", (122.0, 1.6, 0.2), (175.0, 6.0, 14.0), 30), None),
@@ -2335,6 +2364,9 @@ def main():
             cams = [c for i, c in enumerate(cams, 1) if i in only]
         S.PREVIEW = os.path.join(ROOT, "docs", "previews")
         name = "park_set_lightning.png" if lit else ("park_set.png" if not only else "park_set_part.png")
+        for a in args:
+            if a.startswith("--sheet="):
+                name = a[8:]
         S.preview(cams, name)
         return
     for o in parts:

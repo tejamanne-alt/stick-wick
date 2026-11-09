@@ -83,10 +83,10 @@ def mats():
     M["car"] = mat("CarBlack", (0.03, 0.03, 0.035), 0.25, metal=0.5)
     M["car_grey"] = mat("CarGreyDay", (0.2, 0.2, 0.2), 0.3, metal=0.5)
     M["car_pale"] = mat("CarPaleDay", (0.45, 0.45, 0.45), 0.3, metal=0.5)
-    M["glass_ext"] = mat("ExtGlass", (0.06, 0.065, 0.07), 0.04, metal=0.3)
     M["scanner"] = mat("ScannerGlow", (0.9, 0.95, 1.0), 0.2, emit=(1, 1, 1), strength=5.0)
     M["screen"] = mat("ScreenGlow", (0.7, 0.72, 0.75), 0.3, emit=(1, 1, 1), strength=1.4)
     K.mats(M)
+    M["glass_ext"] = K.grey("DayGlass", 0.3, 0.16)                       # windows by day: pale, catching the sky
     M["brass"] = K.grey("BankBrass", 0.52, 0.28, metal=0.8)              # in black and white: a pale bright trim
     # surfaces with texture (object space: walls facing the camera "xz", across the lane "yz", floors "xy")
     M["stone_w"] = K.courses("BankAshlar", 0.4, 0.2, "yz", (1.1, 0.5), joint_w=0.008, grime=0.35)
@@ -544,7 +544,7 @@ def build_counter(g, M):
     sc = f.sub((sx, sy, 1.16), 0)
     sc.box((0, 0.02, 0.04), (0.36, 0.3, 0.08), M["iron"], bevel=0.015)
     pn = K.L(g)
-    pn.T = sc.T @ Matrix.Translation((0, 0.03, 0.13)) @ Matrix.Rotation(math.radians(-28), 4, "X")
+    pn.T = sc.T @ Matrix.Translation((0, 0.03, 0.13)) @ Matrix.Rotation(math.radians(28), 4, "X")
     pn.box((0, 0, 0), (0.34, 0.28, 0.05), M["iron"], bevel=0.012)                 # the tilted head
     pn.box((0, 0, 0.026), (0.3, 0.24, 0.006), M["scanner"])                      # the glowing glass
     for (u, v, su, sv, rz) in ((0.0, -0.03, 0.1, 0.1, 0), (-0.036, 0.05, 0.02, 0.08, 0), (-0.012, 0.062, 0.02, 0.09, 0),

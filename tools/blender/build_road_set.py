@@ -402,7 +402,8 @@ def build_way(coll, M):
     centre = [f for f in fr[::2] if f[0].x <= X_STOP + 6]
     for off in (-0.1, 0.1):                                                           # double line through the bends
         run = []
-        for (p, left, u, s_, i) in centre + [None]:
+        for fr_ in centre + [None]:
+            p, left = (fr_[0], fr_[1]) if fr_ else (None, None)
             if p is not None and in_bend(p):
                 run.append([tuple(p + left * (off + d) + Vector((0, 0, 0.026))) for d in (-0.05, 0.05)])
             elif run:
