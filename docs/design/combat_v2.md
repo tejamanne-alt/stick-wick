@@ -29,6 +29,8 @@ Every fight should look like two men really fighting, in the style of a grounded
 | Floaty gravity, long air time, freeze-frame hit-stops. | **Real gravity** (9.8 m/s² feel, short airtime), small hit-stops (2–4 frames) on heavy hits only. |
 | Strike strings that never tire. | **Breath.** Long flurries slow down; he recovers between exchanges. So do they. |
 
+**No RAMPAGE in story mode** (already switched off: the button never shows and the move can't start). The story's peak moments are its finishers and context moves instead.
+
 Fight mode (the tower) keeps its bigger, arcade feel by default; the story uses the grounded settings. It's one combat system with two tunings, and I can bring the tower closer later if you want.
 
 ### The new system: CONTACT

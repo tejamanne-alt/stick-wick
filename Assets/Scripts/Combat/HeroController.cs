@@ -1236,6 +1236,7 @@ namespace ProjectInk
 
         void StartRampage()
         {
+            if (StoryIntro.Instance != null) return;                 // no rampage in the story: it's grounded there
             var wd = WaveDirector.Instance;
             if (wd == null || !wd.FlowReady || InRampage || CinematicLock || IsDead) return;
             wd.SpendFlow();

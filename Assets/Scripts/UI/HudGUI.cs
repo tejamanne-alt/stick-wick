@@ -888,7 +888,7 @@ namespace ProjectInk
 
             ChalkMarks(w, h);
             if (training) TrainingCard(tut, w, h);
-            RampageButton(w, h, repaint);
+            if (StoryIntro.Instance == null) RampageButton(w, h, repaint);      // no rampage in the story
 
             // the pause and ? buttons (top centre), and SKIP during training
             pauseBtn = new Rect(w * 0.5f - 70, 8, 62, 48);
