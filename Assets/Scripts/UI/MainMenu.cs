@@ -98,8 +98,12 @@ namespace ProjectInk
             float bw = Mathf.Min(360f, w * 0.38f), bh = 96f, gap = 30f, y = h * 0.62f;
             var story = new Rect(w * 0.5f - bw - gap * 0.5f, y, bw, bh);
             var fight = new Rect(w * 0.5f + gap * 0.5f, y, bw, bh);
-            if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true)) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
-            if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false)) SceneManager.LoadScene("Prototype");
+            // while the test panel is open it owns every click: the buttons under it must not take one
+            // (IMGUI gives a click to the first button drawn under the pointer, and these come first)
+            bool open = DevShortcuts && testOpen;
+            GUI.enabled = !open;
+            if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true) && !open) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
+            if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false) && !open) SceneManager.LoadScene("Prototype");
             // TEMPORARY, for testing: jump straight to any checkpoint (set DevShortcuts false to remove)
             if (DevShortcuts)
             {
@@ -107,9 +111,11 @@ namespace ProjectInk
                 Fill(dev, new Color(1f, 0.75f, 0.1f, dev.Contains(Event.current.mousePosition) || testOpen ? 0.24f : 0.12f));
                 btnSub.normal.textColor = new Color(1f, 0.8f, 0.3f, 0.9f);
                 GUI.Label(dev, "TEST  ·  CHECKPOINTS", btnSub);
-                if (GUI.Button(dev, GUIContent.none, GUIStyle.none)) testOpen = !testOpen;
+                if (GUI.Button(dev, GUIContent.none, GUIStyle.none) && !open) testOpen = true;
+                GUI.enabled = true;
                 if (testOpen) TestPanel(w, h);
             }
+            GUI.enabled = true;
             GUI.matrix = Matrix4x4.identity;
         }
 
