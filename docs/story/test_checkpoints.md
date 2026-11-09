@@ -40,7 +40,10 @@
 | | The courtyard | `FortressFrom = 3`: the first courtyard fight under the floodlights. |
 | | **The blackout** | `FortressFrom = 4`: lightning hits the pole, the generator bursts, then the fight in the dark (lit only by the flashes). |
 | | **The Warden** | `FortressFrom = 5`: the hall reveal, his three phases (the chain, the chandeliers falling, bare hands), then "PAPA!" from above. |
-| | The tower | `FortressFrom = 6`: the man and the child on the gallery, "Come up, old friend.", the end of chapter 5. |
+| | The tower | `FortressFrom = 6`: the man and the child on the gallery, "Come up, old friend.", then on up the tower. |
+| | **The last roof** | `FortressFrom = 7`: up the outside of the tower (Elena's and Maya's voices), the door onto the terrace, VOSS holding Maya at the broken end, what he tells him over the three broken stills, "I remember now.", he lets her go. |
+| | **Voss (the duel)** | `FortressFrom = 8`: I the teacher (a boxer's guard), II the gun (a red line finds you: dodge as he fires, or get in close while he aims and take it off him), III the edge (furious, the strikes every few seconds). Dying here restarts the duel. |
+| | **The end** | `FortressFrom = 9`: the fall (him hanging off the broken parapet, "We're the same." / "No. I came home.", the strike, the drop), Maya, the ribbon in her hair, the dawn, the road home, THE END. |
 
 **For every new chapter:** add its checkpoints here and to `MainMenu.Checkpoints`. At least: its start, each fight zone, its boss fight, its ending after the boss, and every story beat worth replaying on its own. The entry points live in `StoryTest.cs` (and a `TestState` per chapter, like the bank's).
 

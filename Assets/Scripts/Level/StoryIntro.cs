@@ -41,7 +41,7 @@ namespace ProjectInk
         Phase phase = Phase.Cinematic;
 
         /// <summary>The fight HUD steps aside while the story holds the screen.</summary>
-        public bool HideHud => chapter == 2 || (chapter == 3 && (barsPx > 1f || driverStage >= 5)) || (chapter == 4 && (barsPx > 1f || cleanerStage >= 5 || hClimbing)) || (chapter == 5 && (barsPx > 1f || handlerStage >= 5)) || (chapter == 6 && (barsPx > 1f || wardenStage >= 5)) || phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
+        public bool HideHud => chapter == 2 || (chapter == 3 && (barsPx > 1f || driverStage >= 5)) || (chapter == 4 && (barsPx > 1f || cleanerStage >= 5 || hClimbing)) || (chapter == 5 && (barsPx > 1f || handlerStage >= 5)) || (chapter == 6 && (barsPx > 1f || vossStage >= 5 || (wardenStage >= 5 && vossStage == 0))) || phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
 
         // the edit (real seconds)
         const float S1 = 4.2f, S2 = 6.8f, S3 = 10.8f, S4 = 15.6f, S5 = 22.2f, S6 = 27.0f, Control = 30.6f;
@@ -1182,7 +1182,7 @@ namespace ProjectInk
         }
 
         /// <summary>The chapter just finished, as the player knows it (the street is chapter 2's second half).</summary>
-        string ChapterDone => chapter >= 6 ? "CHAPTER 5 COMPLETE" : chapter >= 5 ? "CHAPTER 4 COMPLETE" : chapter >= 4 ? "CHAPTER 3 COMPLETE" : chapter >= 2 ? "CHAPTER 2 COMPLETE" : "CHAPTER 1 COMPLETE";
+        string ChapterDone => chapter >= 6 ? (finaleOver ? "THE END" : "CHAPTER 5 COMPLETE") : chapter >= 5 ? "CHAPTER 4 COMPLETE" : chapter >= 4 ? "CHAPTER 3 COMPLETE" : chapter >= 2 ? "CHAPTER 2 COMPLETE" : "CHAPTER 1 COMPLETE";
 
         void EndCard(float w, float h)
         {
@@ -1194,7 +1194,7 @@ namespace ProjectInk
             cap.alignment = TextAnchor.MiddleCenter;
             cap.fontSize = 22;
             cap.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
-            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), chapter >= 6 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 6") + "  ·  THE LAST ROOF     " + Spaced("COMING SOON")
+            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), chapter >= 6 ? Spaced("STICK WICK") + "     ·     " + Spaced("HE CAME HOME")
                                                               : chapter >= 5 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 5") + "  ·  THE FORTRESS"
                                                               : chapter >= 4 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 4") + "  ·  THE BACKYARD"
                                                               : chapter >= 2 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 3") + "  ·  HOME"
@@ -1212,7 +1212,7 @@ namespace ProjectInk
             if (chapter >= 2 && chapter <= 3 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Home"); }
             if (chapter == 4 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Backyard"); }
             if (chapter == 5 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Fortress"); }
-            if (chapter >= 6) { btn.normal.textColor = new Color(1f, 1f, 1f, 0.4f); GUI.Label(next, Spaced("CHAPTER 6 COMING SOON"), btn); btn.normal.textColor = Color.white; }
+            if (chapter >= 6 && GUI.Button(next, Spaced("PLAY FROM CHAPTER 1") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
             btn.fontSize = 24;
             if (GUI.Button(again, Spaced("PLAY AGAIN"), btn)) { Retry = false; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
             if (GUI.Button(menu, Spaced("MAIN MENU"), btn)) { Retry = false; SceneManager.LoadScene("Menu"); }

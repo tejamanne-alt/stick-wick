@@ -35,7 +35,8 @@ OUT = os.path.join(ROOT, "Assets", "Art", "Fortress")
 rnd = random.Random(71)
 UP = 6.0                       # the gate, courtyard and hall stand this much above the road
 HALL_X0, HALL_X1 = 128.0, 166.0
-HALL_TOP = UP + 8.0
+HALL_TOP = UP + 12.0          # a hall as tall as a church
+ROOF = HALL_TOP + 0.4         # the roof terrace (the last fight)
 WALL_Y = 4.2                   # the curtain wall behind the lane
 TOWER_X = 150.0                # the observatory tower behind the hall
 
@@ -187,6 +188,17 @@ def build_court(coll, M):
     g.box((112.0, 3.5, z + 2.6), (6.0, 1.6, 0.1), M["planks"], rot=(-14, 0, 0))
     for k in range(3):
         S.crate(g, (114.0 + k * 0.9, 3.3, z + 0.4), (0.8, 0.8, 0.8), M)
+    # the founder's statue: a knight on a plinth, his sword point-down before him
+    kx = 124.5
+    g.box((kx, 2.6, z + 0.8), (1.6, 1.6, 1.6), M["stone_dark"])
+    g.box((kx, 2.6, z + 1.7), (1.8, 1.8, 0.2), M["stone"])
+    g.cyl((kx, 2.6, z + 2.6), 0.32, 1.6, M["stone"], n=12, r2=0.42)
+    g.cyl((kx, 2.6, z + 3.8), 0.36, 0.9, M["stone"], n=12, r2=0.3)
+    g.cyl((kx, 2.6, z + 4.5), 0.22, 0.45, M["stone"], n=12)
+    g.box((kx - 0.45, 2.3, z + 2.9), (0.06, 0.06, 1.8), M["iron"])
+    g.box((kx - 0.45, 2.3, z + 3.7), (0.4, 0.06, 0.06), M["iron"])
+    for s_ in (-1, 1):
+        g.beam((kx + s_ * 0.36, 2.6, z + 4.1), (kx - 0.4, 2.35, z + 3.8), 0.12, 0.12, M["stone"])
     # the generator shed, its exhaust, the cables, and two floodlights on poles
     sx = 121.0
     g.box((sx, 2.8, z + 1.3), (4.0, 2.4, 2.6), M["stone_dark"])
@@ -215,25 +227,52 @@ def build_hall(coll, M):
     z = UP
     x0, x1 = HALL_X0, HALL_X1
     g.box(((x0 + x1) / 2, 0.6, z - 0.1), (x1 - x0, 7.6, 0.2), M["stone_floor"])
-    g.box(((x0 + x1) / 2, WALL_Y + 0.6, z + 4.0), (x1 - x0, 0.6, 8.0), M["stone"])       # the back wall
+    g.box(((x0 + x1) / 2, WALL_Y + 0.6, z + 6.0), (x1 - x0, 0.6, 12.0), M["stone"])      # the back wall
     g.box(((x0 + x1) / 2, 0.6, HALL_TOP + 0.2), (x1 - x0, 7.6, 0.4), M["planks"])        # the ceiling
     for k in range(int((x1 - x0) / 3)):                                                 # its beams
         g.box((x0 + 1.5 + k * 3.0, 0.6, HALL_TOP - 0.15), (0.35, 7.6, 0.4), M["planks_wall"])
     for x in (x0, x1):
-        g.box((x, 0.6, z + 4.0), (0.6, 7.6, 8.0), M["stone_y"])
+        g.box((x, 0.6, z + 6.0), (0.6, 7.6, 12.0), M["stone_y"])
+    # the upper gallery along the back wall, its balustrade on corbels
+    g.box(((x0 + x1) / 2, WALL_Y - 0.8, z + 6.6), (x1 - x0 - 1.2, 1.6, 0.3), M["stone_dark"])
+    for k in range(int((x1 - x0 - 2) / 0.45)):
+        g.cyl((x0 + 1.2 + k * 0.45, WALL_Y - 1.5, z + 7.2), 0.08, 0.9, M["stone"], n=8, r2=0.05)
+    g.box(((x0 + x1) / 2, WALL_Y - 1.5, z + 7.7), (x1 - x0 - 1.2, 0.25, 0.12), M["stone"])
+    for k in range(int((x1 - x0) / 3)):
+        g.box((x0 + 1.5 + k * 3.0, WALL_Y - 0.2, z + 6.2), (0.4, 0.8, 0.6), M["stone_dark"])
+    # the rose window high in the back wall: a ring of lights round a centre, its tracery
+    rx, rz = (x0 + x1) / 2, z + 9.6
+    g.cyl((rx, WALL_Y + 0.28, rz), 2.2, 0.06, M["glass"], rot=(90, 0, 0), n=40)
+    for k in range(16):
+        a = k / 16 * math.tau
+        g.beam((rx, WALL_Y + 0.22, rz), (rx + math.cos(a) * 2.2, WALL_Y + 0.22, rz + math.sin(a) * 2.2), 0.07, 0.05, M["iron"])
+    for ring in (0.8, 1.6, 2.2):
+        g.torus((rx, WALL_Y + 0.22, rz), ring, 0.05, M["iron"], rot=(90, 0, 0), n1=40, n2=6)
+    g.cyl((rx, WALL_Y + 0.25, rz), 0.5, 0.06, M["window"], rot=(90, 0, 0), n=20)
+    # the throne on its dais at the far end
+    g.box((163.0, 2.4, z + 0.25), (3.0, 3.0, 0.5), M["stone_dark"])
+    g.box((163.0, 2.4, z + 0.65), (2.2, 2.2, 0.3), M["stone"])
+    g.box((163.4, 2.6, z + 1.2), (0.9, 0.9, 0.12), M["planks"])
+    g.box((163.8, 2.6, z + 2.3), (0.14, 1.0, 2.6), M["planks"])
+    for s_ in (-1, 1):
+        g.box((163.4, 2.6 + s_ * 0.5, z + 1.6), (0.9, 0.1, 0.7), M["planks"])
     # the doorway in from the courtyard (x0), the stair door to the tower (x1)
     # tall windows in the back wall: the lightning comes through them
     for wx in (133.0, 139.0, 145.0, 151.0, 157.0):
-        g.box((wx, WALL_Y + 0.25, z + 4.5), (1.4, 0.05, 4.2), M["glass"])
+        if abs(wx - 147.0) < 2.0:
+            continue                                                                   # the rose window's place
+        g.box((wx, WALL_Y + 0.25, z + 3.4), (1.4, 0.05, 4.4), M["glass"])
         for k in range(4):
-            g.box((wx, WALL_Y + 0.2, z + 2.6 + k * 1.2), (1.4, 0.06, 0.05), M["iron"])
-        g.box((wx, WALL_Y + 0.2, z + 4.5), (0.05, 0.06, 4.2), M["iron"])
+            g.box((wx, WALL_Y + 0.2, z + 1.6 + k * 1.2), (1.4, 0.06, 0.05), M["iron"])
+        g.box((wx, WALL_Y + 0.2, z + 3.4), (0.05, 0.06, 4.4), M["iron"])
+        for k in range(5):                                                              # its pointed head
+            g.box((wx + (k - 2) * 0.16, WALL_Y + 0.2, z + 5.7 + (2 - abs(k - 2)) * 0.18), (0.18, 0.06, 0.1), M["stone_dark"])
     # pillars down the front and the back of the hall
     for px in range(int(x0) + 3, int(x1) - 1, 6):
         for py in (-1.6, 3.4):
-            g.box((px, py, z + 3.8), (0.7, 0.7, 7.6), M["stone"])
+            g.box((px, py, z + 5.8), (0.7, 0.7, 11.6), M["stone"])
             g.box((px, py, z + 0.2), (0.95, 0.95, 0.4), M["stone_dark"])
-            g.box((px, py, z + 7.5), (0.95, 0.95, 0.3), M["stone_dark"])
+            g.box((px, py, z + 11.5), (0.95, 0.95, 0.3), M["stone_dark"])
     # the long table and its chairs, the fireplace, the chandeliers, banners
     g.box((146.0, 2.6, z + 0.82), (12.0, 1.3, 0.1), M["planks"])
     for k in range(6):
@@ -258,7 +297,7 @@ def build_hall(coll, M):
         g.box((bx, WALL_Y + 0.26, z + 5.6), (1.4, 0.04, 3.6), M["cloth"])
         g.box((bx, WALL_Y + 0.22, z + 6.0), (0.6, 0.02, 0.6), M["cloth_pale"])
     # the observatory tower rising behind the hall, its dome, its lit gallery (chapter 6 is up there)
-    D.tower(g, (TOWER_X, 9.0, z), 4.2, 24.0, M["stone"], M["stone_dark"], M["iron"], slits=5, crenel=False)
+    D.tower(g, (TOWER_X, 9.0, z), 4.2, 24.0, M["stone"], M["stone_dark"], M["iron"], slits=5, crenel=True)
     g.cyl((TOWER_X, 9.0, z + 24.4), 4.7, 0.5, M["stone_dark"], n=32)
     for k in range(20):                                                                # the gallery's rail
         a = k / 20 * math.tau
@@ -272,7 +311,7 @@ def build_hall(coll, M):
 def build_hall_front(coll, M):
     g = S.Group("FortHallFront")
     z = UP
-    g.box(((HALL_X0 + HALL_X1) / 2, -2.75, z + 4.0), (HALL_X1 - HALL_X0, 0.5, 8.0), M["stone"])
+    g.box(((HALL_X0 + HALL_X1) / 2, -2.75, z + 6.0), (HALL_X1 - HALL_X0, 0.5, 12.0), M["stone"])
     for wx in (134.0, 142.0, 150.0, 158.0):
         g.box((wx, -3.02, z + 4.6), (1.2, 0.05, 3.2), M["window"])
     return g.finish(coll)
@@ -287,6 +326,105 @@ def build_sky(coll, M):
     for k in range(30):                                                               # the far hills
         x = -150 + k * 16
         g.box((x, 110.0, rnd.uniform(4, 16)), (18.0, 6.0, rnd.uniform(14, 34)), M["cloud"])
+    return g.finish(coll)
+
+
+# ---------------------------------------------------------------- the final level's grandeur
+
+def build_roof(coll, M):
+    """The last roof: a terrace over the great hall in the storm, its battlements, gargoyles at the
+    corners, lightning rods, a broken parapet over the drop at the far end; behind it the
+    observatory's dome on the tower, open, a great telescope pointing into the storm."""
+    g = S.Group("FortRoof")
+    z = ROOF
+    D.terrain(g, HALL_X0 - 0.4, HALL_X1 + 0.4, -3.2, 5.0, lambda x, y: z, M["stone_floor"], res=0.8, amp=0.02)
+    # the parapet behind (the tower side) and the low battlements in front
+    g.box(((HALL_X0 + HALL_X1) / 2, 5.2, z + 0.7), (HALL_X1 - HALL_X0, 0.5, 1.4), M["stone"])
+    D.merlons(g, HALL_X0, HALL_X1 - 4.0, 5.2, z + 1.4, 0.5, M["stone"])
+    D.merlons(g, HALL_X0, HALL_X1 - 4.0, -3.6, z, 0.4, M["stone"], w=0.6, gap=0.6, h=0.35)
+    g.box(((HALL_X0 + HALL_X1 - 4.0) / 2, -3.6, z - 0.2), (HALL_X1 - HALL_X0 - 4.0, 0.5, 0.4), M["stone_dark"])
+    # the broken end: the parapet gone, rubble, the drop
+    for k in range(9):
+        D.boulder(g, (HALL_X1 - 3.2 + rnd.uniform(0, 2.4), rnd.uniform(-3.0, -1.0), z + 0.12), rnd.uniform(0.15, 0.35), M["stone"])
+    # gargoyles on the corners: a crouched beast, wings, a gaping head
+    for (gx, gy) in ((HALL_X0 + 0.4, -3.4), (HALL_X1 - 4.4, -3.4), (HALL_X0 + 0.4, 5.3), (HALL_X1 - 0.4, 5.3)):
+        g.box((gx, gy - 0.1, z + 1.2), (0.6, 0.9, 0.5), M["stone_dark"])
+        g.box((gx, gy - 0.6, z + 1.5), (0.4, 0.5, 0.4), M["stone_dark"])
+        g.cyl((gx, gy - 0.95, z + 1.45), 0.08, 0.3, M["stone_dark"], rot=(90, 0, 0), n=8)
+        for s_ in (-1, 1):
+            g.box((gx + s_ * 0.45, gy, z + 1.55), (0.5, 0.6, 0.08), M["stone_dark"], rot=(0, s_ * 35, 0))
+    # lightning rods on the parapet
+    for lx in (HALL_X0 + 6.0, HALL_X0 + 18.0, HALL_X0 + 30.0):
+        g.cyl((lx, 5.2, z + 3.6), 0.04, 4.6, M["iron"], n=6)
+        g.cyl((lx, 5.2, z + 6.0), 0.12, 0.3, M["iron"], n=8, r2=0.0)
+    # the observatory: the tower's top above the terrace, the dome and its open slit, the telescope
+    tz = UP + 24.4
+    for k in range(10):                                                             # the dome, ring by ring
+        a0, a1 = k / 10 * math.pi / 2, (k + 1) / 10 * math.pi / 2
+        r0, r1 = 4.6 * math.cos(a0), 4.6 * math.cos(a1)
+        g.cyl((TOWER_X, 9.0, tz + 0.5 + 4.6 * (math.sin(a0) + math.sin(a1)) / 2), (r0 + r1) / 2, 4.6 * (math.sin(a1) - math.sin(a0)) + 0.02, M["iron"], n=32)
+    g.box((TOWER_X, 9.0 - 2.4, tz + 3.0), (1.2, 2.0, 5.0), M["road"])               # the slit, open
+    g.cyl((TOWER_X - 0.6, 6.0, tz + 5.4), 0.55, 6.5, M["iron"], rot=(-32, 18, 0), n=16, r2=0.4)   # the telescope
+    g.cyl((TOWER_X - 2.0, 3.4, tz + 7.5), 0.6, 0.4, M["iron"], rot=(-32, 18, 0), n=16)
+    # the door from the stair onto the terrace, at the tower's foot
+    g.box((TOWER_X, 4.75, z + 1.3), (1.4, 0.2, 2.6), M["road"])
+    g.box((TOWER_X, 4.7, z + 2.8), (1.9, 0.3, 0.4), M["stone_dark"])
+    return g.finish(coll)
+
+
+def build_back(coll, M):
+    """The fortress beyond the lane: a second, higher wall along the cliff with towers of every
+    height and arched bridges between them, the great keep, a waterfall off the cliff, lit windows
+    everywhere, outer bastions going away into the storm."""
+    g = S.Group("FortBack")
+    by = 18.0
+    D.terrain(g, -10, 200, 12.0, 30.0, lambda x, y: (y - 12.0) * 0.9 + 2.0 + (UP if x > 50 else 0.0), M["rock_top"], res=2.0, amp=1.6, seed=11.0)
+    g.box((95.0, by + 1.0, UP + 9.0), (150.0, 2.0, 10.0), M["stone"])               # the high wall
+    D.merlons(g, 20.0, 170.0, by + 0.2, UP + 14.0, 0.6, M["stone"], w=0.7, gap=0.6, h=0.9)
+    towers = [(24, 3.2, 17), (46, 2.6, 21), (78, 3.6, 25), (102, 2.8, 19), (138, 3.0, 23), (172, 3.4, 27)]
+    for (tx, r, h) in towers:
+        D.tower(g, (tx, by + 1.0, UP + 4.0), r, h, M["stone"], M["stone_dark"], M["iron"], slits=3, crenel=(h % 2 == 1))
+        for k in range(4):
+            g.box((tx + rnd.uniform(-1, 1), by + 1.0 - r - 0.02, UP + 8.0 + k * 4.0), (0.6, 0.05, 1.1), M["window"] if rnd.random() < 0.5 else M["road"])
+    for (a, b) in ((24, 46), (78, 102), (138, 172)):                               # bridges between towers
+        z0 = UP + 15.0
+        g.box(((a + b) / 2, by + 1.0, z0), (b - a, 2.2, 0.8), M["stone"])
+        for k in range(int((b - a) / 3)):
+            cx = a + 1.5 + k * 3
+            g.box((cx, by + 1.0, z0 - 1.6), (0.6, 2.0, 2.4), M["stone"])
+        D.merlons(g, a, b, by, z0 + 0.4, 0.4, M["stone"], w=0.45, gap=0.4, h=0.5)
+    # the great keep: a square tower with buttresses, pinnacles and tall lit windows
+    kx, ky = 115.0, 26.0
+    g.box((kx, ky, UP + 16.0), (14.0, 14.0, 32.0), M["stone"])
+    for s1 in (-1, 1):
+        for s2 in (-1, 1):
+            g.box((kx + s1 * 7.4, ky + s2 * 7.4, UP + 14.0), (2.0, 2.0, 28.0), M["stone_dark"])
+            g.cyl((kx + s1 * 7.4, ky + s2 * 7.4, UP + 30.0), 0.9, 4.0, M["stone_dark"], n=8, r2=0.05)   # pinnacles
+    for k in range(5):
+        for j in range(4):
+            g.box((kx - 5.0 + k * 2.5, ky - 7.05, UP + 6.0 + j * 6.0), (0.9, 0.05, 2.6), M["window"] if rnd.random() < 0.55 else M["road"])
+    D.merlons(g, kx - 7, kx + 7, ky - 7.0, UP + 32.0, 0.6, M["stone"], w=0.8, gap=0.7, h=1.2)
+    g.cyl((kx, ky, UP + 33.0), 0.06, 6.0, M["iron"], n=6)
+    g.box((kx + 0.9, ky, UP + 35.4), (1.6, 0.04, 1.0), M["cloth"])                 # a flag in the gale
+    # the waterfall off the cliff by the road
+    for k in range(40):
+        x = 14.0 + rnd.uniform(-1.2, 1.2)
+        g.box((x, 13.0 + rnd.uniform(-0.3, 0.3), rnd.uniform(-2, 20)), (0.05, 0.05, rnd.uniform(2, 6)), D.flat("FortSpray", 0.8, emit=0.6))
+    # outer bastions far away, fading into the storm
+    for k in range(8):
+        x = -40 + k * 34 + rnd.uniform(-6, 6)
+        h = rnd.uniform(16, 30)
+        g.box((x, 60.0, h / 2), (rnd.uniform(8, 14), 6.0, h), M["stone_dark"])
+        D.merlons(g, x - 5, x + 5, 57.0, h, 0.5, M["stone_dark"], w=0.9, gap=0.8, h=1.0)
+    return g.finish(coll)
+
+
+def build_fore(coll, M):
+    """In front of the lane, below it: the outer parapet's teeth, framing the bottom of the shot."""
+    g = S.Group("FortFore")
+    for x0, x1, z in ((52.0, 88.0, UP), (88.0, 128.0, UP)):
+        g.box(((x0 + x1) / 2, -4.8, z - 2.3), (x1 - x0, 0.7, 2.4), M["stone"])
+        D.merlons(g, x0, x1, -4.8, z - 1.1, 0.7, M["stone"], w=0.7, gap=0.7, h=0.6)
     return g.finish(coll)
 
 
@@ -325,7 +463,9 @@ def lights():
     add_light("POINT", "Fireplace", (160.0, WALL_Y - 1.6, UP + 1.0), 650, size=0.6)
     for cx in (136.0, 146.0, 156.0):
         add_light("POINT", "Chandelier", (cx, 0.8, HALL_TOP - 2.3), 260, size=0.8)
-    add_light("AREA", "HallFill", (147.0, -2.0, UP + 4.0), 300, size=20.0, rot=(math.radians(80), 0, 0))
+    add_light("AREA", "HallFill", (147.0, -2.0, UP + 6.0), 420, size=24.0, rot=(math.radians(80), 0, 0))
+    add_light("AREA", "RoofFill", (147.0, -10.0, ROOF + 4.0), 900, size=40.0, rot=(math.radians(72), 0, 0))
+    add_light("AREA", "BackFill", (95.0, -10.0, UP + 18.0), 2400, size=120.0, rot=(math.radians(62), 0, 0))
     w = bpy.data.worlds.new("Storm")
     w.use_nodes = True
     w.node_tree.nodes["Background"].inputs[0].default_value = (0.03, 0.032, 0.04, 1)
@@ -375,7 +515,8 @@ def main():
     M = M_()
     road, gate, court, hall = build_road(coll, M), build_gate(coll, M), build_court(coll, M), build_hall(coll, M)
     front, sky, port = build_hall_front(coll, M), build_sky(coll, M), build_portcullis(coll, M)
-    for o in (road, gate, court, hall, front, port):
+    roof, back, fore = build_roof(coll, M), build_back(coll, M), build_fore(coll, M)
+    for o in (road, gate, court, hall, front, port, roof, fore):
         D.bevel(o, 0.03)
     lights()
     if preview_only or lit:
@@ -388,12 +529,14 @@ def main():
             ("F6  the gatehouse, the drawbridge", S.shot_camera("P3", (60.0, UP + 1.4, -8.0), (69.0, UP + 4.0, 0.0), 46), None),
             ("F8  the courtyard (gameplay)", S.shot_camera("P4", (108.0, UP + 2.2, -12.0), (108.0, UP + 1.6, 1.0), 42), None),
             ("F10  the great hall (gameplay)", S.shot_camera("P5", (147.0, UP + 2.2, -11.0), (147.0, UP + 2.0, 1.0), 42), None),
-            ("F12  the observatory tower, from the courtyard", S.shot_camera("P6", (124.0, UP + 1.0, -2.0), (TOWER_X, UP + 22.0, 9.0), 46), None),
+            ("F12  the observatory tower, from the courtyard", S.shot_camera("P6", (118.0, UP + 1.0, -8.0), (TOWER_X, UP + 22.0, 9.0), 50), None),
+            ("F16  the last roof (gameplay)", S.shot_camera("P7", (147.0, ROOF + 2.4, -12.0), (147.0, ROOF + 2.0, 1.0), 44), None),
+            ("F0  the whole fortress", S.shot_camera("P8", (60.0, 14.0, -70.0), (100.0, 14.0, 10.0), 44), None),
         ]
         S.PREVIEW = os.path.join(ROOT, "docs", "previews")
         S.preview(cams, "fortress_set_lightning.png" if lit else "fortress_set.png")
         return
-    parts = [road, gate, court, hall, front, sky, port]
+    parts = [road, gate, court, hall, front, sky, port, roof, back, fore]
     for o in parts:
         S.unwrap(o)
     front.hide_render = True
@@ -403,6 +546,9 @@ def main():
     S.bake(hall, 4096, 20)
     S.bake(sky, 1024, 8)
     S.bake(port, 512, 8)
+    S.bake(roof, 4096, 16)
+    S.bake(back, 4096, 12)
+    S.bake(fore, 2048, 10)
     front.hide_render = False
     S.bake(front, 2048, 12)
     # the same set, lit by a strike
@@ -413,6 +559,9 @@ def main():
     S.bake(court, 2048, 10, "_Lightning")
     S.bake(hall, 2048, 12, "_Lightning")
     S.bake(sky, 512, 6, "_Lightning")
+    S.bake(roof, 2048, 10, "_Lightning")
+    S.bake(back, 2048, 8, "_Lightning")
+    S.bake(fore, 1024, 6, "_Lightning")
     front.hide_render = False
     S.bake(front, 1024, 8, "_Lightning")
     marks = []

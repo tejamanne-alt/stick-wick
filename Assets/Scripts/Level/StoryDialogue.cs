@@ -42,7 +42,8 @@ namespace ProjectInk
         {
             string w = who.ToUpperInvariant();
             if (w == "HIM" || w == "YOU") { subKind = VoiceKind.You; subSpeaker = "YOU"; }
-            else if (w == "THE FOREMAN" || w == "THE DRIVER" || w == "THE CLEANER" || w == "THE HANDLER" || w == "THE WARDEN") { subKind = VoiceKind.Boss; subSpeaker = w; }
+            else if (w == "THE FOREMAN" || w == "THE DRIVER" || w == "THE CLEANER" || w == "THE HANDLER" || w == "THE WARDEN" || w == "VOSS") { subKind = VoiceKind.Boss; subSpeaker = w; }
+            else if (w == "MAYA" && mayaHere) { subKind = VoiceKind.Enemy; subSpeaker = "MAYA"; }
             else if (w == "MAYA")
             {
                 subKind = VoiceKind.OffScreen;                 // her voice, out of a memory
@@ -60,6 +61,7 @@ namespace ProjectInk
             }
             else { subKind = VoiceKind.Enemy; subSpeaker = w; }
             subColor = subKind == VoiceKind.You ? YouColor : subKind == VoiceKind.Boss ? BossColor : subKind == VoiceKind.OffScreen ? OffColor : EnemyColor;
+            if (subSpeaker == "MAYA") subColor = new Color(1f, 0.86f, 0.86f);
             subLine = line;
             subAt = Time.unscaledTime;
             subUntil = subAt + seconds;

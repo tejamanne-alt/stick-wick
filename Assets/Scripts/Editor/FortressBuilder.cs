@@ -76,6 +76,13 @@ namespace ProjectInk.EditorTools
             wetRoad.gameObject.AddComponent<PlanarReflection>();
             var wetHill = FloorQuad(env, "WetCourt", new Vector3(98f, FortressPlan.Up + 0.012f, 0.6f), new Vector2(60f, 7f), Wet("FortWetCourt", 0.12f, 0.55f));
             wetHill.gameObject.AddComponent<PlanarReflection>();
+            // the last roof's terrace (over the hall; the hall's own floor is the hill level below it)
+            var roof = PrototypeBuilder.Box(room, "RoofTerrace", Vector3.zero, Vector3.one, hidden);
+            roof.GetComponent<Renderer>().enabled = false;
+            roof.transform.position = new Vector3((FortressPlan.RoofX0 + FortressPlan.HallX1) * 0.5f, FortressPlan.RoofY - 0.1f, 0.6f);
+            roof.transform.localScale = new Vector3(FortressPlan.HallX1 - FortressPlan.RoofX0 + 1f, 0.2f, 8f);
+            var wetRoof = FloorQuad(env, "WetRoof", new Vector3((FortressPlan.RoofX0 + FortressPlan.HallX1) * 0.5f, FortressPlan.RoofY + 0.012f, 0.8f), new Vector2(38f, 7.6f), Wet("FortWetRoof", 0.14f, 0.65f));
+            wetRoof.gameObject.AddComponent<PlanarReflection>();
 
             // the light: the braziers, the floodlights, the chandeliers; mist on the ground
             var coneTex = EnvironmentBuilder.SaveTex("FortCone", EnvironmentBuilder.ConeTexture(128, 256), TextureWrapMode.Clamp);

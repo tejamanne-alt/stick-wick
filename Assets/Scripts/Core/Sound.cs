@@ -54,6 +54,11 @@ namespace ProjectInk
         int nextVoice;
 
         AudioSource room, rain, drone;
+        // the score: two sources so one cue crossfades into the next
+        AudioSource musA, musB;
+        float musWantA, musWantB, musRate = 0.7f;
+        bool musOnA;
+        string musCue;
         AudioLowPassFilter roomLp, rainLp;
         float droneWant;
         bool wasSlow;
@@ -93,6 +98,50 @@ namespace ProjectInk
             room = Loop("amb_room", 0.32f, out roomLp);
             rain = Loop("amb_rain", 0.22f, out rainLp);
             drone = Loop("amb_tension", 0f, out _);
+            musA = MusicSource("MusicA");
+            musB = MusicSource("MusicB");
+        }
+
+        AudioSource MusicSource(string name)
+        {
+            var g = new GameObject(name);
+            g.transform.SetParent(transform, false);
+            var a = g.AddComponent<AudioSource>();
+            a.playOnAwake = false;
+            a.spatialBlend = 0f;
+            a.volume = 0f;
+            a.ignoreListenerPause = false;
+            return a;
+        }
+
+        /// <summary>Play a cue of the score (Resources/Audio/music_&lt;cue&gt;), crossfading from whatever
+        /// is playing over `fade` seconds. The same cue again does nothing.</summary>
+        public static void Music(string cue, float volume = 0.6f, bool loop = true, float fade = 1.5f)
+        {
+            var s = Instance;
+            if (s == null || s.musA == null) return;
+            if (s.musCue == cue) { if (s.musOnA) s.musWantA = volume; else s.musWantB = volume; return; }
+            var clips = Resources.LoadAll<AudioClip>("Audio/music_" + cue);
+            if (clips.Length == 0) return;
+            s.musCue = cue;
+            s.musOnA = !s.musOnA;
+            var to = s.musOnA ? s.musA : s.musB;
+            to.clip = clips[0];
+            to.loop = loop;
+            to.volume = 0f;
+            to.Play();
+            if (s.musOnA) { s.musWantA = volume; s.musWantB = 0f; } else { s.musWantB = volume; s.musWantA = 0f; }
+            s.musRate = 1f / Mathf.Max(0.05f, fade);
+        }
+
+        /// <summary>Let the score go, over `fade` seconds.</summary>
+        public static void MusicStop(float fade = 2f)
+        {
+            var s = Instance;
+            if (s == null) return;
+            s.musWantA = s.musWantB = 0f;
+            s.musCue = null;
+            s.musRate = 1f / Mathf.Max(0.05f, fade);
         }
 
         static string Folder(Sfx s)
@@ -301,6 +350,16 @@ namespace ProjectInk
             if (drone != null) drone.volume = Mathf.MoveTowards(drone.volume, droneWant * Master, Time.unscaledDeltaTime * 0.15f);
             if (room != null) room.volume = Mathf.MoveTowards(room.volume, 0.32f * Master * RoomLevel, Time.unscaledDeltaTime * 0.6f);
             if (rain != null) rain.volume = Mathf.MoveTowards(rain.volume, Mathf.Min(1f, 0.22f * Master * RainLevel), Time.unscaledDeltaTime * 0.8f);
+            if (musA != null)
+            {
+                musA.volume = Mathf.MoveTowards(musA.volume, musWantA * Master, Time.unscaledDeltaTime * musRate);
+                musB.volume = Mathf.MoveTowards(musB.volume, musWantB * Master, Time.unscaledDeltaTime * musRate);
+                if (musA.volume <= 0f && musWantA <= 0f && musA.isPlaying) musA.Stop();
+                if (musB.volume <= 0f && musWantB <= 0f && musB.isPlaying) musB.Stop();
+                // the score bends into slow motion with everything else
+                float p = Time.timeScale < 0.8f && Time.timeScale > 0.02f ? Mathf.Lerp(0.85f, 1f, Time.timeScale) : 1f;
+                musA.pitch = musB.pitch = p;
+            }
         }
     }
 }

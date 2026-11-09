@@ -10,6 +10,8 @@ namespace ProjectInk
         public const float HallX0 = 128f, HallX1 = 166f;
         public const float TowerX = 150f, TowerZ = 9f, GalleryY = Up + 24.6f;
         public const float FloodPoleX = 116f, GeneratorX = 121f;
+        // the last roof: a terrace over the great hall, its far end broken off over the drop
+        public const float RoofY = Up + 12.4f, RoofX0 = 128.8f, RoofX1 = 161.4f, EdgeX = 162.4f, RoofDoorX = TowerX, RoofDoorZ = 4.4f;
         // the fight: (x0, x1, floor y, name)
         public static readonly (float x0, float x1, float y, string name)[] Zones =
         {

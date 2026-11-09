@@ -23,6 +23,9 @@ namespace ProjectInk
         void Awake() { Instance = this; }
         void OnDestroy() { if (Instance == this) Instance = null; }
 
+        /// <summary>Hold the strike's bake on (the dawn after the storm: the set in its brightest light).</summary>
+        public static bool Held;
+
         /// <summary>A strike: the flash pattern lasts `seconds` (real time).</summary>
         public static void Strike(float seconds = 0.38f)
         {
@@ -35,7 +38,7 @@ namespace ProjectInk
         {
             float u = (Time.unscaledTime - struckAt) / Mathf.Max(0.05f, length);
             // on, off, on, then fading out: the stutter of a real strike
-            bool on = u >= 0f && u < 1f && !(u > 0.16f && u < 0.3f) && !(u > 0.62f && u < 0.7f);
+            bool on = Held || (u >= 0f && u < 1f && !(u > 0.16f && u < 0.3f) && !(u > 0.62f && u < 0.7f));
             if (on != lit)
             {
                 lit = on;

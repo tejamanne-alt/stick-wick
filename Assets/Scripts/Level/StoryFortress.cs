@@ -16,7 +16,8 @@ namespace ProjectInk
     public partial class StoryIntro
     {
         public static int FortressCheckpoint = -1;
-        /// <summary>TEST: 0 the road, 1 the stair, 2 the gate, 3 the courtyard, 4 the blackout, 5 the Warden, 6 the tower.</summary>
+        /// <summary>TEST: 0 the road, 1 the stair, 2 the gate, 3 the courtyard, 4 the blackout, 5 the Warden, 6 the tower,
+        /// 7 the last roof (Voss), 8 the duel, 9 the end (the fall, her, the dawn).</summary>
         public static int FortressFrom;
 
         static readonly Spawn[][] FortWaves =
@@ -49,12 +50,14 @@ namespace ProjectInk
             HeadWound.Chapter = 3;
             storm = true;
             Sound.Ambience(2.2f, 0.25f, 22000f);                     // the storm, loud
+            LightningSwap.Held = false;
+            Sound.Music("storm", 0.5f, true, 2.5f);
             nextStrike = Time.unscaledTime + 2.5f;
             FortProps();
             HeroController.Did += OnFortHit;
             int from = FortressFrom;
             FortressFrom = 0;
-            if (from == 0 && FortressCheckpoint >= 0) from = FortressCheckpoint >= 5 ? 5 : FortressCheckpoint == 4 ? 4 : FortressCheckpoint == 0 ? 7 : FortressCheckpoint + 1;
+            if (from == 0 && FortressCheckpoint >= 0) from = FortressCheckpoint >= 7 ? 8 : FortressCheckpoint >= 5 ? 5 : FortressCheckpoint == 4 ? 4 : FortressCheckpoint == 0 ? -1 : FortressCheckpoint + 1;
             StartCoroutine(Fortress(from));
         }
 
@@ -94,7 +97,7 @@ namespace ProjectInk
         {
             if (!storm) return;
             var c = Camera.main;
-            indoors = hero != null && hero.transform.position.x > FortressPlan.HallX0 + 0.5f && (c == null || c.transform.position.z > -3.5f || hero.transform.position.x < FortressPlan.HallX1);
+            indoors = hero != null && hero.transform.position.y < FortressPlan.RoofY - 1f && hero.transform.position.x > FortressPlan.HallX0 + 0.5f && (c == null || c.transform.position.z > -3.5f || hero.transform.position.x < FortressPlan.HallX1);
             if (rainPs != null && c != null)
             {
                 rainPs.transform.position = new Vector3(c.transform.position.x, c.transform.position.y + 9f, 1.5f);
@@ -220,14 +223,14 @@ namespace ProjectInk
                     u => hero.CinePose(new Vector3(wx3 + u * 1.2f, 0f, 0f)));
                 foreach (var g in new[] { g1, g2 }) if (g != null) g.PuppetDie();
             }
-            if (from == 0 || from == 7)
+            if (from == 0 || from == -1)
             {
                 // ------------------------------------------------ T5 play: the cliff road
-                if (from == 7) yield return FadeIn(0.4f);
-                StartFortZone(0, from == 7);
+                if (from == -1) yield return FadeIn(0.4f);
+                StartFortZone(0, from == -1);
                 while (!(fZone == 0 && fClear)) yield return null;
             }
-            if (from <= 1 || from == 7)
+            if (from <= 1 || from == -1)
             {
                 // ------------------------------------------------ T6 the rock stair: a truck, a silhouette on a strike, a crane up
                 if (from == 1) { hero.CinePose(new Vector3(42.5f, 0f, 0f)); yield return FadeIn(0.4f); }
@@ -246,7 +249,7 @@ namespace ProjectInk
                 yield return Cut(2.2f, u => CineCam.PedestalUp(hero.transform.position + Vector3.up * 0.9f, u, 3.4f, -1.2f, 1.6f, 38f), 0.02f,
                     u => hero.CinePose(Vector3.Lerp(s2, s1, u)));
             }
-            if (from <= 2 || from == 7)
+            if (from <= 2 || from == -1)
             {
                 // ------------------------------------------------ T7 play: the gate
                 if (from == 2) { hero.CinePose(new Vector3(53.4f, FortressPlan.Up, 0f)); yield return FadeIn(0.4f); }
@@ -255,13 +258,13 @@ namespace ProjectInk
                 // ------------------------------------------------ T8 the trap
                 yield return ThePortcullis();
             }
-            if (from <= 3 || from == 7)
+            if (from <= 3 || from == -1)
             {
                 if (from == 3) { if (portcullis != null) portcullis.position = portUp - Vector3.up * 4.2f; yield return FadeIn(0.4f); }
                 StartFortZone(2, from == 3);
                 while (!(fZone == 2 && fClear)) yield return null;
             }
-            if (from <= 4 || from == 7)
+            if (from <= 4 || from == -1)
             {
                 // ------------------------------------------------ T10 the blackout, T11 the dark fight
                 if (from == 4) { if (portcullis != null) portcullis.position = portUp - Vector3.up * 4.2f; hero.CinePose(new Vector3(101f, FortressPlan.Up, 0f)); yield return FadeIn(0.4f); }
@@ -269,7 +272,7 @@ namespace ProjectInk
                 StartFortZone(3, false);
                 while (!(fZone == 3 && fClear)) yield return null;
             }
-            if (from <= 5 || from == 7)
+            if (from <= 5 || from == -1)
             {
                 // ------------------------------------------------ T12 the hall, T13 THE WARDEN
                 if (from == 5) { fBlackout = true; hero.CinePose(new Vector3(126.5f, FortressPlan.Up, 0f)); yield return FadeIn(0.4f); }
@@ -279,7 +282,9 @@ namespace ProjectInk
             }
             if (from == 6) { hero.CinePose(new Vector3(146f, FortressPlan.Up, 0f)); yield return FadeIn(0.3f); }
             // ---------------------------------------------------- T15 the tower
-            yield return TheTower();
+            if (from <= 6 || from == -1) yield return TheTower();
+            // ---------------------------------------------------- the last roof (StoryFinale)
+            yield return LastRoof(from);
         }
 
         // ================================================================ the zones
@@ -319,12 +324,15 @@ namespace ProjectInk
                 CineOff();
             }
             Sound.Tension(true);
+            Sound.Music(fBlackout ? "dark" : "fight", 0.55f, true, 1.2f);
         }
 
         void UpdateFortress()
         {
             UpdateStorm();
             UpdateChandeliers();
+            UpdateVoss();
+            if (fZone >= 6) return;
             if (wardenStage > 0 && wardenStage < 5) { UpdateWarden(); return; }
             if (!fReady || fZone < 0 || fZone > 3 || hero.IsDead) return;
             fortMen.RemoveAll(e => e == null || !e.Alive);
@@ -345,6 +353,7 @@ namespace ProjectInk
                     if (Time.time - fDone > 1.0f)
                     {
                         fClear = true;
+                        Sound.Music("storm", 0.45f, true, 3f);
                         Sound.Play(Sfx.WaveClear, 0.6f);
                         if (director != null) director.ShowBanner("CLEAR", 1.2f);
                         fGoUntil = Time.unscaledTime + 30f;
@@ -407,6 +416,7 @@ namespace ProjectInk
             yield return Cut(1.4f, u => Static(gen + new Vector3(-2.6f, 0.4f, -3.2f), gen, 40f), 0.05f);
             // (c) wide: every light dies
             fBlackout = true;
+            Sound.Music("dark", 0.55f, true, 0.8f);
             Sound.Play(Sfx.Riser, 0.5f);
             yield return Cut(2.2f, u => Static(new Vector3(104f, FortressPlan.Up + 3.4f, -11f), new Vector3(110f, FortressPlan.Up + 1.4f, 1f), 42f), 0.03f);
             Say("YOU", "...Good. I don't need to see you.", 2.6f);
@@ -466,6 +476,7 @@ namespace ProjectInk
             hero.runSpeed = runSpeed;
             wardenStage = 1;
             ShowStreetBanner("I  ·  THE CHAIN");
+            Sound.Music("boss", 0.65f, true, 1.0f);
             Sound.Tension(true);
         }
 
@@ -566,6 +577,7 @@ namespace ProjectInk
         IEnumerator AfterWarden()
         {
             Sound.Tension(false);
+            Sound.Music("storm", 0.45f, true, 3f);
             foreach (var e in Enemy.All.ToArray()) if (e != null && e != warden && e.Alive) e.PuppetDie();
             yield return RealWait(0.6f);
             hero.CinePuppet();
@@ -638,14 +650,10 @@ namespace ProjectInk
             Say("YOU", "...I'm coming.", 2.0f);
             yield return Cut(2.0f, u => Static(HeroHead() + new Vector3(0.6f, 0.1f, -1.0f), HeroHead(), 28f), 0.01f);
             // (e) pull away: small at the foot of the tower in the storm
-            yield return Cut(6.0f, u => CineCam.DronePullAway(hero.transform.position + Vector3.up * 1.0f, u, 2.4f, 22f, 0.8f, 16f, 44f), 0.04f,
-                u => { if (u > 0.4f && u - Time.unscaledDeltaTime / 6f <= 0.4f) Strike(1f, 0.4f); });
-            cardAt = Time.unscaledTime;
-            cardLine = "Come up, old friend.";
-            cardTitle = "THE STORM";
-            yield return RealWait(6.0f);
-            CineOff();
-            phase = Phase.End;
+            yield return Cut(4.0f, u => CineCam.DronePullAway(hero.transform.position + Vector3.up * 1.0f, u, 2.4f, 22f, 0.8f, 16f, 44f), 0.04f,
+                u => { if (u > 0.4f && u - Time.unscaledDeltaTime / 4f <= 0.4f) Strike(1f, 0.4f); });
+            if (towerMan != null) towerMan.gameObject.SetActive(false);
+            if (towerGirl != null) towerGirl.gameObject.SetActive(false);
         }
 
         // ================================================================ on screen
@@ -702,6 +710,7 @@ namespace ProjectInk
                 GUI.Label(new Rect(x, y - 30, bw, 26), Spaced("THE WARDEN") + "     " + ph, cap);
                 cap.alignment = TextAnchor.MiddleLeft;
             }
+            FinaleGUI(w, h);
             PromptsGUI(w, h);
         }
     }

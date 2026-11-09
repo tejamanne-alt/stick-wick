@@ -164,6 +164,9 @@ namespace ProjectInk
             ("CHAPTER 5  ·  THE FORTRESS", "The blackout", () => Fortress(4)),
             ("CHAPTER 5  ·  THE FORTRESS", "The Warden (the fight)", () => Fortress(5)),
             ("CHAPTER 5  ·  THE FORTRESS", "The tower", () => Fortress(6)),
+            ("CHAPTER 5  ·  THE FORTRESS", "The last roof  ·  Voss", () => Fortress(7)),
+            ("CHAPTER 5  ·  THE FORTRESS", "Voss (the duel)", () => Fortress(8)),
+            ("CHAPTER 5  ·  THE FORTRESS", "The end  ·  the fall, her, the dawn", () => Fortress(9)),
         };
 
         static void Ch1(System.Action setUp)
