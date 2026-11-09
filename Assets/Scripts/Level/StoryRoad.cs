@@ -67,22 +67,16 @@ namespace ProjectInk
         {
             UpdateStorm();
             if (driving) drive = Mathf.Min(1f, drive + driveSpeed * Time.unscaledDeltaTime);
-            if (roadCar != null && RoadPlan.CarPath.Length > 1)
+            if (roadCar != null)
             {
-                float f = drive * (RoadPlan.CarPath.Length - 1);
-                int i = Mathf.Min(RoadPlan.CarPath.Length - 2, Mathf.FloorToInt(f));
-                var a = RoadPlan.CarPath[i];
-                var b = RoadPlan.CarPath[i + 1];
-                roadCar.position = Vector3.Lerp(a, b, f - i);
-                var d = b - a;
-                d.y = 0f;
-                if (d.sqrMagnitude > 1e-4f) roadCar.rotation = Quaternion.Slerp(roadCar.rotation, Quaternion.LookRotation(d.normalized) * Quaternion.Euler(0f, -90f, 0f), Time.unscaledDeltaTime * 3f);
+                roadCar.position = RoadPlan.Sample(drive * RoadPlan.PathLength, out var dir);
+                roadCar.rotation = Quaternion.Slerp(roadCar.rotation, RoadPlan.CarRotation(dir), Time.unscaledDeltaTime * 4f);
             }
             // the wipers, slow, then faster as the rain gets heavier
             float sp = Mathf.Lerp(1.6f, 3.4f, roadRain);
-            float wa = Mathf.Sin(Time.unscaledTime * sp) * 38f;
-            if (wiperL != null) wiperL.localRotation = Quaternion.Euler(0f, 0f, wa);
-            if (wiperR != null) wiperR.localRotation = Quaternion.Euler(0f, 0f, wa);
+            float wa = (0.5f - 0.5f * Mathf.Cos(Time.unscaledTime * sp)) * RoadPlan.WiperSweep;
+            if (wiperL != null) wiperL.localRotation = Quaternion.AngleAxis(wa, RoadPlan.WiperAxis);
+            if (wiperR != null) wiperR.localRotation = Quaternion.AngleAxis(wa, RoadPlan.WiperAxis);
             if (batteryPip != null && batteryPip.gameObject.activeSelf) batteryPip.GetComponent<Renderer>().enabled = Mathf.Repeat(Time.unscaledTime * 1.6f, 1f) < 0.5f;
         }
 
@@ -120,9 +114,14 @@ namespace ProjectInk
                 yield return RealWait(3.6f);
                 // ------------------------------------------------ 5.1 high: headlights climbing the hairpins, the first drops
                 StartCoroutine(FadeIn(1.2f));
+                if (carInterior != null) carInterior.gameObject.SetActive(false);
+                hero.gameObject.SetActive(false);
                 yield return Cut(5.5f, u => Static(roadCar != null ? roadCar.position + new Vector3(-14f, 16f, -12f) : RoadPlan.CarPath[0] + new Vector3(-14f, 16f, -12f),
                     roadCar != null ? roadCar.position : RoadPlan.CarPath[0], 30f), 0.02f);
                 // ------------------------------------------------ 5.2 inside: his hands on the wheel, the ribbon on his wrist; the walkie crackles back to life
+                if (carInterior != null) carInterior.gameObject.SetActive(true);
+                hero.gameObject.SetActive(true);
+                SeatHero(false);
                 yield return Cut(3.0f, u => Hands(), 0.008f);
                 Sound.Play(Sfx.Static, 0.5f, RoadPlan.PassengerSeat, 1.4f);
                 yield return Cut(1.2f, u => OnWalkie(), 0.006f);
@@ -240,7 +239,7 @@ namespace ProjectInk
             roadRain = 1f;
             Strike(1f, 0.2f);
             Sound.Music("storm", 0.55f, true, 1.5f);
-            yield return Cut(3.0f, u => Static(RoadPlan.DriverHead + new Vector3(-0.35f, 0.05f, 0.1f), RoadPlan.Fortress, Mathf.Lerp(56f, 34f, u)), 0.01f);
+            yield return Cut(3.0f, u => Static(RoadPlan.DriverHead + new Vector3(-0.35f, 0.05f, 0.1f), RoadPlan.Fortress, Mathf.Lerp(56f, 30f, u)), 0.01f);
             drive = 1f;
             driving = false;
             Sound.Play(Sfx.Heartbeat, 0.8f);
@@ -260,6 +259,9 @@ namespace ProjectInk
             Sound.Ambience(2.2f, 0.25f, 22000f);
             if (seatWalkie != null) seatWalkie.gameObject.SetActive(false);
             Say("YOU", "...Over and out.", 1.8f);
+            if (carInterior != null) carInterior.gameObject.SetActive(false);
+            hero.CinePose(RoadPlan.GetOutSpot);
+            hero.body.Play("walk", 0.2f, true, 0.8f);
             yield return Cut(5.0f, u => Static(RoadPlan.CarStop + new Vector3(-6f, 3f, -9f), RoadPlan.Fortress, Mathf.Lerp(40f, 32f, u)), 0.03f);
             cardAt = Time.unscaledTime;
             cardLine = "It was never a trade.";

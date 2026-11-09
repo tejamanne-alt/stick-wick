@@ -15,6 +15,7 @@ namespace ProjectInk
 
         Enemy harrowMan;
         Transform swingSeat, drawerFront, policeLights;
+        Transform[] policeR;
         float epTitleAt = -1f, theEndCardAt = -1f;
 
         void BeginEpilogue()
@@ -34,13 +35,17 @@ namespace ProjectInk
         void UpdateEpilogue()
         {
             // the police lights, white only
-            foreach (var t in new[] { "PoliceLight", "PoliceLight1", "PoliceLight2", "PoliceLightL", "PoliceLightR" })
+            if (policeR == null)
             {
-                var g = GameObject.Find(t);
-                if (g == null) continue;
-                var r = g.GetComponent<Renderer>();
-                if (r != null) r.enabled = Mathf.Repeat(Time.unscaledTime * 2.2f + t.Length * 0.3f, 1f) < 0.5f;
+                policeR = new Transform[EpiloguePlan.PoliceLightCount];
+                for (int i = 0; i < policeR.Length; i++) policeR[i] = Find("PoliceLight_" + i);
             }
+            for (int i = 0; i < policeR.Length; i++)
+                if (policeR[i] != null)
+                {
+                    bool on = Mathf.Repeat(Time.unscaledTime * 2.2f + (i % 2) * 0.5f + (i / 2) * 0.17f, 1f) < 0.5f;
+                    foreach (var r in policeR[i].GetComponentsInChildren<Renderer>()) r.enabled = on;
+                }
         }
 
         IEnumerator Walk(Enemy companion, Vector3 a, Vector3 b, float secs, System.Func<float, CineCam.Shot> shot)
@@ -76,7 +81,17 @@ namespace ProjectInk
                 phase = Phase.End;
                 yield break;
             }
-            maya = SpawnMaya(EpiloguePlan.RoadSpot + new Vector3(-0.45f, 0f, -0.35f), 1);
+            maya = SpawnMaya(EpiloguePlan.MayaRoadSpot, 1);
+            // her photo in the frame over the drawer
+            var ph = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Destroy(ph.GetComponent<Collider>());
+            ph.name = "ElenaPhotoImage";
+            ph.transform.position = EpiloguePlan.HallPhoto + Vector3.right * 0.012f;
+            ph.transform.rotation = Quaternion.Euler(0f, -90f, 0f);
+            ph.transform.localScale = new Vector3(0.24f, 0.17f, 1f);
+            var pm = new Material(Shader.Find("Unlit/Texture"));
+            pm.mainTexture = Resources.Load<Texture2D>("Story/Memories/wed_5");
+            ph.GetComponent<Renderer>().sharedMaterial = pm;
             mayaHere = true;
             TieRibbon();
             Sound.Music("finale", 0.0f, false, 0.1f);
@@ -132,12 +147,12 @@ namespace ProjectInk
             if (from <= 1)
             {
                 // ------------------------------------------------ 7.3 the grave, on the hill, at dawn
-                var g0 = EpiloguePlan.CemeteryGate;
+                var g0 = EpiloguePlan.KneelSpot + new Vector3(-7f, 0f, -0.9f);
                 hero.CinePose(g0);
                 if (maya != null) maya.PuppetPose(g0 + new Vector3(-0.45f, 0f, -0.35f));
                 Sound.Play(Sfx.Wind, 0.4f);
                 StartCoroutine(FadeIn(1.4f));
-                yield return Walk(maya, g0, EpiloguePlan.KneelSpot, 6.0f, u => CineCam.CraneDown(EpiloguePlan.ElenaStone, u, 9f, 2.0f, 7f, 42f));
+                yield return Walk(maya, g0, EpiloguePlan.KneelSpot, 7.0f, u => CineCam.CraneDown(EpiloguePlan.ElenaStone, u, 9f, 2.0f, 7f, 42f));
                 hero.body.Play(hero.body.Has("kneel_grave") ? "kneel_grave" : "kneel_hand", 0.4f);
                 var stone = EpiloguePlan.ElenaStone;
                 System.Action atStone = () => Cine(new CineCam.Shot(stone + new Vector3(-1.4f, 0.3f, -1.6f), stone + Vector3.down * 0.3f, 34f));
@@ -168,7 +183,7 @@ namespace ProjectInk
                 hero.CinePose(EpiloguePlan.PushSpot);
                 hero.SetFacing(1);
                 hero.body.Play(hero.body.Has("push_swing") ? "push_swing" : "idle", 0.2f);
-                if (maya != null) { maya.PuppetPose(EpiloguePlan.SwingSeat + Vector3.down * 0.45f); maya.PuppetPlay(Pick(maya.body, "sit_bound", "idle"), 0f); }
+                if (maya != null) { maya.PuppetPose(EpiloguePlan.SwingSeat + Vector3.down * 0.28f); maya.PuppetPlay(Pick(maya.body, "sit_drive", "sit_bound", "idle"), 0f); }
                 Sound.Music("finale", 0.7f, false, 1.0f);
                 StartCoroutine(FadeIn(1.2f));
                 var seat = EpiloguePlan.SwingSeat;
@@ -178,9 +193,10 @@ namespace ProjectInk
                     vel += -swing * 3.2f * Time.unscaledDeltaTime;
                     vel *= 1f - 0.12f * Time.unscaledDeltaTime;
                     swing += vel * Time.unscaledDeltaTime;
-                    var off = new Vector3(Mathf.Sin(swing) * 1.6f, (1f - Mathf.Cos(swing)) * 1.6f, 0f);
+                    float len = EpiloguePlan.SwingPivot.y - seat.y;
+                    var off = new Vector3(Mathf.Sin(swing) * len, (1f - Mathf.Cos(swing)) * len, 0f);
                     if (swingSeat != null) swingSeat.localRotation = Quaternion.Euler(0f, 0f, swing * Mathf.Rad2Deg);
-                    if (maya != null) maya.PuppetPose(seat + Vector3.down * 0.45f + off);
+                    if (maya != null) maya.PuppetPose(seat + Vector3.down * 0.28f + off);
                     Cine(new CineCam.Shot(seat + new Vector3(-0.8f, 0.4f, -3.4f), seat + new Vector3(0.6f, -0.3f, 0f), 40f));
                 };
                 yield return Hold(2.0f, swingFrame);
@@ -202,37 +218,40 @@ namespace ProjectInk
             {
                 // ------------------------------------------------ 7.5 the hall: the book in the drawer under Elena's photo
                 hero.CinePose(EpiloguePlan.HallSpot);
-                hero.SetFacing(1);
+                hero.SetFacing(-1);
                 hero.body.Play("idle", 0f);
                 if (maya != null) maya.gameObject.SetActive(false);
                 StartCoroutine(FadeIn(1.0f));
                 var drawer = EpiloguePlan.HallDrawer;
-                System.Action atDrawer = () => Cine(CineCam.DollyIn(drawer + Vector3.up * 0.4f, new Vector3(0.2f, -0.35f, 1f), 1f, 2.2f, 1.2f, 36f));
-                yield return Move(2.6f, u => CineCam.DollyIn(drawer + Vector3.up * 0.4f, new Vector3(0.2f, -0.35f, 1f), u, 2.2f, 1.2f, 36f));
+                System.Action atDrawer = () => Cine(CineCam.DollyIn(drawer + Vector3.up * 0.4f, new Vector3(-1f, -0.35f, 0.25f), 1f, 2.2f, 1.2f, 36f));
+                yield return Move(2.6f, u => CineCam.DollyIn(drawer + Vector3.up * 0.4f, new Vector3(-1f, -0.35f, 0.25f), u, 2.2f, 1.2f, 36f));
                 var book = MakeBook();
-                book.position = drawer + new Vector3(0f, 0.08f, 0f);
+                book.position = drawer + new Vector3(0.3f, 0.12f, 0f);
                 Sound.Play(Sfx.Cloth, 0.6f, drawer);
                 yield return Hold(1.6f, atDrawer);
                 Say("YOU", "Forty-one names.", 2.0f);
                 yield return Hold(2.2f, atDrawer);
                 Say("YOU", "Somebody should remember them. It'll be me.", 2.8f);
                 yield return Hold(3.0f, atDrawer);
-                var d0 = drawerFront != null ? drawerFront.localPosition : Vector3.zero;
+                // the drawer stands open; he lays the book in it and slides it shut (towards the wall, -x)
+                var drawerOpen = drawerFront != null ? drawerFront.position + Vector3.right * EpiloguePlan.HallDrawerTravel : Vector3.zero;
+                if (drawerFront != null) drawerFront.position = drawerOpen;
                 StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, atDrawer));
                 yield return DragTo("CLOSE THE DRAWER", Vector2.up, p =>
                 {
                     if (book != null) book.gameObject.SetActive(p < 0.6f);
-                    if (drawerFront != null) drawerFront.localPosition = d0 + Vector3.back * 0.3f * (1f - p);
+                    if (drawerFront != null) drawerFront.position = drawerOpen + Vector3.left * EpiloguePlan.HallDrawerTravel * p;
                 }, drawer);
                 Sound.Play(Sfx.Latch, 0.6f, drawer);
-                yield return Hold(1.4f, () => Cine(new CineCam.Shot(drawer + new Vector3(-0.3f, 1.0f, -1.0f), drawer + Vector3.up * 0.9f, 30f)));    // up to her photo
+                yield return Hold(2.2f, () => Cine(new CineCam.Shot(EpiloguePlan.HallPhoto + new Vector3(1.1f, -0.1f, -0.25f), EpiloguePlan.HallPhoto, 30f)));    // up to her photo
                 Say("MAYA", "Papa, I'm hungry!", 1.8f);
                 yield return Hold(2.0f, () => Cine(new CineCam.Shot(HeroHead() + new Vector3(0.7f, -0.05f, -1.0f), HeroHead(), 30f)));
                 Say("YOU", "...Coming.", 1.8f);
                 yield return Hold(1.4f, () => Cine(new CineCam.Shot(HeroHead() + new Vector3(0.7f, -0.05f, -1.0f), HeroHead(), 30f)));
                 hero.body.Play("walk", 0.2f, true, 0.8f);
                 var h0 = hero.transform.position;
-                yield return Move(3.0f, u => new CineCam.Shot(EpiloguePlan.FrontDoor + new Vector3(-2.5f, 1.4f, -2.5f), HeroHead(), 40f), u => hero.CinePose(Vector3.Lerp(h0, h0 + Vector3.right * 2.4f, u)));
+                var toDoor = new Vector3(EpiloguePlan.FrontDoor.x, EpiloguePlan.HallFloorY, EpiloguePlan.FrontDoor.z - 0.7f);
+                yield return Move(3.0f, u => new CineCam.Shot(EpiloguePlan.HallSpot + new Vector3(0.8f, 1.5f, -2.6f), HeroHead(), 42f), u => hero.CinePose(Vector3.Lerp(h0, toDoor, u)));
                 Sound.Play(Sfx.Door, 0.7f, EpiloguePlan.FrontDoor, 0.7f);
                 yield return FadeOut(1.6f);
             }
