@@ -38,11 +38,11 @@ namespace ProjectInk
         public HeroController hero;
         public WaveDirector director;
 
-        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, Ending, End, Bank, Street, Home, Park, Fortress }
+        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, Ending, End, Bank, Street, Home, Park, Fortress, Road, Epilogue }
         Phase phase = Phase.Cinematic;
 
         /// <summary>The fight HUD steps aside while the story holds the screen.</summary>
-        public bool HideHud => chapter == 2 || (chapter == 3 && (barsPx > 1f || driverStage >= 5)) || (chapter == 4 && (barsPx > 1f || cleanerStage >= 5 || hClimbing)) || (chapter == 5 && (barsPx > 1f || handlerStage >= 5)) || (chapter == 6 && (barsPx > 1f || vossStage >= 5 || (wardenStage >= 5 && vossStage == 0))) || phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
+        public bool HideHud => chapter == 2 || chapter >= 9 || (chapter == 3 && (barsPx > 1f || driverStage >= 5)) || (chapter == 4 && (barsPx > 1f || cleanerStage >= 5 || hClimbing)) || (chapter == 5 && (barsPx > 1f || handlerStage >= 5)) || (chapter == 6 && (barsPx > 1f || vossStage >= 5 || (wardenStage >= 5 && vossStage == 0))) || phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
 
         // the edit (real seconds)
         const float S1 = 4.2f, S2 = 6.8f, S3 = 10.8f, S4 = 15.6f, S5 = 22.2f, S6 = 27.0f, Control = 30.6f;
@@ -127,6 +127,8 @@ namespace ProjectInk
             if (!setUp && chapter == 4) { setUp = true; BeginHome(); }
             if (!setUp && chapter == 5) { setUp = true; BeginBackyard(); }
             if (!setUp && chapter == 6) { setUp = true; BeginFortress(); }
+            if (!setUp && chapter == 9) { setUp = true; BeginRoad(); }
+            if (!setUp && chapter == 10) { setUp = true; BeginEpilogue(); }
             if (!setUp)
             {
                 setUp = true;
@@ -171,6 +173,8 @@ namespace ProjectInk
                 case Phase.Home: UpdateHome(); break;
                 case Phase.Park: UpdatePark(); break;
                 case Phase.Fortress: UpdateFortress(); break;
+                case Phase.Road: UpdateRoad(); break;
+                case Phase.Epilogue: UpdateEpilogue(); break;
                 case Phase.Breach:
                     prevB = b; b += dt;
                     UpdateBreach();
@@ -960,6 +964,8 @@ namespace ProjectInk
             if (chapter == 4) HomeGUI(w, h);
             if (chapter == 5) ParkGUI(w, h);
             if (chapter == 6) FortressGUI(w, h);
+            if (chapter == 9) RoadGUI(w, h);
+            if (chapter == 10) EpilogueGUI(w, h);
             EndingGUI(w, h);
             BlackoutGUI(w, h);
             ControlsGUI(w, h);

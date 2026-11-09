@@ -104,6 +104,11 @@ namespace ProjectInk
             GUI.enabled = !open;
             if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true) && !open) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
             if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false) && !open) SceneManager.LoadScene("Prototype");
+            var whole = new Rect(w * 0.5f - 150, y - 56, 300, 38);
+            Fill(whole, new Color(1f, 1f, 1f, whole.Contains(Event.current.mousePosition) ? 0.14f : 0.07f));
+            btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
+            GUI.Label(whole, "THE WHOLE STORY  ·  TIMELINE", btnSub);
+            if (GUI.Button(whole, GUIContent.none, GUIStyle.none) && !open) Epilogue(5);
             // TEMPORARY, for testing: jump straight to any checkpoint (set DevShortcuts false to remove)
             if (DevShortcuts)
             {
@@ -124,49 +129,59 @@ namespace ProjectInk
         /// <summary>Every place in the story you can jump to, to test it without playing up to it.</summary>
         static readonly (string chapter, string label, System.Action go)[] Checkpoints =
         {
-            ("CHAPTER 1  ·  THE WAREHOUSE", "Opening", () => Ch1(() => { })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Opening  ·  open your eyes, break the ties", () => Ch1(() => { })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "At the shutter (the walk)", () => Ch1(() => { StoryIntro.Retry = true; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 1  ·  Loading bay", () => Ch1(() => Hall(0))),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 2  ·  Racking aisle", () => Ch1(() => Hall(1))),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 3  ·  Mezzanine", () => Ch1(() => Hall(2))),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 4  ·  Crane bay", () => Ch1(() => Hall(3))),
             ("CHAPTER 1  ·  THE WAREHOUSE", "The Foreman (the fight)", () => Ch1(() => { Hall(3); StoryIntro.BossReached = true; })),
-            ("CHAPTER 1  ·  THE WAREHOUSE", "Ending  ·  boss beaten", () => Ch1(() => { StoryIntro.EscapeSeen = true; StoryIntro.TestEnding = 1; })),
-            ("CHAPTER 1  ·  THE WAREHOUSE", "Ending  ·  the key on the body", () => Ch1(() => { StoryIntro.EscapeSeen = true; StoryIntro.TestEnding = 2; })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Ending  ·  \"the old man wants his book\"", () => Ch1(() => { StoryIntro.EscapeSeen = true; StoryIntro.TestEnding = 1; })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "Ending  ·  the search, the note signed V", () => Ch1(() => { StoryIntro.EscapeSeen = true; StoryIntro.TestEnding = 2; })),
             ("CHAPTER 2  ·  THE BANK", "Start  ·  the street", () => Ch2(0)),
             ("CHAPTER 2  ·  THE BANK", "At the counter", () => Ch2(1)),
-            ("CHAPTER 2  ·  THE BANK", "The vault  ·  two keys", () => Ch2(2)),
-            ("CHAPTER 2  ·  THE BANK", "The box  ·  passports, ring, memory", () => Ch2(3)),
-            ("CHAPTER 2  ·  THE BANK", "Walk out", () => Ch2(4)),
-            ("CHAPTER 2  ·  THE STREET", "The box  ·  the men from the car", () => Street(0)),
+            ("CHAPTER 2  ·  THE BANK", "The vault  ·  the standing instruction, the palm", () => Ch2(2)),
+            ("CHAPTER 2  ·  THE BANK", "The box  ·  passports, ring, the book, the letter", () => Ch2(3)),
+            ("CHAPTER 2  ·  THE BANK", "Walk out  ·  \"Yes, Mr. V\"", () => Ch2(4)),
+            ("CHAPTER 2  ·  THE STREET", "\"The book. Hand it over.\"", () => Street(0)),
             ("CHAPTER 2  ·  THE STREET", "The market street", () => Street(1)),
             ("CHAPTER 2  ·  THE STREET", "Under the railway  ·  the train", () => Street(2)),
             ("CHAPTER 2  ·  THE STREET", "The crossroads", () => Street(3)),
             ("CHAPTER 2  ·  THE STREET", "The Driver (the fight)", () => Street(4)),
-            ("CHAPTER 2  ·  THE STREET", "After the Driver  ·  \"We got there first\"", () => Street(5)),
-            ("CHAPTER 3  ·  HOME", "Alder Lane  ·  the arrival", () => Home(0)),
-            ("CHAPTER 3  ·  HOME", "The study  ·  the photo, Maya", () => Home(1)),
+            ("CHAPTER 2  ·  THE STREET", "After the Driver  ·  the question", () => Street(5)),
+            ("CHAPTER 3  ·  HOME", "Alder Lane  ·  the arrival, Harrow's card", () => Home(0)),
+            ("CHAPTER 3  ·  HOME", "The study  ·  the photo of V", () => Home(1)),
             ("CHAPTER 3  ·  HOME", "The kitchen  ·  Elena", () => Home(2)),
-            ("CHAPTER 3  ·  HOME", "The house fight (rage)", () => Home(3)),
-            ("CHAPTER 3  ·  HOME", "The Cleaner (the fight)", () => Home(4)),
-            ("CHAPTER 3  ·  HOME", "The kitchen chair", () => Home(5)),
+            ("CHAPTER 3  ·  HOME", "The house fight (rage)  ·  her shelf", () => Home(3)),
+            ("CHAPTER 3  ·  HOME", "Silas, the Cleaner (the fight)", () => Home(4)),
+            ("CHAPTER 3  ·  HOME", "The kitchen chair  ·  the call", () => Home(5)),
             ("CHAPTER 3  ·  HOME", "The footprints  ·  the garden", () => Home(6)),
-            ("CHAPTER 4  ·  THE BACKYARD", "The garden  ·  her footprints", () => Backyard(0)),
-            ("CHAPTER 4  ·  THE BACKYARD", "The ribbon  ·  how she was taken", () => Backyard(1)),
-            ("CHAPTER 4  ·  THE BACKYARD", "The promise", () => Backyard(2)),
-            ("CHAPTER 4  ·  THE BACKYARD", "The fight (garden to car park)", () => Backyard(3)),
+            ("CHAPTER 4  ·  THE BACKYARD", "Find her  ·  the footprints", () => Backyard(0)),
+            ("CHAPTER 4  ·  THE BACKYARD", "The ribbon  ·  her voice  ·  the van", () => Backyard(1)),
+            ("CHAPTER 4  ·  THE BACKYARD", "Reach her  ·  the torches", () => Backyard(2)),
+            ("CHAPTER 4  ·  THE BACKYARD", "The fight  ·  lose her", () => Backyard(3)),
             ("CHAPTER 4  ·  THE BACKYARD", "The Handler (the fight)", () => Backyard(4)),
             ("CHAPTER 4  ·  THE BACKYARD", "The address  ·  the hill", () => Backyard(5)),
-            ("CHAPTER 5  ·  THE FORTRESS", "The storm  ·  the arrival", () => Fortress(0)),
-            ("CHAPTER 5  ·  THE FORTRESS", "The rock stair", () => Fortress(1)),
-            ("CHAPTER 5  ·  THE FORTRESS", "The gate  ·  the trap", () => Fortress(2)),
-            ("CHAPTER 5  ·  THE FORTRESS", "The courtyard", () => Fortress(3)),
-            ("CHAPTER 5  ·  THE FORTRESS", "The blackout", () => Fortress(4)),
-            ("CHAPTER 5  ·  THE FORTRESS", "The Warden (the fight)", () => Fortress(5)),
-            ("CHAPTER 5  ·  THE FORTRESS", "The tower", () => Fortress(6)),
-            ("CHAPTER 5  ·  THE FORTRESS", "The last roof  ·  Voss", () => Fortress(7)),
-            ("CHAPTER 5  ·  THE FORTRESS", "Voss (the duel)", () => Fortress(8)),
-            ("CHAPTER 5  ·  THE FORTRESS", "The end  ·  the fall, her, the dawn", () => Fortress(9)),
+            ("CHAPTER 5  ·  THE ROAD", "The drive  ·  her voice", () => Road(0)),
+            ("CHAPTER 5  ·  THE ROAD", "Counting the thunder", () => Road(1)),
+            ("CHAPTER 5  ·  THE ROAD", "\"Are you a bad man?\"  ·  the song", () => Road(2)),
+            ("CHAPTER 5  ·  THE ROAD", "The battery", () => Road(3)),
+            ("CHAPTER 5  ·  THE ROAD", "The last hairpin  ·  never a trade", () => Road(4)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The storm  ·  the arrival", () => Fortress(0)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The rock stair", () => Fortress(1)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The gate  ·  the trap", () => Fortress(2)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The courtyard", () => Fortress(3)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The blackout", () => Fortress(4)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The Warden (the fight)", () => Fortress(5)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The tower  ·  \"I see you!\"", () => Fortress(6)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The last roof  ·  Voss, the trade", () => Fortress(7)),
+            ("CHAPTER 6  ·  THE FORTRESS", "Voss (the duel)", () => Fortress(8)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The fall  ·  her  ·  the dawn", () => Fortress(9)),
+            ("CHAPTER 7  ·  HOME", "Harrow  ·  \"Then I never saw you\"", () => Epilogue(0)),
+            ("CHAPTER 7  ·  HOME", "The grave", () => Epilogue(1)),
+            ("CHAPTER 7  ·  HOME", "The swing", () => Epilogue(2)),
+            ("CHAPTER 7  ·  HOME", "The drawer  ·  THE END", () => Epilogue(3)),
+            ("THE WHOLE STORY", "The timeline recap", () => Epilogue(5)),
         };
 
         static void Ch1(System.Action setUp)
@@ -194,6 +209,21 @@ namespace ProjectInk
             StoryIntro.NewRun();
             StoryIntro.FortressFrom = at;
             SceneManager.LoadScene("Story_Fortress");
+        }
+
+        static void Road(int at)
+        {
+            StoryIntro.NewRun();
+            StoryIntro.RoadFrom = at;
+            SceneManager.LoadScene("Story_Road");
+        }
+
+        static void Epilogue(int at)
+        {
+            StoryIntro.NewRun();
+            StoryIntro.EpilogueFrom = at;
+            StoryIntro.RecapOnly = at >= 5;
+            SceneManager.LoadScene("Story_Epilogue");
         }
 
         static void Backyard(int at)

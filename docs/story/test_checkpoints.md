@@ -2,48 +2,31 @@
 
 **Main menu → TEST · CHECKPOINTS** opens a list of places in the story to jump straight to, with the world set up as it would be there. It is controlled by `MainMenu.DevShortcuts`; set it `false` for release.
 
-| Chapter | Checkpoint | How it is set up |
+| Chapter | Checkpoint | What it plays (story v2, docs/story/story_v2.md) |
 |---|---|---|
-| 1 · The Warehouse | Opening | A new run. |
-| | At the shutter (the walk) | `Retry`: the walk to the shutter, before the break-in. |
-| | Hall 1–4 | `HallCheckpoint` = zone, the knife in hand. |
-| | The Foreman (the fight) | Zone 4 with `BossReached`: he rides the hook down. |
-| | **Ending · boss beaten** | `TestEnding = 1`: the Foreman is spawned on his last legs and the ending plays from the final blow, so you don't have to fight him. |
-| | **Ending · the key on the body** | `TestEnding = 2`: the dead man under the skylight; the ending plays from the search of his pockets. |
-| 2 · The Bank | Start · the street | The chapter from the top. |
-| | At the counter | `BankFrom = 1`: the doors open, the guard at his post, the hero at the teller's window. |
-| | The vault · two keys | `BankFrom = 2`: Harrow beside him at the vault. |
-| | The box | `BankFrom = 3`: the box on the viewing table (passports, ring, memory, envelope). |
-| | Walk out | `BankFrom = 4`: the ring on, back through the lobby. The bank's last shot fades straight into the street. |
-| 2 · The Street | The box | `StreetFrom = 0`: the opening outside the bank (the car's four, "The box. Hand it over."), then S1. |
-| | The market street | `StreetFrom = 1`: S2, a second crew from both ends. |
-| | Under the railway | `StreetFrom = 2`: S3; the train comes over within a couple of seconds. |
-| | The crossroads | `StreetFrom = 3`: S4's last wave, then the Driver arrives. |
-| | **The Driver (the fight)** | `StreetFrom = 4`: his car screeches in; all four of his phases (boxer, tire iron, the car charge, bare hands). |
-| | **After the Driver** | `StreetFrom = 5`: straight to the interrogation and the end of chapter 2. |
-| 3 · Home | Alder Lane | `HomeFrom = 0`: the title, the street at dusk, the car, the chalk, the door. |
-| | The study | `HomeFrom = 1`: the desk, the photo, Maya's memory. |
-| | The kitchen | `HomeFrom = 2`: Elena; the broken memory; the voice upstairs; the rage. |
-| | The house fight | `HomeFrom = 3`: the kitchen → living room → hall → up the stairs → the landing, then Maya's room. |
-| | **The Cleaner** | `HomeFrom = 4`: the bedroom; his three phases (knife, choke, anything). |
-| | **The kitchen chair** | `HomeFrom = 5`: the interrogation. |
-| | The footprints | `HomeFrom = 6`: the footprints, the garden, the end of chapter 3. |
-| 4 · The Backyard | The garden | `BackyardFrom = 0`: the title, her footprints across the lawn. |
-| | The ribbon | `BackyardFrom = 1`: the swing stops, the ribbon (red), how she was taken. |
-| | The promise | `BackyardFrom = 2`: the ribbon round his wrist, the vow, the torches at the fence. |
-| | The fight | `BackyardFrom = 3`: the garden → the playground → the pond → the car park. |
-| | **The Handler** | `BackyardFrom = 4`: the van, his three phases (the grip, the knuckles, cornered). |
-| | **The address** | `BackyardFrom = 5`: "Kessel Hill. The old fort." Then the hill, and the end of chapter 4. |
-| 5 · The Fortress | The storm | `FortressFrom = 0`: the title on a lightning flash, the fortress from the air, him on the road (boot, profile, ribbon), the guards on the walls, then the cliff road fight. |
-| | The rock stair | `FortressFrom = 1`: the climb (a truck, a silhouette on a strike, a pedestal up). |
-| | The gate | `FortressFrom = 2`: the drawbridge fight, then the trap (the portcullis slams down in slow motion). |
-| | The courtyard | `FortressFrom = 3`: the first courtyard fight under the floodlights. |
-| | **The blackout** | `FortressFrom = 4`: lightning hits the pole, the generator bursts, then the fight in the dark (lit only by the flashes). |
-| | **The Warden** | `FortressFrom = 5`: the hall reveal, his three phases (the chain, the chandeliers falling, bare hands), then "PAPA!" from above. |
-| | The tower | `FortressFrom = 6`: the man and the child on the gallery, "Come up, old friend.", then on up the tower. |
-| | **The last roof** | `FortressFrom = 7`: up the outside of the tower (Elena's and Maya's voices), the door onto the terrace, VOSS holding Maya at the broken end, what he tells him over the three broken stills, "I remember now.", he lets her go. |
-| | **Voss (the duel)** | `FortressFrom = 8`: I the teacher (a boxer's guard), II the gun (a red line finds you: dodge as he fires, or get in close while he aims and take it off him), III the edge (furious, the strikes every few seconds). Dying here restarts the duel. |
-| | **The end** | `FortressFrom = 9`: the fall (him hanging off the broken parapet, "We're the same." / "No. I came home.", the strike, the drop), Maya, the ribbon in her hair, the dawn, the road home, THE END. |
+| 1 · The Warehouse | Opening | A new run: HOLD to open his eyes while the voices beyond the shutter talk ("Boss wants him breathing. Dead, that box goes straight to the cops."), MASH to break the zip ties, flash 1 (the pipe, the coat walking away). The men: "Easy... boss wants him breathing." |
+| | At the shutter, Hall 1–4 | The walk and the hall zones, as before. |
+| | The Foreman | His hard hat; "Boss wants you breathing. For now."; phase III "You don't even know who you are. Do you?" |
+| | Ending | "The old man wants his book back. Nine o'clock, you open a box for him." Then TAP his coat, TAP the inside pocket, DRAG to unfold the note: "Only his hand opens 417. Keep him alive till nine. Get the book. Then finish him. — V." |
+| 2 · The Bank | The vault | Mr. Pell: six years, the standing instruction (the box goes to the lawyer); HOLD the palm on the glass. |
+| | The box | The family's passports (him, Elena, Maya), the ring and the wedding memory, "I have a daughter", TAP the black book and DRAG to turn its page (41 names, every order signed V.), his own letter ("They'll come for E. and M. 14 Alder Lane. Get them out."). |
+| | Walk out | Past the counter: "Yes, Mr. V. He took it with him." / "...Mr. V." |
+| 2 · The Street | Start · after the Driver | "The book. Hand it over." The Driver drove him for eleven years; at the end, CHOOSE "Who is V?" or "What's waiting at home?" |
+| 3 · Home | Arrival | TAP the hall table: Harrow's card and Elena's note. |
+| | The study | DRAG to turn the family photo over: the old photo of V, the young hero and the boy; flash 2 "I'm out, Voss."; "You raised me." |
+| | The kitchen | The bleach and plastic; HOLD to close her eyes; WHAT HAPPENED HERE; "Silas wants this place spotless." |
+| | The house fight | ...then her room: TAP her shelf, one walkie gone, he keeps the other. |
+| | Silas | "You're early. I wasn't finished." "They always come home." His lines in the fight. |
+| | The kitchen chair | CHOOSE three of four questions; the phone rings (V.), SWIPE up to answer; Voss: "Hello, son."; SWIPE right for the reflex; "...Silas? Silas!" "Bring me the book. Then we're even." |
+| 4 · The Backyard | Find her | Footprints; DRAG the ribbon free; the walkie crackles; HOLD to talk; Maya tells last night over the stills; CHOOSE what to ask; the van at the far end, her face in its window. |
+| | Reach her, lose her | The torches; three stretches, her voice between them (count to three; "did you find Mama?" CHOOSE; "they're starting the van!"); the car park: MASH to run after the van; it gets away. |
+| | The Handler · the address | The slow clap, his three phases, "He pulled you off the street at nineteen... and you just killed Silas." "I'm not his son. I'm hers." The car keys. |
+| 5 · The Road | 0–4 | `RoadFrom`: the drive and her voice; counting the thunder (tap each flash); "Are you a bad man?" (CHOOSE) and HOLD to hum; the battery ("Over and out"); the last hairpin ("It was never a trade"). |
+| 6 · The Fortress | 0–6 | As before, plus: the guards' bounty ("Whoever brings the boss that book gets the son's place!"), the barks, the trap's line, the Warden's chair, and at the tower the walkie: "Papa! I see you! You're tiny!" |
+| | The last roof | Flash 3 ("Bring them to me. All of them. Alive."), six years of mercy, Silas ("Your boy killed Elena." "...I know. And I still loved him."), the trade: DRAG the book across to him, she runs, he draws the blade from his cane. |
+| | The duel, the fall | The teacher, the gun, the edge; then CHOOSE REACH FOR HIM or LET GO; Maya; DRAG to tie her ribbon; the dawn, the book back in his coat. CHAPTER 6 COMPLETE. |
+| 7 · Home | 0–3 | `EpilogueFrom`: Harrow ("...Then I never saw you. Take her home."), the grave (HOLD your hand on the stone), the swing (SWIPE to push), the drawer (DRAG to close it), THE END, then the recap. |
+| The whole story | Timeline | `EpilogueFrom = 5` (also the main menu's THE WHOLE STORY button): the recap alone. |
 
 **For every new chapter:** add its checkpoints here and to `MainMenu.Checkpoints`. At least: its start, each fight zone, its boss fight, its ending after the boss, and every story beat worth replaying on its own. The entry points live in `StoryTest.cs` (and a `TestState` per chapter, like the bank's).
 

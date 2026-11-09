@@ -95,8 +95,9 @@ namespace ProjectInk
 
         static readonly (string still, string line, float secs)[] MayaTells =
         {
-            ("Story/Flash/elena_2", "The bad men came. Mama gave me the walkie and said run to the slide and hide, like we practised.", 4.6f),
-            ("Story/Flash/elena_1", "There was a big bang. I didn't look. I didn't look, Papa.", 3.6f),
+            ("Story/Flash/elena_1", "The bad men came. Lots of them, in the hall.", 3.0f),
+            ("Story/Flash/elena_2", "Mama gave me the walkie and said run to the slide and hide, like we practised.", 4.4f),
+            ("", "There was a big bang. I didn't look. I didn't look, Papa.", 3.8f),
             ("Story/Flash/taken_1", "I was so quiet under the slide... but my walkie went kssh.", 3.6f),
             ("Story/Flash/taken_2", "And they found me with a torch.", 2.6f),
             ("Story/Flash/taken_3", "I dropped my ribbon so you'd find the way. Mama said leave a trail if you're lost.", 4.4f),
@@ -107,7 +108,7 @@ namespace ProjectInk
             if (storyStills == null)
             {
                 storyStills = new Texture2D[MayaTells.Length];
-                for (int i = 0; i < MayaTells.Length; i++) storyStills[i] = Resources.Load<Texture2D>(MayaTells[i].still);
+                for (int i = 0; i < MayaTells.Length; i++) storyStills[i] = MayaTells[i].still.Length > 0 ? Resources.Load<Texture2D>(MayaTells[i].still) : null;
             }
             Sound.MusicStop(1f);
             for (int i = 0; i < MayaTells.Length; i++)
@@ -115,8 +116,8 @@ namespace ProjectInk
                 storyStill = i;
                 storyStillAt = Time.unscaledTime;
                 Walkie(MayaTells[i].line, MayaTells[i].secs);
-                if (i == 1) Sound.PlayLater(Sfx.GunshotIndoor, 1.0f, 0.35f);
-                if (i == 3) Sound.Play(Sfx.Struggle, 0.4f);
+                if (i == 2) { Sound.PlayLater(Sfx.GunshotIndoor, 0.5f, 0.45f); Sound.MusicStop(0.2f); }
+                if (i == 4) Sound.Play(Sfx.Struggle, 0.4f);
                 yield return RealWait(MayaTells[i].secs + 0.3f);
             }
             storyStill = -1;

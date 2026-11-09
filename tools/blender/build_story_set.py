@@ -477,6 +477,30 @@ def forklift(g, x, y, M, yaw, fork_z=0.1):
         g.box(P(1.05, dy, 1.35), (0.1, 0.1, 2.6), M["steel_mid"], rot=R)                      # mast rails
         g.box(P(1.55, dy, fork_z), (1.1, 0.12, 0.05), M["steel_mid"], rot=R)                  # forks
     g.box(P(1.12, 0, fork_z + 0.5), (0.06, 0.8, 0.5), M["steel"], rot=R)                      # carriage
+    # the detail: overhead-guard slats, steering, seat back, LPG bottle, mast chains, lamps, hubs,
+    # the counterweight's hazard bands, the step and the beacon
+    for k in range(5):
+        g.box(P(-0.45 + k * 0.2, 0, 2.2), (0.05, 0.98, 0.05), M["steel"], rot=R)
+    g.box(P(0.05, 0, 1.25), (0.08, 0.45, 0.45), M["rubber"], rot=R)                           # seat back
+    g.beam(P(0.45, 0, 0.9), P(0.3, 0, 1.35), 0.05, 0.05, M["steel"])                           # steering column
+    g.torus(P(0.3, 0, 1.37), 0.16, 0.018, M["rubber"], rot=(0, -60, yaw), n1=14, n2=4)
+    g.cyl(P(-0.68, 0, 1.38), 0.17, 0.75, M["steel_mid"], rot=(90, 0, yaw), n=14)               # LPG bottle
+    for dy in (-0.42, 0.42):
+        g.box(P(-0.68, dy * 0.7, 1.38), (0.06, 0.04, 0.4), M["steel"], rot=R)
+    for dy in (-0.2, 0.2):
+        g.box(P(1.0, dy, 1.35), (0.025, 0.05, 2.5), M["steel"], rot=R)                        # lift chains
+    g.box(P(1.05, 0, 2.62), (0.12, 0.76, 0.08), M["steel_mid"], rot=R)                        # mast head
+    g.cyl(P(1.05, 0, 0.9), 0.07, 1.1, M["steel_mid"], rot=None, n=10)                          # lift ram
+    for dy in (-0.42, 0.42):
+        g.box(P(0.88, dy, 1.85), (0.08, 0.12, 0.1), M["bulb_dead"], rot=R)                     # work lamps
+    g.box(P(-0.98, 0, 0.75), (0.02, 1.0, 0.25), M["paint_yellow"], rot=R)
+    for k in range(4):
+        g.box(P(-0.99, -0.36 + k * 0.24, 0.75), (0.02, 0.08, 0.27), M["steel"], rot=R @ Matrix.Rotation(math.radians(35), 4, "X"))
+    g.box(P(0.0, 0.58, 0.32), (0.4, 0.12, 0.04), M["checker"] if "checker" in M else M["steel_mid"], rot=R)   # step
+    g.cyl(P(-0.45, 0, 2.3), 0.06, 0.1, M["paint_yellow"], n=10)                                # beacon
+    for dx in (-0.55, 0.45):
+        for dy in (-0.45, 0.45):
+            g.cyl(P(dx * 1.05, dy * 1.28, 0.28), 0.14, 0.02, M["steel_mid"], rot=(90, 0, yaw), n=10)   # hubs
 
 
 def drum(g, c, M, m, lying=False):
@@ -533,9 +557,11 @@ def pipes(g, M):
 
 
 def build_shed(coll, M):
+    import warehouse_kit as K
+    K.add_mats(sys.modules[__name__], M)
     g = Group("SetInterior")
-    # floor: slab, joints, paint, oil, a drain
-    g.box((0, (FRONT + BACK) / 2 - 0.4, -0.1), (HALF_W * 2 + 0.6, BACK - FRONT + 1.4, 0.2), M["concrete"])
+    # floor: slab (wet power-floated concrete), joints, paint, oil, a drain
+    g.box((0, (FRONT + BACK) / 2 - 0.4, -0.1), (HALF_W * 2 + 0.6, BACK - FRONT + 1.4, 0.2), M["k_floor"])
     for x in range(-12, 14, 4):
         g.box((x, 0.6, 0.002), (0.03, BACK - FRONT + 1.0, 0.004), M["concrete_dark"])
     g.box((0, 1.0, 0.002), (HALF_W * 2, 0.03, 0.004), M["concrete_dark"])
@@ -658,6 +684,10 @@ def build_shed(coll, M):
     # the fan housing on the back wall (the blades turn in Unity)
     g.box((-12.6, BACK + 0.0, 5.4), (1.3, 0.3, 1.3), M["steel"])
     g.torus((-12.6, BACK - 0.16, 5.4), 0.55, 0.05, M["steel_mid"], rot=(90, 0, 0), n1=24, n2=6)
+    for k in range(9):                                                                       # the fan's guard
+        g.box((-12.6 - 0.48 + k * 0.12, BACK - 0.2, 5.4), (0.012, 0.012, 1.1 - abs(k - 4) * 0.12), M["steel_mid"])
+    # the dressing: services, steel detail, signs, the crew's table, the chair, the litter
+    K.shed_detail(sys.modules[__name__], g, M)
     return g.finish(coll)
 
 
@@ -728,9 +758,27 @@ def container(g, c, yaw, m, M):
     for sx in (-1, 1):                                                                       # corner posts / castings
         for sy in (-1, 1):
             g.box(P(sx * (L / 2 - 0.08), sy * (W / 2 - 0.08), H / 2), (0.18, 0.18, H + 0.02), M["steel"], rot=R)
+    near = (Vector(c[:2]) - Vector((-2.0, 6.0))).length < 34.0                               # the ones a camera comes close to
     for dy in (-0.75, -0.3, 0.3, 0.75):                                                      # door lock bars
         g.box(P(L / 2 + 0.03, dy, H / 2), (0.04, 0.04, H - 0.3), M["steel_mid"], rot=R)
+        if near:
+            g.box(P(L / 2 + 0.07, dy + 0.06, 1.15), (0.03, 0.14, 0.05), M["steel"], rot=R)    # handles
+            g.box(P(L / 2 + 0.05, dy, H - 0.2), (0.06, 0.08, 0.08), M["steel"], rot=R)        # cam keepers
     g.box(P(L / 2 + 0.02, 0, H / 2), (0.02, 0.03, H - 0.2), M["steel"], rot=R)
+    for sy in (-1, 1):
+        if near:
+            for z in (0.5, 2.1):
+                g.box(P(L / 2 + 0.03, sy * (W / 2 - 0.05), z), (0.05, 0.08, 0.16), M["steel"], rot=R)   # hinges
+        g.box(P(0, sy * (W / 2 + 0.035), H - 0.07), (L - 0.3, 0.05, 0.14), m, rot=R)          # top side rails
+    g.box(P(L / 2 + 0.03, 0, H - 0.08), (0.05, W - 0.2, 0.16), m, rot=R)                     # door header
+    if near:
+        for i in range(3):                                                                   # roof dents/ribs
+            g.box(P(-L / 2 + 0.8 + i * (L - 1.6) / 2, 0, H + 0.005), (0.25, W - 0.3, 0.02), m, rot=R)
+    if rnd.random() < 0.45:                                                                  # rust weeping down a side
+        for k in range(rnd.randint(1, 3)):
+            dx = rnd.uniform(-L / 2 + 0.4, L / 2 - 0.4)
+            hz = rnd.uniform(0.5, 1.8)
+            g.box(P(dx, -(W / 2 + 0.045), H - 0.15 - hz / 2), (rnd.uniform(0.1, 0.4), 0.01, hz), M["rust"], rot=R)
 
 
 def crane(g, x, y, M):
@@ -748,6 +796,37 @@ def crane(g, x, y, M):
     g.box((x + 8.0, y - L / 2 - 1.71, h - 0.9), (1.9, 0.02, 0.9), M["cab_window"])
     for sx in (-1, 1):
         g.cyl((x + sx * (span / 2 + 0.3), y - L / 2, h + 1.9), 0.18, 0.3, M["aviation"], n=10)
+    # the walkway and handrails along the girders, ladders up the legs, the cab's frame
+    for sy in (-1, 1):
+        yy = y + sy * (L / 2 + 0.75)
+        g.box((x, yy, h + 0.05), (span, 0.6, 0.04), M["steel_mid"])
+        for zz in (h + 0.55, h + 1.05):
+            g.box((x, yy + sy * 0.28, zz), (span, 0.04, 0.04), M["crane"])
+        px = x - span / 2
+        while px <= x + span / 2:
+            g.box((px, yy + sy * 0.28, h + 0.55), (0.04, 0.04, 1.0), M["crane"])
+            px += 1.5
+    for sx in (-1, 1):
+        lx = x + sx * (span / 2 + 0.55)
+        for dy in (-0.22, 0.22):
+            g.box((lx, y + L / 2 + dy, h / 2), (0.05, 0.05, h), M["steel_mid"])
+        z = 0.6
+        while z < h:
+            g.box((lx, y + L / 2, z), (0.03, 0.44, 0.03), M["steel_mid"])
+            z += 0.35
+    g.box((x + 8.0, y - L / 2 - 1.72, h - 0.9), (2.0, 0.06, 0.06), M["steel"])
+    g.box((x + 8.0, y - L / 2 - 1.72, h - 0.45), (2.0, 0.06, 0.06), M["steel"])
+    # the hoist ropes and the spreader hanging under the trolley, a machinery house on top
+    for dx in (-0.8, 0.8):
+        for dy in (-1.0, 1.0):
+            g.beam((x + 3.0 + dx, y + dy, h + 1.2), (x + 3.0 + dx * 2.6, y + dy, h - 7.0), 0.04, 0.04, M["steel"])
+    g.box((x + 3.0, y, h - 7.2), (6.1, 2.4, 0.4), M["crane"])
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            g.box((x + 3.0 + sx * 2.9, y + sy * 1.1, h - 7.5), (0.2, 0.2, 0.3), M["steel"])
+    g.box((x - 6.0, y, h + 2.4), (4.0, L - 2.0, 2.4), M["crane"])
+    for k in range(6):
+        g.box((x - 7.6 + k * 0.6, y - (L - 2.0) / 2 - 0.02, h + 2.4), (0.3, 0.02, 1.6), M["steel"])
     for k in range(10):                                                                      # diagonal bracing
         a = k / 10
         for sx in (-1, 1):
@@ -777,12 +856,14 @@ def car(g, c, yaw, m, M, squash=1.0):
 
 
 def build_yard(coll, M):
+    import warehouse_kit as K
+    K.add_mats(sys.modules[__name__], M)
     g = Group("SetYard")
     # the shed's exterior: gutters, downpipes, a painted bay number
     g.box((0, BACK + 0.45, ROOF + 0.3), (HALF_W * 2 + 0.6, 0.25, 0.2), M["steel_mid"])
     for x in (-HALF_W + 0.4, HALF_W - 0.4):
         g.cyl((x, BACK + 0.45, ROOF / 2), 0.07, ROOF, M["steel_mid"], n=10)
-    for i, (x0, ch) in enumerate(((-4.0, "B"), (-2.7, "A"), (-1.4, "Y"), (0.8, "7"))):
+    for i, (x0, ch) in enumerate(((0.8, "B"), (-0.5, "A"), (-1.8, "Y"), (-4.0, "7"))):
         g.box((x0, BACK + 0.32, 5.2), (0.95, 0.02, 1.4), M["paint_yellow"])
     # an exterior sodium lamp over the bay letters
     g.box((-1.5, BACK + 0.9, 6.4), (0.5, 0.6, 0.12), M["steel"])
@@ -832,12 +913,15 @@ def build_yard(coll, M):
         x += 3.0
     for z in (0.3, 1.4, 2.6, 2.75, 2.9):
         g.box((0, -28.0, z), (120.0, 0.02, 0.02), M["steel_mid"])
+    K.yard_detail(sys.modules[__name__], g, M)
     return g.finish(coll)
 
 
 def build_ground(coll, M):
+    import warehouse_kit as K
+    K.add_mats(sys.modules[__name__], M)
     g = Group("SetGround")
-    g.box((0, 0, -0.08), (240, 240, 0.1), M["asphalt"])
+    g.box((0, 0, -0.08), (240, 240, 0.1), M["k_asphalt"])
     for i in range(26):
         x, y = rnd.uniform(-50, 50), rnd.uniform(-25, 45)
         if -22 < x < 22 and y < 7:                    # never in front of (or under) the shed: the fight's foreground
@@ -845,11 +929,15 @@ def build_ground(coll, M):
         g.cyl((x, y, 0.003), rnd.uniform(1.0, 3.5), 0.006, M["puddle"], n=20)
     for k in range(8):                                                                       # painted bay lines
         g.box((-56 + k * 15, 4.0, 0.004), (0.15, 50, 0.008), M["paint_yellow"])
+    K.ground_detail(sys.modules[__name__], g, M)
     return g.finish(coll)
 
 
 def build_city(coll, M):
+    import warehouse_kit as K
+    K.add_mats(sys.modules[__name__], M)
     g = Group("SetCity")
+    K.city_detail(sys.modules[__name__], g, M)               # the hazy layers behind, and a bridge
     x = -260.0
     while x < 260.0:
         w = rnd.uniform(8, 26)
@@ -869,6 +957,7 @@ def build_city(coll, M):
             g.cyl((x, y, h + 6.2), 0.6, 0.5, M["aviation"], n=8)
         if rnd.random() < 0.12:
             g.box((x, y + 10.2, h * 0.6), (w * 0.6, 0.05, 2.0), rnd.choice([M["neon_pink"], M["neon_cyan"]]))
+        K.tower_dress(g, M, x, y, w, h, 10.0)                # setbacks, fins, plant rooms, masts
         x += w + rnd.uniform(0, 6)
     return g.finish(coll)
 
@@ -1006,10 +1095,13 @@ def stickman(pose_clip, frame, x, rot_z=0.0):
     return arm, frame
 
 
+PREVIEW_SAMPLES = 24                # the contact sheet's samples (--fast: fewer)
+
+
 def preview(shots, name="story_set.png"):
     sc = bpy.context.scene
     sc.render.engine = "CYCLES"
-    sc.cycles.samples = 24
+    sc.cycles.samples = PREVIEW_SAMPLES
     sc.cycles.device = "CPU"
     try:
         sc.cycles.use_denoising = True
@@ -1107,7 +1199,10 @@ def export(objs):
 
 
 def main():
+    global PREVIEW_SAMPLES
     preview_only = "--preview" in sys.argv
+    if "--fast" in sys.argv:                       # a quick look: the contact sheet at low samples, no bake
+        PREVIEW_SAMPLES = 8
     os.makedirs(OUT, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
     _tower_to_hall()

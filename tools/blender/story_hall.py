@@ -207,7 +207,7 @@ def lamp(g, M, x, y, z, working, cold=False):
     g.cyl((x, y, z - 0.13), 0.07, 0.1, bulb, n=10)
 
 
-def boxes_on(g, M, x0, x1, y0, y1, z, fill=0.7, hmax=0.9):
+def boxes_on(g, M, x0, x1, y0, y1, z, fill=0.7, hmax=0.9, pallets=False):
     """Stock on a shelf or a pallet: cartons and wrapped loads, leaving gaps."""
     x = x0 + 0.05
     while x < x1 - 0.3:
@@ -216,6 +216,14 @@ def boxes_on(g, M, x0, x1, y0, y1, z, fill=0.7, hmax=0.9):
             w = x1 - x - 0.05
         if rnd.random() < fill and w > 0.3:
             h = rnd.uniform(0.35, hmax)
+            if pallets and y1 - y0 > 0.5:                                                    # the load sits on a pallet
+                g.box((x + w / 2, (y0 + y1) / 2, z + 0.11), (w + 0.04, y1 - y0, 0.025), M["wood"])
+                for dy in (-0.4, 0.0, 0.4):
+                    if abs(dy) < (y1 - y0) / 2:
+                        g.box((x + w / 2, (y0 + y1) / 2 + dy * (y1 - y0) / 1.0, z + 0.05), (w + 0.04, 0.09, 0.1), M["wood_dark"])
+                z, z_orig = z + 0.125, z
+            else:
+                z_orig = z
             if rnd.random() < 0.35:
                 g.box((x + w / 2, (y0 + y1) / 2, z + h / 2), (w, y1 - y0, h), rnd.choice((M["wrap"], M["tarp"])))
             else:
@@ -226,6 +234,7 @@ def boxes_on(g, M, x0, x1, y0, y1, z, fill=0.7, hmax=0.9):
                     g.box((x + w / 2 + rnd.uniform(-0.03, 0.03), (y0 + y1) / 2, zz + bh / 2), (w - 0.04, (y1 - y0) - 0.04, bh), rnd.choice((M["card"], M["card"], M["card_dark"])))
                     zz += bh
                     k += 1
+            z = z_orig
         x += w + 0.08
 
 
@@ -246,10 +255,10 @@ def rack(g, M, x0, x1, y0, y1, levels, stock_front=False):
             g.box(((x0 + x1) / 2, y, z - 0.07), (x1 - x0, 0.06, 0.12), M["rack_orange"])
         g.box(((x0 + x1) / 2, (y0 + y1) / 2, z - 0.02), (x1 - x0, y1 - y0, 0.03), M["steel_mid"])   # deck
         if stock_front:
-            boxes_on(g, M, x0, x1, y0 + 0.05, y1 - 0.05, z, 0.75)
+            boxes_on(g, M, x0, x1, y0 + 0.05, y1 - 0.05, z, 0.75, pallets=True)
         else:
             boxes_on(g, M, x0, x1, y0 + (y1 - y0) * 0.62, y1 - 0.05, z, 0.85)               # stock at the back: room to stand
-    boxes_on(g, M, x0, x1, y0 + (y1 - y0) * 0.55, y1 - 0.05, 0.0, 0.6, 1.2)
+    boxes_on(g, M, x0, x1, y0 + (y1 - y0) * 0.55, y1 - 0.05, 0.0, 0.6, 1.2, pallets=stock_front)
 
 
 def trailer(g, M, x, y, length=11.0):
@@ -268,10 +277,12 @@ def trailer(g, M, x, y, length=11.0):
 # ---------------------------------------------------------------- the hall
 
 def build_hall(S, coll, M):
+    import warehouse_kit as K
     hall_materials(S, M)
+    K.add_mats(S, M)
     g = S.Group("SetHall")
-    # floor: slab, joints, painted lines and bays, oil, puddles, debris
-    g.box(((HALL_X0 + HALL_X1) / 2, (HALL_F + HALL_B) / 2, -0.1), (HALL_X1 - HALL_X0 + 0.8, HALL_B - HALL_F + 0.9, 0.2), M["concrete"])
+    # floor: slab (wet concrete), joints, painted lines and bays, oil, puddles, debris
+    g.box(((HALL_X0 + HALL_X1) / 2, (HALL_F + HALL_B) / 2, -0.1), (HALL_X1 - HALL_X0 + 0.8, HALL_B - HALL_F + 0.9, 0.2), M["k_floor_hall"])
     x = HALL_X0 + 4
     while x < HALL_X1:
         g.box((x, (HALL_F + HALL_B) / 2, 0.002), (0.03, HALL_B - HALL_F, 0.004), M["concrete_dark"])
@@ -468,6 +479,8 @@ def build_hall(S, coll, M):
     for x in (HALL_X0 + 0.5, 38.0, HALL_X1 - 0.3):
         g.cyl((x, yo + 0.15, EAVE / 2), 0.08, EAVE, M["steel_mid"], n=10)
     trailer(g, M, 36.5, yo + 5.5)
+    # the dressing, zone by zone (warehouse_kit.hall_detail): services, steel, signs, stores, the office
+    K.hall_detail(S, g, M)
     return g.finish(coll)
 
 
