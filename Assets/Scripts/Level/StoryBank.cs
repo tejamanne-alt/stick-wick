@@ -72,6 +72,7 @@ namespace ProjectInk
             {
                 t2 += Time.unscaledDeltaTime;
                 float k = Mathf.SmoothStep(0f, 1f, t2 / 3f);
+                if (t2 > 0.9f && t2 - Time.unscaledDeltaTime <= 0.9f) Say("YOU", "The same mark as the key. This is the place.", 2.4f);
                 EndShot(Vector3.Lerp(new Vector3(-7f, 4.6f, 0.4f), new Vector3(-5.2f, 5.0f, 0.2f), k), new Vector3(0f, 5.3f, 0f), 34f);
                 yield return null;
             }
@@ -80,7 +81,11 @@ namespace ProjectInk
             Bell(3);
             if (guard != null) { guard.PuppetPose(new Vector3(-0.9f, 0f, 0.9f)); guard.SetFacing(-1); }
             Sound.PlayLater(Sfx.Latch, 1.6f, 0.8f, new Vector3(BankDoorX, 1f, 0f));
-            yield return Hold(3.2f, () => EndShot(new Vector3(-23.2f, 1.5f, -2.4f), new Vector3(-6f, 2.4f, 0.8f), 40f));
+            yield return Hold(1.2f, () => EndShot(new Vector3(-23.2f, 1.5f, -2.4f), new Vector3(-6f, 2.4f, 0.8f), 40f));
+            Say("YOU", "Nine o'clock. They're opening.", 2.0f);
+            yield return Hold(2.2f, () => EndShot(new Vector3(-23.2f, 1.5f, -2.4f), new Vector3(-6f, 2.4f, 0.8f), 40f));
+            Say("YOU", "If I've been here before... someone in there knows my face.", 2.8f);
+            yield return Hold(3.0f, () => EndShot(HeadC() + new Vector3(0.5f, 0.0f, -1.2f), HeadC(), 32f));
 
             // ------------------------------------------------------------ B4 play: walk to the doors
             if (guard != null) { guard.PuppetPose(new Vector3(1.8f, 0f, 1.4f)); guard.SetFacing(-1); }
@@ -170,6 +175,14 @@ namespace ProjectInk
                 yield return null;
             }
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f);
+            if (harrow != null) { harrow.SetFacing(-1); harrow.PuppetPlay("idle_loose", 0.2f); }
+            System.Action twoShot = () => EndShot(new Vector3(endX + 0.65f, 1.5f, -2.4f), new Vector3(endX + 0.65f, 1.35f, 0.3f), 36f);
+            Say("YOU", "How long has it been?", 1.8f);
+            yield return Hold(2.0f, twoShot);
+            Say("HARROW", "Eleven years, sir. Paid in cash. Twenty years in advance.", 3.0f, HeadT(harrow));
+            yield return Hold(3.2f, twoShot);
+            Say("YOU", "...Of course I did.", 1.8f);
+            yield return Hold(2.0f, twoShot);
 
             // ------------------------------------------------------------ B11 two keys; the long box comes out
             if (harrow != null)
@@ -258,7 +271,11 @@ namespace ProjectInk
             // ------------------------------------------------------------ B14 the passports: three names, one face
             bankUi = 2; bankUiAt = Time.unscaledTime;
             Sound.Play(Sfx.Cloth, 0.5f, null, 1.4f);
-            yield return Hold(3.6f, boxShot);
+            yield return Hold(1.8f, boxShot);
+            Say("YOU", "Three passports. Three names...", 2.2f);
+            yield return Hold(2.3f, boxShot);
+            Say("YOU", "...and every one of them is me.", 2.4f);
+            yield return Hold(2.6f, boxShot);
             bankUi = 0;
             Sound.Play(Sfx.Cloth, 0.4f, null, 1.2f);
 
@@ -267,7 +284,12 @@ namespace ProjectInk
             if (pouch != null) pouch.gameObject.SetActive(false);
             Sound.Play(Sfx.Glint, 0.8f);
             bankUi = 3; bankUiAt = Time.unscaledTime;
-            yield return Hold(2.8f, boxShot);
+            yield return Hold(1.2f, boxShot);
+            Say("YOU", "A ring. A wedding ring...", 2.2f);
+            yield return Hold(2.3f, boxShot);
+            Say("YOU", "\"E. — always.\" Who is E...?", 2.4f);
+            Sound.Play(Sfx.Heartbeat, 0.5f);
+            yield return Hold(2.6f, boxShot);
 
             // ------------------------------------------------------------ B16 the memory: their wedding, and her
             bankUi = 4; bankUiAt = Time.unscaledTime;
@@ -310,8 +332,12 @@ namespace ProjectInk
             Sound.Play(Sfx.Cloth, 0.7f, null, 1.5f);
             bankUi = 5; bankUiAt = Time.unscaledTime;
             yield return Hold(2.6f, boxShot);
+            Say("YOU", "Fourteen Alder Lane...", 2.0f);
+            yield return Hold(2.2f, boxShot);
+            Say("YOU", "She wrote this. She wanted me to find my way back.", 2.8f);
+            yield return Hold(3.0f, boxShot);
             Say("YOU", "...Home.", 2.0f);
-            yield return Hold(2.6f, boxShot);
+            yield return Hold(2.4f, boxShot);
             bankUi = 0;
             Sound.Play(Sfx.Cloth, 0.6f);
 
@@ -338,6 +364,7 @@ namespace ProjectInk
                 tx += Time.unscaledDeltaTime;
                 hero.CinePose(Vector3.Lerp(exit0, new Vector3(-6f, 0f, -0.6f), Mathf.SmoothStep(0f, 1f, tx / 4.5f)));
                 if (!engine && tx > 1.0f) { engine = true; Sound.Play(Sfx.Rotor, 0.25f, new Vector3(-6f, 0.6f, -26f), 0.35f); }
+                if (tx > 0.3f && tx - Time.unscaledDeltaTime <= 0.3f) Say("YOU", "Elena... I'm coming home.", 2.2f);
                 if (!door && tx > 2.6f) { door = true; Sound.Play(Sfx.Door, 0.5f, new Vector3(-6f, 1f, -26f), 1.2f); }
                 if (carDoor != null && tx > 2.6f) carDoor.localRotation = Quaternion.Euler(0f, -55f * Mathf.SmoothStep(0f, 1f, (tx - 2.6f) / 1.0f), 0f);
                 EndShot(new Vector3(-1.4f, 1.55f, 1.2f), Vector3.Lerp(hero.transform.position + Vector3.up * 1.2f, new Vector3(-6f, 1.0f, -26f), Mathf.SmoothStep(0f, 1f, (tx - 1.8f) / 2f)), 38f);

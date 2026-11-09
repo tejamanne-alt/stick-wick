@@ -1251,3 +1251,11 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - **Eight memories** (24 s): the rainy cafe where they met, the proposal on a bridge, the altar, the first dance, moving day at 14 Alder Lane, the floury kitchen, the sea at sundown, her face.
   - **Her lines** run across the montage (`MemoryLines`).
   - **Its own sound** (`memory_elena`): a piano waltz with a chord per memory and a string pad, over each memory's real sounds (rain, river, applause and bell, chimes, birds and keys and a door, the kitchen, the beach, her breath).
+- **The coat and the key, as a scene with his thoughts out loud** (`StoryEnding` beats 9–15, `MatchGUI`):
+  - "Who am I?"; he searches the hall.
+  - Lightning shows the coat. "...What's that?"
+  - He walks to it. "A coat... Blood on the collar. Mine." He lifts it: "It looks like mine." A flash cut: "It IS mine. They took it off me."
+  - "Let me check what I can find." The pockets: "Empty...", then a CAFE NOIR matchbook (the cafe on the bank's street), then "something in the lining".
+  - The key: "What is this...? A key. Too small for a door... It's a locker key. Meridian Trust. A bank."
+  - The decision: "Whoever I was... I locked something away there... Maybe the reason they want me dead. Then that's where I'm going."
+- **More of his lines through chapter 2:** at the mark, the street, Harrow ("Eleven years, sir. Paid in cash."), the passports, the ring ("Who is E...?"), the envelope, and walking out ("Elena... I'm coming home.").

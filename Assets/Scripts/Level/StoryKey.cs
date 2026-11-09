@@ -14,6 +14,37 @@ namespace ProjectInk
 
         void ShowKey(bool on) => keyUiTarget = on ? 1f : 0f;
 
+        float matchUi, matchUiTarget;
+        void ShowMatches(bool on) => matchUiTarget = on ? 1f : 0f;
+
+        /// <summary>A cafe's matchbook from his coat pocket: CAFE NOIR (the cafe on the bank's street,
+        /// chapter 2: he has been there before).</summary>
+        void MatchGUI(float w, float h)
+        {
+            matchUi = Mathf.MoveTowards(matchUi, matchUiTarget, Time.unscaledDeltaTime * 2.2f);
+            if (matchUi <= 0.001f) return;
+            float a = matchUi;
+            float bh = barsPx * (h / 720f);
+            float mh = Mathf.Min(h - bh * 2f - 120f, 260f), mw = mh * 0.62f;
+            var r = new Rect((w - mw) * 0.5f + Mathf.Sin(Time.unscaledTime * 0.8f) * 2f, (h - mh) * 0.5f - 10f, mw, mh);
+            Fill(new Rect(r.x - 3, r.y - 3, r.width + 6, r.height + 6), new Color(0f, 0f, 0f, 0.8f * a));
+            Fill(r, new Color(0.1f, 0.1f, 0.11f, a));
+            Fill(new Rect(r.x, r.y + mh * 0.82f, mw, mh * 0.18f), new Color(0.75f, 0.74f, 0.7f, a));       // the striker
+            for (int i = 0; i < 14; i++)
+                Fill(new Rect(r.x + 4 + i * (mw - 8) / 14f, r.y + mh * 0.85f, 2, mh * 0.12f), new Color(0.35f, 0.35f, 0.35f, a));
+            int capSize = cap.fontSize, bigSize = big.fontSize;
+            var capAlign = cap.alignment;
+            cap.alignment = TextAnchor.MiddleCenter;
+            big.fontSize = Mathf.RoundToInt(mh * 0.16f);
+            big.normal.textColor = new Color(0.9f, 0.9f, 0.88f, a);
+            GUI.Label(new Rect(r.x, r.y + mh * 0.22f, mw, mh * 0.2f), "CAFE", big);
+            GUI.Label(new Rect(r.x, r.y + mh * 0.4f, mw, mh * 0.2f), "NOIR", big);
+            cap.fontSize = Mathf.RoundToInt(mh * 0.05f);
+            cap.normal.textColor = new Color(0.6f, 0.6f, 0.58f, a);
+            GUI.Label(new Rect(r.x, r.y + mh * 0.62f, mw, mh * 0.08f), Spaced("OPEN LATE"), cap);
+            cap.fontSize = capSize; big.fontSize = bigSize; cap.alignment = capAlign;
+        }
+
         /// <summary>The bank's mark alone (a keyhole in a shield), pale on clear: for the tag and the stone.</summary>
         public static Texture2D BankMark(int n, Color ink)
         {

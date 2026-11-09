@@ -303,56 +303,127 @@ namespace ProjectInk
             }
             headYawOn = false;
 
-            // ---------------------------------------------------------------- 9 lightning: in the flash, his coat
+            // ================================================================ THE COAT, AND THE KEY
             // (the phone call that used to be here waits for a later chapter: docs/story/story_arc.md)
             float coatX = Mathf.Max(landX - 2.7f, 51.2f);
             var coat = BuildCoat(new Vector3(coatX, 0f, 0.75f));
-            yield return Hold(1.2f, wide);
+            System.Action faceShot = () => EndShot(HeadC() + new Vector3(-0.45f, 0.02f, -1.0f), HeadC() + Vector3.down * 0.1f, 30f);
+
+            // ---------------------------------------------------------------- 9 alone with it: what now?
+            yield return Hold(1.0f, wide);
+            Sound.Play(Sfx.Breath, 0.8f, null, 0.85f);
+            Say("YOU", "Who were you...? Who am I?", 2.4f);
+            yield return Hold(2.6f, faceShot);
+            // he looks round the empty hall, for anything
+            headYawOn = true;
+            float tl = 0f;
+            while (tl < 2.6f)
+            {
+                tl += Time.unscaledDeltaTime;
+                headYaw = Mathf.Sin(tl * 1.6f) * 34f * Mathf.Clamp01(tl / 0.5f) * Mathf.Clamp01((2.6f - tl) / 0.5f);
+                if (tl > 0.8f && tl - Time.unscaledDeltaTime <= 0.8f) Say("YOU", "There has to be something here. Anything.", 2.2f);
+                wide();
+                yield return null;
+            }
+            headYawOn = false;
+
+            // ---------------------------------------------------------------- 10 lightning: in the flash, a coat over the drums
             Lightning(1f, 0.9f, 0.5f);
             backGlow = 2.0f;
-            yield return Hold(0.5f, () => { backGlow = Mathf.MoveTowards(backGlow, 1f, Time.unscaledDeltaTime * 2f); wide(); });
+            yield return Hold(0.4f, () => { backGlow = Mathf.MoveTowards(backGlow, 1f, Time.unscaledDeltaTime * 2f); wide(); });
             ClearBacklight();
             if (boss != null) boss.SetBaseColor(boss.InkColor);
-            // insert: the coat on the drums, sodden, dark at the collar
             Sound.Play(Sfx.Drip, 0.6f);
-            yield return Hold(1.8f, () => EndShot(new Vector3(coatX - 0.9f, 0.45f, 0.1f), new Vector3(coatX, 0.75f, 0.75f), 34f));
-
-            // ---------------------------------------------------------------- 10 he goes to it and lifts it: he knows it
+            yield return Hold(1.6f, () => EndShot(new Vector3(coatX - 0.9f, 0.45f, 0.1f), new Vector3(coatX, 0.75f, 0.75f), 34f));   // insert: the coat
             hero.SetFacing(coatX < hero.transform.position.x ? -1 : 1);
+            Say("YOU", "...What's that?", 1.8f);
+            yield return Hold(1.9f, faceShot);
+
+            // ---------------------------------------------------------------- 11 he goes to it
             if (hero.body.Has("walk")) hero.body.Play("walk", 0.25f, true, 0.7f);
             float cx0 = hero.transform.position.x, tc = 0f, standAt = coatX + 0.75f;
-            while (tc < 2.2f)
+            while (tc < 2.4f)
             {
                 tc += Time.unscaledDeltaTime;
-                hero.CinePose(new Vector3(Mathf.Lerp(cx0, standAt, Mathf.SmoothStep(0f, 1f, tc / 2.1f)), 0f, 0f));
+                hero.CinePose(new Vector3(Mathf.Lerp(cx0, standAt, Mathf.SmoothStep(0f, 1f, tc / 2.3f)), 0f, 0f));
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.6f; Sound.Play(Sfx.Footstep, 0.6f, hero.transform.position, 0.8f); }
-                EndShot(new Vector3(coatX + 0.4f, 1.0f, -3.2f), new Vector3(coatX + 0.4f, 0.9f, 0.4f), 36f);
+                EndShot(new Vector3(coatX + 3.2f, 0.25f, -1.6f), hero.transform.position + Vector3.up * 0.9f, 40f);   // low, behind him
                 yield return null;
             }
             hero.SetFacing(-1);
+            if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f);
+            // it lies there: long, black, soaked, dark at the collar
+            Say("YOU", "A coat...", 1.6f);
+            yield return Hold(1.8f, () => EndShot(new Vector3(coatX + 0.2f, 1.25f, -0.7f), new Vector3(coatX, 0.75f, 0.75f), 32f));
+            Say("YOU", "Blood on the collar. Mine.", 2.2f);
+            Sound.Play(Sfx.Heartbeat, 0.5f);
+            yield return Hold(2.3f, () => EndShot(new Vector3(coatX - 0.3f, 1.0f, 0.1f), new Vector3(coatX + 0.12f, 0.93f, 0.93f), 26f));
+
+            // ---------------------------------------------------------------- 12 he lifts it; he knows it
             if (hero.body.Has("kneel_hold")) hero.body.Play("kneel_hold", 0.3f);
             Sound.Play(Sfx.Cloth, 1f);
-            yield return Hold(0.7f, () => EndShot(new Vector3(coatX + 0.3f, 0.8f, -2.4f), new Vector3(coatX, 0.6f, 0.5f), 34f));
+            yield return Hold(0.8f, () => EndShot(new Vector3(coatX + 0.3f, 0.8f, -2.4f), new Vector3(coatX, 0.6f, 0.5f), 34f));
             CarryCoat(coat);
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.4f);
-            // he knows it: a cut of it hanging by a door somewhere warm
+            Sound.Play(Sfx.Cloth, 0.7f, null, 0.9f);
+            Say("YOU", "It looks like mine.", 2.0f);
+            yield return Hold(2.2f, faceShot);
+            // a flash: the weight of it, his hands remember it
             Sound.Play(Sfx.FlashCut, 0.8f);
-            Sound.Play(Sfx.Heartbeat, 0.7f);
             flashFrames = 2;
-            yield return Hold(1.4f, () => EndShot(HeadC() + new Vector3(-0.35f, 0.0f, -1.1f), HeadC() + Vector3.down * 0.35f, 32f));
+            Sound.Play(Sfx.Heartbeat, 0.7f);
+            Say("YOU", "No... it IS mine. They took it off me before they dumped me here.", 3.2f);
+            yield return Hold(3.4f, faceShot);
 
-            // ---------------------------------------------------------------- 11 the inside pocket: a key
+            // ---------------------------------------------------------------- 13 let me see what's in it: the pockets
+            Say("YOU", "Let me check what I can find.", 2.0f);
+            yield return Hold(2.0f, faceShot);
+            System.Action pockets = () => EndShot(HeadC() + new Vector3(0.25f, -0.5f, -0.95f), HeadC() + Vector3.down * 0.6f, 30f);
+            Sound.Play(Sfx.Cloth, 0.8f, null, 1.1f);
+            yield return Hold(1.0f, pockets);
+            Say("YOU", "Empty...", 1.4f);
+            yield return Hold(1.4f, pockets);
+            Sound.Play(Sfx.Cloth, 0.8f, null, 1.25f);
+            yield return Hold(0.8f, pockets);
+            // a matchbook from a cafe
+            ShowMatches(true);
+            Sound.Play(Sfx.Cloth, 0.4f, null, 1.6f);
+            Say("YOU", "A matchbook. 'Cafe Noir'...", 2.2f);
+            yield return Hold(2.4f, pockets);
+            Say("YOU", "Means nothing to me.", 1.8f);
+            yield return Hold(1.8f, pockets);
+            ShowMatches(false);
+            yield return Hold(0.5f, pockets);
+            // the inside pocket: something small and cold
             Sound.Play(Sfx.Cloth, 0.8f, null, 1.2f);
-            Sound.Play(Sfx.KnifeGrab, 0.35f, null, 1.6f);                  // small metal in the lining
-            yield return Hold(1.0f, () => EndShot(HeadC() + new Vector3(0.2f, -0.45f, -0.9f), HeadC() + Vector3.down * 0.55f, 30f));
+            Sound.Play(Sfx.KnifeGrab, 0.35f, null, 1.6f);                  // metal in the lining
+            Say("YOU", "Wait. There's something in the lining...", 2.2f);
+            yield return Hold(2.4f, pockets);
+
+            // ---------------------------------------------------------------- 14 the key
             ShowKey(true);
             Sound.Play(Sfx.Piano, 0.5f);
             Sound.Play(Sfx.Heartbeat, 0.6f, null, 0.9f);
-            yield return Hold(1.6f, () => EndShot(HeadC() + new Vector3(0.2f, -0.45f, -0.9f), HeadC() + Vector3.down * 0.55f, 30f));
-            Say("YOU", "Meridian Trust...", 2.4f);
-            yield return Hold(3.0f, () => EndShot(HeadC() + new Vector3(0.2f, -0.45f, -0.9f), HeadC() + Vector3.down * 0.55f, 30f));
+            yield return Hold(1.4f, pockets);
+            Say("YOU", "What is this...?", 1.8f);
+            yield return Hold(2.0f, pockets);
+            Say("YOU", "A key. Too small for a door.", 2.2f);
+            yield return Hold(2.4f, pockets);
+            Say("YOU", "Safe deposit... box four-one-seven. It's a locker key.", 2.8f);
+            yield return Hold(3.0f, pockets);
+            Say("YOU", "Meridian Trust. A bank.", 2.2f);
+            yield return Hold(2.6f, pockets);
             ShowKey(false);
-            yield return Hold(0.7f, () => EndShot(HeadC() + new Vector3(0.2f, -0.2f, -1.2f), HeadC() + Vector3.down * 0.3f, 32f));
+
+            // ---------------------------------------------------------------- 15 the decision
+            Sound.Play(Sfx.Drone, 0.35f);
+            Say("YOU", "Whoever I was... I locked something away there.", 2.8f);
+            yield return Hold(3.0f, () => EndShot(HeadC() + new Vector3(0.6f, 0.05f, -1.4f), HeadC(), 32f));
+            Say("YOU", "Something worth hiding. Maybe the reason they want me dead.", 3.2f);
+            yield return Hold(3.4f, () => EndShot(HeadC() + new Vector3(0.45f, 0.0f, -1.1f), HeadC(), 28f));
+            Sound.Play(Sfx.Thunder, 0.5f);
+            Say("YOU", "Then that's where I'm going.", 2.4f);
+            yield return Hold(2.6f, () => EndShot(HeadC() + new Vector3(0.35f, -0.05f, -0.8f), HeadC(), 26f));
 
             // ---------------------------------------------------------------- 12 wide, high: small in the empty hall
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.8f);
@@ -828,6 +899,7 @@ namespace ProjectInk
         void EndingGUI(float w, float h)
         {
             PhoneGUI(w, h);
+            MatchGUI(w, h);
             KeyGUI(w, h);
             if (cardAt < 0f || phase == Phase.End) return;
             float t = Time.unscaledTime - cardAt;

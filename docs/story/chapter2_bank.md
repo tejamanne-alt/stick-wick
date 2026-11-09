@@ -10,14 +10,19 @@ The phone call is gone from here (see `story_arc.md`).
 
 | # | Shot | What happens | Sound |
 |---|---|---|---|
-| E1 | Wide, silhouette | He stands over the dead man, breathing. | Rain on the roof. |
-| E2 | Lightning: a white flash | In the flash he sees it: **a long black coat** thrown over the oil drums by the press. The crew took it off him when they dumped him. | Thunder. |
-| E3 | Insert, low | The coat on the drums, sodden, dark at the collar (his own blood). | A drip. |
-| E4 | He walks to it and lifts it | The weight of it in his hands. He knows it. A flash cut: the coat hanging by a door somewhere warm. | Flash-cut hit, heartbeat. |
-| E5 | Close, his hand in the inside pocket | Something small and cold: **a brass key on a leather tag.** | Keys, cloth. |
-| E6 | **The key, full screen** | The tag carries a bank's mark (a keyhole in a shield), **MERIDIAN TRUST · SAFE DEPOSIT · Nº 417**. **YOU** (a whisper): *"Meridian Trust..."* | Heartbeat slows. One piano note. |
-| E7 | From behind, wide | He folds the coat over his arm and walks out through the big door into the rain and the searchlight. | Thunder, rotor. |
-| E8 | Black | **CHAPTER 1 COMPLETE · THE HITMAN.** Memory restored: *"You kill people. You are good at it."* Then **CONTINUE → CHAPTER 2 · THE BANK**. | |
+| E1 | Wide, silhouette; then close on his face | He stands over the dead man. **YOU:** *"Who were you...? Who am I?"* | Rain on the roof, his breath. |
+| E2 | Wide; he looks round the empty hall | **YOU:** *"There has to be something here. Anything."* | |
+| E3 | **Lightning**, then an insert, low | In the flash: **a long black coat** over the oil drums by the press. | Thunder, a drip. |
+| E4 | Close, his face | **YOU:** *"...What's that?"* | |
+| E5 | Low, behind him | He walks to it. | Footsteps in water. |
+| E6 | Over the coat; then close on the collar | **YOU:** *"A coat..."* *"Blood on the collar. Mine."* | Heartbeat. |
+| E7 | He kneels and lifts it; close on his face | **YOU:** *"It looks like mine."* A flash cut: **YOU:** *"No... it IS mine. They took it off me before they dumped me here."* | Cloth, a flash-cut hit. |
+| E8 | Close, his hands at the pockets | **YOU:** *"Let me check what I can find."* The first pocket: *"Empty..."* The second: **a matchbook, CAFE NOIR · OPEN LATE** (full screen). *"A matchbook. 'Cafe Noir'... Means nothing to me."* (It is the cafe on the bank's street in chapter 2.) | Cloth, paper. |
+| E9 | The lining | **YOU:** *"Wait. There's something in the lining..."* | Metal in cloth. |
+| E10 | **The key, full screen** | **MERIDIAN TRUST · SAFE DEPOSIT · Nº 417**. **YOU:** *"What is this...?"* *"A key. Too small for a door."* *"Safe deposit... box four-one-seven. It's a locker key."* *"Meridian Trust. A bank."* | A piano note, heartbeat. |
+| E11 | Closer and closer on his face | **YOU:** *"Whoever I was... I locked something away there."* *"Something worth hiding. Maybe the reason they want me dead."* *"Then that's where I'm going."* | A drone, far thunder. |
+| E12 | From behind, wide | He folds the coat over his arm and walks out through the big door into the rain and the searchlight. | Thunder, rotor. |
+| E13 | Black | **CHAPTER 1 COMPLETE · THE HITMAN.** Memory restored: *"You kill people. You are good at it."* Then **CONTINUE → CHAPTER 2 · THE BANK**. | |
 
 ---
 
@@ -49,5 +54,7 @@ The phone call is gone from here (see `story_arc.md`).
 | B20 | **Play** | Walk out through the lobby. The clerk won't meet his eyes; the guard's hand rests on his holster. | |
 | B21 | Outside, wide | He comes down the steps into the white morning. Across the road a black car's door opens. Hold. | Engine idling. |
 | B22 | Black | **CHAPTER 2 COMPLETE · THE RING.** Memory restored: *"Her name was Elena. She was waiting for you."* Then **CHAPTER 3 · THE STREET · COMING SOON**. | |
+
+**More of his lines in chapter 2:** at the mark (*"The same mark as the key. This is the place."*), down the street (*"Nine o'clock. They're opening."* *"If I've been here before... someone in there knows my face."*), with Harrow at the vault (*"How long has it been?"* HARROW: *"Eleven years, sir. Paid in cash. Twenty years in advance."* *"...Of course I did."*), at the passports (*"Three passports. Three names... and every one of them is me."*), at the ring (*"A ring. A wedding ring... 'E. — always.' Who is E...?"*), at the envelope (*"Fourteen Alder Lane... She wrote this. She wanted me to find my way back. ...Home."*), and walking out (*"Elena... I'm coming home."*).
 
 **Names invented for the story:** the bank MERIDIAN TRUST; HARROW the manager; ELENA his wife; 14 ALDER LANE their home. Change any of them freely.
