@@ -213,7 +213,7 @@ namespace ProjectInk
                     if (!sameLevel || onStairs) { if (LevelNav.Active) NavTravel(dt, dx); else Travel(dt); break; }
                     LeaveStairsLane(dt);
                     FaceTowards(hero.transform.position.x);
-                    if (Boss && dist > 4f && dist < 13f && Time.time > nextSpecialAt && !hero.IsDead && Random.value < dt * 0.9f && AttackTokens.TryTake(this))
+                    if (Boss && !Driver && dist > 4f && dist < 13f && Time.time > nextSpecialAt && !hero.IsDead && Random.value < dt * 0.9f && AttackTokens.TryTake(this))
                     { HasToken = true; BeginCharge(dx); break; }
                     if (ContactFlank(dt, dx)) break;
                     if (dist > Ring + 0.3f) Walk(Mathf.Sign(dx));
@@ -227,7 +227,7 @@ namespace ProjectInk
                     else if (!Passive && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
                         HasToken = true;
-                        if (Boss && TryBossSpecial(dist, dx)) break;
+                        if (Boss && !Driver && TryBossSpecial(dist, dx)) break;
                         state = Ranged ? State.Windup : State.Advance;
                         stateTime = 0f;
                         if (Ranged) BeginWindup(); else body.Play("run", 0.08f, false, 1.1f);
@@ -270,6 +270,7 @@ namespace ProjectInk
                         chained = false;
                         ReleaseToken(); state = State.Recover; stateTime = 0f; body.Play(IdleClip, 0.12f);
                         if (Foreman && comboLeft == 1) recoverFor = 1.15f;           // the third swing missed: he is open
+                        if (Driver && attack.clip == "sword_c") recoverFor = 1.15f;      // the Driver's third swing: open too
                         comboLeft = 0;
                     }
                     break;
@@ -1494,7 +1495,7 @@ namespace ProjectInk
                 if (!Alive) Sound.Play(brute ? Sfx.BruteDeath : Sfx.EnemyDeath, 1f, Chest);
                 else Sound.Play(brute ? Sfx.BruteHurt : Sfx.EnemyHurt, 1f, Chest);
             }
-            if (Boss && !Foreman && !Enraged && !enragePending && Health <= maxHealth * 0.5f) enragePending = true;   // the Foreman's rage is StoryForeman's call
+            if (Boss && !Foreman && !Driver && !Enraged && !enragePending && Health <= maxHealth * 0.5f) enragePending = true;   // the Foreman's rage is StoryForeman's call
             if (armored)
             {
                 // charging, slamming or dazed: he takes it without flinching

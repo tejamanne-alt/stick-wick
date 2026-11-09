@@ -530,12 +530,8 @@ namespace ProjectInk
             }
             yield return Hold(2.0f, () => EndShot(new Vector3(-1.4f, 1.55f, 1.2f), new Vector3(-6f, 1.0f, -26f), 30f));
 
-            // ------------------------------------------------------------ B22 black: chapter complete
-            cardAt = Time.unscaledTime;
-            cardLine = "Her name was Elena. She was waiting for you.";
-            cardTitle = "THE RING";
-            yield return RealWait(6.0f);
-            phase = Phase.End;
+            // ------------------------------------------------------------ B22 the men get out of the car: on, into the street (the chapter goes on)
+            yield return OnToTheStreet();
         }
 
         /// <summary>TEST checkpoints: the bank as it is at that point of the story.</summary>

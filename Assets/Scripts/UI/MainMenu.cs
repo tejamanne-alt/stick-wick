@@ -132,6 +132,12 @@ namespace ProjectInk
             ("CHAPTER 2  ·  THE BANK", "The vault  ·  two keys", () => Ch2(2)),
             ("CHAPTER 2  ·  THE BANK", "The box  ·  passports, ring, memory", () => Ch2(3)),
             ("CHAPTER 2  ·  THE BANK", "Walk out", () => Ch2(4)),
+            ("CHAPTER 2  ·  THE STREET", "The box  ·  the men from the car", () => Street(0)),
+            ("CHAPTER 2  ·  THE STREET", "The market street", () => Street(1)),
+            ("CHAPTER 2  ·  THE STREET", "Under the railway  ·  the train", () => Street(2)),
+            ("CHAPTER 2  ·  THE STREET", "The crossroads", () => Street(3)),
+            ("CHAPTER 2  ·  THE STREET", "The Driver (the fight)", () => Street(4)),
+            ("CHAPTER 2  ·  THE STREET", "After the Driver  ·  \"We got there first\"", () => Street(5)),
         };
 
         static void Ch1(System.Action setUp)
@@ -154,10 +160,20 @@ namespace ProjectInk
             SceneManager.LoadScene("Story_Bank");
         }
 
+        static void Street(int at)
+        {
+            StoryIntro.NewRun();
+            StoryIntro.StreetFrom = at;
+            SceneManager.LoadScene("Story_Street");
+        }
+
         void TestPanel(float w, float h)
         {
-            float pw = Mathf.Min(760f, w - 40f), rowH = 34f;
-            int rows = Checkpoints.Length + 2;
+            int heads = 0;
+            string seen = null;
+            foreach (var c in Checkpoints) if (c.chapter != seen) { seen = c.chapter; heads++; }
+            int rows = Checkpoints.Length + heads;
+            float pw = Mathf.Min(760f, w - 40f), rowH = Mathf.Min(34f, (h - 90f) / rows);
             float ph = rows * rowH + 60f;
             var r = new Rect((w - pw) * 0.5f, Mathf.Max(10f, (h - ph) * 0.5f), pw, ph);
             Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.75f));

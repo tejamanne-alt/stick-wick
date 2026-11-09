@@ -614,7 +614,7 @@ namespace ProjectInk.EditorTools
         }
 
         /// <summary>A 200-litre drum standing on the floor: the body, three pale hoops, the lid.</summary>
-        static void Drum(Transform parent, Vector3 floor, Material body, Material hoop, Material lid)
+        internal static void Drum(Transform parent, Vector3 floor, Material body, Material hoop, Material lid)
         {
             const float r = OilDrum.Radius, h = OilDrum.Height;
             var root = new GameObject("OilDrum").transform;

@@ -1298,3 +1298,12 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - Flanking: two on the same side and one walks round (a step out of line) to the hero's other side.
 - Fear: below 30% health a man stands further off and waits longer.
 - The hero's hit reactions match the blow too. The Foreman's bare-handed phase can be parried (a shorter daze for him); his headbutt uses the real headbutt clip.
+
+## Chapter 2, part two: the street
+- A new set (`tools/blender/build_street_set.py`, baked): about 140 m of the morning-after street in the tower palette. MERIDIAN TRUST's columns and steps, Cafe Noir's terrace, a bus shelter, the market with its stalls and a scaffold, the elevated railway on its pillars, and the crossroads with a hotel, a side street, a phone box, a newsstand and a stalled bus. The Driver's car and a four-carriage train are separate objects the story moves. No rain: wet, reflective pavement and road, puddles, haze.
+- `StreetBuilder` builds `Story_Street` (wet sidewalk and road sharing one reflection, lamp cones under the railway, haze, dust, fruit crates and bins to kick). Added to Build All and the build settings; SceneVersion 41.
+- `StoryStreet`: the bank's last shot now fades straight into the street (the chapter goes on, with no card). The opening is "The box. Hand it over." / "It's empty... Come and look.", and the first swing slows down to teach the parry. Four zones of waves, a walking line, GO between zones. The train overhead strobes the light and startles every enemy (so they're dazed for context finishers) every 22–28 s.
+- THE DRIVER, the street's boss, in four phases: a boxer (guard, combinations, all parryable), a tire iron from the boot (three-swing strings, open after the third), the car (he drives along the pavement at you; swipe to DIVE CLEAR; it ends in the railway pillar), then bare hands and furious. His health bar marks the phase changes at 60% and 30%.
+- Finale: a fist in his collar, "Who sent you?" / "You'll find out at home. We got there first." / "...Elena.", then he runs north up the side street. CHAPTER 2 COMPLETE · THE RING; next, CHAPTER 3 · HOME.
+- New sounds: a train pass-by, car revs, car doors (from the Oculus audio pack).
+- Test checkpoints: the box, the market, the railway, the crossroads, the Driver, after the Driver. The test panel's rows now shrink to fit.

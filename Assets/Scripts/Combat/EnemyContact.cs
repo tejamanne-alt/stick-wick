@@ -24,7 +24,7 @@ namespace ProjectInk
         public bool CanBeHeld => Alive && !Boss && !Passive && Targetable && state != State.Scripted && !OnLedge;
         /// <summary>A punch the hero can knock aside: bare hands, coming now.</summary>
         public bool Parryable => Alive && !Armed && Type != EnemyType.Piper && !Ranged &&
-                                 (!Boss || (Foreman && Enraged && attack.clip != "grab_attack")) &&    // the Foreman, bare-handed
+                                 (!Boss || ((Foreman && Enraged) || (Driver && DriverPhase != 2)) && attack.clip != "grab_attack") &&   // bosses, bare-handed
                                  (state == State.Windup || state == State.Attack) && !feinting;
         /// <summary>Too big to lift until he is worn down.</summary>
         public bool TooHeavy => (Type == EnemyType.Brute || Type == EnemyType.Grabber) && HealthFraction > 0.4f && !Dazed;
@@ -105,6 +105,20 @@ namespace ProjectInk
             body.Play(body.Has("hit_chin") ? "hit_chin" : "hit_front", 0.03f);
         }
 
+        /// <summary>Something huge goes off near him (the train overhead): he flinches, out of it for a moment.</summary>
+        public void Startle(float seconds)
+        {
+            if (state == State.Scripted || state == State.Down || state == State.GetUp || state == State.Dead || !Alive) return;
+            ReleaseToken();
+            chain.Clear(); chained = false; feinting = false;
+            state = State.Hurt;
+            stateTime = 0f;
+            hurtFor = seconds;
+            dazedUntil = Time.time + seconds;
+            velocity.x = 0f;
+            body.Play(body.Has("block_high") ? "block_high" : "hit_front", 0.08f);
+        }
+
         /// <summary>The CONTACT hit reaction: the clip the blow asks for, held for its length.</summary>
         bool ContactReact(string react)
         {
@@ -132,14 +146,18 @@ namespace ProjectInk
         float lastTakenAt, flankCheckAt;
 
         bool flankParity;                                    // half of them are the kind who go round (set in ContactInit)
-        bool StoryBrain => hero != null && hero.Contact && !Ranged && !Boss;
+        bool StoryBrain => hero != null && hero.Contact && !Ranged && (!Boss || Driver);
+
+        /// <summary>Chapter 2's mini-boss, the black car's driver: I a boxer, II a tire iron, III bare-handed and furious.</summary>
+        public bool Driver;
+        public int DriverPhase = 1;
 
         void ContactInit()
         {
             AttackTokens.Max = hero != null && hero.Contact ? 3 : 2;      // story: three may come at once
             if (!StoryBrain) return;
             flankParity = Random.value < 0.5f;
-            ringDistance = Type == EnemyType.Runner ? Random.Range(1.5f, 2.1f) : Random.Range(1.4f, 2.2f);
+            ringDistance = Driver ? 2.0f : Type == EnemyType.Runner ? Random.Range(1.5f, 2.1f) : Random.Range(1.4f, 2.2f);
             walkSpeed *= 0.85f;
         }
 
@@ -153,6 +171,34 @@ namespace ProjectInk
             feinting = false;
             float r = Random.value;
             AttackData[] s;
+            if (Driver)
+            {
+                // I: a real boxer, guard up. II: the tire iron, three swings (step out of the third and he is open).
+                // III: bare hands again, furious: haymakers, the headbutt, a bear hug.
+                if (DriverPhase == 2)
+                {
+                    s = r < 0.7f ? new[] { AttackData.CrowbarA, AttackData.CrowbarB, AttackData.CrowbarC } : new[] { AttackData.CrowbarC };
+                    attack = s[0];
+                    for (int i = 1; i < s.Length; i++) chain.Enqueue(s[i]);
+                    body.Play("sword_idle", 0.08f);
+                    return true;
+                }
+                if (DriverPhase >= 3)
+                {
+                    if (r < 0.15f) { attack = AttackData.EnemyGrab; body.Play("windup", 0.08f); return true; }
+                    s = r < 0.4f ? new[] { AttackData.EHaymaker } : r < 0.6f ? new[] { AttackData.Headbutt } : r < 0.85f ? new[] { AttackData.EJab, AttackData.ECross, AttackData.EHaymaker } : new[] { AttackData.ELowKick, AttackData.EHook };
+                }
+                else
+                {
+                    s = r < 0.3f ? new[] { AttackData.EJab, AttackData.ECross, AttackData.EHook } : r < 0.55f ? new[] { AttackData.EJab, AttackData.EJab, AttackData.ECross }
+                      : r < 0.75f ? new[] { AttackData.ELowKick, AttackData.EHook } : new[] { AttackData.EHaymaker };
+                    feinting = Random.value < 0.2f;
+                }
+                attack = s[0];
+                for (int i = 1; i < s.Length; i++) chain.Enqueue(s[i]);
+                body.Play("windup", 0.08f);
+                return true;
+            }
             switch (Type)
             {
                 case EnemyType.Runner:
@@ -234,7 +280,8 @@ namespace ProjectInk
                 if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, repeat ? "HE READ IT: MIX IT UP" : "SLIPPED");
                 return true;
             }
-            float chance = Type == EnemyType.DoorMan ? 0.4f : Type == EnemyType.Grabber ? 0.3f : Type == EnemyType.Runner ? 0.1f : 0.22f;
+            float chance = Driver ? (DriverPhase == 1 ? 0.45f : DriverPhase == 2 ? 0.2f : 0f)
+                         : Type == EnemyType.DoorMan ? 0.4f : Type == EnemyType.Grabber ? 0.3f : Type == EnemyType.Runner ? 0.1f : 0.22f;
             if (repeat) chance += 0.45f;
             if (Random.value >= chance) { guardHits = 0; return false; }
             guardHits++;
@@ -252,7 +299,7 @@ namespace ProjectInk
         /// <summary>Two men on the same side: one works round to the hero's other side.</summary>
         bool ContactFlank(float dt, float dx)
         {
-            if (!StoryBrain) return false;
+            if (!StoryBrain || Driver) return false;
             if (Time.time > flankCheckAt)
             {
                 flankCheckAt = Time.time + 1.2f;
@@ -281,6 +328,33 @@ namespace ProjectInk
         }
 
         /// <summary>Hurt badly, he hangs back further and waits longer.</summary>
-        float FearRing => StoryBrain && HealthFraction < 0.3f ? 0.9f : 0f;
+        float FearRing => StoryBrain && !Driver && HealthFraction < 0.3f ? 0.9f : 0f;
+
+        /// <summary>Make this (a freshly spawned brute) the Driver: a man's size, a boxer's guard.</summary>
+        public void MakeDriver(float health)
+        {
+            Driver = true;
+            DriverPhase = 1;
+            transform.localScale = Vector3.one * 1.12f;
+            walkSpeed = 2.3f;
+            windupSeconds = 0.42f;
+            DamageScale = 1.25f;
+            SetMaxHealth(health);
+            ShowIron(false);
+            ContactInit();
+        }
+
+        /// <summary>The Driver's tire iron: in his hand from phase II (the pipe the boss spawned with).</summary>
+        public void ShowIron(bool on)
+        {
+            foreach (var t in GetComponentsInChildren<Transform>(true))
+                if (t.name == "Pipe") { t.gameObject.SetActive(on); break; }
+        }
+
+        /// <summary>Hidden in the car (phase III's charge), then back out of it.</summary>
+        public void Hide(bool hidden)
+        {
+            foreach (var r in GetComponentsInChildren<Renderer>(true)) r.enabled = !hidden;
+        }
     }
 }

@@ -14,7 +14,13 @@
 | | At the counter | `BankFrom = 1`: the doors open, the guard at his post, the hero at the teller's window. |
 | | The vault · two keys | `BankFrom = 2`: Harrow beside him at the vault. |
 | | The box | `BankFrom = 3`: the box on the viewing table (passports, ring, memory, envelope). |
-| | Walk out | `BankFrom = 4`: the ring on, back through the lobby. |
+| | Walk out | `BankFrom = 4`: the ring on, back through the lobby. The bank's last shot fades straight into the street. |
+| 2 · The Street | The box | `StreetFrom = 0`: the opening outside the bank (the car's four, "The box. Hand it over."), then S1. |
+| | The market street | `StreetFrom = 1`: S2, a second crew from both ends. |
+| | Under the railway | `StreetFrom = 2`: S3; the train comes over within a couple of seconds. |
+| | The crossroads | `StreetFrom = 3`: S4's last wave, then the Driver arrives. |
+| | **The Driver (the fight)** | `StreetFrom = 4`: his car screeches in; all four of his phases (boxer, tire iron, the car charge, bare hands). |
+| | **After the Driver** | `StreetFrom = 5`: straight to the interrogation and the end of chapter 2. |
 
 **For every new chapter:** add its checkpoints here and to `MainMenu.Checkpoints`. At least: its start, each fight zone, its boss fight, its ending after the boss, and every story beat worth replaying on its own. The entry points live in `StoryTest.cs` (and a `TestState` per chapter, like the bank's).
 

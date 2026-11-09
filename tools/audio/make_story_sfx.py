@@ -700,6 +700,29 @@ def phone_click():
         save("phone_click", x, take, peak=0.5)
 
 
+def train_pass():
+    """The elevated train going over: the long roar of a pass-by, heavy under the deck."""
+    x = oc("TRNElec_TrainPassby_OS_01", 6.0, 14.0)
+    x = mix((x, 1.0, 0.0), (lp(x, 180, 2), 0.5, 0.0))           # the deck booms with it
+    x *= np.minimum(1, t(len(x) / SR) / 1.5) * np.minimum(1, (len(x) / SR - t(len(x) / SR)) / 2.0)
+    save("train_pass", room(x, 1.8, 0.3, 0.02, 3000), 1, peak=0.85)
+
+
+def car_rev():
+    """The black car: the engine caught, revved hard, then the run at him."""
+    a = oc("VEHCar_CarStartRunStop_OS_01", 0.0, 4.5)
+    b = oc("VEHCar_CarEngineHigh_LOOP_01")
+    save("car_rev", a, 1, peak=0.8)
+    save("car_rev", mix((b, 1.0, 0.0), (b, 0.8, len(b) / SR - 0.05)), 2, peak=0.8)
+
+
+def car_door():
+    """Car doors opening, slamming, the boot."""
+    save("car_door", oc("VEHDoor_CarDoorOpen_OS_01"), 1, peak=0.7)
+    save("car_door", oc("VEHDoor_CarDoorClose_OS_01"), 2, peak=0.8)
+    save("car_door", oc("VEHDoor_CarTrunkClose_OS_01"), 3, peak=0.8)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--oculus", default="/home/user/facebookincubator/meta-open-sound/corpora/oculus-audio-pack/ogg")
@@ -711,6 +734,6 @@ if __name__ == "__main__":
     for name in ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", "static",
                  "whispers", "drone", "latch", "wind", "rotor", "piano",
                  "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click", "gunshot_indoor", "gun_draw", "gun_cock", "shell_casing",
-                 "gun_drop_water", "struggle", "death_breath", "memory_elena"):
+                 "gun_drop_water", "struggle", "death_breath", "memory_elena", "train_pass", "car_rev", "car_door"):
         clear(name)
         globals()[name]()

@@ -21,6 +21,7 @@ namespace ProjectInk
         Chain, BodySplash, Crawl, Glint, KnifeGrab, FlashCut, PhoneBuzz, PhoneClick,
         GunshotIndoor, GunDraw, GunCock, ShellCasing, GunDropWater, Struggle, DeathBreath,
         MemoryElena,
+        TrainPass, CarRev, CarDoor,
     }
 
     /// <summary>The mixer. Plays recorded takes with no immediate repeats, small pitch and

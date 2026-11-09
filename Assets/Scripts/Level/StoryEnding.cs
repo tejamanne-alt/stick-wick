@@ -917,7 +917,7 @@ namespace ProjectInk
             Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, a));
             float ta = Mathf.Clamp01((t - 0.8f) / 0.8f);
             big.normal.textColor = new Color(1f, 1f, 1f, ta);
-            GUI.Label(new Rect(0, h * 0.36f, w, 90), Spaced(chapter == 2 ? "CHAPTER 2 COMPLETE" : "CHAPTER 1 COMPLETE"), big);
+            GUI.Label(new Rect(0, h * 0.36f, w, 90), Spaced(chapter >= 2 ? "CHAPTER 2 COMPLETE" : "CHAPTER 1 COMPLETE"), big);
             Fill(new Rect(w * 0.5f - 140 * ta, h * 0.36f + 86, 280 * ta, 3), new Color(0.8f, 0.06f, 0.07f, ta));
             float ca = Mathf.Clamp01((t - 1.8f) / 0.8f);
             cap.alignment = TextAnchor.MiddleCenter;
