@@ -155,16 +155,18 @@ namespace ProjectInk
             hero.SetFacing(1);
             barsPx = 92f;
             Sound.Play(Sfx.Crickets, 0.5f);
-            if (from >= 3) AttachRibbon();
+            ParkCast();
+            if (from >= 2) AttachRibbon();
             if (from <= 0)
             {
-                // ------------------------------------------------ Y1 black: the title, crickets, a swing creaking
+                // ================================================ ACT 1 · FIND HER
+                // ------------------------------------------------ 4.0 black: the title, crickets, a swing creaking
                 blackout = 1f;
                 parkTitleAt = Time.unscaledTime;
                 parkSwingFrom = Time.unscaledTime;
                 Sound.PlayLater(Sfx.SwingCreak, 0.8f, 0.6f);
                 yield return RealWait(3.4f);
-                // ------------------------------------------------ Y2 the small footprints across the lawn: a truck, low, beside him
+                // ------------------------------------------------ 4.1 the small footprints across the wet lawn: a truck, low, beside him
                 hero.CinePose(new Vector3(2.2f, 0f, 0f));
                 hero.body.Play("walk", 0.2f, true, 0.8f);
                 StartCoroutine(FadeIn(1.0f));
@@ -173,88 +175,138 @@ namespace ProjectInk
                     {
                         hero.CinePose(new Vector3(Mathf.Lerp(2.2f, 8.2f, u), 0f, 0f));
                         if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.55f; Sound.Play(Sfx.Footstep, 0.25f, hero.transform.position, 0.8f); }
+                        if (u > 0.5f && u - Time.unscaledDeltaTime / 4.2f <= 0.5f) Say("YOU", "Small steps. Running.", 2.2f);
                     });
                 CineOff();
                 yield return PlayerWalk(ParkPlan.RibbonX - 0.9f, 7.5f, 1.6f, Application.isMobilePlatform ? "HOLD TO FOLLOW THEM" : "HOLD  D  TO FOLLOW THEM");
             }
             if (from <= 1)
             {
-                // ------------------------------------------------ Y3 the swing stops; under it, her ribbon: the crane comes down to it
+                // ------------------------------------------------ 4.2 the swing stops; under it, her ribbon: a crane down. He pulls it free.
                 if (from == 1) { hero.CinePose(new Vector3(ParkPlan.RibbonX - 0.9f, 0f, 0f)); yield return FadeIn(0.5f); }
                 hero.CinePuppet();
                 parkSwingFrom = -1f;
                 if (hero.body.Has("kneel_hand")) hero.body.Play("kneel_hand", 0.4f);
                 var rib = ribbonProp.position;
                 yield return Move(3.6f, u => CineCam.CraneDown(rib + Vector3.up * 0.1f, u, 3.2f, 0.5f, 1.6f, 40f));
-                yield return WaitTap("HER RIBBON", Application.isMobilePlatform ? "TAP" : "TAP  /  CLICK", () => Cine(CineCam.CraneDown(rib + Vector3.up * 0.1f, 1f, 3.2f, 0.5f, 1.6f, 40f)));
+                Say("YOU", "...Her ribbon.", 2.0f);
+                StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () => Cine(CineCam.CraneDown(rib + Vector3.up * 0.1f, 1f, 3.2f, 0.5f, 1.6f, 40f))));
+                yield return DragTo("PULL IT FREE", Vector2.up, p => { if (ribbonProp != null) ribbonProp.position = rib + Vector3.up * 0.25f * p; }, rib);
                 ribbonAt = Time.unscaledTime;
                 Sound.Play(Sfx.MusicNote, 0.8f);
                 yield return RealWait(3.4f);
                 ribbonAt = -1f;
-                // ------------------------------------------------ Y4 how she was taken: broken stills
-                takenAt = Time.unscaledTime;
-                Sound.Play(Sfx.Static, 0.6f);
-                float tt = 0f;
-                bool cry = false, door = false;
-                while (tt < 7.4f)
-                {
-                    tt += Time.unscaledDeltaTime;
-                    if (!cry && tt > 3.6f) { cry = true; Say("MAYA", "PAPA!", 2.0f); Sound.Play(Sfx.Static, 0.6f); Buzz(); }
-                    if (!door && tt > 5.8f) { door = true; Sound.Play(Sfx.CarDoor, 1f, null, 0.8f); }
-                    yield return null;
-                }
-                takenAt = -1f;
                 if (ribbonProp != null) ribbonProp.gameObject.SetActive(false);
+                // ------------------------------------------------ 4.3 a crackle in his coat: the walkie from her shelf
+                var face = HeroHead();
+                System.Action closeOn = () => Cine(new CineCam.Shot(HeroHead() + new Vector3(0.75f, -0.05f, -1.0f), HeroHead(), 30f));
+                yield return Hold(1.0f, closeOn);
+                Sound.Play(Sfx.Static, 0.6f, hero.Chest, 1.5f);
+                yield return Hold(0.8f, closeOn);
+                yield return WalkieLine("...Papa? Is that you? Over.", 2.6f, closeOn);
+                hero.body.Play("idle", 0.3f);
+                HoldWalkie(true);
+                // ------------------------------------------------ 4.4 he answers: an extreme close on the walkie at his mouth
+                System.Action atMouth = () => Cine(new CineCam.Shot(HeroHead() + new Vector3(0.45f, -0.12f, -0.55f), HeroHead() + Vector3.down * 0.12f, 26f));
+                StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, atMouth));
+                yield return HoldTo("HOLD TO TALK", 1.2f, null);
+                Sound.Play(Sfx.Static, 0.3f, null, 2f);
+                Say("YOU", "Maya. It's me. It's Papa.", 2.4f);
+                yield return Hold(2.6f, atMouth);
+                yield return WalkieLine("Papa!", 1.4f, closeOn);
+                yield return WalkieLine("I knew you'd answer. Mama said you always answer.", 3.2f, closeOn);
+                // ------------------------------------------------ 4.5 her story, in her words, over the stills
+                yield return MayaStory();
+                // ------------------------------------------------ 4.6 the ribbon round his wrist as he listens
+                AttachRibbon();
+                Sound.Play(Sfx.Cloth, 0.6f, hero.Chest);
+                System.Action wrist = () => Cine(new CineCam.Shot((wristBand != null ? wristBand.position : hero.Chest) + new Vector3(0.1f, 0.25f, -0.6f), wristBand != null ? wristBand.position : hero.Chest, 26f));
+                Say("YOU", "That was so clever, sweetheart.", 2.2f);
+                yield return Hold(2.4f, wrist);
+                StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, atMouth));
+                yield return ChooseFrom("\"Are you hurt?\"", "\"Where are you now?\"", "\"I'm coming for you.\"");
+                if (chosen == 0)
+                {
+                    Say("YOU", "Are you hurt?", 1.6f);
+                    yield return Hold(1.8f, atMouth);
+                    yield return WalkieLine("My knee. I was brave. I didn't cry... a lot.", 3.0f, closeOn);
+                    Say("YOU", "Where are you now?", 1.8f);
+                    yield return Hold(2.0f, atMouth);
+                }
+                else if (chosen == 1)
+                {
+                    Say("YOU", "Where are you now?", 1.8f);
+                    yield return Hold(2.0f, atMouth);
+                }
+                else
+                {
+                    Say("YOU", "I'm coming for you. Where are you?", 2.4f);
+                    yield return Hold(2.6f, atMouth);
+                }
+                yield return WalkieLine("In a van. It smells like petrol. I can see the swings through the little window...", 3.8f, closeOn);
+                yield return WalkieLine("...and I can see you!", 2.0f, closeOn);
+                // ------------------------------------------------ 4.7 he looks up. The reverse, down the whole dark park, on a long lens: the van, her face
+                if (vanMaya != null) vanMaya.gameObject.SetActive(true);
+                if (vanWindow != null) vanWindow.gameObject.SetActive(true);
+                Sound.Play(Sfx.Heartbeat, 0.8f);
+                var vw = VanWindow();
+                yield return Move(2.6f, u => CineCam.DollyZoom(vw, u, 30f, 22f, 4.0f), null);
+                Say("YOU", "I see you.", 1.8f);
+                yield return Hold(2.0f, () => Cine(CineCam.DollyZoom(vw, 1f, 30f, 22f, 4.0f)));
+                Say("YOU", "Stay down. Keep the walkie hidden. Papa's coming.", 3.0f);
+                yield return Hold(3.2f, atMouth);
+                Say("VOICE, IN THE VAN", "Who are you talking to? Give me that!", 2.4f);
+                Sound.Play(Sfx.Static, 0.7f, null, 1.2f);
+                yield return Hold(1.4f, closeOn);
+                if (vanLights != null) vanLights.gameObject.SetActive(true);
+                Sound.Play(Sfx.CarRev, 0.7f, new Vector3(ParkPlan.VanX, 1f, ParkPlan.VanZ));
+                yield return Hold(1.4f, () => Cine(CineCam.DollyZoom(vw, 1f, 30f, 22f, 4.0f)));
+                HoldWalkie(false);
+                if (vanMaya != null) vanMaya.gameObject.SetActive(false);
             }
             if (from <= 2)
             {
-                // ------------------------------------------------ Y5 the promise: the ribbon round his wrist; an arc round him, the house behind
+                // ================================================ ACT 2 · REACH HER
+                // ------------------------------------------------ 4.8 torches over the fence: a pan to them
                 if (from == 2) { hero.CinePose(new Vector3(ParkPlan.RibbonX - 0.9f, 0f, 0f)); yield return FadeIn(0.5f); }
                 hero.CinePuppet();
-                AttachRibbon();
-                hero.body.Play(hero.body.Has("kneel_hand") ? "kneel_hand" : "idle", 0.3f);
-                Sound.Play(Sfx.MemoryMaya, 0.45f);
-                var him = hero.transform.position + Vector3.up * 0.75f;
-                bool said1 = false, said2 = false, stood = false;
-                yield return Move(9.0f, u => CineCam.ArcShot(him, u, 2.4f, 40f, -50f, 0.15f, 36f),
-                    u =>
-                    {
-                        if (!said1 && u > 0.12f) { said1 = true; Say("YOU", "I will find you, wherever you are in the world, and bring you back.", 4.0f); }
-                        if (!said2 && u > 0.6f) { said2 = true; Say("YOU", "Trust me, my sweetheart.", 3.0f); }
-                        if (!stood && u > 0.82f) { stood = true; hero.body.Play("idle", 0.5f); }
-                    });
-                // ------------------------------------------------ Y6 torches through the fence slats: a pan to them
-                var fence = new Vector3(34f, 1.0f, 0.4f);
+                hero.body.Play("idle", 0.3f);
+                var fence = new Vector3(PZ1(0) - 1f, 1.0f, 0.4f);
                 Sound.Play(Sfx.Door, 0.6f, fence, 0.7f);
                 Sound.Play(Sfx.Footstep, 0.7f, fence);
                 yield return Move(2.0f, u => CineCam.Pan(new Vector3(ParkPlan.RibbonX - 2.6f, 1.4f, -3.4f), HeroHead(), fence, u, 40f));
-                Say("VOICE, BY THE FENCE", "There! He's in the garden!", 2.4f);
-                yield return Hold(1.4f, () => Cine(CineCam.Pan(new Vector3(ParkPlan.RibbonX - 2.6f, 1.4f, -3.4f), HeroHead(), fence, 1f, 40f)));
+                Say("THUG", "There he is! Take the book. Break his legs.", 2.6f);
+                yield return Hold(1.8f, () => Cine(CineCam.Pan(new Vector3(ParkPlan.RibbonX - 2.6f, 1.4f, -3.4f), HeroHead(), fence, 1f, 40f)));
             }
             if (from <= 3)
             {
-                // ------------------------------------------------ Y7-Y9 the fight, out through the park
-                int start = from == 3 && BackyardCheckpoint >= 0 && BackyardCheckpoint < 4 ? BackyardCheckpoint : 0;
+                // ------------------------------------------------ 4.9 the fight out through the park, the van always at the far end
+                int start = from == 3 && BackyardCheckpoint >= 0 && BackyardCheckpoint < 3 ? BackyardCheckpoint : 0;
                 if (from == 3) yield return FadeIn(0.4f);
+                if (vanLights != null) vanLights.gameObject.SetActive(true);
                 StartParkZone(start, from == 3);
-                while (pZone < 3 || !pClear) yield return null;
+                while (pZone < 2 || !pClear) yield return null;
+                // ================================================ ACT 3 · LOSE HER
+                yield return PlayerWalk(PZ0(3) + 2.5f, PZ0(2) + 1f, 3.2f, Application.isMobilePlatform ? "HOLD TO RUN" : "HOLD  D  TO RUN");
+                yield return LoseHer();
             }
             if (from <= 4)
             {
-                // ------------------------------------------------ Y10-Y11 THE HANDLER
-                if (from == 4) { StartParkZone(3, true); pClear = true; parkMen.Clear(); yield return FadeIn(0.4f); }
+                // ------------------------------------------------ 4.12-4.13 THE HANDLER
+                if (from == 4) { pZone = 3; SetArena(PZ0(3) + 0.6f, PZ1(3) - 0.6f); parkMen.Clear(); if (van != null) van.gameObject.SetActive(false); hero.CinePose(new Vector3(PZ0(3) + 4f, 0f, 0f)); yield return FadeIn(0.4f); }
                 yield return HandlerArrives();
                 while (handlerStage < 5) yield return null;
             }
-            // ---------------------------------------------------- Y12 the address
+            // ---------------------------------------------------- 4.14 the address
             if (from == 5)
             {
+                if (van != null) van.gameObject.SetActive(false);
                 SpawnHandler(new Vector3(ParkPlan.VanX - 3.4f, 0f, 0.6f));
                 yield return FadeIn(0.3f);
             }
             if (from <= 5) yield return TheAddress();
-            else { hero.CinePose(new Vector3(112f, 0f, 0f)); yield return FadeIn(0.4f); }
-            // ---------------------------------------------------- Y13-Y15 the hill
+            else { hero.CinePose(new Vector3(ParkPlan.VanX - 4f, 0f, 0f)); yield return FadeIn(0.4f); }
+            // ---------------------------------------------------- 4.15 the hill
             yield return TheHill();
         }
 
@@ -331,18 +383,18 @@ namespace ProjectInk
                         {
                             pClear = true;
                             Sound.Play(Sfx.WaveClear, 0.6f);
-                            if (pZone < 3)
+                            StartCoroutine(BetweenStretches(pZone));
+                            if (pZone < 2)
                             {
                                 SetArena(PZ0(pZone) + 0.6f, PZ1(pZone + 1) - 0.6f);
                                 if (director != null) director.ShowBanner("CLEAR", 1.2f);
                                 pGoUntil = Time.unscaledTime + 30f;
-                                if (pZone == 0) Say("YOU", "They came this way. With her.", 2.6f);
                             }
                         }
                     }
                 }
             }
-            else if (pZone < 3 && hero.transform.position.x > PZ0(pZone + 1) + 1.4f) StartParkZone(pZone + 1, false);
+            else if (pZone < 2 && hero.transform.position.x > PZ0(pZone + 1) + 1.4f) StartParkZone(pZone + 1, false);
         }
 
         // ================================================================ THE HANDLER
@@ -354,6 +406,7 @@ namespace ProjectInk
             handler = director != null ? director.SpawnScripted(EnemyType.Brute, SpawnKind.RightDoor) : null;
             if (handler == null) return;
             handler.MakeHandler(handler.maxHealth * 0.8f);
+            Dress(handler.body, Look.Handler);
             handler.Puppet();
             handler.PuppetPose(at);
             handler.SetFacing(-1);
@@ -368,14 +421,17 @@ namespace ProjectInk
             SetArena(PZ0(3) + 0.6f, PZ1(3) - 0.6f);
             SpawnHandler(new Vector3(ParkPlan.VanX - 3.0f, 0f, 1.8f));
             if (handler == null) { handlerStage = 5; yield break; }
-            if (vanDoors != null) Sound.Play(Sfx.CarDoor, 1f, vanDoors.position);
+            // slow clapping behind him
+            for (int i = 0; i < 5; i++) Sound.PlayLater(Sfx.PunchLight, 0.2f + i * 0.55f, 0.35f, new Vector3(ParkPlan.VanX - 3f, 1.2f, 1.8f));
             handler.PuppetPlay("walk", 0.2f, 0.75f);
             var h0 = handler.transform.position;
             yield return Move(3.4f, u => CineCam.LowAngleArc(handler.transform.position + Vector3.up * 1.2f, u, 3.6f, -60f, 0f, 36f),
                 u => handler.PuppetPose(Vector3.Lerp(h0, new Vector3(ParkPlan.VanX - 6.5f, 0f, 0f), u)));
             handler.PuppetPlay("idle", 0.2f);
-            Say("THE HANDLER", "She bit me, your girl. Kicked all the way to the van.", 3.4f, HeadOf(handler));
-            yield return Hold(3.4f, () => Cine(CineCam.LowAngleArc(handler.transform.position + Vector3.up * 1.2f, 1f, 3.6f, -60f, 0f, 36f)));
+            Say("THE HANDLER", "Close. So close. You always did cut it fine.", 2.8f, HeadOf(handler));
+            yield return Hold(2.8f, () => Cine(CineCam.LowAngleArc(handler.transform.position + Vector3.up * 1.2f, 1f, 3.6f, -60f, 0f, 36f)));
+            Say("THE HANDLER", "I set up your jobs for ten years. Now I get the book. And the son's chair.", 3.6f, HeadOf(handler));
+            yield return Hold(3.6f, () => Cine(CineCam.LowAngleArc(handler.transform.position + Vector3.up * 1.2f, 1f, 3.6f, -60f, 0f, 36f)));
             if (director != null) director.ShowBanner("THE HANDLER", 2.6f);
             Sound.Play(Sfx.CineMassive, 0.7f);
             yield return Hold(1.0f, () => Cine(CineCam.DollyIn(HeroHead(), new Vector3(1f, -0.1f, 0.8f), 1f, 2.6f, 1.6f, 34f)));
@@ -400,7 +456,7 @@ namespace ProjectInk
                 handler.HandlerKnuckles();
                 Sound.Play(Sfx.MetalClang, 0.6f, handler.Chest, 1.4f);
                 ShowStreetBanner("II  ·  THE KNUCKLES");
-                Say("THE HANDLER", "Let's do this properly.", 1.8f, HeadOf(handler));
+                Say("THE HANDLER", "Ten years I made you look good! You owe me a thank you!", 2.8f, HeadOf(handler));
             }
             else if (handlerStage == 2 && hp <= 0.3f)
             {
@@ -437,18 +493,28 @@ namespace ProjectInk
             var two = at + new Vector3(-0.5f, 0.8f, 0f);
             // held, wide: the two of them against the van
             yield return Hold(1.4f, () => Cine(new CineCam.Shot(two + new Vector3(-0.2f, 0.4f, -3.8f), two, 34f)));
-            Say("YOU", "Where is she?", 2.0f);
+            Say("YOU", "Where's the van going?", 2.0f);
             yield return Hold(2.2f, () => Cine(new CineCam.Shot(two + new Vector3(-0.2f, 0.4f, -3.8f), two, 34f)));
-            Say("THE HANDLER", "...Kessel Hill. The old fort. The boss's place.", 3.2f, hh);
+            Say("THE HANDLER", "...Kessel Hill. The old fort, with the observatory.", 3.2f, hh);
             yield return Move(3.4f, u => CineCam.DollyIn(hHead(), new Vector3(-1f, -0.15f, 0.7f), u, 2.6f, 1.4f, 32f));
-            Say("YOU", "Who's the boss?", 2.0f);
-            yield return Hold(2.2f, () => Cine(new CineCam.Shot(HeroHead() + new Vector3(1.4f, 0.1f, -1.1f), HeroHead(), 32f)));
-            Say("THE HANDLER", "You'd know him. He knows you. He said you'd come.", 3.6f, hh);
+            Say("THE HANDLER", "He won't hurt her. He wants you back. Don't you get it?", 3.2f, hh);
+            yield return Hold(3.4f, () => Cine(CineCam.DollyIn(hHead(), new Vector3(-1f, -0.15f, 0.7f), 1f, 2.6f, 1.4f, 32f)));
+            Say("THE HANDLER", "He pulled you off the street at nineteen. You were more his son than Silas ever was...", 4.0f, hh);
+            yield return Hold(4.2f, () => Cine(CineCam.DollyIn(hHead(), new Vector3(-1f, -0.15f, 0.7f), 1f, 2.6f, 1.4f, 32f)));
+            Say("THE HANDLER", "...and you just killed Silas.", 2.4f, hh);
             Sound.Play(Sfx.Heartbeat, 0.8f);
-            yield return Hold(3.8f, () => Cine(CineCam.DollyIn(hHead(), new Vector3(-1f, -0.15f, 0.7f), 1f, 2.6f, 1.4f, 32f)));
+            yield return Hold(2.6f, () => Cine(new CineCam.Shot(HeroHead() + new Vector3(1.4f, 0.1f, -1.1f), HeroHead(), 32f)));
+            Say("YOU", "I'm not his son.", 2.0f);
+            yield return Hold(2.2f, () => Cine(new CineCam.Shot(HeroHead() + new Vector3(1.1f, 0.05f, -0.95f), HeroHead(), 30f)));
+            Say("YOU", "I'm hers.", 2.0f);
+            yield return Hold(2.4f, () => Cine(new CineCam.Shot(HeroHead() + new Vector3(0.9f, 0.0f, -0.8f), HeroHead(), 28f)));
             // he lets go; the man slumps against the van
             if (handler != null) handler.PuppetPlay(handler.body.Has("lie_up") ? "lie_up" : "lie", 0.3f);
             Sound.Play(Sfx.BodyFall, 0.7f, at);
+            // his car keys, off the man's belt
+            Sound.Play(Sfx.KnifeGrab, 0.5f, at, 1.6f);
+            Say("YOU", "Your car. I'm borrowing it.", 2.2f);
+            yield return Hold(2.4f, () => Cine(new CineCam.Shot(HeroHead() + new Vector3(1.0f, 0.05f, -1.0f), HeroHead(), 30f)));
         }
 
         // ================================================================ the hill
@@ -463,7 +529,8 @@ namespace ProjectInk
             var wrist = wristBand != null ? wristBand.position : hero.transform.position + Vector3.up * 0.9f;
             var camAt = hero.transform.position + new Vector3(-1.6f, 1.1f, -1.6f);
             yield return Move(5.0f, u => CineCam.TiltUp(camAt, wrist, ParkPlan.Fortress, u, Mathf.Lerp(34f, 26f, u)));
-            yield return Hold(1.8f, () => Cine(CineCam.TiltUp(camAt, wrist, ParkPlan.Fortress, 1f, 26f)));
+            Say("YOU", "I'm coming, sweetheart.", 2.4f);
+            yield return Hold(2.6f, () => Cine(CineCam.TiltUp(camAt, wrist, ParkPlan.Fortress, 1f, 26f)));
             // he walks out of the car park towards it; the camera pulls away and up
             hero.body.Play("walk", 0.25f, true, 0.9f);
             var w0 = hero.transform.position;
@@ -481,6 +548,7 @@ namespace ProjectInk
 
         void ParkGUI(float w, float h)
         {
+            BackyardV2GUI(w, h);
             if (phase == Phase.Park && pClear && pZone < 3 && handlerStage == 0 && Time.unscaledTime < pGoUntil)
             {
                 float a = 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 5f);
