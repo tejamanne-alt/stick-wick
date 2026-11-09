@@ -16,3 +16,5 @@
 docs/previews/_frame.png
 __pycache__/
 tools/mocap/bvh/
+Assets/Art/*/_shot.png
+Assets/Art/*/_shot.png.meta
