@@ -661,6 +661,41 @@
       "hitFrame": -1
     },
     {
+      "name": "sit_bound",
+      "frames": 48,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "sit_shock",
+      "frames": 12,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "sit_slump",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "hold_cord",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "kneel_hand",
+      "frames": 48,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
       "name": "idle",
       "frames": 35,
       "fps": 30,

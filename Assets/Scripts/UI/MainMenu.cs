@@ -144,6 +144,13 @@ namespace ProjectInk
             ("CHAPTER 2  ·  THE STREET", "The crossroads", () => Street(3)),
             ("CHAPTER 2  ·  THE STREET", "The Driver (the fight)", () => Street(4)),
             ("CHAPTER 2  ·  THE STREET", "After the Driver  ·  \"We got there first\"", () => Street(5)),
+            ("CHAPTER 3  ·  HOME", "Alder Lane  ·  the arrival", () => Home(0)),
+            ("CHAPTER 3  ·  HOME", "The study  ·  the photo, Maya", () => Home(1)),
+            ("CHAPTER 3  ·  HOME", "The kitchen  ·  Elena", () => Home(2)),
+            ("CHAPTER 3  ·  HOME", "The house fight (rage)", () => Home(3)),
+            ("CHAPTER 3  ·  HOME", "The Cleaner (the fight)", () => Home(4)),
+            ("CHAPTER 3  ·  HOME", "The kitchen chair", () => Home(5)),
+            ("CHAPTER 3  ·  HOME", "The footprints  ·  the garden", () => Home(6)),
         };
 
         static void Ch1(System.Action setUp)
@@ -164,6 +171,13 @@ namespace ProjectInk
             StoryIntro.NewRun();
             StoryIntro.BankFrom = at;
             SceneManager.LoadScene("Story_Bank");
+        }
+
+        static void Home(int at)
+        {
+            StoryIntro.NewRun();
+            StoryIntro.HomeFrom = at;
+            SceneManager.LoadScene("Story_Home");
         }
 
         static void Street(int at)

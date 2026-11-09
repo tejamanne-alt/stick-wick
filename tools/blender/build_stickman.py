@@ -947,6 +947,29 @@ CONTACT_CLIPS = {
 }
 CLIPS.update(CONTACT_CLIPS)
 
+# ---------------------------------------------------------------- chapter 3: home
+SIT_BOUND = pose(STRAIGHT, spine=176, chest=170, head=150, upperarm_L=-28, forearm_L=8, upperarm_R=-32, forearm_R=4,
+                 thigh_L=88, shin_L=2, thigh_R=92, shin_R=-2, dz=-0.34)          # on a kitchen chair, hands tied behind
+SIT_JOLT = pose(SIT_BOUND, spine=194, chest=206, head=222, upperarm_L=-52, upperarm_R=-56, thigh_L=96, shin_L=30, thigh_R=100, shin_R=24)
+HOME_CLIPS = {
+    "sit_bound": dict(frames=48, loop=True, hit=None, keys=[
+        (0, SIT_BOUND), (24, pose(SIT_BOUND, head=146, chest=168)), (48, SIT_BOUND)]),
+    "sit_shock": dict(frames=12, loop=True, hit=None, keys=[                   # the current through him
+        (0, SIT_JOLT), (3, pose(SIT_JOLT, spine=190, head=214, chest=200)), (6, SIT_JOLT),
+        (9, pose(SIT_JOLT, spine=192, head=218, upperarm_L=-46)), (12, SIT_JOLT)]),
+    "sit_slump": dict(frames=30, loop=False, hit=None, keys=[                   # it stops: his head drops
+        (0, SIT_JOLT), (10, pose(SIT_BOUND, head=140, chest=164)), (30, pose(SIT_BOUND, spine=168, chest=150, head=118))]),
+    "hold_cord": dict(frames=40, loop=True, hit=None, keys=[                    # the stripped flex in his hand, held out
+        (0, pose(LOOSE, upperarm_R=62, forearm_R=84, hand_R=84, upperarm_L=10, forearm_L=30, head=172)),
+        (20, pose(LOOSE, upperarm_R=64, forearm_R=86, hand_R=86, upperarm_L=10, forearm_L=30, head=170, chest=174)),
+        (40, pose(LOOSE, upperarm_R=62, forearm_R=84, hand_R=84, upperarm_L=10, forearm_L=30, head=172))]),
+    "kneel_hand": dict(frames=48, loop=True, hit=None, keys=[                   # on one knee by her, holding her hand
+        (0, pose(KNEEL, chest=150, head=128, upperarm_R=36, forearm_R=18, upperarm_L=60, forearm_L=40)),
+        (24, pose(KNEEL, chest=148, head=124, upperarm_R=36, forearm_R=18, upperarm_L=62, forearm_L=42)),
+        (48, pose(KNEEL, chest=150, head=128, upperarm_R=36, forearm_R=18, upperarm_L=60, forearm_L=40))]),
+}
+CLIPS.update(HOME_CLIPS)
+
 
 # ---------------------------------------------------------------- build
 def reset_scene():

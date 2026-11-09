@@ -1,4 +1,4 @@
-# Chapter 3: HOME (design, for review)
+# Chapter 3: HOME
 
 14 Alder Lane, the same day, late afternoon going to dusk. It's dry: a low sun and long shadows through the windows, still in the game's black and white (the tower palette). The red is kept for the chapter's rage.
 
@@ -41,8 +41,9 @@
 - **New sounds:** a music box, a creaking floorboard, a dripping tap, an electric buzz, a fridge hum, a swing's creak.
 - **Test checkpoints:** the street (arrival), the study (photo and memory), the kitchen (Elena), the house fight (rooms 1–4), the Cleaner, the interrogation, and the footprints.
 
-## Choices to confirm
-1. The daughter's name: **Maya** (6).
-2. How Elena died: shot at the back door after getting Maya out (the white flash only, nothing shown).
-3. The Cleaner's line *"You taught me this"*: a first hint that the hero trained these men (the antagonist's world is his old one).
-4. How far to take the interrogation: staged with restraint (light, sound, silhouette), not graphic.
+## Confirmed and built
+- Maya (6). Elena shot at the back door after getting Maya out: only the white flash is shown. The Cleaner's *"You taught me this"*. The interrogation is staged with restraint: light, sound, silhouette.
+- **Set:** `tools/blender/build_home_set.py` (baked). **Scene:** `Story_Home` (`Editor/HomeBuilder.cs`). **Story:** `Level/StoryHome.cs`.
+- **Stills:** `tools/blender/render_maya.py` (6 memories `maya_*`, 3 broken stills `elena_*`). **Sounds:** `memory_maya` (the music box), `music_note`, `creak`, `buzz`, `fridge_hum`, `swing_creak`.
+- **Camera:** each shot's move is chosen for its beat (docs/story/camera_language.md).
+- **Built differently from the plan:** the Cleaner's three phases are I · the knife (parry the stab; clinch him when he's dazed to take the knife), II · the choke (a rear hold: break it with taps; the screen narrows), III · anything (wild, red). The house fight runs right to left: kitchen, living room (the glass table), the hall (they come down the stairs), then up the stairs to the landing.

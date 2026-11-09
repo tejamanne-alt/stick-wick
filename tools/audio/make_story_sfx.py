@@ -723,6 +723,116 @@ def car_door():
     save("car_door", oc("VEHDoor_CarTrunkClose_OS_01"), 3, peak=0.8)
 
 
+MAYA_SECONDS = [2.8, 2.6, 2.6, 2.6, 2.6, 3.4]    # render_maya.py and StoryHome.MayaDur use the same
+
+
+def box_note(f, dur=1.6, vel=1.0):
+    """One tine of a music box: a bright pluck, metallic overtones, a long soft ring."""
+    x = t(dur)
+    e = np.exp(-x / 0.55) * np.minimum(1.0, x / 0.002)
+    tone = (np.sin(2 * np.pi * f * x) + 0.35 * np.sin(2 * np.pi * f * 2.0 * x) * np.exp(-x / 0.2)
+            + 0.18 * np.sin(2 * np.pi * f * 3.98 * x) * np.exp(-x / 0.08) + 0.08 * np.sin(2 * np.pi * f * 6.1 * x) * np.exp(-x / 0.04))
+    return tone * e * vel * (1 + 0.04 * np.sin(2 * np.pi * 5.5 * x))
+
+
+def memory_maya():
+    """Maya's theme: a music-box lullaby (original), slow, in E major, one phrase per memory, the
+    last one resolving and left ringing; a soft string pad under it."""
+    L = int(sum(MAYA_SECONDS) * SR)
+    out = np.zeros(L + int(2.0 * SR))
+    hz = lambda n: 440.0 * 2 ** ((n - 69) / 12)
+    # (beat, midi) per phrase; a beat is 0.43 s; each phrase sits in its memory's window
+    phrases = [
+        [(0, 76), (1, 80), (2, 83), (3, 81), (4, 80)],
+        [(0, 78), (1, 81), (2, 85), (3.5, 83)],
+        [(0, 76), (1, 80), (2, 83), (2.5, 88), (3.5, 85)],
+        [(0, 81), (1, 80), (2, 78), (3, 76)],
+        [(0, 73), (1, 76), (2, 80), (3, 81), (4, 83)],
+        [(0, 85), (1, 83), (2, 80), (3, 78), (4.5, 76), (4.5, 68), (4.5, 71)],
+    ]
+    start = 0.0
+    for i, ph in enumerate(phrases):
+        for b, n in ph:
+            k = int((start + 0.15 + b * 0.43) * SR)
+            note = box_note(hz(n), 2.2 if i == 5 else 1.5, 0.8 if n > 70 else 0.5)
+            out[k:k + len(note)] += note[:max(0, len(out) - k)]
+        start += MAYA_SECONDS[i]
+    # a soft pad: the chords under it
+    x = t(len(out) / SR)
+    chords = [(64, 68, 71), (66, 69, 73), (64, 68, 71), (69, 73, 76), (61, 64, 68), (64, 68, 71)]
+    pad = np.zeros(len(out))
+    start = 0.0
+    for i, ch in enumerate(chords):
+        a, b = int(start * SR), int((start + MAYA_SECONDS[i] + 0.6) * SR)
+        b = min(b, len(out))
+        seg = x[a:b] - x[a]
+        env_ = np.minimum(1, seg / 0.6) * np.minimum(1, (seg[-1] - seg + 1e-3) / 0.6)
+        for n in ch:
+            f = hz(n - 12)
+            pad[a:b] += (np.sin(2 * np.pi * f * seg) + 0.3 * np.sin(2 * np.pi * f * 2 * seg)) * env_ * 0.06
+        start += MAYA_SECONDS[i]
+    pad = lp(pad, 1800, 2)
+    y = out + pad
+    y = room(y, 2.4, 0.28, 0.02, 5000)
+    save("memory_maya", pad_to(y, L + int(1.5 * SR)), 1, peak=0.8)
+
+
+def music_note():
+    """A single music-box note: the photo, her room."""
+    for take, n in ((1, 83), (2, 88), (3, 80)):
+        f = 440.0 * 2 ** ((n - 69) / 12)
+        save("music_note", room(box_note(f, 2.4), 2.2, 0.3, 0.02, 5000), take, peak=0.6)
+
+
+def creak():
+    """A floorboard upstairs: stick-slip friction, a slow groan of wood."""
+    for take in (1, 2, 3):
+        dur = rng.uniform(0.6, 1.1)
+        x = t(dur)
+        rate = rng.uniform(28, 55) * (1 + 0.5 * np.sin(np.pi * x / dur))
+        ph = np.cumsum(rate) / SR
+        pulses = np.exp(-((ph % 1.0) / 0.08)) * np.sin(np.pi * x / dur) ** 0.7
+        noise = rng.standard_normal(len(x))
+        y = bp(pulses * (0.5 + 0.5 * noise), 180, 1400, 2)
+        save("creak", room(y, 1.4, 0.25, 0.02, 2500), take, peak=0.7)
+
+
+def buzz():
+    """The lamp flex at the socket: mains hum, crackle, a hard fizz."""
+    dur = 1.4
+    x = t(dur)
+    hum = sum(np.sin(2 * np.pi * 50 * k * x) / k for k in (1, 2, 3, 5, 7))
+    crack = (rng.random(len(x)) < 0.002) * rng.standard_normal(len(x)) * 6
+    fizz = hp(rng.standard_normal(len(x)), 3000, 2) * (0.5 + 0.5 * np.sin(2 * np.pi * 9 * x))
+    y = np.tanh(1.8 * (hum * 0.4 + lp(crack, 6000, 2) + fizz * 0.25)) * np.minimum(1, x / 0.01) * np.minimum(1, (dur - x) / 0.08)
+    save("buzz", y, 1, peak=0.75)
+
+
+def fridge_hum():
+    """The kitchen at rest: a fridge's low hum, its compressor ticking."""
+    dur = 5.0
+    x = t(dur)
+    y = 0.6 * np.sin(2 * np.pi * 60 * x) + 0.25 * np.sin(2 * np.pi * 120 * x) + 0.08 * lp(rng.standard_normal(len(x)), 400, 2)
+    y *= 0.85 + 0.15 * np.sin(2 * np.pi * 0.3 * x)
+    y *= np.minimum(1, x / 0.6) * np.minimum(1, (dur - x) / 0.6)
+    save("fridge_hum", y, 1, peak=0.35)
+
+
+def swing_creak():
+    """An empty swing still moving: the chains' squeak at each end of the arc."""
+    dur = 3.2
+    x = t(dur)
+    y = np.zeros(len(x))
+    for k, at in enumerate((0.2, 1.0, 1.8, 2.6)):
+        a = int(at * SR)
+        n = int(0.32 * SR)
+        tt = np.arange(n) / SR
+        f = 620 + 260 * np.sin(np.pi * tt / 0.32) + (40 if k % 2 else 0)
+        sq = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.sin(np.pi * tt / 0.32) ** 2 * (0.9 - 0.15 * k)
+        y[a:a + n] += sq + 0.2 * bp(rng.standard_normal(n), 1500, 4000, 2) * np.sin(np.pi * tt / 0.32)
+    save("swing_creak", room(y, 1.6, 0.3, 0.03, 4000), 1, peak=0.55)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--oculus", default="/home/user/facebookincubator/meta-open-sound/corpora/oculus-audio-pack/ogg")
@@ -734,6 +844,7 @@ if __name__ == "__main__":
     for name in ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", "static",
                  "whispers", "drone", "latch", "wind", "rotor", "piano",
                  "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click", "gunshot_indoor", "gun_draw", "gun_cock", "shell_casing",
-                 "gun_drop_water", "struggle", "death_breath", "memory_elena", "train_pass", "car_rev", "car_door"):
+                 "gun_drop_water", "struggle", "death_breath", "memory_elena", "train_pass", "car_rev", "car_door",
+                 "memory_maya", "music_note", "creak", "buzz", "fridge_hum", "swing_creak"):
         clear(name)
         globals()[name]()

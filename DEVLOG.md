@@ -1307,3 +1307,11 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - Finale: a fist in his collar, "Who sent you?" / "You'll find out at home. We got there first." / "...Elena.", then he runs north up the side street. CHAPTER 2 COMPLETE · THE RING; next, CHAPTER 3 · HOME.
 - New sounds: a train pass-by, car revs, car doors (from the Oculus audio pack).
 - Test checkpoints: the box, the market, the railway, the crossroads, the Driver, after the Driver. The test panel's rows now shrink to fit.
+
+## Chapter 3: HOME
+- A camera language for the cutscenes (`CineCam`): fifteen moves (orbit, arc, pull-away, truck, roll, pan, crane, dolly zoom, tilt, dolly in and out, overhead rotation, pedestal, low arc, lateral reveal), each chosen for what its beat means, with held frames where stillness is better (docs/story/camera_language.md). The camera director gained a scripted up direction for true overheads.
+- The house (`build_home_set.py`, baked): Alder Lane at dusk, No. 14 cut away side-on over two floors (the hall and stairs, study, living room, kitchen; the landing, Maya's room, the bedroom), the garden and the play area. It has its chalk drawing, the black car, a small raincoat, Maya's fairy lights and drawings, and a low sun through the back windows.
+- Maya's memories (`render_maya.py`): a child figure in Elena's figure language (her bob and pigtails, the ribbon). Six soft stills and three broken ones of how Elena died. Her own music-box theme, and new sounds: creaks, a buzz, a fridge hum, a swing.
+- `StoryHome`, H1–H22: the arrival, the car, the chalk ("...Three."), the photo ("...I have a daughter."), the memory, Elena in the kitchen, the broken flash, the voice upstairs, RAGE (red edges, heavier blows, enemies hang back), four rooms of fighting right to left and up the stairs, Maya's room, THE CLEANER (knife / choke / anything, with a disarm), the kitchen chair (restrained: light, sound, silhouette), the small footprints, the moving swing. CHAPTER 3 COMPLETE · THE DAUGHTER.
+- New props: the glass coffee table a man goes through, the kitchen chair, the bulb, the footprints. New rig poses: seated and bound, the shock, the slump, holding the cord, kneeling to hold her hand.
+- The street's end card now continues to chapter 3. Test checkpoints for every beat. SceneVersion 42.

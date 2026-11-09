@@ -207,9 +207,27 @@ namespace ProjectInk
 
         // ------------------------------------------------------------------ the clinch
 
+        /// <summary>The hero's rage (chapter 3): his blows land 25% harder.</summary>
+        public static float RageScale = 1f;
+
         bool TryClinch(Enemy e, int dir)
         {
             if (e == null || !e.CanBeHeld) return false;
+            if (e.Cleaner && e.HasKnife)
+            {
+                // the knife hand: take hold of the wrist, twist, and it is gone
+                SetFacing(dir);
+                state = State.Attack;
+                stateTime = 0f;
+                currentAttack = new AttackData { clip = "catch_kick", damage = 0, reach = 1f };
+                hitDone = true;
+                body.Play(body.Has("catch_kick") ? "catch_kick" : "parry", 0.04f, true, 1.3f);
+                e.Disarm(dir);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(150, "DISARMED!");
+                if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.35f, 0.4f, 0.02f, 0.2f);
+                Tell("disarm");
+                return true;
+            }
             SetFacing(dir);
             velocity = Vector3.zero;
             running = false;
@@ -355,8 +373,8 @@ namespace ProjectInk
         void GrappleImpact()
         {
             var foe = clinchFoe;
-            bool killing = foe.Health <= grapple.damage;
-            foe.HeldDamage(grapple.damage);
+            bool killing = foe.Health <= grapple.damage * RageScale;
+            foe.HeldDamage(grapple.damage * RageScale);
             if (!string.IsNullOrEmpty(grapple.react)) foe.HeldPlay(grapple.react, 0.03f);
             if (grapple.clip == "clinch_knee") clinchKnees++;
             attackDir = Facing;

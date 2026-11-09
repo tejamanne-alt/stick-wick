@@ -21,10 +21,10 @@ namespace ProjectInk
         public bool Held => heldBy != null && state == State.Scripted;
         public float HealthFraction => maxHealth > 0f ? Health / maxHealth : 0f;
         /// <summary>A man the hero can take hold of: on his feet, not a boss, not mid-cutscene.</summary>
-        public bool CanBeHeld => Alive && !Boss && !Passive && Targetable && state != State.Scripted && !OnLedge;
+        public bool CanBeHeld => Alive && (!Boss || (Cleaner && Dazed)) && !Passive && Targetable && state != State.Scripted && !OnLedge;
         /// <summary>A punch the hero can knock aside: bare hands, coming now.</summary>
         public bool Parryable => Alive && !Armed && Type != EnemyType.Piper && !Ranged &&
-                                 (!Boss || ((Foreman && Enraged) || (Driver && DriverPhase != 2)) && attack.clip != "grab_attack") &&   // bosses, bare-handed
+                                 (!Boss || ((Foreman && Enraged) || (Driver && DriverPhase != 2) || Cleaner) && attack.clip != "grab_attack") &&   // bosses, bare-handed (or the Cleaner's stab)
                                  (state == State.Windup || state == State.Attack) && !feinting;
         /// <summary>Too big to lift until he is worn down.</summary>
         public bool TooHeavy => (Type == EnemyType.Brute || Type == EnemyType.Grabber) && HealthFraction > 0.4f && !Dazed;
@@ -146,7 +146,15 @@ namespace ProjectInk
         float lastTakenAt, flankCheckAt;
 
         bool flankParity;                                    // half of them are the kind who go round (set in ContactInit)
-        bool StoryBrain => hero != null && hero.Contact && !Ranged && (!Boss || Driver);
+        bool StoryBrain => hero != null && hero.Contact && !Ranged && (!Boss || Driver || Cleaner);
+
+        /// <summary>Chapter 3's boss, the man who did it: I a knife, II the choke, III anything to hand.</summary>
+        public bool Cleaner;
+        public int CleanerPhase = 1;
+        public bool HasKnife { get; private set; }
+        Transform knife;
+        /// <summary>The hero's rage (chapter 3): every man of them stands further off and hesitates.</summary>
+        public static bool RageFear;
 
         /// <summary>Chapter 2's mini-boss, the black car's driver: I a boxer, II a tire iron, III bare-handed and furious.</summary>
         public bool Driver;
@@ -171,6 +179,24 @@ namespace ProjectInk
             feinting = false;
             float r = Random.value;
             AttackData[] s;
+            if (Cleaner)
+            {
+                // I: the knife, quick stabs and slashes (parry the stab). II: the choke, he wants you from
+                // behind. III: anything, wild.
+                if (CleanerPhase == 1 && HasKnife)
+                    s = r < 0.4f ? new[] { Stab, Stab } : r < 0.75f ? new[] { Slash, Stab } : new[] { Stab, Slash, Stab };
+                else if (CleanerPhase <= 2)
+                {
+                    if (r < 0.45f) { attack = AttackData.EnemyGrab; body.Play("windup", 0.08f); return true; }
+                    s = r < 0.75f ? new[] { AttackData.EJab, AttackData.ECross } : new[] { AttackData.ELowKick, AttackData.EHook };
+                }
+                else
+                    s = r < 0.3f ? new[] { AttackData.EHaymaker } : r < 0.55f ? new[] { AttackData.Headbutt } : r < 0.8f ? new[] { AttackData.EElbow, AttackData.EHaymaker } : new[] { AttackData.ELunge, AttackData.EHook };
+                attack = s[0];
+                for (int i = 1; i < s.Length; i++) chain.Enqueue(s[i]);
+                body.Play("windup", 0.08f);
+                return true;
+            }
             if (Driver)
             {
                 // I: a real boxer, guard up. II: the tire iron, three swings (step out of the third and he is open).
@@ -280,7 +306,7 @@ namespace ProjectInk
                 if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, repeat ? "HE READ IT: MIX IT UP" : "SLIPPED");
                 return true;
             }
-            float chance = Driver ? (DriverPhase == 1 ? 0.45f : DriverPhase == 2 ? 0.2f : 0f)
+            float chance = Cleaner ? (CleanerPhase == 1 ? 0.3f : CleanerPhase == 2 ? 0.25f : 0f) : Driver ? (DriverPhase == 1 ? 0.45f : DriverPhase == 2 ? 0.2f : 0f)
                          : Type == EnemyType.DoorMan ? 0.4f : Type == EnemyType.Grabber ? 0.3f : Type == EnemyType.Runner ? 0.1f : 0.22f;
             if (repeat) chance += 0.45f;
             if (Random.value >= chance) { guardHits = 0; return false; }
@@ -328,7 +354,53 @@ namespace ProjectInk
         }
 
         /// <summary>Hurt badly, he hangs back further and waits longer.</summary>
-        float FearRing => StoryBrain && !Driver && HealthFraction < 0.3f ? 0.9f : 0f;
+        float FearRing => StoryBrain && !Driver && !Cleaner ? (HealthFraction < 0.3f ? 0.9f : 0f) + (RageFear ? 0.6f : 0f) : 0f;
+
+        static readonly AttackData Stab = new AttackData { clip = "jab", damage = 13, reach = 1.05f, knockback = 2f, hitStopFrames = 4, shake = 0.1f, react = "hit_body" };
+        static readonly AttackData Slash = new AttackData { clip = "lead_hook", damage = 11, reach = 1.0f, knockback = 2f, hitStopFrames = 4, shake = 0.1f, react = "hit_chin" };
+
+        /// <summary>Make this (a freshly spawned brute) the Cleaner: a man's size, a knife in his hand.</summary>
+        public void MakeCleaner(float health)
+        {
+            Cleaner = true;
+            CleanerPhase = 1;
+            transform.localScale = Vector3.one * 1.05f;
+            walkSpeed = 2.5f;
+            windupSeconds = 0.38f;
+            DamageScale = 1.2f;
+            SetMaxHealth(health);
+            ShowIron(false);
+            var hand = body != null ? body.Bone("hand.R") : null;
+            if (hand != null)
+            {
+                var k = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Destroy(k.GetComponent<Collider>());
+                k.name = "Knife";
+                k.transform.SetParent(hand, false);
+                k.transform.localPosition = new Vector3(0f, 0.12f, 0f);
+                k.transform.localScale = new Vector3(0.025f, 0.24f, 0.05f);
+                var mr = k.GetComponent<Renderer>();
+                mr.material = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.86f, 0.87f, 0.9f) };
+                knife = k.transform;
+            }
+            HasKnife = true;
+            ContactInit();
+        }
+
+        /// <summary>The knife taken off him (a clinch on him dazed): it clatters away.</summary>
+        public void Disarm(int dir)
+        {
+            if (!HasKnife) return;
+            HasKnife = false;
+            if (knife != null)
+            {
+                knife.SetParent(null, true);
+                var fall = knife.gameObject.AddComponent<ShieldFall>();
+                fall.velocity = new Vector3(dir * 3f, 4f, 0f);
+            }
+            Sound.Play(Sfx.Knife, 1f, Chest);
+            if (CleanerPhase == 1) CleanerPhase = 2;
+        }
 
         /// <summary>Make this (a freshly spawned brute) the Driver: a man's size, a boxer's guard.</summary>
         public void MakeDriver(float health)

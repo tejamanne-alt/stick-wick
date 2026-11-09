@@ -21,6 +21,13 @@
 | | The crossroads | `StreetFrom = 3`: S4's last wave, then the Driver arrives. |
 | | **The Driver (the fight)** | `StreetFrom = 4`: his car screeches in; all four of his phases (boxer, tire iron, the car charge, bare hands). |
 | | **After the Driver** | `StreetFrom = 5`: straight to the interrogation and the end of chapter 2. |
+| 3 · Home | Alder Lane | `HomeFrom = 0`: the title, the street at dusk, the car, the chalk, the door. |
+| | The study | `HomeFrom = 1`: the desk, the photo, Maya's memory. |
+| | The kitchen | `HomeFrom = 2`: Elena; the broken memory; the voice upstairs; the rage. |
+| | The house fight | `HomeFrom = 3`: the kitchen → living room → hall → up the stairs → the landing, then Maya's room. |
+| | **The Cleaner** | `HomeFrom = 4`: the bedroom; his three phases (knife, choke, anything). |
+| | **The kitchen chair** | `HomeFrom = 5`: the interrogation. |
+| | The footprints | `HomeFrom = 6`: the footprints, the garden, the end of chapter 3. |
 
 **For every new chapter:** add its checkpoints here and to `MainMenu.Checkpoints`. At least: its start, each fight zone, its boss fight, its ending after the boss, and every story beat worth replaying on its own. The entry points live in `StoryTest.cs` (and a `TestState` per chapter, like the bank's).
 

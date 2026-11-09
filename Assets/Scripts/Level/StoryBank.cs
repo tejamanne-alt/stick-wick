@@ -853,7 +853,14 @@ namespace ProjectInk
                 case 4: MemoryGUI(w, h, t); break;
                 case 5: EnvelopeGUI(w, h, t); break;
             }
-            // the player's prompts: walk, and tap
+            PromptsGUI(w, h);
+            cap.alignment = oldCapAlign; cap.fontSize = capSize; big.fontSize = bigSize;
+        }
+
+        /// <summary>The player's prompts in a directed scene: walk (HOLD TO WALK), and tap.</summary>
+        void PromptsGUI(float w, float h)
+        {
+            int bigSize = big.fontSize;
             if (walkTitle != null && walkAlpha > 0.01f)
             {
                 prompt.normal.textColor = new Color(1f, 1f, 1f, 0.9f * walkAlpha);
@@ -878,7 +885,7 @@ namespace ProjectInk
                     GUI.color = o;
                 }
             }
-            cap.alignment = oldCapAlign; cap.fontSize = capSize; big.fontSize = bigSize;
+            big.fontSize = bigSize;
         }
 
         /// <summary>B8: the clerk's screen. A flag on the box, blinking red.</summary>

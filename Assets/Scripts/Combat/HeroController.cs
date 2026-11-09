@@ -2138,7 +2138,7 @@ namespace ProjectInk
             }
             var hit = new HitInfo
             {
-                damage = currentAttack.damage,
+                damage = currentAttack.damage * RageScale,
                 direction = attackDir,
                 knockback = currentAttack.knockback,
                 knockdown = currentAttack.knockdown,

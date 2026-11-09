@@ -9,6 +9,8 @@ namespace ProjectInk
     {
         [Tooltip("World z of the wall's inner face: the camera further out than this sees through it.")]
         public float insideZ = -1.15f;
+        /// <summary>A story shot from outside wants the house whole (the street at dusk): show every front wall.</summary>
+        public static bool ShowAll;
         Renderer[] rs;
         bool shown = true;
 
@@ -18,7 +20,7 @@ namespace ProjectInk
         {
             var c = Camera.main;
             if (c == null) return;
-            bool show = c.transform.position.z > insideZ;
+            bool show = ShowAll || c.transform.position.z > insideZ;
             if (show == shown) return;
             shown = show;
             foreach (var r in rs) if (r != null) r.enabled = show;

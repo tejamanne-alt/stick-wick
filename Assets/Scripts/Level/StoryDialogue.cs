@@ -42,7 +42,12 @@ namespace ProjectInk
         {
             string w = who.ToUpperInvariant();
             if (w == "HIM" || w == "YOU") { subKind = VoiceKind.You; subSpeaker = "YOU"; }
-            else if (w == "THE FOREMAN" || w == "THE DRIVER") { subKind = VoiceKind.Boss; subSpeaker = w; }
+            else if (w == "THE FOREMAN" || w == "THE DRIVER" || w == "THE CLEANER") { subKind = VoiceKind.Boss; subSpeaker = w; }
+            else if (w == "MAYA")
+            {
+                subKind = VoiceKind.OffScreen;                 // her voice, out of a memory
+                subSpeaker = "MAYA  ·  A MEMORY";
+            }
             else if (w == "HER")
             {
                 subKind = VoiceKind.OffScreen;                 // a voice from a memory: heard, not in the shot
