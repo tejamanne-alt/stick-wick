@@ -31,8 +31,7 @@ import os
 import random
 import sys
 
-import bpy  # noqa: E402  (bpy first: it provides bmesh and mathutils)
-import bmesh
+import bpy  # noqa: E402  (bpy first: it provides mathutils)
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -84,7 +83,7 @@ def mats():
     M["car"] = mat("CarBlack", (0.03, 0.03, 0.035), 0.25, metal=0.5)
     M["car_grey"] = mat("CarGreyDay", (0.2, 0.2, 0.2), 0.3, metal=0.5)
     M["car_pale"] = mat("CarPaleDay", (0.45, 0.45, 0.45), 0.3, metal=0.5)
-    M["glass_ext"] = mat("ExtGlass", (0.06, 0.065, 0.07), 0.05)
+    M["glass_ext"] = mat("ExtGlass", (0.06, 0.065, 0.07), 0.04, metal=0.3)
     M["scanner"] = mat("ScannerGlow", (0.9, 0.95, 1.0), 0.2, emit=(1, 1, 1), strength=5.0)
     M["screen"] = mat("ScreenGlow", (0.7, 0.72, 0.75), 0.3, emit=(1, 1, 1), strength=1.4)
     K.mats(M)
@@ -104,7 +103,6 @@ def mats():
     M["m_dark_wall"] = K.marble("BankMarbleDark", 0.045, 0.3, "xz")
     M["m_dark_w"] = K.marble("BankMarbleDark", 0.045, 0.3, "yz")
     M["m_pale_w"] = K.marble("BankMarblePale", 0.52, 0.2, "yz")
-    M["m_column"] = K.marble("BankMarbleColumn", 0.5, 0.25, "xz", scale=1.6)
     M["wood"] = D.planks("BankWalnut", 0.06, "xz", board=0.32)
     M["wood_w"] = D.planks("BankWalnut", 0.06, "yz", board=0.32)
     M["wood_top"] = D.planks("BankWalnut", 0.06, "xy", board=0.32)
@@ -129,80 +127,10 @@ def mats():
 
 S.TONE.update({"Stone": 0.40, "StoneDark": 0.16, "MarblePale": 0.42, "MarbleDark": 0.05, "CounterWood": 0.06,
                "Velvet": 0.035, "BoxSteel": 0.28, "VaultSteel": 0.2, "CarBlack": 0.025, "CarGreyDay": 0.16,
-               "CarPaleDay": 0.42, "ExtGlass": 0.05})
+               "CarPaleDay": 0.42, "ExtGlass": 0.2})
 
 
 # ---------------------------------------------------------------- shared pieces
-
-def prism_x(g, pts_yz, x0, x1, m):
-    """Extrude a 2D outline (y, z) along x (an emblem on the west face)."""
-    tmp = bmesh.new()
-    f0 = [tmp.verts.new((x0, y, z)) for y, z in pts_yz]
-    f1 = [tmp.verts.new((x1, y, z)) for y, z in pts_yz]
-    tmp.faces.new(f0)
-    tmp.faces.new(list(reversed(f1)))
-    n = len(pts_yz)
-    for i in range(n):
-        tmp.faces.new((f0[i], f0[(i + 1) % n], f1[(i + 1) % n], f1[i]))
-    g._merge(tmp, m)
-
-
-def shield(g, cy, cz, s, x, m, hole=None):
-    """The bank's mark: a shield with a keyhole through it (the keyhole in a darker inlay)."""
-    pts = [(cy - 0.82 * s, cz + 0.88 * s), (cy + 0.82 * s, cz + 0.88 * s)]
-    for i in range(1, 12):
-        v = 0.1 - i / 12 * 1.05
-        pts.append((cy + 0.82 * math.sqrt(max(0.0, (v + 0.95) / 1.05)) * s, cz + v * s))
-    pts.append((cy, cz - 0.95 * s))
-    for i in range(11, 0, -1):
-        v = 0.1 - i / 12 * 1.05
-        pts.append((cy - 0.82 * math.sqrt(max(0.0, (v + 0.95) / 1.05)) * s, cz + v * s))
-    prism_x(g, pts, x - 0.06, x, m)
-    if hole is not None:
-        g.cyl((x - 0.07, cy, cz + 0.22 * s), 0.2 * s, 0.02, hole, rot=(0, 90, 0), n=20)
-        prism_x(g, [(cy - 0.07 * s, cz + 0.18 * s), (cy + 0.07 * s, cz + 0.18 * s), (cy + 0.13 * s, cz - 0.55 * s), (cy - 0.13 * s, cz - 0.55 * s)], x - 0.075, x - 0.065, hole)
-
-
-def laurel(f, u0, w0, u1, w1, m, n=9, side=1):
-    """A laurel spray carved in relief: a stem and pairs of leaves along it (local frame)."""
-    f.beam((u0, -0.03, w0), (u1, -0.03, w1), 0.04, 0.04, m)
-    for k in range(n):
-        t = (k + 0.5) / n
-        u, w = u0 + (u1 - u0) * t, w0 + (w1 - w0) * t
-        ang = math.degrees(math.atan2(w1 - w0, u1 - u0))
-        for s in (-1, 1):
-            f.box((u, -0.05, w + s * 0.07), (0.16 * (1.1 - t * 0.4), 0.04, 0.06), m, rot=(0, -(ang + s * 40), 0))
-
-
-def column(f, x, y, z0, h, r, m, mcap=None, flutes=20, ionic=True):
-    """A stone (or marble) column: an Attic base on a square plinth, a fluted shaft with entasis,
-    an Ionic capital (necking, echinus with egg-and-dart, volutes on both faces, the abacus)."""
-    mc = mcap or m
-    f.box((x, y, z0 + 0.09), (r * 2.7, r * 2.7, 0.18), m, bevel=0.02)
-    f.lathe((x, y, z0 + 0.18), [(r * 1.3, 0.0), (r * 1.32, 0.06), (r * 1.22, 0.12), (r * 1.06, 0.15), (r * 1.04, 0.22),
-                                (r * 1.16, 0.27), (r * 1.12, 0.33), (r * 1.02, 0.36), (0.0, 0.36)], m, n=24)
-    zs = z0 + 0.54
-    top = z0 + h - (0.62 if ionic else 0.4)
-    f.fluted((x, y, zs), r, r * 0.86, top - zs, m, flutes=flutes)
-    f.torus((x, y, zs + 0.02), r * 1.0, 0.035, m, n1=24, n2=5)
-    f.torus((x, y, top - 0.02), r * 0.88, 0.03, mc, n1=24, n2=5)
-    if ionic:
-        f.lathe((x, y, top), [(r * 0.88, 0.0), (r * 0.9, 0.06), (r * 1.12, 0.22), (r * 1.18, 0.3), (0.0, 0.3)], mc, n=24)
-        for k in range(16):                                                                  # egg and dart
-            a = k / 16 * math.tau
-            f.box((x + math.cos(a) * r * 1.08, y + math.sin(a) * r * 1.08, top + 0.17), (0.07, 0.07, 0.1), mc, rot=(0, 0, math.degrees(a)), bevel=0.02)
-        for s in (-1, 1):                                                                    # the volutes, on both faces
-            for side in (-1, 1):
-                c = (x + s * r * 1.12, y + side * r * 0.9, top + 0.2)
-                f.torus(c, r * 0.32, 0.045, mc, axis="y", n1=16, n2=5)
-                f.torus(c, r * 0.17, 0.04, mc, axis="y", n1=12, n2=5)
-                f.cyl(c, r * 0.07, 0.1, mc, axis="y", n=8)
-            f.cyl((x + s * r * 1.12, y, top + 0.2), r * 0.3, r * 1.8, mc, axis="y", n=14)      # the bolster
-        f.box((x, y, top + 0.53), (r * 2.9, r * 2.9, 0.18), mc, bevel=0.025)                  # the abacus
-    else:
-        f.lathe((x, y, top), [(r * 0.88, 0.0), (r * 1.2, 0.2), (r * 1.2, 0.26), (0.0, 0.26)], mc, n=24)
-        f.box((x, y, top + 0.33), (r * 2.7, r * 2.7, 0.14), mc, bevel=0.02)
-
 
 def pendant(f, x, y, zc, M, top=None):
     """A pendant globe on a rod: a ceiling rose, a rod with collars, a brass gallery, the glowing globe."""
@@ -376,7 +304,7 @@ def build_lobby_walls(g, M):
     K.clock_face(fi, (CLOCK[0], -0.24, CLOCK[1]), 0.95, M, 8, 41, rim_m=M["brass"])
     fi.box((CLOCK[0], -0.12, CLOCK[1] - 1.42), (0.7, 0.24, 0.16), M["trim"], bevel=0.03)
     for s in (-1, 1):
-        laurel(fi, CLOCK[0] + s * 0.4, CLOCK[1] - 1.3, CLOCK[0] + s * 1.35, CLOCK[1] - 0.6, M["trim"], n=6)
+        K.laurel(fi, CLOCK[0] + s * 0.4, CLOCK[1] - 1.3, CLOCK[0] + s * 1.35, CLOCK[1] - 0.6, M["trim"], n=6)
 
     # the west wall (the entrance), cut by the door and the four windows between the columns
     fw = K.L(g, (X0 - 0.2, 0, 0), 90)
@@ -483,7 +411,7 @@ def build_lobby_furniture(g, M):
     # columns, two rows behind the lane (Ionic, pale marble)
     for x in (5.0, 11.0, 17.0, 23.0):
         for y in (5.0, 11.0):
-            column(f, x, y, 0.0, H - 0.62, 0.42, M["m_column"], M["trim"])
+            K.column(f, x, y, 0.0, H - 0.62, 0.42, M["trim"], M["trim"])
     # pendant globes on long rods (the three over the lane stay where the game's cones hang)
     for x in (6.0, 13.0, 20.0):
         pendant(f, x, 1.2, 5.6, M)
@@ -612,24 +540,21 @@ def build_counter(g, M):
             f.text("PLEASE", (tx, cy0 - 0.01, 1.21), 0.045, M["ink"], kind="serif")
     # the palm scanner at the clerk's window (StoryBank 2.2): a tilted glass panel on a black steel
     # base, a glowing frame and the outline of a hand in it, a ready light, its label
-    sx, sy = TELLER_X + 0.42, cy0 + 0.02
+    sx, sy = TELLER_X + 0.42, cy0 + 0.0
     sc = f.sub((sx, sy, 1.16), 0)
-    sc.box((0, 0, 0.03), (0.34, 0.3, 0.06), M["iron"], bevel=0.015)
-    pn = sc.sub((0, 0.02, 0.1), 0)
-    tilt = (-62, 0, 0)
-    pn.box((0, 0, 0), (0.3, 0.24, 0.025), M["iron"], rot=tilt, bevel=0.01)
-    pn.box((0, -0.004, 0.009), (0.26, 0.2, 0.01), M["glass_shop"], rot=tilt)
-    for (u, v, su, sv) in ((0, 0.096, 0.26, 0.012), (0, -0.096, 0.26, 0.012), (0.125, 0, 0.012, 0.2), (-0.125, 0, 0.012, 0.2)):
-        q = Matrix.Rotation(math.radians(-62), 3, "X") @ Vector((u, v, 0.016))
-        pn.box(q[:], (su, sv, 0.004), M["scanner"], rot=tilt)
-    hand = [(0.0, -0.03, 0.09, 0.09), (-0.032, 0.045, 0.018, 0.07), (-0.011, 0.055, 0.018, 0.08), (0.011, 0.052, 0.018, 0.075),
-            (0.032, 0.04, 0.016, 0.06), (0.058, -0.02, 0.016, 0.06)]
-    for (u, v, su, sv) in hand:
-        q = Matrix.Rotation(math.radians(-62), 3, "X") @ Vector((u, v, 0.016))
-        pn.box(q[:], (su, sv, 0.003), M["scanner"], rot=(-62, 0, -28 if su < 0.02 and u > 0.05 else 0))
-    sc.cyl((0.13, -0.13, 0.065), 0.01, 0.01, M["led"], n=6)
-    sc.box((0, -0.152, 0.03), (0.2, 0.004, 0.03), M["white_paint"])
-    sc.text("PLACE  PALM", (0, -0.156, 0.03), 0.018, M["ink"], kind="body")
+    sc.box((0, 0.02, 0.04), (0.36, 0.3, 0.08), M["iron"], bevel=0.015)
+    pn = K.L(g)
+    pn.T = sc.T @ Matrix.Translation((0, 0.03, 0.13)) @ Matrix.Rotation(math.radians(-28), 4, "X")
+    pn.box((0, 0, 0), (0.34, 0.28, 0.05), M["iron"], bevel=0.012)                 # the tilted head
+    pn.box((0, 0, 0.026), (0.3, 0.24, 0.006), M["scanner"])                      # the glowing glass
+    for (u, v, su, sv, rz) in ((0.0, -0.03, 0.1, 0.1, 0), (-0.036, 0.05, 0.02, 0.08, 0), (-0.012, 0.062, 0.02, 0.09, 0),
+                               (0.012, 0.058, 0.02, 0.085, 0), (0.036, 0.046, 0.018, 0.07, 0), (0.07, -0.02, 0.018, 0.065, -35)):
+        pn.box((u, v, 0.031), (su, sv, 0.003), M["frame_dark"], rot=(0, 0, rz))   # the hand, dark on the light
+    for k in range(5):                                                            # the scan lines
+        pn.box((0, -0.1 + k * 0.05, 0.0335), (0.28, 0.003, 0.002), M["frame_dark"])
+    sc.cyl((0.14, -0.13, 0.085), 0.01, 0.01, M["led"], n=6)
+    sc.box((0, -0.132, 0.04), (0.2, 0.004, 0.035), M["white_paint"])
+    sc.text("PLACE  PALM", (0, -0.136, 0.04), 0.02, M["ink"], kind="body")
     # behind the counter: the tellers' side (the clerk stands at y 3.25)
     for k, tx in enumerate(TELLERS):
         f.box((tx, cy1 + 0.12, 1.0), (2.6, 0.24, 0.04), M["wood_top"])                         # a shelf under the top
@@ -863,18 +788,21 @@ def build_corridor_and_vault(g, M):
     f.lathe((VAULT_X + 1.2, -1.4, VAULT_TOP - 0.02), [(0.0, -0.14), (0.1, -0.12), (0.14, -0.05), (0.15, 0.0), (0.0, 0.0)], M["reveal"], n=16)
 
 
-def box_door(f, u, w, wd, ht, M, num, front=-0.0, proud=False, two_keys=True):
+def box_door(f, u, w, wd, ht, M, num, front=-0.0, proud=False, two_keys=True, label=True):
     """One deposit box's door (local frame on the wall's face): the door, its hinges, the two
     keyholes (the bank's guard key and the renter's), a brass plate with the number."""
     v = front - (0.012 if proud else 0.0)
-    f.box((u, v + 0.015, w), (wd - 0.02, 0.03, ht - 0.02), M["box_steel"], bevel=0.006)
+    f.box((u, v + 0.015, w), (wd - 0.02, 0.03, ht - 0.02), M["box_steel"], bevel=0.006 if label else 0.0)
     f.box((u - wd / 2 + 0.02, v - 0.004, w + ht * 0.28), (0.012, 0.012, 0.05), M["chrome"])
     f.box((u - wd / 2 + 0.02, v - 0.004, w - ht * 0.28), (0.012, 0.012, 0.05), M["chrome"])
     for ku in ((0.08, 0.17) if two_keys else (0.13,)):
-        f.cyl((u + ku, v - 0.003, w), 0.022, 0.008, M["brass"], axis="y", n=8)
+        f.box((u + ku, v - 0.003, w), (0.036, 0.008, 0.044), M["brass"])
         f.box((u + ku, v - 0.008, w), (0.008, 0.004, 0.026), M["keyhole"])
     f.box((u - 0.08, v - 0.003, w + 0.02), (0.15, 0.008, 0.065), M["brass"])
-    f.text(str(num), (u - 0.08, v - 0.009, w + 0.02), 0.05, M["ink"], kind="body")
+    if label:                                                                   # readable round 417; further off, a mark
+        f.text(str(num), (u - 0.08, v - 0.009, w + 0.02), 0.05, M["ink"], kind="body", res=1)
+    else:
+        f.box((u - 0.08, v - 0.008, w + 0.02), (0.07, 0.004, 0.025), M["ink"])
 
 
 def build_box_room(g, M):
@@ -897,9 +825,9 @@ def build_box_room(g, M):
             if r >= 9:                                                                             # big lockers below
                 if r == 10:
                     continue
-                box_door(fw, xa + c * 0.5 + 0.5, 0.4, 1.0, 0.6, M, f"L{c // 2 + 1}", front=-0.055)
+                box_door(fw, xa + c * 0.5 + 0.5, 0.4, 1.0, 0.6, M, f"L{c // 2 + 1}", front=-0.055, label=False)
                 continue
-            box_door(fw, xa + c * 0.5 + 0.25, zc, 0.5, 0.3, M, num, front=-0.055, proud=(num == 417))
+            box_door(fw, xa + c * 0.5 + 0.25, zc, 0.5, 0.3, M, num, front=-0.055, proud=(num == 417), label=(2 <= r <= 8 and 1 <= c <= 12))
     for c in range(cols + 1):
         fw.box((xa + c * 0.5, -0.06, 1.75), (0.012, 0.012, 3.1), M["iron"])
     fw.box(((xa + xb) / 2, -0.07, 3.48), (xb - xa + 0.2, 0.14, 0.12), M["steel_mid"], bevel=0.02)
@@ -912,7 +840,7 @@ def build_box_room(g, M):
             u = -(VAULT_BACK - 0.6 - c * 0.5)
             if u > -(YF + 0.6):
                 continue
-            box_door(fe, u, zc, 0.5, 0.3, M, 525 + r * 8 + c + 1, front=-0.05)
+            box_door(fe, u, zc, 0.5, 0.3, M, 525 + r * 8 + c + 1, front=-0.05, label=False)
     # the library ladder on its rail
     fw.cyl(((xa + xb) / 2, -0.25, 3.3), 0.02, xb - xa, M["brass"], axis="x", n=8)
     lx = 43.6
@@ -984,13 +912,13 @@ def build_facade(g, M):
         tg.torus((u, 0.0, 3.4 + 0.1), 0.08, 0.012, M["brass"], axis="y", n1=12, n2=4)
     tg.box((0.0, 0.0, DOOR_H - 0.02), (2 * DOOR_Y, 0.06, 0.06), M["brass"])
     # the mark carved over the doors (StoryBank's match cut): a recessed panel, a wreath, a ribbon
-    shield(g, 0.0, 5.3, 0.95, X0 - 0.42, M["stone"], hole=M["stone_dark"])
+    K.shield(g, 0.0, 5.3, 0.95, X0 - 0.42, M["stone"], hole=M["stone_dark"])
     g.box((X0 - 0.43, 0.0, 5.3), (0.02, 2.4, 2.4), M["stone_dark"])
     fm = K.L(g, (X0 - 0.42, 0, 0), -90)
     for s in (-1, 1):
         fm.box((s * 1.28, -0.04, 5.3), (0.16, 0.1, 2.72), M["trim_w"], bevel=0.02)
         fm.box((0.0, -0.04, 5.3 + s * 1.28), (2.72, 0.1, 0.16), M["trim_w"], bevel=0.02)
-        laurel(fm, s * 0.45, 4.25, s * 1.05, 5.9, M["trim_w"], n=8)
+        K.laurel(fm, s * 0.45, 4.25, s * 1.05, 5.9, M["trim_w"], n=8)
     fm.box((0.0, -0.06, 4.28), (1.4, 0.06, 0.22), M["trim_w"], bevel=0.02)
     fm.text("EST.  1887", (0.0, -0.095, 4.28), 0.13, M["stone_dark"], kind="serif")
     # windows between the columns: arched, framed, barred below, keystones
@@ -1037,7 +965,7 @@ def build_portico(g, M):
     f.box((-2.15, 7.2, 0.15), (3.5, 11.2, 0.3), M["trim"], bevel=0.02)
     f.box((-3.95, 7.2, 0.075), (0.3, 11.2, 0.15), M["trim"], bevel=0.02)
     for y in (2.2, 5.4, 8.6, 11.8):
-        column(f, X0 - 3.0, y, 0.3, 7.9, 0.48, M["trim"], M["trim"], flutes=24)
+        K.column(f, X0 - 3.0, y, 0.3, 7.9, 0.48, M["trim"], M["trim"], flutes=24)
     # the entablature: three fasciae, the frieze with the name, the cornice with dentils and modillions
     ey0, ey1 = YF - 1.6, YB - 0.4
     ex0, ex1 = X0 - 3.4, X0 + 0.2
@@ -1065,16 +993,15 @@ def build_portico(g, M):
     fp = K.L(g, (ex0, 0, 0), -90)
     fp.wallshape([(-py1, 0.0), (-py0, 0.0), (-pc, pz1 - pz0)], -0.02, 3.4, M["trim_w"], c=(0, 0, pz0))
     fp.wallshape([(-py1 + 0.6, 0.12), (-py0 - 0.6, 0.12), (-pc, pz1 - pz0 - 0.4)], -0.06, 0.0, M["stone_dark"], c=(0, 0, pz0))
-    slope = math.atan2(pz1 - pz0, (py1 - py0) / 2)
     for s in (-1, 1):
         a = (-pc + s * (py1 - py0) / 2, pz0)
         b = (-pc, pz1)
         for k, (dz, dd, hh) in enumerate(((0.05, 0.25, 0.14), (0.2, 0.4, 0.12), (0.32, 0.5, 0.08))):
             fp.beam((a[0], -dd / 2, a[1] + dz), (b[0], -dd / 2, b[1] + dz), hh, dd, M["trim_w"])
-    shield(g, -0.0 + pc, pz0 + 1.0, 0.75, ex0 - 0.04, M["trim"], hole=M["stone_dark"])
+    K.shield(g, -0.0 + pc, pz0 + 1.0, 0.75, ex0 - 0.04, M["trim"], hole=M["stone_dark"])
     fpm = K.L(g, (ex0 - 0.05, 0, 0), -90)
     for s in (-1, 1):
-        laurel(fpm, -pc + s * 0.75, pz0 + 0.3, -pc + s * 3.6, pz0 + 0.55, M["trim_w"], n=12)
+        K.laurel(fpm, -pc + s * 0.75, pz0 + 0.3, -pc + s * 3.6, pz0 + 0.55, M["trim_w"], n=12)
     fpm.box((-pc, -0.03, pz0 + 0.18), (2.2, 0.06, 0.18), M["trim_w"])
     fpm.text("MDCCCLXXXVII", (-pc, -0.065, pz0 + 0.18), 0.12, M["stone_dark"], kind="serif")
     for (yy, zz) in ((py0, pz0 + 0.4), (py1, pz0 + 0.4), (pc, pz1 + 0.35)):
@@ -1139,66 +1066,6 @@ def build_shell(coll, M):
 
 # ---------------------------------------------------------------- the street outside
 
-def shop_building(g, x0, x1, M, h, wall_m, name, kind, floors_m=None):
-    """A building on the street's far side of the sidewalk (its face at y 8.2, facing the lane):
-    the shopfront below (pilasters, fascia with its name, a display window over a stall riser, the
-    door), upper floors of framed windows, string courses, a cornice, the roofline."""
-    f = K.L(g, (0, 8.2, 0), 0)
-    cx, w = (x0 + x1) / 2, x1 - x0
-    sf = 3.8
-    dwx = x1 - 1.4                                                                                  # the door
-    win0, win1 = x0 + 0.5, dwx - 0.6
-    ncol = max(1, int(w / 2.4))
-    ups, z = [], sf + 0.9
-    while z + 1.8 < h - 0.8:
-        ups += [(x0 + (c + 0.5) * w / ncol, 1.1, z, z + 1.6, False) for c in range(ncol)]
-        z += 2.9
-    K.wall(f, x0, x1, 0.0, h, 0.4, wall_m, [((win0 + win1) / 2, win1 - win0, 0.6, 3.1, False), (dwx, 1.0, 0.0, 3.2, False)] + ups, v=0.2)
-    f.box(((win0 + win1) / 2, 0.3, 1.85), (win1 - win0, 0.2, 2.5), M["reveal"])                       # the shop, dark inside
-    f.box((dwx, 0.3, 1.6), (1.0, 0.2, 3.2), M["reveal"])
-    # the shopfront
-    for xx in (x0 + 0.2, x1 - 0.2):
-        f.box((xx, -0.08, sf / 2), (0.4, 0.16, sf), M["sf_paint"], bevel=0.02)
-        f.box((xx, -0.12, sf - 0.25), (0.5, 0.24, 0.3), M["sf_paint"], bevel=0.03)
-    f.box((cx, -0.1, sf - 0.3), (w - 0.6, 0.2, 0.6), M["sf_paint"], bevel=0.02)                  # fascia
-    f.box((cx, -0.21, sf - 0.3), (w - 1.0, 0.02, 0.44), M["ink"])
-    f.text(name, (cx, -0.225, sf - 0.3), 0.34, M["white_paint"], depth=0.008, kind="serif" if kind != "pawn" else "sign")
-    f.box((cx, -0.18, sf + 0.03), (w - 0.4, 0.3, 0.06), M["sf_paint"])
-    f.box(((win0 + win1) / 2, -0.04, 0.3), (win1 - win0, 0.08, 0.6), M["sf_paint"], bevel=0.02)      # stall riser
-    f.box(((win0 + win1) / 2, 0.06, 1.85), (win1 - win0, 0.03, 2.5), M["glass_shop"])
-    for k in range(int((win1 - win0) / 1.2) + 1):
-        f.box((win0 + k * (win1 - win0) / max(1, int((win1 - win0) / 1.2)), 0.0, 1.85), (0.06, 0.08, 2.5), M["sf_paint"])
-    f.box(((win0 + win1) / 2, 0.0, 2.75), (win1 - win0, 0.08, 0.05), M["sf_paint"])
-    f.box((dwx, 0.15, 1.3), (1.0, 0.04, 2.6), M["sf_paint"])
-    f.box((dwx, 0.12, 1.55), (0.7, 0.02, 1.6), M["glass_shop"])
-    f.box((dwx + 0.38, 0.1, 1.2), (0.03, 0.06, 0.25), M["brass"])
-    f.box((dwx, 0.12, 3.0), (1.0, 0.02, 0.4), M["glass_shop"])
-    for xx in (dwx - 0.55, dwx + 0.55):
-        f.box((xx, 0.0, 1.5), (0.1, 0.12, 3.0), M["sf_paint"])
-    # upper floors
-    fl = floors_m or M["frame_pale"]
-    z = sf + 0.9
-    lvl = 0
-    while z + 1.8 < h - 0.8:
-        K.string_course(f, x0, x1, z - 0.55, M["trim"], h=0.14, d=0.08)
-        for c in range(ncol):
-            wx = x0 + (c + 0.5) * w / ncol
-            blind = rnd.choice((None, None, 0.4, 0.7))
-            K.window(f, wx, z, z + 1.6, 1.1, M, fl, M["glass_ext"], M["trim"], head="pediment" if lvl == 0 and kind == "cafe" else "flat",
-                     cols=2, rows=2, blind=blind, keystone=(lvl % 2 == 0), box=(M["urn"] if (kind == "florist" and lvl == 0) else None))
-        z += 2.9
-        lvl += 1
-    K.cornice(f, x0, x1, h - 0.5, M["trim"], depth=0.45)
-    f.box((cx, 0.1, h + 0.35), (w, 0.3, 0.7), wall_m)
-    for k in range(2):                                                                              # chimneys
-        cxx = x0 + 1.0 + k * (w - 2.0)
-        f.box((cxx, 1.2, h + 1.2), (0.7, 0.5, 2.4), M["brick"])
-        for q in range(2):
-            f.cyl((cxx - 0.15 + q * 0.3, 1.2, h + 2.55), 0.08, 0.3, M["iron_mid"], n=8)
-    K.drainpipe(f, x1 - 0.15, 0.0, h, M["iron"])
-    return f
-
-
 def build_street(coll, M):
     """The street outside: the road, the sidewalk (level with the bank's floor), the shops up the
     block, lamp posts and street furniture, the parked black car, puddles, the far side, the city."""
@@ -1231,12 +1098,12 @@ def build_street(coll, M):
                         (-28.0, 2.4, 0.8), (-2.5, 5.5, 0.7), (-21.0, -10.5, 2.6), (8.0, -4.5, 1.2), (-14.0, -2.75, 0.9)):
         K.puddle(f, px, py, r, M["puddle"], z=(0.0 if py > -2.2 else -0.148), seed=px * 0.37)
     # the shops up the block
-    cafe = shop_building(g, -30.0, -21.0, M, 14.0, M["stucco"], "CAFE  NOIR", "cafe", floors_m=M["frame_dark"])
-    pawn = shop_building(g, -21.0, -13.5, M, 12.5, M["brick"], "PAWN  &  LOANS", "pawn")
-    flor = shop_building(g, -13.5, -2.5, M, 16.0, M["brick_dark"], "LILY'S  FLOWERS", "florist")
+    K.shop_building(g, -30.0, -21.0, M, 14.0, M["stucco"], "CAFE  NOIR", "cafe", floors_m=M["frame_dark"])
+    K.shop_building(g, -21.0, -13.5, M, 12.5, M["brick"], "PAWN  &  LOANS", "pawn")
+    K.shop_building(g, -13.5, -2.5, M, 16.0, M["brick_dark"], "LILY'S  FLOWERS", "florist")
     fs = K.L(g, (0, 8.2, 0), 0)
     # Cafe Noir: a striped scalloped awning with its name on the valance, letters on the glass, the terrace
-    K_awning(fs, -29.6, -21.4, 3.3, 2.6, M, "CAFE  NOIR  ·  ESPRESSO")
+    K.awning(fs, -29.6, -21.4, 3.3, 2.6, M, "CAFE  NOIR  ·  ESPRESSO")
     fs.text("OPEN  LATE", (-26.2, 0.035, 2.4), 0.2, M["white_paint"], kind="serif")
     fs.text("Espresso  ·  Croissants  ·  Wine", (-26.2, 0.035, 2.1), 0.12, M["white_paint"], kind="body")
     for k in range(3):
@@ -1267,7 +1134,7 @@ def build_street(coll, M):
         fs.lathe((-14.2 + math.cos(a) * 0.17, -1.0, 4.15 + math.sin(a) * 0.17), [(0.0, -0.12), (0.08, -0.09), (0.12, 0.0), (0.08, 0.09), (0.0, 0.12)], M["brass"], n=10)
     fs.rod((-14.2, -1.0, 4.6), (-14.2, -1.0, 4.3), 0.01, M["iron"], 4)
     # the florist: buckets of flowers on a stepped stand, a plain awning
-    K_awning(fs, -12.9, -3.1, 3.25, 1.8, M, "", striped=False)
+    K.awning(fs, -12.9, -3.1, 3.25, 1.8, M, "", striped=False)
     for k in range(3):
         f.box((-8.0, 7.6 - k * 0.35, 0.15 + k * 0.25), (4.0, 0.34, 0.04), M["slat"])
         for q in range(9):
@@ -1280,7 +1147,7 @@ def build_street(coll, M):
                 f.rod((bx, by, bz + 0.2), (bx + math.cos(a) * 0.12, by + math.sin(a) * 0.12, bz + 0.6), 0.008, M["leaf"], 3)
                 f.lathe((bx + math.cos(a) * 0.12, by + math.sin(a) * 0.12, bz + 0.58), [(0.0, 0.0), (0.05, 0.03), (0.0, 0.08)], M["fruit" if (p + q) % 2 else "white_band"], n=6)
     # upper storey dressing: a fire escape on the cafe, AC units, posters, graffiti, pigeons
-    fire_escape(fs, -20.6, -16.9, [4.7, 7.6], M)
+    K.fire_escape(fs, -20.6, -16.9, [4.7, 7.6], M)
     for (ax, az) in ((-16.0, 6.0), (-27.0, 6.0), (-27.0, 8.9), (-5.25, 6.0), (-10.75, 11.8)):
         K.ac_unit(fs, ax, az, M)
     fp_ = K.L(g, (0, 8.2 - 0.165, 0), 0)
@@ -1348,60 +1215,6 @@ def build_street(coll, M):
     f.box((10.0, 120.0, 40.0), (400.0, 1.0, 80.0), M["sky_day"])
     return g.finish(coll)
 
-
-def K_awning(f, x0, x1, z, depth, M, text, striped=True):
-    """A shop awning: canvas sloping out from the wall in stripes, a scalloped valance with lettering,
-    the iron arms."""
-    n = int((x1 - x0) / 0.35)
-    sw = (x1 - x0) / n
-    ang = math.degrees(math.atan2(0.7, depth))
-    for k in range(n):
-        m = (M["cloth_a"] if k % 2 == 0 else M["cloth_b"]) if striped else M["cloth_b"]
-        f.box((x0 + (k + 0.5) * sw, -depth / 2, z - 0.35), (sw, math.hypot(depth, 0.7), 0.025), m, rot=(-ang, 0, 0))
-        f.lathe((x0 + (k + 0.5) * sw, -depth - 0.01, z - 0.95), [(0.0, 0.0), (sw * 0.48, 0.02), (sw * 0.5, 0.18), (0.0, 0.18)], m, n=8, axis="y")
-    f.box(((x0 + x1) / 2, -depth - 0.01, z - 0.82), (x1 - x0, 0.02, 0.26), M["cloth_b"])
-    if text:
-        f.text(text, ((x0 + x1) / 2, -depth - 0.025, z - 0.82), 0.16, M["white_paint"], kind="serif")
-    for xx in (x0 + 0.1, x1 - 0.1):
-        f.beam((xx, 0.0, z - 1.0), (xx, -depth, z - 0.72), 0.03, 0.03, M["iron"])
-        f.box((xx, -depth / 2, z - 0.35), (0.04, math.hypot(depth, 0.7) + 0.04, 0.04), M["iron"], rot=(-ang, 0, 0))
-    f.box(((x0 + x1) / 2, -0.12, z + 0.05), (x1 - x0 + 0.1, 0.24, 0.18), M["iron"], bevel=0.02)
-
-
-def fire_escape(f, x0, x1, levels, M):
-    """A fire escape on the wall (local frame): landings of slatted grating with railings and
-    balusters, stairs between them, the drop ladder hanging over the street."""
-    d = 1.1
-    for z in levels:
-        f.box(((x0 + x1) / 2, -d / 2, z), (x1 - x0, d, 0.04), M["iron"])
-        k = x0 + 0.05
-        while k < x1:
-            f.box((k, -d / 2, z + 0.025), (0.02, d - 0.05, 0.012), M["iron_mid"])
-            k += 0.08
-        for xx in (x0, x1):
-            f.box((xx, -d / 2, z + 0.5), (0.03, d, 0.03), M["iron"])
-        f.box(((x0 + x1) / 2, -d, z + 1.0), (x1 - x0, 0.04, 0.04), M["iron"])
-        f.box(((x0 + x1) / 2, -d, z + 0.5), (x1 - x0, 0.02, 0.02), M["iron"])
-        xx = x0
-        while xx <= x1 + 1e-3:
-            f.box((xx, -d, z + 0.5), (0.02, 0.02, 1.0), M["iron"])
-            xx += 0.25
-        for xx in (x0 + 0.4, x1 - 0.4):
-            f.beam((xx, 0.0, z - 0.6), (xx, -d + 0.1, z - 0.02), 0.04, 0.04, M["iron"])
-    for a, b in zip(levels, levels[1:]):
-        for s in (0.15, 0.85):
-            f.beam((x0 + 0.6, -d * s, a), (x0 + 2.6, -d * s, b), 0.04, 0.12, M["iron"])
-        for q in range(1, 10):
-            t = q / 10
-            f.box((x0 + 0.6 + 2.0 * t, -d / 2, a + (b - a) * t), (0.2, d * 0.7, 0.02), M["iron_mid"])
-        f.beam((x0 + 0.6, -d * 0.85, a + 0.9), (x0 + 2.6, -d * 0.85, b + 0.9), 0.03, 0.03, M["iron"])
-    for s in (-0.22, 0.22):
-        f.box((x1 - 0.6 + s, -d + 0.05, levels[0] - 1.2), (0.03, 0.03, 2.3), M["iron"])
-    for q in range(8):
-        f.box((x1 - 0.6, -d + 0.05, levels[0] - 2.2 + q * 0.28), (0.44, 0.025, 0.025), M["iron"])
-
-
-# ---------------------------------------------------------------- light, world, export
 
 def lights():
     def add(kind, name, loc, energy, color=(1, 1, 1), size=1.0, rot=None):
@@ -1490,7 +1303,7 @@ def main():
             ("2.2  the palm scanner, over his shoulder", S.shot_camera("P9", (15.2, 1.75, -0.9), (16.4, 1.25, 1.75), 32), None),
             ("B11  box 417, close", S.shot_camera("P10", (37.25, 1.65, 0.4), (37.25, 1.35, 2.6), 40), None),
             ("B21  from the steps: the car across the road", S.shot_camera("P11", (-1.4, 1.55, 1.2), (-6.0, 1.0, -26.0), 38), None),
-            ("2.1  the clock: 8:41", S.shot_camera("P12", (9.0, 3.5, 4.0), (13.0, 8.6, 15.8), 40), None),
+            ("2.1  the clock: 8:41", S.shot_camera("P12", (11.5, 4.5, 9.5), (13.0, 9.3, 15.8), 34), None),
         ]
         sel = [a for a in sys.argv if a.startswith("--shots=")]
         if sel:

@@ -871,3 +871,69 @@ def car_materials(M):
     M["wiper"] = mat("WiperBlack", (0.015, 0.015, 0.015), 0.6)
     M["rubber"] = mat("Rubber", (0.05, 0.05, 0.055), 0.9)
     return M
+
+
+def strata_rock(name, g=0.22, plane="xz", scale=1.0):
+    """Rock cut by the road: layered beds (soft horizontal bands), weathering blotches, fine cracks.
+    Reads as rock at arm's length and from a hundred metres (no crazy-paving cells)."""
+    key = (name, plane, "strata")
+    if key in D.MATS:
+        return D.MATS[key]
+    m, nt, bsdf = D._base(f"{name}_{plane}")
+    co = D._coords(nt, plane, scale)
+    nz = nt.nodes.new("ShaderNodeTexNoise")
+    nz.inputs["Scale"].default_value = 1.4
+    nz.inputs["Detail"].default_value = 10.0
+    nz.inputs["Roughness"].default_value = 0.62
+    nt.links.new(co, nz.inputs["Vector"])
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    ramp.color_ramp.elements[0].position = 0.3
+    ramp.color_ramp.elements[0].color = D._grey(g * 0.5)
+    ramp.color_ramp.elements[1].position = 0.72
+    ramp.color_ramp.elements[1].color = D._grey(g * 1.45)
+    nt.links.new(nz.outputs["Fac"], ramp.inputs["Fac"])
+    wv = nt.nodes.new("ShaderNodeTexWave")
+    wv.wave_type = "BANDS"
+    wv.bands_direction = "Y"
+    wv.inputs["Scale"].default_value = 1.1
+    wv.inputs["Distortion"].default_value = 5.0
+    wv.inputs["Detail"].default_value = 4.0
+    nt.links.new(co, wv.inputs["Vector"])
+    bands = nt.nodes.new("ShaderNodeMapRange")
+    bands.inputs["To Min"].default_value = 0.72
+    bands.inputs["To Max"].default_value = 1.08
+    nt.links.new(wv.outputs["Fac"], bands.inputs["Value"])
+    mix = nt.nodes.new("ShaderNodeMix")
+    mix.data_type = "RGBA"
+    mix.blend_type = "MULTIPLY"
+    mix.inputs["Factor"].default_value = 1.0
+    nt.links.new(ramp.outputs["Color"], mix.inputs["A"])
+    nt.links.new(bands.outputs["Result"], mix.inputs["B"])
+    vo = nt.nodes.new("ShaderNodeTexVoronoi")
+    vo.feature = "DISTANCE_TO_EDGE"
+    vo.inputs["Scale"].default_value = 4.5
+    nt.links.new(co, vo.inputs["Vector"])
+    crack = nt.nodes.new("ShaderNodeMapRange")
+    crack.inputs["From Min"].default_value = 0.0
+    crack.inputs["From Max"].default_value = 0.025
+    crack.inputs["To Min"].default_value = 0.55
+    crack.inputs["To Max"].default_value = 1.0
+    nt.links.new(vo.outputs["Distance"], crack.inputs["Value"])
+    mix2 = nt.nodes.new("ShaderNodeMix")
+    mix2.data_type = "RGBA"
+    mix2.blend_type = "MULTIPLY"
+    mix2.inputs["Factor"].default_value = 1.0
+    nt.links.new(mix.outputs["Result"], mix2.inputs["A"])
+    nt.links.new(crack.outputs["Result"], mix2.inputs["B"])
+    nt.links.new(mix2.outputs["Result"], bsdf.inputs["Base Color"])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.7
+    add = nt.nodes.new("ShaderNodeMath")
+    add.operation = "ADD"
+    nt.links.new(nz.outputs["Fac"], add.inputs[0])
+    nt.links.new(wv.outputs["Fac"], add.inputs[1])
+    nt.links.new(add.outputs[0], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    bsdf.inputs["Roughness"].default_value = 0.6
+    D.MATS[key] = m
+    return m

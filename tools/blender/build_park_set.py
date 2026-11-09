@@ -67,7 +67,7 @@ LAMPS = [(37.0, -1.75), (49.0, -1.75), (61.0, -1.75), (69.0, -1.75), (96.0, -1.7
 LAMP_H = 3.7
 CAR_LAMPS = [(115.0, -2.3), (124.0, 7.6)]
 CAR_LAMP_H = 6.4
-HILL_C, HILL_H, HILL_R = (245.0, 34.0), 46.0, (75.0, 62.0)   # Kessel Hill: its crown, height, half extents
+HILL_C, HILL_H, HILL_R = (250.0, 40.0), 30.0, (68.0, 56.0)   # Kessel Hill: its crown, height, half extents
 FORT_Z = HILL_H - 1.0
 
 
@@ -2083,40 +2083,42 @@ def build_hill(coll, M):
             p = road[i]
             g.cyl((p.x, p.y + 3.0, p.z + 3.0), 0.12, 6.0, M["steel_mid"], n=6)
             g.box((p.x, p.y + 2.5, p.z + 6.0), (0.8, 1.0, 0.2), M["sodium"])
-    # the fortress on the crown
-    fz = h(cx, cy) - 1.0
-    fx, fy = cx, cy
-    wall = 26.0
-    for s in (-1, 1):
-        g.box((fx, fy + s * wall / 2, fz + 6.0), (wall, 2.0, 12.0), M["fort"])
-        g.box((fx + s * wall / 2, fy, fz + 6.0), (2.0, wall, 12.0), M["fort_y"])
-        D.merlons(g, fx - wall / 2, fx + wall / 2, fy + s * wall / 2, fz + 12.0, 2.0, M["fort"], w=0.9, gap=0.8, h=1.2)
-    for (dx, dy) in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
-        D.tower(g, (fx + dx * wall / 2, fy + dy * wall / 2, fz), 3.2, 17.0, M["fort"], M["fort"], M["steel"], slits=3, crenel=True)
-    g.box((fx + 2.0, fy + 4.0, fz + 14.0), (12.0, 10.0, 28.0), M["fort"])                          # the keep
-    D.merlons(g, fx - 4.0, fx + 8.0, fy - 1.0, fz + 28.0, 1.0, M["fort"], w=0.9, gap=0.8, h=1.2)
-    tx, ty = fx - 6.0, fy + 6.0                                                                    # the observatory tower and dome
-    g.cyl((tx, ty, fz + 17.0), 3.6, 34.0, M["fort"], n=20)
-    for k in range(8):
-        a0, a1 = k / 8 * math.pi / 2, (k + 1) / 8 * math.pi / 2
-        r0, r1 = 4.0 * math.cos(a0), 4.0 * math.cos(a1)
-        g.cyl((tx, ty, fz + 34.2 + 4.0 * (math.sin(a0) + math.sin(a1)) / 2), (r0 + r1) / 2, 4.0 * (math.sin(a1) - math.sin(a0)) + 0.05, M["steel_mid"], n=20)
-    g.box((tx, ty - 3.4, fz + 36.0), (1.0, 1.0, 3.6), M["fort_win"])                               # the slit, lit
-    g.cyl((tx, ty, fz + 34.3), 4.3, 0.5, M["fort"], n=20)
-    # the windows: the keep's rows, the towers' slits, the gatehouse; all facing the town (-y and -x)
-    for j in range(5):
-        for k in range(4):
+    # the fortress on the crown (built at its own origin, set on the crown at three-quarter scale)
+    def fortress(g):
+        fx, fy, fz = 0.0, 0.0, 0.0
+        wall = 26.0
+        for s in (-1, 1):
+            g.box((fx, fy + s * wall / 2, fz + 6.0), (wall, 2.0, 12.0), M["fort"])
+            g.box((fx + s * wall / 2, fy, fz + 6.0), (2.0, wall, 12.0), M["fort_y"])
+            D.merlons(g, fx - wall / 2, fx + wall / 2, fy + s * wall / 2, fz + 12.0, 2.0, M["fort"], w=0.9, gap=0.8, h=1.2)
+        for (dx, dy) in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
+            D.tower(g, (fx + dx * wall / 2, fy + dy * wall / 2, fz), 3.2, 17.0, M["fort"], M["fort"], M["steel"], slits=3, crenel=True)
+        g.box((fx + 2.0, fy + 4.0, fz + 14.0), (12.0, 10.0, 28.0), M["fort"])                          # the keep
+        D.merlons(g, fx - 4.0, fx + 8.0, fy - 1.0, fz + 28.0, 1.0, M["fort"], w=0.9, gap=0.8, h=1.2)
+        tx, ty = fx - 6.0, fy + 6.0                                                                    # the observatory tower and dome
+        g.cyl((tx, ty, fz + 17.0), 3.6, 34.0, M["fort"], n=20)
+        for k in range(8):
+            a0, a1 = k / 8 * math.pi / 2, (k + 1) / 8 * math.pi / 2
+            r0, r1 = 4.0 * math.cos(a0), 4.0 * math.cos(a1)
+            g.cyl((tx, ty, fz + 34.2 + 4.0 * (math.sin(a0) + math.sin(a1)) / 2), (r0 + r1) / 2, 4.0 * (math.sin(a1) - math.sin(a0)) + 0.05, M["steel_mid"], n=20)
+        g.box((tx, ty - 3.4, fz + 36.0), (1.0, 1.0, 3.6), M["fort_win"])                               # the slit, lit
+        g.cyl((tx, ty, fz + 34.3), 4.3, 0.5, M["fort"], n=20)
+        # the windows: the keep's rows, the towers' slits, the gatehouse; all facing the town (-y and -x)
+        for j in range(5):
+            for k in range(4):
+                if rnd.random() < 0.7:
+                    g.box((fx - 2.5 + k * 3.0, fy - 1.05, fz + 8.0 + j * 4.0), (0.9, 0.1, 1.8), M["fort_win"])
             if rnd.random() < 0.7:
-                g.box((fx - 2.5 + k * 3.0, fy - 1.05, fz + 8.0 + j * 4.0), (0.9, 0.1, 1.8), M["fort_win"])
-        if rnd.random() < 0.7:
-            g.box((fx - 4.05, fy + 1.0 + (j % 3) * 3.0, fz + 8.0 + j * 4.0), (0.1, 0.9, 1.8), M["fort_win"])
-    for k in range(8):
-        g.box((fx - wall / 2 + 2.0 + k * 3.0, fy - wall / 2 - 1.05, fz + 7.5), (0.6, 0.1, 1.2), M["fort_win"])
-        g.box((fx - wall / 2 - 1.05, fy - wall / 2 + 2.0 + k * 3.0, fz + 7.5), (0.1, 0.6, 1.2), M["fort_win"])
-    for k in range(10):
-        a = k / 10 * math.tau
-        g.box((tx + math.cos(a) * 3.62, ty + math.sin(a) * 3.62, fz + 28.0), (0.6, 0.6, 1.4), M["fort_win"], rot=(0, 0, math.degrees(a)))
-    g.box((fx - wall / 2 - 1.1, fy, fz + 3.0), (0.3, 4.0, 6.0), M["fort_win"])                    # the gate, lit
+                g.box((fx - 4.05, fy + 1.0 + (j % 3) * 3.0, fz + 8.0 + j * 4.0), (0.1, 0.9, 1.8), M["fort_win"])
+        for k in range(8):
+            g.box((fx - wall / 2 + 2.0 + k * 3.0, fy - wall / 2 - 1.05, fz + 7.5), (0.6, 0.1, 1.2), M["fort_win"])
+            g.box((fx - wall / 2 - 1.05, fy - wall / 2 + 2.0 + k * 3.0, fz + 7.5), (0.1, 0.6, 1.2), M["fort_win"])
+        for k in range(10):
+            a = k / 10 * math.tau
+            g.box((tx + math.cos(a) * 3.62, ty + math.sin(a) * 3.62, fz + 28.0), (0.6, 0.6, 1.4), M["fort_win"], rot=(0, 0, math.degrees(a)))
+        g.box((fx - wall / 2 - 1.1, fy, fz + 3.0), (0.3, 4.0, 6.0), M["fort_win"])                    # the gate, lit
+
+    sub(g, fortress, (cx, cy, h(cx, cy) - 0.8), scale=0.75)
     return g.finish(coll)
 
 
@@ -2142,12 +2144,12 @@ def build_sky(coll, M):
         blob(g, (x, rnd.uniform(130, 160), hh * 0.2), hh, M["far"], s=(1.6, 0.6, 0.5), subdiv=1, rough=0.2)
     # the storm gathering over the fortress: banks of heavy cloud, lit from within here and there
     cx, cy = HILL_C
-    for (bx, by, bz, n) in ((-30, 10, 30, 9), (5, 25, 38, 10), (40, 5, 32, 8), (-10, 55, 44, 8), (30, 45, 50, 7)):
+    for (bx, by, bz, n) in ((-35, 30, 46, 9), (5, 40, 52, 10), (40, 25, 46, 8), (-10, 70, 58, 8), (30, 65, 62, 7)):
         for k in range(n):
             c = (cx + bx + rnd.uniform(-22, 22), cy + by + rnd.uniform(-10, 10), HILL_H + bz + rnd.uniform(-4, 6))
             blob(g, c, rnd.uniform(7, 13), M["cloud"], s=(1.7, 1.2, 0.6), subdiv=2, rough=0.45)
     for k in range(4):
-        c = (cx + rnd.uniform(-25, 25), cy + rnd.uniform(5, 30), HILL_H + rnd.uniform(27, 33))
+        c = (cx + rnd.uniform(-25, 25), cy + rnd.uniform(25, 45), HILL_H + rnd.uniform(42, 48))
         blob(g, c, rnd.uniform(4, 6), M["cloud_lit"], s=(1.5, 1.2, 0.45), subdiv=1, rough=0.3)
     # thinner cloud over the town, drifting
     for k in range(18):

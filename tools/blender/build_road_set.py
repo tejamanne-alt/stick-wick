@@ -237,9 +237,10 @@ def mats():
     M["asphalt"] = K.mottled("RoadAsphalt", 0.055, 0.28, scale=0.35, var=0.45)
     M["gravel"] = K.mottled("RoadGravel", 0.13, 0.95, scale=4.0, var=0.5)
     M["heath"] = K.mottled("HillHeath", 0.075, 0.95, scale=0.09, var=0.65)
-    M["scree"] = D.rock("HillScree", 0.16, "xy")
-    M["cut_x"] = D.rock("HillCut", 0.22, "xz")
-    M["cut_y"] = D.rock("HillCut", 0.22, "yz")
+    M["scree"] = K.strata_rock("HillScree", 0.15, "xy", 0.5)
+    M["cut_x"] = K.strata_rock("HillCut", 0.24, "xz")
+    M["cut_y"] = K.strata_rock("HillCut", 0.24, "yz")
+    M["rock"] = K.strata_rock("RoadRock", 0.22, "xz")
     M["line"] = S.mat("RoadLine", (0.62, 0.62, 0.62), 0.5)
     M["barrier"] = S.mat("Barrier", (0.42, 0.42, 0.42), 0.32, metal=0.7)
     M["barrier_post"] = S.mat("BarrierPost", (0.12, 0.12, 0.12), 0.5, metal=0.5)
@@ -251,7 +252,7 @@ def mats():
     M["bark"] = D.flat("PineBark", 0.07)
     M["cloud"] = K.mottled("StormCloud", 0.11, 1.0, scale=0.04, var=0.55)
     M["cloud_low"] = K.mottled("ValleyCloud", 0.16, 1.0, scale=0.05, var=0.5)
-    M["sky"] = K.grad_sky("RoadSkyGrad", -140.0, 160.0, [(0.0, 0.05), (0.18, 0.03), (0.45, 0.012), (1.0, 0.004)], 1.0)
+    M["sky"] = K.grad_sky("RoadSkyGrad", -140.0, 160.0, [(0.0, 0.09), (0.2, 0.06), (0.45, 0.03), (1.0, 0.012)], 1.0)
     M["city_light"] = S.mat("CityLight", (1, 1, 1), 0.5, emit=(1, 1, 1), strength=14.0)
     M["flood_lens"] = D.flat("RoadFlood", 1.0, emit=40.0)
     M["sentry"] = D.flat("Sentry", 0.01, rough=0.9)
@@ -398,16 +399,23 @@ def build_way(coll, M):
             rows.append([tuple(p + left * (o + d) + Vector((0, 0, 0.012))) for d in (-0.06, 0.06)])
         grid(rows, M["line"])
     in_bend = lambda p: (p.x > XR - 1 or p.x < XL + 1) and p.y < -1  # noqa: E731
-    for (p, left, u, s, i) in fr:
-        if p.x > X_STOP + 6:
-            break
-        bend = in_bend(p)
-        if bend:
-            for off in (-0.09, 0.09):
-                a = p + left * off
-                g.box((a.x, a.y, p.z + 0.024), (0.5, 0.08, 0.004), M["line"], rot=(0, 0, math.degrees(math.atan2(left.x, -left.y))))
-        elif s % 9.0 < 1.0:
-            g.box((p.x, p.y, p.z + 0.024), (3.0, 0.12, 0.004), M["line"], rot=(0, 0, math.degrees(math.atan2(left.x, -left.y))))
+    centre = [f for f in fr[::2] if f[0].x <= X_STOP + 6]
+    for off in (-0.1, 0.1):                                                           # double line through the bends
+        run = []
+        for (p, left, u, s_, i) in centre + [None]:
+            if p is not None and in_bend(p):
+                run.append([tuple(p + left * (off + d) + Vector((0, 0, 0.026))) for d in (-0.05, 0.05)])
+            elif run:
+                if len(run) > 1:
+                    grid(run, M["line"])
+                run = []
+    for (p, left, u, s_, i) in centre:                                               # dashes on the legs
+        if in_bend(p) or i % 10 != 0:
+            continue
+        T = Vector((left.y, -left.x, 0))
+        a, b = p - T * 1.5, p + T * 1.5
+        grid([[tuple(a + left * d + Vector((0, 0, 0.026))) for d in (-0.06, 0.06)],
+              [tuple(b + left * d + Vector((0, 0, 0.026))) for d in (-0.06, 0.06)]], M["line"])
     # SLOW painted before every bend, in the climbing lane
     for k in range(4):
         x_b = XR - 24.0 if k % 2 == 0 else XL + 24.0
@@ -483,13 +491,9 @@ def build_way(coll, M):
             for sgn in (-1, 1):
                 q = ctr + tang * sgn * 0.28
                 g.box((q.x, q.y, (zc + 1.45 + pz) / 2 - 0.2), (0.07, 0.07, zc + 1.45 - pz + 0.4), M["barrier_post"])
-            Mb = K.frame_m(ctr + inward * 0.04, tang, (0, 0, 1))
             yaw = math.degrees(math.atan2(tang.y, tang.x))
             g.box(tuple(ctr + inward * 0.02), (0.8, 0.04, 0.95), M["sign_black"], rot=(0, 0, yaw))
-            for (dz, sgn) in ((0.18, 1), (-0.18, -1)):
-                q = ctr + inward * 0.05 + Vector((0, 0, dz * 0.5))
-                g.box(tuple(q), (0.42, 0.012, 0.11), M["sign_white"], rot=(0, -sgn * 38 * (1 if turn_left else -1), yaw) if False else None)
-            for sgn in (-1, 1):
+            for sgn in (-1, 1):                                                       # the white chevron, pointing round the bend
                 q = ctr + inward * 0.05 + Vector((0, 0, sgn * 0.13))
                 Mb2 = Matrix.Translation(q) @ Matrix.Rotation(math.radians(yaw), 4, "Z") @ Matrix.Rotation(math.radians(sgn * 38), 4, "Y")
                 g.box(tuple(q), (0.40, 0.012, 0.11), M["sign_white"], rot=Mb2.to_3x3().to_4x4())
@@ -620,8 +624,6 @@ def build_top(coll, M):
     g.box((X_STOP + 1.0, 2.75, -0.01), (12.0, 0.7, 0.04), M["gravel"] if "gravel" in M else M["road"])
     for k in range(6):
         g.box((X_STOP - 4.0 + k * 2.0, 3.12, 0.06), (1.9, 0.14, 0.14), M["stone"])
-    for (px, py, r) in ((X_STOP - 1.5, 0.2, 0.9), (X_STOP + 3.4, -1.2, 0.7), (X_STOP - 4.2, -1.8, 1.1), (X_STOP + 7.0, 0.8, 0.6), (4.0, -0.6, 1.2), (16.0, 1.0, 0.8)):
-        g.cyl((px, py, 0.016), r, 0.008, M["puddle"], n=18)
     bx, by = X_STOP + 5.5, 3.6
     for s in (-1, 1):
         g.beam((bx + s * 0.8, by - 0.3, 0.0), (bx + s * 0.8, by, 0.9), 0.05, 0.05, M["iron"])
@@ -788,11 +790,12 @@ def lights():
         if ob.type == "LIGHT" and ob.name in ("Fill", "RoadFlood"):
             bpy.data.objects.remove(ob)
     moon = bpy.context.scene.objects["Moon"]
-    moon.data.energy = 0.42
+    moon.data.energy = 1.1
     moon.rotation_euler = (math.radians(58), 0, math.radians(200))
     # the city's glow from below, on the hill's face and the clouds' bellies
     K.add_light("AREA", "CityGlow", (-60.0, -230.0, -60.0), 1.6e6, size=320.0, rot=(math.radians(-62), 0, 0))
-    K.add_light("AREA", "FaceFill", (-80.0, -150.0, 20.0), 1.2e5, size=160.0, rot=(math.radians(68), 0, 0))
+    K.add_light("AREA", "FaceFill", (-80.0, -150.0, 20.0), 3.0e5, size=160.0, rot=(math.radians(68), 0, 0))
+    K.add_light("AREA", "TopFill", (-20.0, -30.0, 25.0), 6.0e4, size=60.0, rot=(math.radians(50), 0, 0))
     # the floodlights at the top: the stop, and the cliff road's
     f = K.add_light("SPOT", "StopFlood", (-6.4, 2.8, 6.4), 9000, size=0.4, spot=80)
     K.aim(f, (X_STOP, Y_STOP - 0.6, 0.0))
@@ -808,8 +811,9 @@ def lights():
     K.add_light("AREA", "CarSideR", (c.x - 1.0, c.y - 6.0, c.z + 1.6), 160, size=6.0, rot=(math.radians(80), 0, 0))
     K.add_light("AREA", "CarSideL", (c.x + 1.0, c.y + 6.0, c.z + 1.6), 60, size=6.0, rot=(math.radians(-80), 0, 0))
     ci = INTERIOR_AT                                                                   # the cabin: the road's glow in the screen
-    K.add_light("AREA", "CabinBounce", (ci.x + 3.2, ci.y, ci.z + 0.9), 30, size=2.0, rot=(0, math.radians(-80), 0))
-    K.add_light("AREA", "CabinSide", (ci.x - 0.4, ci.y - 2.5, ci.z + 1.3), 10, size=1.5, rot=(math.radians(85), 0, 0))
+    K.add_light("AREA", "CabinBounce", (ci.x + 3.2, ci.y, ci.z + 0.9), 160, size=2.0, rot=(0, math.radians(-80), 0))
+    K.add_light("AREA", "CabinSide", (ci.x - 0.4, ci.y - 2.5, ci.z + 1.3), 70, size=1.5, rot=(math.radians(85), 0, 0))
+    K.add_light("AREA", "CabinGlow", (ci.x + 0.1, ci.y, ci.z + 1.25), 6, size=0.8, rot=(0, 0, 0))
     w = bpy.context.scene.world
     w.node_tree.nodes["Background"].inputs[0].default_value = (0.018, 0.019, 0.024, 1)
 
@@ -938,7 +942,7 @@ def write_plan():
         f"        public static readonly Vector3 PassengerHead = {u3(*(INTERIOR_AT + Vector((-0.62, -K.DRIVER_Y, 1.14))))};",
         f"        public static readonly Vector3 Windscreen = {u3(*(INTERIOR_AT + Vector(((K.SCREEN_BASE[0] + K.SCREEN_TOP[0]) / 2, 0.0, (K.SCREEN_BASE[1] + K.SCREEN_TOP[1]) / 2))))};",
         "        /// <summary>Far ahead through the windscreen: the road's end and the fortress over it.</summary>",
-        f"        public static readonly Vector3 OutsideAhead = {u3(*(INTERIOR_AT + Vector((70.0, -0.4, 3.0))))};",
+        f"        public static readonly Vector3 OutsideAhead = {u3(90.0, 3.0, UP + 14.0)};",
         f"        public static readonly Vector3 RearViewMirror = {u3(*(INTERIOR_AT + Vector((K.SCREEN_TOP[0] - 0.094, 0.0, K.SCREEN_TOP[1] - 0.14))))};",
         f"        public static readonly Vector3 Gauges = {u3(*(INTERIOR_AT + Vector((0.462, K.DRIVER_Y, 0.865))))};",
         f"        public static readonly Vector3 WiperPivotR = {u3(*(INTERIOR_AT + Vector(WIPER_PIVOTS[0])))};",
@@ -1079,14 +1083,14 @@ def preview_shots(car, cab, wipers):
         shots.append((label, S.shot_camera("O%d" % len(shots), pos, look, fov)))
         placements.append((p, d))
     p, d = at(-80.0, LEG_Y[2] + LANE)
-    outside("5.1  the hairpins from high, a car climbing", p, d, (-70.0, 30.0, -150.0), (-82.0, -28.0, -32.0), 44)
+    outside("5.1  the hairpins from high, a car climbing", p, d, (-170.0, 20.0, -175.0), (-50.0, -18.0, -20.0), 50)
     inside("5.2  close on his hands on the wheel", (-0.30, -0.62, 1.02), (0.18, -0.30, 0.80), 50)
     inside("5.3  two-shot of nobody: the empty seat", (0.30, -0.70, 1.10), (-0.42, 0.37, 0.62), 62)
-    inside("5.8  the fortress fills the windscreen", (-0.62, -0.37, 1.14), (20.0, 0.0, 3.8), 58)
+    inside("5.8  the fortress fills the windscreen", (-0.62, -0.37, 1.14), (60.0, 3.0, 13.0), 46)
     inside("5.6  the dials, the wipers, the mirror", (-0.75, 0.05, 1.20), (0.4, -0.25, 0.95), 70)
     outside("5.9  the floodlit stop (the car parked)", Vector((X_STOP, Y_STOP, 0.0)), Vector((1, 0, 0)), (-15.5, 1.5, -6.0), (-7.0, 1.0, 1.0), 48)
     p5, d5 = at(XR + 6.0, LEG_Y[2] + 6.0)
-    outside("a hairpin close: chevrons, barrier, the cutting", p5, d5, (XR + 22.0, leg_z(2, XR) + 4.0, LEG_Y[2] - 8.0), (XR + 6.0, leg_z(2, XR) + 1.2, LEG_Y[2] + 8.0), 52)
+    outside("a hairpin close: chevrons, barrier, the cutting", p5, d5, (XR + 26.0, leg_z(2, XR) + 6.0, LEG_Y[2] - 16.0), (XR + 4.0, leg_z(2, XR), LEG_Y[2] + 9.0), 50)
     outside("the fortress from the cliff road", Vector((X_STOP, Y_STOP, 0.0)), Vector((1, 0, 0)), (-26.0, 1.6, -1.0), (60.0, 12.0, 6.0), 50)
     cab.location = ci
 

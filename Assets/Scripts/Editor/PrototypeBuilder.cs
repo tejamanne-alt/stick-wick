@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 44;
+        public const int SceneVersion = 45;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
@@ -30,6 +30,8 @@ namespace ProjectInk.EditorTools
         public const string HomeScenePath = "Assets/Scenes/Story_Home.unity";
         public const string ParkScenePath = "Assets/Scenes/Story_Backyard.unity";
         public const string FortressScenePath = "Assets/Scenes/Story_Fortress.unity";
+        public const string RoadScenePath = "Assets/Scenes/Story_Road.unity";
+        public const string EpilogueScenePath = "Assets/Scenes/Story_Epilogue.unity";
         public const string MenuScenePath = "Assets/Scenes/Menu.unity";
 
         /// <summary>The main scene: the tower.</summary>
@@ -65,7 +67,9 @@ namespace ProjectInk.EditorTools
             Build(LayoutKind.Street, StreetScenePath, false);
             Build(LayoutKind.Home, HomeScenePath, false);
             Build(LayoutKind.Park, ParkScenePath, false);
+            Build(LayoutKind.Park, RoadScenePath, false, StorySet.Road);
             Build(LayoutKind.Fortress, FortressScenePath, false);
+            Build(LayoutKind.Park, EpilogueScenePath, false, StorySet.Epilogue);
             BuildMenu();
             File.WriteAllText(VersionFile, SceneVersion.ToString());
             AssetDatabase.ImportAsset(VersionFile);
@@ -77,7 +81,9 @@ namespace ProjectInk.EditorTools
                 new EditorBuildSettingsScene(StreetScenePath, true),
                 new EditorBuildSettingsScene(HomeScenePath, true),
                 new EditorBuildSettingsScene(ParkScenePath, true),
+                new EditorBuildSettingsScene(RoadScenePath, true),
                 new EditorBuildSettingsScene(FortressScenePath, true),
+                new EditorBuildSettingsScene(EpilogueScenePath, true),
                 new EditorBuildSettingsScene(ScenePath, true),
             };
             AssetDatabase.SaveAssets();
@@ -103,7 +109,10 @@ namespace ProjectInk.EditorTools
         [MenuItem("Stick Wick/Build Classic Hall (backup)")]
         public static void BuildClassicHall() => Build(LayoutKind.Hall, HallScenePath, false);
 
-        static void Build(LayoutKind kind, string scenePath, bool main)
+        /// <summary>Story scenes that are not a LayoutKind of their own (no navigation map, no fight lane).</summary>
+        enum StorySet { None, Road, Epilogue }
+
+        static void Build(LayoutKind kind, string scenePath, bool main, StorySet storySet = StorySet.None)
         {
             Directory.CreateDirectory(GenDir);
             Directory.CreateDirectory(GenDir + "/Textures");
@@ -150,8 +159,21 @@ namespace ProjectInk.EditorTools
             bool home = kind == LayoutKind.Home;
             bool park = kind == LayoutKind.Park;
             bool fortress = kind == LayoutKind.Fortress;
-            bool story = kind == LayoutKind.Warehouse || bank || street || home || park || fortress;
-            if (kind == LayoutKind.Hall)
+            bool road = storySet == StorySet.Road;
+            bool epilogue = storySet == StorySet.Epilogue;
+            if (road || epilogue) park = false;
+            bool story = kind == LayoutKind.Warehouse || bank || street || home || park || fortress || road || epilogue;
+            if (road)
+            {
+                layout.roofY = RoadBuilder.RoofY;
+                RoadBuilder.Build(room, spawnRoot, points, out heroStart);
+            }
+            else if (epilogue)
+            {
+                layout.roofY = EpilogueBuilder.RoofY;
+                EpilogueBuilder.Build(room, spawnRoot, points, out heroStart);
+            }
+            else if (kind == LayoutKind.Hall)
             {
                 layout.roofY = 6.8f;
                 BuildHall(room, ground, arch, trail, spawnRoot, points, out heroStart);
@@ -202,8 +224,8 @@ namespace ProjectInk.EditorTools
                 // the man in the warehouse: narrowed eyes and the scar at his temple
                 hero.eyeOpenY = 0.034f;
                 StoryBuilder.AddScar(heroGo, eyeMat);
-                hero.arenaMinX = fortress ? 0.4f : park ? ParkPlan.LaneX0 : home ? HomePlan.StreetX0 : street ? StreetPlan.LaneX0 : bank ? BankBuilder.StreetX0 : -StoryBuilder.HalfW + 0.6f;
-                hero.arenaMaxX = fortress ? FortressPlan.HallX1 - 0.6f : park ? ParkPlan.LaneX1 : home ? HomePlan.HouseX1 - 0.4f : street ? StreetPlan.LaneX1 : bank ? BankBuilder.VaultX1 : StoryBuilder.HalfW - 0.6f;
+                hero.arenaMinX = road ? RoadBuilder.LaneX0 : epilogue ? EpilogueBuilder.LaneX0 : fortress ? 0.4f : park ? ParkPlan.LaneX0 : home ? HomePlan.StreetX0 : street ? StreetPlan.LaneX0 : bank ? BankBuilder.StreetX0 : -StoryBuilder.HalfW + 0.6f;
+                hero.arenaMaxX = road ? RoadBuilder.LaneX1 : epilogue ? EpilogueBuilder.LaneX1 : fortress ? FortressPlan.HallX1 - 0.6f : park ? ParkPlan.LaneX1 : home ? HomePlan.HouseX1 - 0.4f : street ? StreetPlan.LaneX1 : bank ? BankBuilder.VaultX1 : StoryBuilder.HalfW - 0.6f;
             }
 
             var systems = new GameObject("Systems");
@@ -255,7 +277,7 @@ namespace ProjectInk.EditorTools
             if (story)
             {
                 cam.backgroundColor = new Color(0.012f, 0.014f, 0.024f);
-                cam.farClipPlane = 320f;                   // the city on the horizon in the opening shot
+                cam.farClipPlane = road ? 600f : 320f;     // the city on the horizon in the opening shot (the valley's, far below, on the road)
                 dirCam.minX = -9f;
                 dirCam.maxX = 9f;
                 dirCam.wallX = StoryBuilder.HalfW - 0.4f;

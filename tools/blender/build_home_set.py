@@ -1635,7 +1635,7 @@ def build_outside(coll, M):
     g.box((10.0, -18.6, -0.05), (160.0, 1.6, 0.1), M["paving"])
     # the front gardens (the hero comes along the shared path at y 0) and their low walls
     g.box((-24.0, 1.0, -0.06), (48.0, 8.4, 0.1), M["grass"])
-    g.box((-14.0, 0.0, -0.01), (24.0, 1.2, 0.04), M["path"])                                  # the shared path
+    g.box((-15.0, 0.0, -0.01), (22.0, 1.2, 0.04), M["path"])                                  # the shared path
     g.box((-2.0, 0.0, -0.01), (4.0, 1.4, 0.04), M["path"])                                    # No. 14's path to the porch
     g.box((-3.05, -1.55, -0.01), (1.1, 1.7, 0.04), M["path"])                                 # and from the gate
     for (a, b) in ((-48.0, -3.7), (-2.35, -0.25)):
@@ -1698,7 +1698,7 @@ def build_outside(coll, M):
     for k in range(12):                                                                        # shrubs by No. 12
         D.boulder(g, (-23.0 + k * 1.2, 2.4, 0.3), r.uniform(0.35, 0.5), M["leaf"], squash=0.8)
     # street lamps, trees
-    for x in (-38.0, -22.0, -6.0, 26.0, 58.0):
+    for x in (-38.0, -22.0, -6.0, 66.0, 82.0):
         lamp_post(g, x, -3.0, M)
     for x in (-30.0, 10.0, 50.0):
         lamp_post(g, x, -19.0, M, toward=1)
@@ -1897,8 +1897,14 @@ def build_props(coll, M):
     fw, fh = 0.22, 0.27
     L.box((0, 0, fh / 2 + 0.005), (fw, 0.016, fh), M["chrome"], rot=(-10, 0, 0))
     L.box((0, 0.055, fh * 0.4), (0.02, 0.012, fh * 0.8), M["chrome"], rot=(25, 0, 0))
+    up = Vector((0.0, math.sin(math.radians(10)), math.cos(math.radians(10))))       # the frame leans back 10 degrees
+    nrm = Vector((0.0, -math.cos(math.radians(10)), math.sin(math.radians(10))))
+    layer = [0]
+
     def P(dx, dz, s, m):
-        L.box((dx, -0.0095 - 0.0012 * (dz > 0), fh / 2 + 0.006 + dz), s, m, rot=(-10, 0, 0))
+        layer[0] += 1
+        q = Vector((dx, 0.0, fh / 2 + 0.005)) + up * dz + nrm * (0.009 + 0.0012 * layer[0])
+        L.box(tuple(q), s, m, rot=(-10, 0, 0))
     P(0, 0, (fw * 0.84, 0.002, fh * 0.84), M["paper"])
     P(0, 0.02, (fw * 0.76, 0.002, fh * 0.6), M["books"][4])                                    # the sky
     P(0, -0.085, (fw * 0.76, 0.002, 0.05), M["books"][1])                                      # the sea wall
@@ -1923,7 +1929,8 @@ def build_props(coll, M):
     L.cyl((0.022, 0.0, 0.17), 0.006, 0.09, M["ink"], n=6)                                      # the aerial
     L.cyl((0.022, 0.0, 0.218), 0.009, 0.012, M["ink"], n=6)
     L.cyl((-0.02, 0.0, 0.136), 0.007, 0.012, M["toy"][1], n=6)
-    g.box((wx + 0.13, wy, wz + 0.0006), (0.075, 0.045, 0.0012), M["white_paint"])               # where the other one stood
+    for (ddx, ddy, sx, sy) in ((0, -0.024, 0.08, 0.004), (0, 0.024, 0.08, 0.004), (-0.04, 0, 0.004, 0.052), (0.04, 0, 0.004, 0.052)):
+        g.box((wx + 0.13 + ddx, wy + ddy, wz + 0.0008), (sx, sy, 0.0016), M["books"][2])        # where the other one stood: its outline in the dust
     props.append(finish_prop(g, coll))
     # ---- her drawing on the wall: the three of them holding hands under a sun
     g = S.Group("MayaDrawing")
@@ -2012,7 +2019,7 @@ def lights():
     # outside: the porch lantern, the back door's light, the street lamps
     add("POINT", "Porch", (X0 - 0.35, -0.9, 2.0), 40, size=0.1)
     add("POINT", "BackLight", (X1 + 0.35, -0.95, 2.0), 30, size=0.1)
-    for x in (-38.0, -22.0, -6.0, 26.0, 58.0):
+    for x in (-38.0, -22.0, -6.0, 66.0, 82.0):
         add("POINT", "StreetLamp", (x, -3.8, 5.2), 220, size=0.2)
     # a soft fill from the camera side so the lane reads
     add("AREA", "Fill", (17.0, -9.0, 3.5), 1500, size=26.0, rot=(math.radians(78), 0, 0))

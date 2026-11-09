@@ -201,6 +201,9 @@ def add_mats(S, M):
         return M
     if hasattr(S, "H"):
         S.H.hall_materials(S, M)                       # rack paint, cardboard, wrap, tarp: shared with the hall
+    import detail as D                                # the detail kit's timber, for the table and bench tops
+    D.MATS.pop(("WarehouseTimber", "xy"), None)
+    M["k_planks"] = D.planks("WarehouseTimber", 0.16, "xy", board=0.14)
     M["k_floor"] = wet_concrete("WetConcreteFloor", 0.10)
     M["k_floor_hall"] = wet_concrete("WetConcreteHall", 0.10, patch_scale=0.16)
     M["k_asphalt"] = wet_concrete("WetAsphalt", 0.05, wet_dark=0.45, patch_scale=0.09)
@@ -955,7 +958,7 @@ def shed_detail(S, g, M):
 
     # ---------------------------------------------------- the crew's table (they sat here and waited)
     tx, ty = -3.55, 1.45
-    bbox(g, (tx, ty, 0.74), (1.3, 0.72, 0.035), M["wood"], w=0.006)
+    bbox(g, (tx, ty, 0.74), (1.3, 0.72, 0.035), M["k_planks"], w=0.006)
     for dx in (-0.6, 0.6):
         for dy in (-0.3, 0.3):
             g.box((tx + dx, ty + dy, 0.37), (0.035, 0.035, 0.74), M["steel_mid"])
@@ -1131,7 +1134,7 @@ def _Sub(g):
     return g.__class__("tmp")
 
 
-def chainlink(g, M, x0, x1, y, h=2.6, spacing=0.16, post=3.0):
+def chainlink(g, M, x0, x1, y, h=2.6, spacing=0.2, post=3.0):
     """Chain-link mesh between the fence posts: a diamond lattice of wire."""
     n = int((x1 - x0) / spacing)
     for k in range(n):
@@ -1140,10 +1143,10 @@ def chainlink(g, M, x0, x1, y, h=2.6, spacing=0.16, post=3.0):
         g.beam((x + h, y, 0.06), (x, y, h), 0.008, 0.008, M["steel_mid"], up=Vector((0, 1, 0)))
 
 
-def razor_wire(g, M, x0, x1, y, z, r=0.32, pitch=0.45):
+def razor_wire(g, M, x0, x1, y, z, r=0.32, pitch=0.55):
     x = x0
     while x < x1:
-        g.torus((x, y, z), r, 0.008, M["steel_mid"], rot=(0, 90 + R.uniform(-15, 15), 0), n1=10, n2=3)
+        g.torus((x, y, z), r, 0.008, M["steel_mid"], rot=(0, 90 + R.uniform(-15, 15), 0), n1=8, n2=3)
         x += pitch
 
 
@@ -1429,7 +1432,7 @@ def city_detail(S, g, M):
 
 def bench_kit(g, M, x, y, w=2.2, back_panel=True):
     """A steel workbench with its tools out, a vice, a shelf of tins, a pegboard on its own frame."""
-    bbox(g, (x, y, 0.88), (w, 0.75, 0.05), M["wood"], w=0.008)
+    bbox(g, (x, y, 0.88), (w, 0.75, 0.05), M["k_planks"], w=0.008)
     for dx in (-w / 2 + 0.05, w / 2 - 0.05):
         for dy in (-0.32, 0.32):
             g.box((x + dx, y + dy, 0.43), (0.05, 0.05, 0.86), M["steel"])

@@ -3,6 +3,11 @@ night and BAKED, so the unlit game shows a lit film set at no runtime cost.
 
     python tools/blender/build_story_set.py              # build, bake, export
     python tools/blender/build_story_set.py --preview    # build and render the shots (no bake)
+    python tools/blender/build_story_set.py --preview --hall    # the main hall's shots instead
+    ... --preview [--hall] --fast                                # the same at low samples (a quick look)
+
+The dressing (services, steel detail, signs, stores, the crew's table, the chair, the yard's fence
+and masts, the skyline's haze) is in warehouse_kit.py, merged into the same groups.
 
 Coordinates: Blender X = Unity X (along the fight lane), Blender Y = Unity Z (depth: the back
 wall is at +2.6, the camera side is negative), Blender Z = Unity Y (up). Units are metres.
