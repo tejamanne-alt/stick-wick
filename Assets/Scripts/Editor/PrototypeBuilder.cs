@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 39;
+        public const int SceneVersion = 40;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
@@ -267,7 +267,8 @@ namespace ProjectInk.EditorTools
                     name = n,
                     clip = c,
                     loop = meta != null && meta.loop,
-                    hitTime = meta != null && meta.hitFrame >= 0 ? meta.hitFrame / (float)Mathf.Max(1, meta.fps) : -1f
+                    hitTime = meta != null && meta.hitFrame >= 0 ? meta.hitFrame / (float)Mathf.Max(1, meta.fps) : -1f,
+                    endShift = meta != null ? meta.endShift : 0f
                 });
             }
             EditorUtility.SetDirty(set);

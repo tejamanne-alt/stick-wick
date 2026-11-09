@@ -1275,3 +1275,9 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - Chapter 1: opening, the shutter, each hall zone, the Foreman fight, the ending with the boss already beaten (no fight), and the ending from the search of the body.
   - Chapter 2: start, counter, vault, box, walk out.
   - The pieces: `StoryTest.JumpToEnding`, `StoryEnding.EndingFrom`, and the bank's `BankFrom`/`TestState` (the bank's sequence is now in blocks that can be entered mid-way).
+
+## Fight move library (CONTACT kit, part 1)
+- 14 new mocap clips from the CMU database. Karate: oi-zuki, gyaku-zuki, mae-geri, mawashi-geri, side kick, gedan-barai. Boxing: lead hook, jab-hook, one-two-three. Also a slip, a fall on the face, and get-ups from face down, side and back.
+- 38 hand-keyed clips: strikes (elbow, back fist, palm heel, low kick, hammer fist, headbutt, clinch knee, clothesline), parries and blocks, the clinch, judo throws (hip throw, shoulder throw, sweep), pro-wrestling slams (suplex, body slam, DDT, spear), and new hit reactions. Paired moves come as attacker + `_v` victim clips; `endShift` tells the game where the thrown man lands.
+- No rain after the warehouse: chapter 2's rain sound is now silent (the puddles stay), and the docs record the rule.
+- See docs/design/move_library.md.

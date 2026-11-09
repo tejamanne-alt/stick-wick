@@ -32,7 +32,7 @@ In chapter 2 the race is set up at once: at the bank's carved mark, *"The same m
 
 ## Chapter 2: The Bank
 
-**Morning after the storm.** The street is still wet and the sky is white. The bank is a stone facade with columns, a revolving door and a brass sign. Inside: a marble lobby with a clock, pendant lamps, teller windows behind glass, a velvet rope and a guard. A corridor runs behind it, through a barred gate, to the round vault door, which is open, and the safe-deposit room with its walls of numbered boxes.
+**Morning after the storm.** The street is still wet and the sky is white. No rain falls in this chapter or any later one: it stopped with the warehouse (puddles only, no rain sound). The bank is a stone facade with columns, a revolving door and a brass sign. Inside: a marble lobby with a clock, pendant lamps, teller windows behind glass, a velvet rope and a guard. A corridor runs behind it, through a barred gate, to the round vault door, which is open, and the safe-deposit room with its walls of numbered boxes.
 
 | # | Shot | What happens | Sound |
 |---|---|---|---|

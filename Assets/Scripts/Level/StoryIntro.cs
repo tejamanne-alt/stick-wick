@@ -95,7 +95,7 @@ namespace ProjectInk
             runSpeed = hero.runSpeed;
             StoryCameraFX.Set(0f, 0f);
             chapter = SceneManager.GetActiveScene().name == "Story_Bank" ? 2 : 1;
-            if (chapter == 2) { HeadWound.Chapter = 2; Sound.Ambience(0.12f, 0.55f, 22000f); }
+            if (chapter == 2) { HeadWound.Chapter = 2; Sound.Ambience(0f, 0.55f, 22000f); }   // the rain stopped with the warehouse
             else Sound.Ambience(2.4f, 0.2f, 22000f);
             FindEscapeProps();
         }

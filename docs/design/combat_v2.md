@@ -148,6 +148,8 @@ The Foreman (chapter 1) is re-tuned on the same system: guard, combos and his cl
 
 ### The street, block by block (one continuous side-on lane, about 120 m, 4 zones)
 
+**Weather: no rain.** The rain ended with the warehouse. The street is the morning after: a white sky, wet tarmac and standing puddles that still reflect, gutters dripping, but nothing falling and no rain sound. (The same goes for every chapter after it.)
+
 | Zone | Place | Its kit | Fight |
 |---|---|---|---|
 | **S1 · Outside the bank** | The bank's steps, Café Noir's terrace (tables, chairs, its awning), the black car at the kerb, a newspaper box, a bus stop with a glass shelter. | Car doors, the bonnet, café chairs and tables, the bus-stop glass. | The men from the black car (4) and the driver. |

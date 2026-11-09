@@ -11,7 +11,7 @@ namespace ProjectInk.EditorTools
         public const string ModelPath = "Assets/Art/Stickman/Stickman.fbx";
         public const string ClipJsonPath = "Assets/Art/Stickman/stickman_clips.json";
 
-        [System.Serializable] public class ClipInfo { public string name; public int frames; public int fps; public bool loop; public int hitFrame; }
+        [System.Serializable] public class ClipInfo { public string name; public int frames; public int fps; public bool loop; public int hitFrame; public float endShift; }
         [System.Serializable] public class ClipList { public ClipInfo[] clips; }
 
         public static ClipList LoadClipInfo()

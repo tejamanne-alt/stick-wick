@@ -31,4 +31,20 @@ MOCAP_CLIPS = {
     "knockdown":  dict(file="90_18", start=12, end=60, hit=None, speed=1.15),
     # locomotion
     "run":        dict(file="09_02", start=11, end=33, hit=None, loop=True),
+
+    # ---- CONTACT kit: karate (subject 135), boxing (14), evasion (76), falls and get-ups (90, 139, 140)
+    "oi_zuki":      dict(file="135_09", start=228, end=268, hit=251, speed=1.3, aim="joint_forward", joint="LeftHand", extend="LeftHand"),
+    "gyaku_zuki":   dict(file="135_09", start=314, end=352, hit=334, speed=1.3, aim="joint_forward", joint="RightHand", extend="RightHand"),
+    "side_kick":    dict(file="135_11", start=64, end=110, hit=87, speed=1.3, aim="joint_forward", joint="RightFoot"),
+    "mawashi_geri": dict(file="135_07", start=10, end=54, hit=30, speed=1.3, aim="joint_forward", joint="RightFoot"),
+    "mae_geri":     dict(file="135_04", start=72, end=116, hit=94, speed=1.3, aim="joint_forward", joint="RightFoot"),
+    "gedan_barai":  dict(file="135_05", start=72, end=110, hit=92, speed=1.2),
+    "one_two_three": dict(file="14_02", start=378, end=420, hit=398, speed=1.15, aim="joint_forward", joint="LeftHand"),
+    "jab_hook":     dict(file="14_03", start=696, end=730, hit=712, speed=1.15, aim="joint_forward", joint="LeftHand"),
+    "lead_hook":    dict(file="14_02", start=176, end=210, hit=189, speed=1.15, aim="joint_forward", joint="LeftHand"),
+    "slip":         dict(file="76_03", start=92, end=160, hit=None, speed=1.7),
+    "fall_face":    dict(file="90_16", start=84, end=130, hit=None, speed=1.1),
+    "getup_face":   dict(file="140_01", start=30, end=150, hit=None, speed=1.4),
+    "getup_side":   dict(file="140_03", start=40, end=215, hit=None, speed=1.6),
+    "getup_back":   dict(file="139_18", start=26, end=200, hit=None, speed=1.6),
 }

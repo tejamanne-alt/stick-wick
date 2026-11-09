@@ -144,7 +144,7 @@ namespace ProjectInk
             yield return Hold(1.7f, () => EndShot(new Vector3(-2.6f, 1.6f, -2.0f), new Vector3(-1.5f, 1.3f, 0.8f), 36f));
             // in through the open doors: the street's air gives way to the hush of marble
             Sound.Play(Sfx.Footstep, 0.5f, null, 1.0f);
-            Sound.Ambience(0.03f, 0.75f, 5000f);
+            Sound.Ambience(0f, 0.75f, 5000f);
             yield return PuppetWalk(2.2f, 2.2f, () =>
             {
                 if (guard != null && hero.transform.position.x > 0.2f)
@@ -503,7 +503,7 @@ namespace ProjectInk
             if (depositBox != null) depositBox.gameObject.SetActive(false);
             hero.CinePose(new Vector3(21.5f, 0f, 0f));
             hero.SetFacing(-1);
-            Sound.Ambience(0.03f, 0.75f, 5000f);
+            Sound.Ambience(0f, 0.75f, 5000f);
             if (clerk != null) clerk.SetFacing(1);                      // she won't meet his eyes
             if (guard != null) { guard.PuppetPose(new Vector3(3.2f, 0f, 1.3f)); guard.SetFacing(1); }
             Sound.Play(Sfx.Heartbeat, 0.35f);
@@ -512,7 +512,7 @@ namespace ProjectInk
             // ------------------------------------------------------------ B21 outside: the white morning; across the road, a door opens
             hero.CinePuppet();
             Sound.Play(Sfx.Door, 0.6f, new Vector3(0f, 1f, 0f), 0.8f);
-            Sound.Ambience(0.12f, 0.55f, 22000f);
+            Sound.Ambience(0f, 0.55f, 22000f);
             if (hero.body.Has("walk")) hero.body.Play("walk", 0.2f, true, 0.75f);
             float tx = 0f;
             var exit0 = hero.transform.position;
@@ -542,7 +542,7 @@ namespace ProjectInk
         void TestState(int at)
         {
             barsPx = 92f;
-            Sound.Ambience(0.03f, 0.75f, 5000f);
+            Sound.Ambience(0f, 0.75f, 5000f);
             if (doorL != null) doorL.localRotation = Quaternion.Euler(0f, -78f, 0f);
             if (doorR != null) doorR.localRotation = Quaternion.Euler(0f, 78f, 0f);
             if (guard != null) { guard.PuppetPose(new Vector3(1.8f, 0f, 1.4f)); guard.SetFacing(-1); guard.PuppetPlay("idle", 0f); }

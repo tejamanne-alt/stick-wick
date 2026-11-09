@@ -17,6 +17,9 @@ namespace ProjectInk
             public bool loop;
             [Tooltip("Seconds into the clip where the strike connects (-1 = not an attack).")]
             public float hitTime = -1f;
+            [Tooltip("Metres forward the body's hips end up at the clip's end (paired throws and slams): " +
+                     "move the transform by this when the clip hands over, so he lies where he landed.")]
+            public float endShift;
             public float Length => clip != null ? clip.length : 0f;
         }
 

@@ -372,6 +372,305 @@
       "hitFrame": -1
     },
     {
+      "name": "elbow",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5
+    },
+    {
+      "name": "back_fist",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4
+    },
+    {
+      "name": "palm_strike",
+      "frames": 13,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5
+    },
+    {
+      "name": "low_kick",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6
+    },
+    {
+      "name": "hammer_fist",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 7
+    },
+    {
+      "name": "headbutt",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4
+    },
+    {
+      "name": "clinch_knee",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6
+    },
+    {
+      "name": "clothesline",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "endShift": 0.2211
+    },
+    {
+      "name": "parry",
+      "frames": 10,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 2
+    },
+    {
+      "name": "block_high",
+      "frames": 8,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "block_hold",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "block_hit",
+      "frames": 10,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "endShift": -0.0589
+    },
+    {
+      "name": "block_low",
+      "frames": 8,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "catch_kick",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 3
+    },
+    {
+      "name": "clinch",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "clinch_v",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "clinch_enter",
+      "frames": 8,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 3
+    },
+    {
+      "name": "shove",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4
+    },
+    {
+      "name": "shoved_v",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "endShift": -0.5526
+    },
+    {
+      "name": "hip_throw",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 13,
+      "endShift": 0.0884
+    },
+    {
+      "name": "hip_throw_v",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 13,
+      "endShift": 0.1179
+    },
+    {
+      "name": "shoulder_throw",
+      "frames": 28,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 15,
+      "endShift": 0.0737
+    },
+    {
+      "name": "shoulder_throw_v",
+      "frames": 28,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 15,
+      "endShift": 1.1421
+    },
+    {
+      "name": "suplex",
+      "frames": 40,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 20
+    },
+    {
+      "name": "suplex_v",
+      "frames": 40,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 20,
+      "endShift": 0.9579
+    },
+    {
+      "name": "body_slam",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 16,
+      "endShift": 0.0737
+    },
+    {
+      "name": "body_slam_v",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 16,
+      "endShift": -0.0737
+    },
+    {
+      "name": "ddt",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 12
+    },
+    {
+      "name": "ddt_v",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 12,
+      "endShift": 0.4053
+    },
+    {
+      "name": "spear",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 8,
+      "endShift": 0.7
+    },
+    {
+      "name": "spear_v",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 8,
+      "endShift": -0.4421
+    },
+    {
+      "name": "sweep",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 8,
+      "endShift": 0.0884
+    },
+    {
+      "name": "sweep_v",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 8,
+      "endShift": -0.2579
+    },
+    {
+      "name": "clothesline_v",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "endShift": -0.3684
+    },
+    {
+      "name": "hit_body",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "endShift": -0.0737
+    },
+    {
+      "name": "hit_legs",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1
+    },
+    {
+      "name": "hit_chin",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "endShift": -0.1621
+    },
+    {
+      "name": "stumble_back",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "endShift": -0.5158
+    },
+    {
+      "name": "dazed",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
+      "name": "kneel_hurt",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
       "name": "idle",
       "frames": 35,
       "fps": 30,
@@ -466,6 +765,118 @@
       "loop": true,
       "hitFrame": -1,
       "source": "CMU 09_02"
+    },
+    {
+      "name": "oi_zuki",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 18,
+      "source": "CMU 135_09"
+    },
+    {
+      "name": "gyaku_zuki",
+      "frames": 29,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 15,
+      "source": "CMU 135_09"
+    },
+    {
+      "name": "side_kick",
+      "frames": 35,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 17,
+      "source": "CMU 135_11"
+    },
+    {
+      "name": "mawashi_geri",
+      "frames": 33,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 15,
+      "source": "CMU 135_07"
+    },
+    {
+      "name": "mae_geri",
+      "frames": 33,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 17,
+      "source": "CMU 135_04"
+    },
+    {
+      "name": "gedan_barai",
+      "frames": 31,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 17,
+      "source": "CMU 135_05"
+    },
+    {
+      "name": "one_two_three",
+      "frames": 36,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 18,
+      "source": "CMU 14_02"
+    },
+    {
+      "name": "jab_hook",
+      "frames": 29,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 14,
+      "source": "CMU 14_03"
+    },
+    {
+      "name": "lead_hook",
+      "frames": 29,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 11,
+      "source": "CMU 14_02"
+    },
+    {
+      "name": "slip",
+      "frames": 40,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "source": "CMU 76_03"
+    },
+    {
+      "name": "fall_face",
+      "frames": 41,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "source": "CMU 90_16"
+    },
+    {
+      "name": "getup_face",
+      "frames": 85,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "source": "CMU 140_01"
+    },
+    {
+      "name": "getup_side",
+      "frames": 109,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "source": "CMU 140_03"
+    },
+    {
+      "name": "getup_back",
+      "frames": 108,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "source": "CMU 139_18"
     }
   ]
 }
