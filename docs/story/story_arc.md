@@ -1,5 +1,7 @@
 # Stick Wick: the story, level by level
 
+> **Superseded by `story_v2.md`** (the reworked story: the book in box 417, V seeded from chapter 1, Maya on the walkie, the trade, the epilogue). This file is kept for the history.
+
 **One look all game:** the fight-mode tower's black-and-white world: pale concrete, black steel, white edges, neutral light, wet reflective floors. Only the fighters carry colour.
 
 **One subtitle rule all game:** `docs/story/dialogue.md`.
