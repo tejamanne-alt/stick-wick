@@ -831,10 +831,10 @@ def wiper(g, M, pivot, length, side_dir, screen_up):
 def car_materials(M):
     mat = S.mat
     S.TONE.update({"CarHandler": 0.03, "CarGlassDark": 0.02, "Chrome": 0.55, "TyreBlack": 0.02, "WheelTrim": 0.35,
-                   "Grille": 0.03, "ShutLine": 0.005, "PlateWhite": 0.7, "SeatCloth": 0.075, "Stitch": 0.32, "InteriorTrim": 0.05,
+                   "Grille": 0.03, "ShutLine": 0.005, "PlateWhite": 0.7, "SeatCloth": 0.075, "Stitch": 0.16, "InteriorTrim": 0.05,
                    "Carpet": 0.035, "Dash": 0.03, "DashTop": 0.02, "DoorCard": 0.06, "Headliner": 0.36, "Leather": 0.03,
                    "MetalDark": 0.02, "Dial": 0.008, "WheelRim": 0.025, "WheelSpoke": 0.04, "SeatBelt": 0.02,
-                   "WiperBlack": 0.015, "MirrorGlass": 0.4})
+                   "WiperBlack": 0.015, "MirrorGlass": 0.22})
     M["car_black"] = mat("CarHandler", (0.03, 0.03, 0.035), 0.22, metal=0.6)
     M["car_glass"] = mat("CarGlassDark", (0.02, 0.022, 0.025), 0.05, metal=0.2)
     M["chrome"] = mat("Chrome", (0.6, 0.6, 0.6), 0.15, metal=0.9)
@@ -847,7 +847,7 @@ def car_materials(M):
     M["head_lamp_off"] = mat("HeadLampOff", (0.6, 0.6, 0.6), 0.1, metal=0.5)
     M["tail_lamp"] = mat("TailLamp", (0.3, 0.3, 0.3), 0.3, emit=(1, 1, 1), strength=1.2)
     M["indicator"] = mat("Indicator", (0.45, 0.45, 0.45), 0.2)
-    M["mirror"] = mat("MirrorGlass", (0.4, 0.4, 0.42), 0.05, metal=1.0)
+    M["mirror"] = mat("MirrorGlass", (0.22, 0.22, 0.23), 0.18, metal=0.6)
     M["seat_cloth"] = mottled("SeatCloth", 0.075, 0.95, scale=40.0, var=0.25)
     M["stitch"] = mat("Stitch", (0.32, 0.32, 0.32), 0.9)
     M["trim"] = mat("InteriorTrim", (0.05, 0.05, 0.05), 0.7)
