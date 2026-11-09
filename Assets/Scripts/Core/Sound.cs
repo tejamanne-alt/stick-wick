@@ -22,7 +22,7 @@ namespace ProjectInk
         GunshotIndoor, GunDraw, GunCock, ShellCasing, GunDropWater, Struggle, DeathBreath,
         MemoryElena,
         TrainPass, CarRev, CarDoor,
-        MemoryMaya, MusicNote, Creak, Buzz, FridgeHum, SwingCreak,
+        MemoryMaya, MusicNote, Creak, Buzz, FridgeHum, SwingCreak, Crickets,
     }
 
     /// <summary>The mixer. Plays recorded takes with no immediate repeats, small pitch and

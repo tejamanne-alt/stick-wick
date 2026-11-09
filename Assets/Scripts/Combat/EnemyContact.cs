@@ -24,7 +24,7 @@ namespace ProjectInk
         public bool CanBeHeld => Alive && (!Boss || (Cleaner && Dazed)) && !Passive && Targetable && state != State.Scripted && !OnLedge;
         /// <summary>A punch the hero can knock aside: bare hands, coming now.</summary>
         public bool Parryable => Alive && !Armed && Type != EnemyType.Piper && !Ranged &&
-                                 (!Boss || ((Foreman && Enraged) || (Driver && DriverPhase != 2) || Cleaner) && attack.clip != "grab_attack") &&   // bosses, bare-handed (or the Cleaner's stab)
+                                 (!Boss || ((Foreman && Enraged) || (Driver && DriverPhase != 2) || Cleaner || Handler) && attack.clip != "grab_attack") &&   // bosses, bare-handed (or the Cleaner's stab)
                                  (state == State.Windup || state == State.Attack) && !feinting;
         /// <summary>Too big to lift until he is worn down.</summary>
         public bool TooHeavy => (Type == EnemyType.Brute || Type == EnemyType.Grabber) && HealthFraction > 0.4f && !Dazed;
@@ -146,7 +146,11 @@ namespace ProjectInk
         float lastTakenAt, flankCheckAt;
 
         bool flankParity;                                    // half of them are the kind who go round (set in ContactInit)
-        bool StoryBrain => hero != null && hero.Contact && !Ranged && (!Boss || Driver || Cleaner);
+        bool StoryBrain => hero != null && hero.Contact && !Ranged && (!Boss || Driver || Cleaner || Handler);
+
+        /// <summary>Chapter 4's mini-boss, the one who carried her off: I the grip, II the knuckles, III cornered.</summary>
+        public bool Handler;
+        public int HandlerPhase = 1;
 
         /// <summary>Chapter 3's boss, the man who did it: I a knife, II the choke, III anything to hand.</summary>
         public bool Cleaner;
@@ -179,6 +183,27 @@ namespace ProjectInk
             feinting = false;
             float r = Random.value;
             AttackData[] s;
+            if (Handler)
+            {
+                // I: a grappler, his arms round you (tap to break them), haymakers. II: brass knuckles,
+                // quick combinations (parry them). III: cornered by his van, anything.
+                if (HandlerPhase == 1)
+                {
+                    if (r < 0.45f) { attack = AttackData.EnemyGrab; body.Play("windup", 0.08f); return true; }
+                    s = r < 0.75f ? new[] { AttackData.EHaymaker } : new[] { AttackData.EElbow, AttackData.EHaymaker };
+                }
+                else if (HandlerPhase == 2)
+                    s = r < 0.35f ? new[] { AttackData.EJab, AttackData.EJab, AttackData.ECross } : r < 0.7f ? new[] { AttackData.EJab, AttackData.ECross, AttackData.EHook } : new[] { AttackData.ELowKick, AttackData.ECross, AttackData.EHook };
+                else
+                {
+                    if (r < 0.2f) { attack = AttackData.EnemyGrab; body.Play("windup", 0.08f); return true; }
+                    s = r < 0.45f ? new[] { AttackData.Headbutt } : r < 0.75f ? new[] { AttackData.EHaymaker, AttackData.EHaymaker } : new[] { AttackData.EElbow, AttackData.EHook };
+                }
+                attack = s[0];
+                for (int i = 1; i < s.Length; i++) chain.Enqueue(s[i]);
+                body.Play("windup", 0.08f);
+                return true;
+            }
             if (Cleaner)
             {
                 // I: the knife, quick stabs and slashes (parry the stab). II: the choke, he wants you from
@@ -306,7 +331,7 @@ namespace ProjectInk
                 if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, repeat ? "HE READ IT: MIX IT UP" : "SLIPPED");
                 return true;
             }
-            float chance = Cleaner ? (CleanerPhase == 1 ? 0.3f : CleanerPhase == 2 ? 0.25f : 0f) : Driver ? (DriverPhase == 1 ? 0.45f : DriverPhase == 2 ? 0.2f : 0f)
+            float chance = Handler ? (HandlerPhase == 1 ? 0.35f : HandlerPhase == 2 ? 0.3f : 0f) : Cleaner ? (CleanerPhase == 1 ? 0.3f : CleanerPhase == 2 ? 0.25f : 0f) : Driver ? (DriverPhase == 1 ? 0.45f : DriverPhase == 2 ? 0.2f : 0f)
                          : Type == EnemyType.DoorMan ? 0.4f : Type == EnemyType.Grabber ? 0.3f : Type == EnemyType.Runner ? 0.1f : 0.22f;
             if (repeat) chance += 0.45f;
             if (Random.value >= chance) { guardHits = 0; return false; }
@@ -354,7 +379,7 @@ namespace ProjectInk
         }
 
         /// <summary>Hurt badly, he hangs back further and waits longer.</summary>
-        float FearRing => StoryBrain && !Driver && !Cleaner ? (HealthFraction < 0.3f ? 0.9f : 0f) + (RageFear ? 0.6f : 0f) : 0f;
+        float FearRing => StoryBrain && !Driver && !Cleaner && !Handler ? (HealthFraction < 0.3f ? 0.9f : 0f) + (RageFear ? 0.6f : 0f) : 0f;
 
         static readonly AttackData Stab = new AttackData { clip = "jab", damage = 13, reach = 1.05f, knockback = 2f, hitStopFrames = 4, shake = 0.1f, react = "hit_body" };
         static readonly AttackData Slash = new AttackData { clip = "lead_hook", damage = 11, reach = 1.0f, knockback = 2f, hitStopFrames = 4, shake = 0.1f, react = "hit_chin" };
@@ -385,6 +410,29 @@ namespace ProjectInk
             }
             HasKnife = true;
             ContactInit();
+        }
+
+        /// <summary>Make this (a freshly spawned brute) the Handler: big, slow to start, hands like shovels.</summary>
+        public void MakeHandler(float health)
+        {
+            Handler = true;
+            HandlerPhase = 1;
+            transform.localScale = Vector3.one * 1.25f;
+            walkSpeed = 2.0f;
+            windupSeconds = 0.5f;
+            DamageScale = 1.2f;
+            SetMaxHealth(health);
+            ShowIron(false);
+            ContactInit();
+        }
+
+        /// <summary>Phase II: the knuckles go on, he gets quicker.</summary>
+        public void HandlerKnuckles()
+        {
+            HandlerPhase = 2;
+            windupSeconds = 0.34f;
+            walkSpeed = 2.6f;
+            DamageScale = 1.35f;
         }
 
         /// <summary>The knife taken off him (a clinch on him dazed): it clatters away.</summary>

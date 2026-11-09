@@ -833,6 +833,24 @@ def swing_creak():
     save("swing_creak", room(y, 1.6, 0.3, 0.03, 4000), 1, peak=0.55)
 
 
+def crickets():
+    """A summer night in the gardens: crickets near and far, a breath of wind."""
+    dur = 8.0
+    x = t(dur)
+    y = np.zeros(len(x))
+    for k in range(7):
+        f = rng.uniform(3800, 5200)
+        rate = rng.uniform(2.2, 3.4)
+        phase = rng.uniform(0, 1)
+        gate = (np.mod(x * rate + phase, 1.0) < 0.32).astype(float)
+        trill = (np.sin(2 * np.pi * 38 * x) > 0).astype(float)
+        amp = rng.uniform(0.15, 1.0)
+        y += np.sin(2 * np.pi * f * x) * gate * trill * amp * 0.12
+    y = lp(y, 7000, 2) + 0.04 * lp(rng.standard_normal(len(x)), 300, 2)
+    y *= np.minimum(1, x / 1.0) * np.minimum(1, (dur - x) / 1.0)
+    save("crickets", room(y, 1.2, 0.2, 0.02, 7000), 1, peak=0.35)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--oculus", default="/home/user/facebookincubator/meta-open-sound/corpora/oculus-audio-pack/ogg")
@@ -845,6 +863,6 @@ if __name__ == "__main__":
                  "whispers", "drone", "latch", "wind", "rotor", "piano",
                  "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click", "gunshot_indoor", "gun_draw", "gun_cock", "shell_casing",
                  "gun_drop_water", "struggle", "death_breath", "memory_elena", "train_pass", "car_rev", "car_door",
-                 "memory_maya", "music_note", "creak", "buzz", "fridge_hum", "swing_creak"):
+                 "memory_maya", "music_note", "creak", "buzz", "fridge_hum", "swing_creak", "crickets"):
         clear(name)
         globals()[name]()

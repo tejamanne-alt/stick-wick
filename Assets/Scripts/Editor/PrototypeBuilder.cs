@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 42;
+        public const int SceneVersion = 43;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
@@ -28,6 +28,7 @@ namespace ProjectInk.EditorTools
         public const string BankScenePath = "Assets/Scenes/Story_Bank.unity";
         public const string StreetScenePath = "Assets/Scenes/Story_Street.unity";
         public const string HomeScenePath = "Assets/Scenes/Story_Home.unity";
+        public const string ParkScenePath = "Assets/Scenes/Story_Backyard.unity";
         public const string MenuScenePath = "Assets/Scenes/Menu.unity";
 
         /// <summary>The main scene: the tower.</summary>
@@ -62,6 +63,7 @@ namespace ProjectInk.EditorTools
             Build(LayoutKind.Bank, BankScenePath, false);
             Build(LayoutKind.Street, StreetScenePath, false);
             Build(LayoutKind.Home, HomeScenePath, false);
+            Build(LayoutKind.Park, ParkScenePath, false);
             BuildMenu();
             File.WriteAllText(VersionFile, SceneVersion.ToString());
             AssetDatabase.ImportAsset(VersionFile);
@@ -72,6 +74,7 @@ namespace ProjectInk.EditorTools
                 new EditorBuildSettingsScene(BankScenePath, true),
                 new EditorBuildSettingsScene(StreetScenePath, true),
                 new EditorBuildSettingsScene(HomeScenePath, true),
+                new EditorBuildSettingsScene(ParkScenePath, true),
                 new EditorBuildSettingsScene(ScenePath, true),
             };
             AssetDatabase.SaveAssets();
@@ -142,11 +145,17 @@ namespace ProjectInk.EditorTools
             bool bank = kind == LayoutKind.Bank;
             bool street = kind == LayoutKind.Street;
             bool home = kind == LayoutKind.Home;
-            bool story = kind == LayoutKind.Warehouse || bank || street || home;
+            bool park = kind == LayoutKind.Park;
+            bool story = kind == LayoutKind.Warehouse || bank || street || home || park;
             if (kind == LayoutKind.Hall)
             {
                 layout.roofY = 6.8f;
                 BuildHall(room, ground, arch, trail, spawnRoot, points, out heroStart);
+            }
+            else if (park)
+            {
+                layout.roofY = ParkBuilder.RoofY;
+                ParkBuilder.Build(room, spawnRoot, points, out heroStart);
             }
             else if (home)
             {
@@ -184,8 +193,8 @@ namespace ProjectInk.EditorTools
                 // the man in the warehouse: narrowed eyes and the scar at his temple
                 hero.eyeOpenY = 0.034f;
                 StoryBuilder.AddScar(heroGo, eyeMat);
-                hero.arenaMinX = home ? HomePlan.StreetX0 : street ? StreetPlan.LaneX0 : bank ? BankBuilder.StreetX0 : -StoryBuilder.HalfW + 0.6f;
-                hero.arenaMaxX = home ? HomePlan.HouseX1 - 0.4f : street ? StreetPlan.LaneX1 : bank ? BankBuilder.VaultX1 : StoryBuilder.HalfW - 0.6f;
+                hero.arenaMinX = park ? ParkPlan.LaneX0 : home ? HomePlan.StreetX0 : street ? StreetPlan.LaneX0 : bank ? BankBuilder.StreetX0 : -StoryBuilder.HalfW + 0.6f;
+                hero.arenaMaxX = park ? ParkPlan.LaneX1 : home ? HomePlan.HouseX1 - 0.4f : street ? StreetPlan.LaneX1 : bank ? BankBuilder.VaultX1 : StoryBuilder.HalfW - 0.6f;
             }
 
             var systems = new GameObject("Systems");

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ProjectInk
 {
-    public enum LayoutKind { Hall, Tower, Warehouse, Bank, Street, Home }
+    public enum LayoutKind { Hall, Tower, Warehouse, Bank, Street, Home, Park }
 
     /// <summary>A walkable surface: [x0, x1] at height y. One-way platforms (gratings, slabs)
     /// can be jumped up through and dropped down through; the ground is solid.</summary>

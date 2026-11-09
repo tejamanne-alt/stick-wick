@@ -151,6 +151,12 @@ namespace ProjectInk
             ("CHAPTER 3  ·  HOME", "The Cleaner (the fight)", () => Home(4)),
             ("CHAPTER 3  ·  HOME", "The kitchen chair", () => Home(5)),
             ("CHAPTER 3  ·  HOME", "The footprints  ·  the garden", () => Home(6)),
+            ("CHAPTER 4  ·  THE BACKYARD", "The garden  ·  her footprints", () => Backyard(0)),
+            ("CHAPTER 4  ·  THE BACKYARD", "The ribbon  ·  how she was taken", () => Backyard(1)),
+            ("CHAPTER 4  ·  THE BACKYARD", "The promise", () => Backyard(2)),
+            ("CHAPTER 4  ·  THE BACKYARD", "The fight (garden to car park)", () => Backyard(3)),
+            ("CHAPTER 4  ·  THE BACKYARD", "The Handler (the fight)", () => Backyard(4)),
+            ("CHAPTER 4  ·  THE BACKYARD", "The address  ·  the hill", () => Backyard(5)),
         };
 
         static void Ch1(System.Action setUp)
@@ -171,6 +177,13 @@ namespace ProjectInk
             StoryIntro.NewRun();
             StoryIntro.BankFrom = at;
             SceneManager.LoadScene("Story_Bank");
+        }
+
+        static void Backyard(int at)
+        {
+            StoryIntro.NewRun();
+            StoryIntro.BackyardFrom = at;
+            SceneManager.LoadScene("Story_Backyard");
         }
 
         static void Home(int at)

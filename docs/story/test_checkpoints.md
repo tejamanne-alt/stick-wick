@@ -28,6 +28,12 @@
 | | **The Cleaner** | `HomeFrom = 4`: the bedroom; his three phases (knife, choke, anything). |
 | | **The kitchen chair** | `HomeFrom = 5`: the interrogation. |
 | | The footprints | `HomeFrom = 6`: the footprints, the garden, the end of chapter 3. |
+| 4 · The Backyard | The garden | `BackyardFrom = 0`: the title, her footprints across the lawn. |
+| | The ribbon | `BackyardFrom = 1`: the swing stops, the ribbon (red), how she was taken. |
+| | The promise | `BackyardFrom = 2`: the ribbon round his wrist, the vow, the torches at the fence. |
+| | The fight | `BackyardFrom = 3`: the garden → the playground → the pond → the car park. |
+| | **The Handler** | `BackyardFrom = 4`: the van, his three phases (the grip, the knuckles, cornered). |
+| | **The address** | `BackyardFrom = 5`: "Kessel Hill. The old fort." Then the hill, and the end of chapter 4. |
 
 **For every new chapter:** add its checkpoints here and to `MainMenu.Checkpoints`. At least: its start, each fight zone, its boss fight, its ending after the boss, and every story beat worth replaying on its own. The entry points live in `StoryTest.cs` (and a `TestState` per chapter, like the bank's).
 
