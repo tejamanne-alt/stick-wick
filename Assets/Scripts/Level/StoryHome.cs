@@ -226,6 +226,8 @@ namespace ProjectInk
                 Sound.Play(Sfx.Heartbeat, 0.3f);
                 yield return Move(2.6f, u => CineCam.Pan(new Vector3(7.4f, 1.45f, -1.6f), HeroHead(), coat, u, 40f));
                 yield return Hold(0.8f, () => Cine(CineCam.Pan(new Vector3(7.4f, 1.45f, -1.6f), HeroHead(), coat, 1f, 40f)));
+                // the hall table: a detective's card, and a note in her hand
+                yield return HallCard();
                 CineOff();
             }
             if (from <= 1)
@@ -240,9 +242,9 @@ namespace ProjectInk
                 photoAt = Time.unscaledTime;
                 Sound.Play(Sfx.MusicNote, 0.8f);
                 yield return RealWait(4.2f);
-                Say("YOU", "...I have a daughter.", 2.6f);
-                yield return RealWait(3.0f);
-                photoAt = -1f;
+                Say("YOU", "Elena... and Maya.", 2.6f);
+                yield return RealWait(2.8f);
+                yield return PhotoOfV();
                 // ------------------------------------------------ H6 the memory: Maya
                 mayaAt = Time.unscaledTime;
                 Sound.Play(Sfx.MemoryMaya, 0.9f);
@@ -267,6 +269,7 @@ namespace ProjectInk
                 hero.CinePuppet();
                 // ------------------------------------------------ H8 the kitchen, past the doorway: there she is
                 Sound.Play(Sfx.Tinnitus, 0.7f);
+                Say("YOU", "...Bleach. Plastic on the floor. Someone's been cleaning.", 3.2f);
                 var her = new Vector3(HomePlan.ElenaX - 0.4f, 0.25f, 0.7f);
                 yield return Move(4.6f, u => CineCam.LateralReveal(new Vector3(24.7f, 1.2f, 1.0f), new Vector3(26.6f, 1.25f, -0.9f), her, u, 40f));
                 // ------------------------------------------------ H9 he goes to her and kneels: the crane comes down to him
@@ -281,6 +284,17 @@ namespace ProjectInk
                 Say("YOU", "No...  no, no, no.", 3.0f);
                 Sound.Play(Sfx.Heartbeat, 0.8f);
                 yield return Move(3.4f, u => CineCam.DollyIn(HeroHead(), new Vector3(0.6f, -0.1f, 1f), u, 2.6f, 1.2f, 34f));
+                // he closes her eyes: the music goes, the house goes quiet
+                Sound.MusicStop(1.5f);
+                Sound.Tension(false);
+                {
+                    var herFace = new Vector3(HomePlan.ElenaX - 0.2f, 0.28f, 0.7f);
+                    StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () => Cine(new CineCam.Shot(herFace + new Vector3(-0.4f, 0.9f, -0.9f), herFace, 30f))));
+                    yield return HoldTo("CLOSE HER EYES", 2.8f, null, herFace);
+                }
+                yield return RealWait(0.6f);
+                Say("YOU", "...I'm home.", 2.6f);
+                yield return Hold(3.2f, () => Cine(CineCam.CraneDown(kneelAt, 1f, 3.6f, 0.9f, 2.8f, 38f)));
                 // ------------------------------------------------ H10 how it happened: broken stills
                 flashAt = Time.unscaledTime;
                 Sound.Play(Sfx.Static, 0.6f);
@@ -289,17 +303,17 @@ namespace ProjectInk
                 while (ft < 8.0f)
                 {
                     ft += Time.unscaledDeltaTime;
-                    if (!f1 && ft > 1.6f) { f1 = true; Say("HER", "Run, baby. Run to the swings and hide. Don't come out for anyone but Papa.", 3.2f); Sound.Play(Sfx.Static, 0.4f); }
-                    if (!f2 && ft > 4.9f) { f2 = true; Say("HER", "He'll come for you. All of you.", 2.6f); Sound.Play(Sfx.Static, 0.5f); }
+                    if (!f1 && ft > 1.6f) { f1 = true; Say("YOU", "She was running. Out the back... pulling someone small.", 3.2f); Sound.Play(Sfx.Static, 0.4f); }
+                    if (!f2 && ft > 4.9f) { f2 = true; Say("YOU", "She got her out of the door first.", 2.6f); Sound.Play(Sfx.Static, 0.5f); }
                     if (!shot && ft > 7.55f) { shot = true; Sound.Play(Sfx.GunshotIndoor, 0.7f); Buzz(); }
                     yield return null;
                 }
                 flashAt = -1f;
                 // ------------------------------------------------ H11 back, on him: the voice upstairs, the floor drops away (a dolly zoom)
                 Sound.Play(Sfx.Creak, 0.8f, new Vector3(20f, 4f, 2f));
-                Say("VOICE, UPSTAIRS", "Garden's empty. Check the rooms again. The kid's here somewhere.", 3.4f);
+                Say("VOICE, UPSTAIRS", "Bag the rest. Silas wants this place spotless before the police come back.", 3.6f);
                 yield return Move(3.6f, u => CineCam.DollyZoom(HeroHead() + Vector3.down * 0.15f, u, 1.5f, 4.2f, 1.2f));
-                Say("YOU", "...She got away.", 2.2f);
+                Say("YOU", "...Spotless.", 2.0f);
                 yield return Hold(2.2f, () => Cine(CineCam.DollyZoom(HeroHead() + Vector3.down * 0.15f, 1f, 1.5f, 4.2f, 1.2f)));
                 // he lets her hand go, and stands: the camera rises with him
                 hero.body.Play("idle", 0.4f);
@@ -329,8 +343,10 @@ namespace ProjectInk
                 if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f);
                 Sound.Play(Sfx.MusicNote, 0.7f);
                 var inRoom = hero.transform.position + Vector3.up * 1.0f;
-                yield return Move(5.0f, u => CineCam.ArcShot(inRoom, u, 2.8f, -46f, 22f, 0.3f, 36f),
-                    u => { if (u > 0.55f && u - Time.unscaledDeltaTime / 5f <= 0.55f) Say("YOU", "...I'm coming, sweetheart.", 2.6f); });
+                yield return Move(3.0f, u => CineCam.ArcShot(inRoom, u, 2.8f, -46f, 0f, 0.3f, 36f));
+                yield return ShelfWalkie();
+                yield return Move(3.0f, u => CineCam.ArcShot(inRoom, u, 2.8f, 0f, 22f, 0.3f, 36f),
+                    u => { if (u > 0.4f && u - Time.unscaledDeltaTime / 3f <= 0.4f) Say("YOU", "...I'm coming, sweetheart.", 2.6f); });
                 CineOff();
                 yield return PlayerWalk(24.2f, 17.5f, 1.6f, Application.isMobilePlatform ? "HOLD TO WALK" : "HOLD  D  TO WALK");
             }
@@ -503,6 +519,7 @@ namespace ProjectInk
             cleaner = director != null ? director.SpawnScripted(EnemyType.Brute, SpawnKind.RightDoor) : null;
             if (cleaner == null) return;
             cleaner.MakeCleaner(cleaner.maxHealth * 0.75f);
+            Dress(cleaner.body, Look.Cleaner);
             cleaner.Puppet();
             cleaner.PuppetPose(at);
             cleaner.SetFacing(-1);
@@ -525,7 +542,9 @@ namespace ProjectInk
             yield return Move(3.4f, u => CineCam.LowAngleArc(cleaner.transform.position + Vector3.up * 1.0f, u, 3.2f, -58f, 4f, 36f),
                 u => cleaner.PuppetPose(Vector3.Lerp(c0, new Vector3(29.6f, HomePlan.Floor2, 0f), u)));
             cleaner.PuppetPlay("idle", 0.2f);
-            Say("THE CLEANER", "Thought you'd forgotten where you live.", 2.8f, HeadOf(cleaner));
+            Say("THE CLEANER", "You're early. I wasn't finished.", 2.4f, HeadOf(cleaner));
+            yield return Hold(2.4f, () => Cine(CineCam.LowAngleArc(cleaner.transform.position + Vector3.up * 1.0f, 1f, 3.2f, -58f, 4f, 36f)));
+            Say("THE CLEANER", "They always come home.", 2.4f, HeadOf(cleaner));
             yield return Hold(2.8f, () => Cine(CineCam.LowAngleArc(cleaner.transform.position + Vector3.up * 1.0f, 1f, 3.2f, -58f, 4f, 36f)));
             if (director != null) director.ShowBanner("THE CLEANER", 2.6f);
             Sound.Play(Sfx.CineMassive, 0.7f);
@@ -551,7 +570,7 @@ namespace ProjectInk
                 cleaner.Disarm(cleaner.Facing);
                 cleaner.CleanerPhase = 2;
                 ShowStreetBanner("II  ·  THE CHOKE");
-                Say("THE CLEANER", "Come here.", 1.4f, HeadOf(cleaner));
+                Say("THE CLEANER", "You taught me this. Remember?", 2.2f, HeadOf(cleaner));
             }
             else if (cleanerStage == 2 && hp <= 0.3f)
             {
@@ -559,6 +578,7 @@ namespace ProjectInk
                 cleaner.CleanerPhase = 3;
                 cleaner.QueueEnrage();
                 ShowStreetBanner("III  ·  ANYTHING");
+                Say("THE CLEANER", "You taught all of us! Then you just LEFT!", 2.6f, HeadOf(cleaner));
             }
         }
 
@@ -595,27 +615,7 @@ namespace ProjectInk
             // H16 wide, still: the two of them, the bulb over them (the frame barely creeping in)
             var two = new Vector3(28.45f, 1.0f, 0.75f);
             yield return Move(3.2f, u => CineCam.DollyIn(two, new Vector3(0f, -0.12f, 1f), u * 0.25f, 4.4f, 3.4f, 36f));
-            // H17 over his shoulder, onto the man in the chair
-            Say("YOU", "Where is my daughter?", 2.4f);
-            yield return Hold(2.6f, () => Cine(new CineCam.Shot(new Vector3(27.1f, 1.55f, 0.05f), cHead(), 34f)));
-            Say("THE CLEANER", "You think I'm scared of you? You taught me this.", 3.4f, ch);
-            yield return Hold(3.6f, () => Cine(new CineCam.Shot(new Vector3(30.1f, 0.95f, -1.3f), cHead(), 30f)));
-            // H18 the cord, the socket, the bulb (a tilt up to it): the first shock
-            yield return Move(1.4f, u => CineCam.TiltUp(new Vector3(28.0f, 1.0f, -1.7f), new Vector3(27.9f, 0.95f, 0.6f), bulb.position, u, 38f));
-            yield return Shock(1.3f, () => Cine(CineCam.DollyIn(HeroHead(), new Vector3(0.6f, -0.05f, 1f), 1f, 2.6f, 1.3f, 32f)));
-            Say("YOU", "Where.  Is.  She.", 2.4f);
-            yield return Move(2.6f, u => CineCam.DollyIn(HeroHead(), new Vector3(0.6f, -0.05f, 1f), u, 1.8f, 1.1f, 30f));
-            Say("THE CLEANER", "...Already gone. Far up the hill, where you can't...", 3.4f, ch);
-            yield return Hold(3.6f, () => Cine(new CineCam.Shot(new Vector3(30.1f, 0.95f, -1.3f), cHead(), 30f)));
-            // H19 the second: the world tips (a roll), and it stops. He never talked.
-            yield return Shock(1.8f, null, true);
-            if (cleaner != null) cleaner.PuppetPlay("sit_slump", 0.1f);
-            Sound.Play(Sfx.DeathBreath, 0.8f, cHead());
-            yield return Hold(2.0f, () => Cine(CineCam.Roll(new Vector3(28.4f, 1.3f, -3.4f), two, 1f, 0f, -9f, 36f)));
-            Sound.Play(Sfx.FridgeHum, 0.5f);
-            Say("YOU", "...No. Not yet.  NOT YET!", 2.8f);
-            yield return Move(3.4f, u => CineCam.DollyOut(HeroHead(), new Vector3(0.5f, -0.1f, 1f), u, 1.4f, 4.6f, 34f));
-            yield return Hold(1.0f, () => Cine(CineCam.DollyOut(HeroHead(), new Vector3(0.5f, -0.1f, 1f), 1f, 1.4f, 4.6f, 34f)));
+            yield return ChairTalk(ch, cHead, two);
         }
 
         /// <summary>The current: the bulb flickers, a buzz, his silhouette jerks in the chair.</summary>
@@ -664,7 +664,7 @@ namespace ProjectInk
             Sound.Play(Sfx.SwingCreak, 0.6f, new Vector3(HomePlan.SwingX, 1f, HomePlan.SwingZ));
             yield return Move(6.0f, u => CineCam.DronePullAway(hero.transform.position + Vector3.up * 1.0f, u, 2.2f, 13f, 0.6f, 7.5f, 42f));
             cardAt = Time.unscaledTime;
-            cardLine = "Her name is Maya. She ran.";
+            cardLine = "They always come home.";
             cardTitle = "THE DAUGHTER";
             yield return RealWait(6.0f);
             CineOff();
@@ -729,6 +729,7 @@ namespace ProjectInk
                 }
             }
             if (photoAt > 0f) PhotoGUI(w, h, Time.unscaledTime - photoAt);
+            HomeV2GUI(w, h);
             if (mayaAt > 0f) MayaGUI(w, h, Time.unscaledTime - mayaAt);
             if (flashAt > 0f) ElenaFlashGUI(w, h, Time.unscaledTime - flashAt);
             // the Cleaner's health and his phase
