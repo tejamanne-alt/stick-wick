@@ -428,7 +428,7 @@ def build_way(coll, M):
         K.text(g, "SLOW", Mt @ Matrix.Diagonal((1.0, 2.2, 1.0, 1.0)), 1.1, M["line"], extrude=0.002)
     # crash barriers on the drop side: posts every 2 m, a W-beam rail, the ends turned down
     runs, cur = [], []
-    for (p, left, u, s, i) in fr:
+    for (p, left, u, s, i) in fr[::2]:
         if p.x > -7.0 or p.x < -235.0:
             if cur:
                 runs.append(cur)
@@ -447,12 +447,12 @@ def build_way(coll, M):
             base = p + left * lat
             for (o, h) in prof:
                 verts.append(tuple(base + inward * o + Vector((0, 0, h - 0.12))))
-            if k % 2 == 0:
+            if True:
                 pb = base - inward * 0.12 + Vector((0, 0, -0.12))
                 g.box((pb.x, pb.y, pb.z + 0.38), (0.07, 0.12, 0.8), M["barrier_post"], rot=(0, 0, math.degrees(math.atan2(left.y, left.x))))
                 ps = base - inward * 0.05 + Vector((0, 0, 0.44))
                 g.box((ps.x, ps.y, ps.z), (0.06, 0.12, 0.28), M["barrier_post"], rot=(0, 0, math.degrees(math.atan2(left.y, left.x))))
-                if k % 8 == 0:
+                if k % 4 == 0:
                     pr = base + inward * 0.06 + Vector((0, 0, 0.7))
                     g.box((pr.x, pr.y, pr.z), (0.09, 0.09, 0.06), M["reflector"], rot=(0, 0, math.degrees(math.atan2(left.y, left.x))))
         n = len(prof)
@@ -791,12 +791,12 @@ def lights():
         if ob.type == "LIGHT" and ob.name in ("Fill", "RoadFlood"):
             bpy.data.objects.remove(ob)
     moon = bpy.context.scene.objects["Moon"]
-    moon.data.energy = 1.1
+    moon.data.energy = 0.5
     moon.rotation_euler = (math.radians(58), 0, math.radians(200))
     # the city's glow from below, on the hill's face and the clouds' bellies
     K.add_light("AREA", "CityGlow", (-60.0, -230.0, -60.0), 1.6e6, size=320.0, rot=(math.radians(-62), 0, 0))
-    K.add_light("AREA", "FaceFill", (-80.0, -150.0, 20.0), 3.0e5, size=160.0, rot=(math.radians(68), 0, 0))
-    K.add_light("AREA", "TopFill", (-20.0, -30.0, 25.0), 6.0e4, size=60.0, rot=(math.radians(50), 0, 0))
+    K.add_light("AREA", "FaceFill", (-80.0, -150.0, 20.0), 9.0e4, size=160.0, rot=(math.radians(68), 0, 0))
+    K.add_light("AREA", "TopFill", (-20.0, -30.0, 25.0), 1.2e4, size=60.0, rot=(math.radians(50), 0, 0))
     # the floodlights at the top: the stop, and the cliff road's
     f = K.add_light("SPOT", "StopFlood", (-6.4, 2.8, 6.4), 9000, size=0.4, spot=80)
     K.aim(f, (X_STOP, Y_STOP - 0.6, 0.0))
@@ -812,7 +812,7 @@ def lights():
     K.add_light("AREA", "CarSideR", (c.x - 1.0, c.y - 6.0, c.z + 1.6), 160, size=6.0, rot=(math.radians(80), 0, 0))
     K.add_light("AREA", "CarSideL", (c.x + 1.0, c.y + 6.0, c.z + 1.6), 60, size=6.0, rot=(math.radians(-80), 0, 0))
     ci = INTERIOR_AT                                                                   # the cabin: the road's glow in the screen
-    K.add_light("AREA", "CabinBounce", (ci.x + 3.2, ci.y, ci.z + 0.9), 160, size=2.0, rot=(0, math.radians(-80), 0))
+    K.add_light("AREA", "CabinBounce", (ci.x + 3.2, ci.y, ci.z + 0.9), 110, size=2.0, rot=(0, math.radians(-80), 0))
     K.add_light("AREA", "CabinSide", (ci.x - 0.4, ci.y - 2.5, ci.z + 1.3), 70, size=1.5, rot=(math.radians(85), 0, 0))
     K.add_light("AREA", "CabinGlow", (ci.x + 0.1, ci.y, ci.z + 1.25), 6, size=0.8, rot=(0, 0, 0))
     w = bpy.context.scene.world

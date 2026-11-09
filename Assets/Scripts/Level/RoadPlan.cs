@@ -89,7 +89,7 @@ namespace ProjectInk
         public static readonly Vector3 PassengerHead = new Vector3(-30.620f, 1.140f, 1.970f);
         public static readonly Vector3 Windscreen = new Vector3(-29.650f, 1.168f, 1.600f);
         /// <summary>Far ahead through the windscreen: the road's end and the fortress over it.</summary>
-        public static readonly Vector3 OutsideAhead = new Vector3(40.000f, 3.000f, 1.200f);
+        public static readonly Vector3 OutsideAhead = new Vector3(90.000f, 20.000f, 3.000f);
         public static readonly Vector3 RearViewMirror = new Vector3(-30.154f, 1.245f, 1.600f);
         public static readonly Vector3 Gauges = new Vector3(-29.538f, 0.865f, 1.230f);
         public static readonly Vector3 WiperPivotR = new Vector3(-29.200f, 0.958f, 1.100f);

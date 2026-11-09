@@ -617,7 +617,8 @@ def hotel(g, M):
     f = K.L(g, (0, SHOP_Y, 0), 0)
     x0, x1, h = 92.0, 104.0, 13.0
     ups = [(x0 + 1.2 + c * 2.4, 1.2, 4.8 + r * 2.7, 6.5 + r * 2.7, r == 2) for r in range(3) for c in range(5)]
-    K.wall(f, x0, x1, 0.0, h, 0.4, M["ashlar"], [(98.0, 4.0, 0.0, 3.4, False), (94.0, 2.0, 0.6, 3.2, False), (102.4, 2.4, 0.6, 3.2, False)] + ups, v=0.2)
+    K.wall(f, x0, x1, 0.0, 4.2, 0.4, M["ashlar"], [(98.0, 4.0, 0.0, 3.4, False), (94.0, 2.0, 0.6, 3.2, False), (102.4, 2.4, 0.6, 3.2, False)], v=0.2)
+    K.wall(f, x0, x1, 4.2, h, 0.4, M["ashlar"], ups, v=0.2)
     for c, w in ((94.0, 2.0), (102.4, 2.4)):
         f.box((c, 0.3, 1.9), (w, 0.2, 2.6), M["reveal"])
         f.box((c, 0.08, 1.9), (w - 0.06, 0.03, 2.6), M["glass_shop"])
@@ -817,7 +818,8 @@ def build_backdrop(coll, M):
         wm = (M["brick"], M["stucco"], M["ashlar"], M["brick_dark"])[k % 4]
         u0, u1 = -(x0 + 9.2), -x0
         ups = [(u0 + 1.6 + c * 3.0, 1.1, 5.0 + r * 2.6, 6.5 + r * 2.6, False) for r in range(int((h - 4.5) / 2.6)) for c in range(3)]
-        K.wall(ff, u0, u1, 0.0, h, 1.0, wm, ups + [((u0 + u1) / 2, 7.0, 0.6, 3.0, False)], v=0.5)
+        K.wall(ff, u0, u1, 0.0, 4.2, 1.0, wm, [((u0 + u1) / 2, 7.0, 0.6, 3.0, False)], v=0.5)
+        K.wall(ff, u0, u1, 4.2, h, 1.0, wm, ups, v=0.5)
         for (c, w0, w1, wd, _a) in ups:
             K.window(ff, c, w0, w1, wd, M, M["frame_pale"], M["glass_ext"], M["trim"], cols=2, rows=2, blind=rnd.choice((None, 0.5)), keystone=False)
         ff.box(((u0 + u1) / 2, 0.15, 1.8), (7.0, 0.03, 2.4), M["glass_shop"])

@@ -429,22 +429,33 @@ class L:
 
 def wall(f, u0, u1, w0, w1, t, m, openings=(), v=0.0, arch_steps=12):
     """A wall u0..u1 by w0..w1, t thick about v, with openings [(u centre, width, w0, w1, arched)]
-    cut right through it (an arched opening rises a half-circle above its w1)."""
+    cut right through it (an arched opening rises a half-circle above its w1). Openings that share
+    a column (one window over another) are stacked: the wall fills between them."""
+    cols = {}
+    for (uc, wd, ow0, ow1, arch) in openings:
+        cols.setdefault((round(uc, 4), round(wd, 4)), []).append((ow0, ow1, arch))
     u = u0
-    for (uc, wd, ow0, ow1, arch) in sorted(openings):
+    for (uc, wd) in sorted(cols):
         a, b = uc - wd / 2, uc + wd / 2
         if a > u + 1e-4:
             f.box(((u + a) / 2, v, (w0 + w1) / 2), (a - u, t, w1 - w0), m)
-        if ow0 > w0 + 1e-4:
-            f.box((uc, v, (w0 + ow0) / 2), (wd, t, ow0 - w0), m)
-        if arch:
-            R = wd / 2
-            pts = [(R, 0.0), (R, w1 - ow1), (-R, w1 - ow1), (-R, 0.0)]
-            pts += [(R * math.cos(math.pi - math.pi * k / arch_steps), R * math.sin(math.pi - math.pi * k / arch_steps)) for k in range(1, arch_steps)]
-            f.wallshape(pts, v - t / 2, v + t / 2, m, c=(uc, 0, ow1))
-        elif ow1 < w1 - 1e-4:
-            f.box((uc, v, (ow1 + w1) / 2), (wd, t, w1 - ow1), m)
-        u = b
+        z = w0
+        for (ow0, ow1, arch) in sorted(cols[(uc, wd)]):
+            if ow0 > z + 1e-4:
+                f.box((uc, v, (z + ow0) / 2), (wd, t, ow0 - z), m)
+            if arch:
+                R = wd / 2
+                rest = sorted(o for o in cols[(uc, wd)] if o[0] > ow1)
+                top = rest[0][0] if rest else w1
+                pts = [(R, 0.0), (R, top - ow1), (-R, top - ow1), (-R, 0.0)]
+                pts += [(R * math.cos(math.pi - math.pi * k / arch_steps), R * math.sin(math.pi - math.pi * k / arch_steps)) for k in range(1, arch_steps)]
+                f.wallshape(pts, v - t / 2, v + t / 2, m, c=(uc, 0, ow1))
+                z = top
+            else:
+                z = ow1
+        if z < w1 - 1e-4:
+            f.box((uc, v, (z + w1) / 2), (wd, t, w1 - z), m)
+        u = max(u, b)
     if u < u1 - 1e-4:
         f.box(((u + u1) / 2, v, (w0 + w1) / 2), (u1 - u, t, w1 - w0), m)
 
@@ -1020,7 +1031,8 @@ def shop_building(g, x0, x1, M, h, wall_m, name, kind, floors_m=None, face=8.2):
     while z + 1.8 < h - 0.8:
         ups += [(x0 + (c + 0.5) * w / ncol, 1.1, z, z + 1.6, False) for c in range(ncol)]
         z += 2.9
-    wall(f, x0, x1, 0.0, h, 0.4, wall_m, [((win0 + win1) / 2, win1 - win0, 0.6, 3.1, False), (dwx, 1.0, 0.0, 3.2, False)] + ups, v=0.2)
+    wall(f, x0, x1, 0.0, sf + 0.3, 0.4, wall_m, [((win0 + win1) / 2, win1 - win0, 0.6, 3.1, False), (dwx, 1.0, 0.0, 3.2, False)], v=0.2)
+    wall(f, x0, x1, sf + 0.3, h, 0.4, wall_m, ups, v=0.2)
     f.box(((win0 + win1) / 2, 0.3, 1.85), (win1 - win0, 0.2, 2.5), M["reveal"])                       # the shop, dark inside
     f.box((dwx, 0.3, 1.6), (1.0, 0.2, 3.2), M["reveal"])
     # the shopfront
