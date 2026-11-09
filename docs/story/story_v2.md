@@ -44,6 +44,7 @@ This replaces `story_arc.md` as the source of truth. The sets, fights and bosses
   - **Silas disobeyed on purpose.** Elena ran for the back door with Maya, and he shot her. He wanted to take from the hero what the hero had chosen over his father.
   - Maya was dragged into the HANDLER's van.
   - Voss was furious: a body in the house, with Harrow already watching it. Silas's punishment: **"You made this mess. Go back and clean it. Leave nothing for Harrow."**
+- **Why the fortress fights him (chapter 6):** once the book leaves box 417 (chapter 2) the dead-man's switch is gone. Voss no longer needs him alive: kill him, take the book off the body. The "trade" on the phone is a lie, and Maya is bait. With Silas dead, Voss tells his crew: **"Whoever brings me the book takes my son's place."** Every man on the hill wants to be his heir. Voss watches from the observatory.
 - **Today, at dusk, Silas goes back to the house** with plastic sheeting and bleach. Then the Driver radios in: "He's got the book. He's heading home." Silas stays, and waits for one evening. He wants to be the one who finishes the great man: "They always come home."
 - **Then the blow did more than they meant.** He woke with no memory. The FOREMAN was told to keep him alive until the bank opened, walk him in, get the book, then finish him.
 
@@ -229,7 +230,8 @@ The set: the Handler's car, inside, at night: the dashboard glow, wipers, rain o
 | 5.5 | Rain heavier; a slow push-in on his face | **MAYA:** "Papa? The cane man says you used to be like him. Are you a bad man?" | **CHOOSE:** "I was." / "Not any more." / "I don't know, sweetheart." Each gets an answer from her: "Mama says people can change, like caterpillars." / "Good. Because I need a good one." / "I know. You're my papa." |
 | 5.6 | Close on the walkie; then on him | **MAYA:** "Can you sing the music box song? Mama sings it when it's dark." The music-box theme, played softly, unfinished. He hums it, badly. **MAYA** (giggling): "That's wrong." **YOU:** "I'll practise." | **HOLD** to hum: the melody plays while it's held. |
 | 5.7 | The battery light blinking on the walkie (a red pip, one of the few reds) | **MAYA:** "The light is blinking." **YOU:** "That's the battery. Turn it off now and keep it hidden. Turn it on only when you see me. Promise?" **MAYA:** "Promise. Over and out." Click. Silence. | |
-| 5.8 | The car comes round the last hairpin: the fortress fills the windscreen as the storm breaks, the first huge strike | He stops at the floodlight, gets out into the rain. **YOU:** "...Over and out." | |
+| 5.8 | The car comes round the last hairpin: the fortress fills the windscreen as the storm breaks, the first huge strike. Floodlights on every wall, men on the battlements | **YOU:** "...The book's out of the box. He doesn't need me alive any more." "It was never a trade." | |
+| 5.9 | Close on the walkie on the empty seat; then on him | **YOU:** "Then I'll go through all of them." He gets out into the rain. "...Over and out." | |
 
 Card: **CHAPTER 5 · THE ROAD.** *"Over and out."*
 
@@ -238,13 +240,14 @@ The storm. Keep everything built: the road, the gate, the trap, the courtyard, t
 
 | # | Shot | What happens / is said | Player |
 |---|---|---|---|
+| 6.0 | (as built) T4, the guards on the walls | **GUARD:** "It's him! The book's on him!" "Whoever gets it gets the son's place!" Mid-fight barks all chapter: "The book! Get the book!" "Silas's place is mine!" The trap (T8): **VOICE FROM THE WALLS:** "He's in. Close it. Nobody touches the girl. Everybody touches him." | |
 | 6.1 | (as built) title, aerial, the road | The walkie stays silent: she promised to turn it on only when she sees him. Between zones he checks it; nothing. **YOU:** "...Good girl." | |
 | 6.2 | (as built) the blackout; the courtyard dark | **YOU** (to himself): "I don't need to see them." | |
-| 6.3 | (as built) the Warden | **WARDEN:** "I kept his door. Twenty years." After: "Go on up. He's been waiting. He's been waiting years." | (fight) |
+| 6.3 | (as built) the Warden | **WARDEN:** "I kept his door. Twenty years. Boss said, whoever brings the book... I've waited twenty years for that chair." After: "Go on up. He's been waiting. He's been waiting years." | (fight) |
 | 6.3b | (as built) the tower: the man and the child on the gallery, lit by a strike. Then the walkie in his pocket clicks on | **MAYA (walkie, whispering):** "Papa! I see you! You're tiny!" "The cane man is taking me up to the roof." **YOU:** "I see you too. I'm coming up. Over." | **HOLD** to answer. |
 | 6.4 | (as built) the stair, the roof | **VOSS:** "Look at you. Twelve years, and you still walk like one of mine." | |
 | 6.5 | Flash 3: the window, the phone | **VOSS (in the flash):** "Bring them to me. All of them. Alive." Now the whole night comes back. **VOSS:** "Six years I lived on your mercy. A detective at your door, and I'm meant to wait?" **VOSS:** "I told him to bring her. He never listened. Not once in his life." **YOU:** "Your boy killed Elena." **VOSS:** "...I know. And I still loved him. That's what fathers do. You'd know." **YOU:** "And I killed him." **VOSS:** "Yes. So here we are." | |
-| 6.6 | **The trade.** Two-shot down the terrace; the book in his hand, Maya in Voss's | **VOSS:** "The book, and she walks to you. That was always the deal." **DRAG** the book across the wet stones to him. Voss lets Maya go ("Run along, little one"), weighs the book in his hand, then drops it and raises the silver pistol: "I did teach you better than to trust me." Into the duel. | **DRAG** |
+| 6.6 | **The trade.** Two-shot down the terrace; the book in his hand, Maya in Voss's | **VOSS:** "The book, and she walks to you. That was always the deal." Every man has failed, so the trade is Voss's last card, now open force: Maya held at the broken edge. **VOSS:** "You've killed my whole house to get here. Now, the book, or she learns to fly." **DRAG** the book across the wet stones to him. Voss lets Maya go ("Run along, little one"), weighs the book in his hand, then drops it and raises the silver pistol: "I did teach you better than to trust me." Into the duel. | **DRAG** |
 | 6.7 | (as built) the duel: I the teacher (the sword-cane), II the gun (slip the shot, get in close), III the edge | **VOSS**, phase II: "Every one of them down there, you taught. I taught you." Phase III: "Then let's finish what I started." | (fight) |
 | 6.8 | (as built) the fall: Voss hanging at the broken parapet | **VOSS:** "We're the same, you and me." | **CHOOSE:** **REACH FOR HIM** / **LET GO**. *Reach:* he grabs Voss's glove; it slips off empty in his hand, the stone gives, and Voss falls: "...Good boy." *Let go:* **YOU:** "No. I came home." The lightning takes the stone. |
 | 6.9 | (as built) Maya runs to him; the ribbon in her hair | **MAYA:** "Papa... you came." **YOU:** "I promised, sweetheart." **MAYA:** "Mama said you'd always come home." **YOU:** "...Always." | **DRAG** to tie the ribbon. |
