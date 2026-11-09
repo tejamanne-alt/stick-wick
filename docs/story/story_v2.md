@@ -29,15 +29,21 @@ This replaces `story_arc.md` as the source of truth. The sets, fights and bosses
 - **His past:** for fifteen years he was the best of VOSS's men. Voss took him in off the street at nineteen and taught him everything: to fight, to wait, to kill.
 - **His insurance:** he kept a record of every job Voss ever gave him: names, dates, payments, in Voss's own hand on the orders. This is **THE BOOK**. It is enough to bury Voss, and him with it.
 - **The family:** he met Elena, and Maya was born. Six years ago he told Voss: **"I'm out, Voss."**
-- **The deal:** he left the book in **box 417 at Meridian Trust**. Only his palm opens it. If anything happened to his family, a lawyer would send the box's contents to the police. That deal kept them all alive for six years.
+- **The deal (the dead-man's switch):** he left the book in **box 417 at Meridian Trust**.
+  - Only his living palm opens it: the scanner checks for a pulse.
+  - The box carries a standing instruction: if he dies, his lawyer takes the box, and the book goes to the police.
+  - So Voss can't kill him without burying himself. That deal kept them all alive for six years.
+- **Voss's son:** VOSS has a real son, **SILAS**, raised in the hero's shadow ("He'd have done it cleaner"). The hero trained him. Silas is THE CLEANER.
+- **The trigger (why now):** a detective, **HARROW** of Organised Crime, has been closing in on Voss. He has found out the hero exists and has twice come to the house. Elena wanted him to call Harrow back. Voss fears the hero will trade the book for immunity, so he strikes first.
 - **Three nights ago, the trap:** Voss sent for him: one last meeting, the warehouse, "for old times." He went because Voss threatened Maya if he didn't.
   - In the warehouse a pipe came down from behind (**the blow**).
-  - Voss needed him alive: only his hand opens 417.
-  - They tried to make him talk. He wouldn't.
+  - Voss needed him alive: only his living hand opens 417, and his death would send the book to the police.
+  - The vault is time-locked until nine. The plan was to walk him in at opening with a gun in his back, take the book, then finish him.
 - **The same night, at the house:**
-  - The CLEANER and his men took the house to use as leverage. Elena ran for the back door with Maya and was shot.
+  - Voss's order was careful: **"Bring them to me. All of them. Alive."** Elena and Maya were leverage, worth nothing dead.
+  - **Silas disobeyed on purpose.** Elena ran for the back door with Maya, and he shot her. He wanted to take from the hero what the hero had chosen over his father.
   - Maya was dragged into the HANDLER's van.
-  - The Cleaner stayed in the house to wait: "He'll come home. They always come home."
+  - Silas stayed in the house to wait, wanting to finish the great man himself: "He'll come home. They always come home."
 - **Then the blow did more than they meant.** He woke with no memory. The FOREMAN was told to keep him alive until the bank opened, walk him in, get the book, then finish him.
 
 **So every chapter is one question answered, and one new question asked:**
@@ -46,7 +52,7 @@ This replaces `story_arc.md` as the source of truth. The sets, fights and bosses
 |---|---|---|
 | 1 | I'm a killer. They need me alive for box 417. | What's in the box? |
 | 2 | I have a wife and a daughter. The box holds a book of my crimes, and someone wants it badly. | Where are they? |
-| 3 | Elena is dead. Maya was taken. The man behind it trained me. | Where is Maya, and who is "V"? |
+| 3 | Elena is dead, killed by Silas, Voss's son, against Voss's order. Maya was taken. V raised me. | Where is Maya? |
 | 4 | Maya is alive and talking to me. She's at Kessel Hill. The boss is Voss. | Can I get her back? |
 | 5 | Everything. Voss did it to make me come back. | What do I do with the book, and with myself? |
 | 6 | (the epilogue) He keeps his promise to Elena, his own way. | |
@@ -63,6 +69,9 @@ This replaces `story_arc.md` as the source of truth. The sets, fights and bosses
 | **"Promise me you'll always come home"** | Ch2: the wedding memory, Elena's voice. | Ch3: the Cleaner: "They always come home." The words turn sour. | Ch6: he does come home, to her grave, with Maya. |
 | **The red ribbon** | Ch3: Maya's photo, the red ribbon in her hair. | Ch4: the ribbon in the grass, which she left as a trail ("Mama said leave a trail if you're lost"). He ties it round his wrist. | Ch5: he ties it back in her hair. |
 | **The walkie-talkie** (new) | Ch3: a pair of toy walkie-talkies on Maya's shelf, and one is missing. | Ch4: the other one crackles on the swing: her voice. | Ch5: he talks to her through the storm; she guides him to the tower. |
+| **Why now: HARROW** | Ch3: Harrow's card on the hall table, with Elena's note: *"He came again. Says you'd be safe if you talk. Call him?"* | Ch3: Voss on the phone: "A detective at your door, son. You know what that looks like to me." | Ch6: Harrow at the bottom of the hill. He makes the call Elena wanted. |
+| **The dead-man's switch** | Ch1: the Foreman: "Boss wants him breathing. Dead, that box goes straight to the cops." | Ch2: the clerk: "The box has a standing instruction, sir. If anything happens to you, it goes to your lawyer." | Ch5: Voss: "Six years I lived on your mercy." |
+| **SILAS, Voss's son** | Ch3: the photo: young Voss, the hero, and a boy half hidden behind them. | Ch3: in the chair: "Every day of my life it was you." Then the phone: "...Silas? Silas!" | Ch5: "Your boy killed Elena." "...I know. And I still loved him." |
 | **His bosses are his own** | Each boss knows him: the Driver drove for him, the Cleaner he trained, the Handler set up his jobs, the Warden kept Voss's door. | Each one says one line that tells you who he was. | Ch5: Voss says the truth they were all hinting at: "Every one of them, you taught." |
 
 ---
@@ -79,7 +88,7 @@ In a black-and-white world each person needs one clear shape and one prop. Red s
 | **THE FOREMAN** | Big, a hard hat, a hi-vis vest. | A crowbar. | "Boss wants you breathing. For now." |
 | **THE CLERK** | Thin, glasses, a waistcoat. | The phone under the counter. | Polite, frightened. |
 | **THE DRIVER** | A flat cap, a leather jacket. | Car keys, the tire iron. | "I used to drive you. Remember? No?" |
-| **THE CLEANER** | Gloves, a long apron, slicked hair. | A scalpel. | Soft and precise: "You taught me this." |
+| **THE CLEANER** (SILAS VOSS) | Gloves, a long apron, slicked hair; his father's jaw. | A scalpel. | Soft and precise: "You taught me this." Bitter under it. |
 | **THE HANDLER** | A broken-nosed boxer, a tracksuit. | Brass knuckles. | Talks too much. |
 | **THE WARDEN** | Huge, a bald head, a chain round his shoulder. | The chain. | Two words at a time. |
 | **VOSS** | Long dark coat, silver hair, leather gloves, a cane he doesn't need. Older but straight-backed. | A silver pistol. The cane is a sword-cane in the duel. | Calm, fatherly, never shouts. The scariest man in the game because he's kind. |
@@ -118,11 +127,11 @@ Night, rain. Keep the set, the fights and the Foreman.
 
 | # | Shot | What happens / is said | Player |
 |---|---|---|---|
-| 1.1 | Black. One drip. Then extreme close on an eye opening | Muffled voices. **THUG:** "He's waking up." **FOREMAN (off):** "Boss wants him breathing. Till the bank opens." | **HOLD** to open his eyes (a blurred image sharpens). |
+| 1.1 | Black. One drip. Then extreme close on an eye opening | Muffled voices. **THUG:** "He's waking up." **FOREMAN (off):** "Boss wants him breathing. Dead, that box goes straight to the cops." "Nine o'clock. Then he's yours." | **HOLD** to open his eyes (a blurred image sharpens). |
 | 1.2 | Overhead, rotating slowly: him zip-tied to a chair, a wound on his head | **YOU:** "...Where...?" A thug slaps him: "Morning, sunshine." | **MASH** to snap the ties as the thug turns away. |
 | 1.3 | **Flash 1** (new still): a pipe, a shadow, a figure in a long coat walking away, out of focus | No words. A ring of tinnitus. | |
 | 1.4–1.n | (as built) the escape, the knife, INSTINCT, the hall fights, the Foreman | The Foreman, in phase III: "You don't even know who you are. Do you?" | (fight) |
-| 1.E | (as built) the accidental shot; the pockets | The key: **MERIDIAN TRUST · Nº 417**. The note, now signed: ***"Walk him into Meridian at nine. Only his hand opens 417. Get the book. Then finish him. — V."*** **YOU:** "A book... What did I write down that's worth all this?" "And who the hell is V?" | **TAP** each pocket; **DRAG** the note open. |
+| 1.E | (as built) the accidental shot; the pockets | The key: **MERIDIAN TRUST · Nº 417**. The note, now signed: ***"Only his hand opens 417. Keep him alive till nine. Get the book. Then finish him. — V."*** **YOU:** "A book... What did I write down that's worth all this?" "And who the hell is V?" | **TAP** each pocket; **DRAG** the note open. |
 | 1.F | Wide, from behind: out into the rain | **YOU:** "If my hand opens it... then I'll open it first." | |
 
 Card: **CHAPTER 1 · THE HITMAN.** *"You kill people. You are good at it."*
@@ -133,7 +142,7 @@ Morning, no rain. Keep the set, the street fights and the Driver.
 | # | Shot | What happens / is said | Player |
 |---|---|---|---|
 | 2.1 | (as built) the key's mark matched to the stone above the doors | **YOU:** "Nine o'clock. They'll be here at nine." He checks the bank's clock: **8:41**. The clock stays on screen as a quiet timer for the bank part. | |
-| 2.2 | The clerk at the counter, over his shoulder | **CLERK:** "Box four-one-seven... Of course, sir. You haven't been in for six years." "Palm on the glass, please." | **HOLD** the palm on the scanner. Lines run up his hand and the box unlocks. |
+| 2.2 | The clerk at the counter, over his shoulder | **CLERK:** "Box four-one-seven... Of course, sir. You haven't been in for six years." "The standing instruction is still in place: if anything happens to you, the box goes to your lawyer." "Palm on the glass, please." | **HOLD** the palm on the scanner. Lines run up his hand and the box unlocks. |
 | 2.3 | Top-down on the open box | The box holds, in order: the ring, three passports (him, Elena, a girl of six, new names), a thick black **book**, and an envelope with a letter. | **TAP** each item. |
 | 2.4 | The ring | **The wedding memory** (stills as built). **HER · A MEMORY:** "Promise me you'll always come home." **YOU:** "...Elena." | |
 | 2.5 | A child's passport, the photo | **YOU:** "A daughter... I have a daughter." The name on it: **MAYA.** | |
@@ -151,14 +160,17 @@ Dusk. Keep the house, the fights and the Cleaner. The order changes so the grief
 | # | Shot | What happens / is said | Player |
 |---|---|---|---|
 | 3.1 | (as built) Alder Lane at dusk, No. 14; the black car | A child's chalk hopscotch on the path: **1 2 3**. **YOU:** "...She counts to three." | |
-| 3.2 | The study; the photo on the desk | The family photo (him, Elena, Maya with her red ribbon). | **DRAG** to turn it over: on the back, another photo slipped behind it: him at twenty, beside a man in a long coat. *"To my best student. — V."* **YOU:** "...You." Flash 2: **"I'm out, Voss."** (voss_1, his gun on the desk). **YOU:** "Voss." Now he has the name. |
+| 3.1b | The hall table | Harrow's business card, with a note in Elena's hand: *"He came again. Says you'd be safe if you talk. Call him?"* **YOU:** "...Someone came asking. That's why." | **TAP** the card. |
+| 3.2 | The study; the photo on the desk | The family photo (him, Elena, Maya with her red ribbon). | **DRAG** to turn it over: on the back, another photo slipped behind it: him at twenty beside a man in a long coat, and a sullen boy half hidden behind them. *"To my best student. — V."* **YOU:** "...You. You raised me." Flash 2: **"I'm out, Voss."** (voss_1, his gun on the desk). **YOU:** "Voss." Now he has the name. |
 | 3.3 | Maya's room | A pair of toy walkie-talkies on the shelf, with one gone. A drawing: three stick figures and a sun. **YOU:** "She took one with her." | **TAP** the walkie, the drawing. |
 | 3.4 | The kitchen, the back door; a high wide shot, then slowly closer | Elena on the floor by the open back door (white flash only, as agreed). He kneels. **YOU:** "...I'm home." | **HOLD** to close her eyes. The music drops out entirely. |
 | 3.5 | A voice from the hall, soft | **THE CLEANER:** "They always come home." Rage begins (as built: red edges). | |
 | 3.6 | (as built) the fight through the rooms, up the stairs; THE CLEANER | **CLEANER**, mid-fight: "You taught me this." "You taught all of us." | (fight) |
-| 3.7 | The kitchen chair (restrained, as built) | **CHOOSE**, three times; each question gets a different answer: "Where is she?" → "Alive. That's all you get." / "Why Elena?" → "She ran. You'd have done the same." / "What does Voss want?" → "His book. And you, back where you belong." | **CHOOSE** |
+| 3.7 | The kitchen chair (restrained, as built) | **CHOOSE**, three times; each question gets a different answer: "Where is she?" → "Alive. Leverage. That's all you get." / "Why Elena?" → "He said bring her. ...I didn't feel like it." "Every day of my life it was you. *He'd have done it cleaner.* So I did it cleaner." / "Who are you?" → "You don't even remember me. ...Of course you don't." | **CHOOSE** |
 | 3.8 | The Cleaner's phone rings on the table. Close on the screen: **V.** | | **SWIPE** to answer. |
-| 3.9 | Close on him, the phone at his ear; the voice is calm and kind | **VOICE ON THE PHONE (Voss):** "Hello, son." "You weren't supposed to wake up like this. I'm sorry about Elena. That was never the plan." "Maya's safe. She's asking for you. Bring me the book, and you can take her home." "Don't make me teach you twice." | **CHOOSE:** "Where?" / "I'll kill you." / (stay silent). The answers are "You'll find her. You always do.", "You'll try.", and, to silence, "That's my boy." Then the line goes dead. |
+| 3.9 | Close on him, the phone at his ear; the voice is calm and kind | **VOICE ON THE PHONE (Voss):** "Hello, son. A detective at your door... you know what that looks like to me." "I'm sorry about Elena. That was never the plan." "Maya's safe. Bring me the book, and you can take her home." | |
+| 3.9b | Behind him, in the chair: the Cleaner's hand finds a hidden scalpel. A sharp cut to the lunge | Silas lunges; the hero kills him by reflex (one move, a silhouette). The phone lies on the floor, the line still open. | **SWIPE** (the reflex; plays itself if the player waits). |
+| 3.9c | Close on the phone on the floor | **VOSS:** "...Silas? Silas!" Silence. Then, cold, a different man: "Bring me the book. Then we're even." The line goes dead. **YOU** (looking at the body): "...Silas. Your son." | |
 | 3.10 | (as built) the small footprints out of the back door, toward the swings | **YOU:** "...Maya." | |
 
 Card: **CHAPTER 3 · THE DAUGHTER.** *"They always come home."*
@@ -187,7 +199,7 @@ The storm. Keep everything built: the road, the gate, the trap, the courtyard, t
 | 5.2 | (as built) the blackout | **MAYA (walkie):** "The lights went out. I'm not scared. Are you scared?" **YOU:** "...No. I don't need to see them." | |
 | 5.3 | (as built) the Warden | **WARDEN:** "I kept his door. Twenty years." After: "Go on up. He's been waiting. He's been waiting years." | (fight) |
 | 5.4 | (as built) the stair, the roof | **VOSS:** "Look at you. Twelve years, and you still walk like one of mine." | |
-| 5.5 | Flash 3: the window, the phone | **VOSS (in the flash):** "Then finish it. All of them." Now the whole night comes back. **YOU:** "You told them all of us." **VOSS:** "I told them to bring her. Elena ran. I've never been sorry for anything until her." | |
+| 5.5 | Flash 3: the window, the phone | **VOSS (in the flash):** "Bring them to me. All of them. Alive." Now the whole night comes back. **VOSS:** "Six years I lived on your mercy. A detective at your door, and I'm meant to wait?" **VOSS:** "I told him to bring her. He never listened. Not once in his life." **YOU:** "Your boy killed Elena." **VOSS:** "...I know. And I still loved him. That's what fathers do. You'd know." **YOU:** "And I killed him." **VOSS:** "Yes. So here we are." | |
 | 5.6 | **The trade.** Two-shot down the terrace; the book in his hand, Maya in Voss's | **VOSS:** "The book, and she walks to you. That was always the deal." | **DRAG** the book toward Voss **or** **SWIPE** to throw it off the roof. *Hand it over:* Voss lets Maya go, then raises the silver pistol: "I did teach you better than that." *Throw it:* Voss: "...You'd burn us both. You really did leave." He pushes Maya toward the door and draws. Both lead into the duel. |
 | 5.7 | (as built) the duel: I the teacher (the sword-cane), II the gun (slip the shot, get in close), III the edge | **VOSS**, phase II: "Every one of them down there, you taught. I taught you." Phase III: "Then let's finish what I started." | (fight) |
 | 5.8 | (as built) the fall: Voss hanging at the broken parapet | **VOSS:** "We're the same, you and me." | **CHOOSE:** **REACH FOR HIM** / **LET GO**. *Reach:* he grabs Voss's glove; it slips off empty in his hand, the stone gives, and Voss falls: "...Good boy." *Let go:* **YOU:** "No. I came home." The lightning takes the stone. |
