@@ -102,6 +102,44 @@ The INSTINCT tutorial (chapter 1) is re-taught with the four verbs: strike, grab
 - **Clips** (`build_stickman.py`): `clinch`, `knee_clinch`, `headbutt`, `throw_side`, `suplex`, `slam_down`, `parry`, `hit_body`, `hit_legs`, `stumble_back`, `door_slam`, `pole_swing`, `bonnet_roll`, `chair_swing`.
 - **Fight mode (the tower)** gets the same system: it's one combat for the whole game.
 
+### 7. Enemies that really fight
+
+**Why bare-handed men barely fight today:**
+- They wait in a ring 2.2–3.4 m away, out of reach.
+- Only two may attack at once (`AttackTokens.Max = 2`).
+- Each attack is one telegraphed swing and then a retreat.
+- The rest circle, wait 0.3–1.2 s and taunt.
+
+**What the new enemies do** (grounded, like men in a real street fight):
+
+| Behaviour | What it looks like |
+|---|---|
+| **Close in and stay close** | They fight at arm's length (0.9–1.3 m), not from a ring. The ones not in the exchange **move to flank** (one behind you, one cutting off the way out) instead of standing still. |
+| **Combinations** | Jab–cross, jab–jab–hook, a body shot then the head, a kick to the leg. Two to four hits, with real wind-ups you learn to read. The red telegraph is kept only for unblockable heavy blows. |
+| **Guard and defence** | Hands up between exchanges: high strikes are blocked (go low, or grab). They **slip** and **step back** from your strings, and **block-and-counter** if you keep doing the same thing. |
+| **Feints** | A wind-up that stops: bait for an early parry. |
+| **Grabs** | They clinch you too: one holds you while another hits. Break free, or reverse it into your own throw. |
+| **Use the place** | They pick up a café chair or a bottle, slam you into a car door or a wall, and kick you when you're down (roll away). |
+| **Pressure that adapts** | Up to three can be on you at once, with the others always moving. Hurt men back off, catch their breath and come again; a man left alone grows bolder. |
+| **Fear** | When their leader falls, or half of them are down, the rest may hesitate, or run. |
+
+**The street's crew** (all bare hands or street objects; no guns):
+
+| Type | Style | How to beat him |
+|---|---|---|
+| **Boxer** (the backbone) | Guard up, fast combos, slips your punches. | Go low, grab, or parry his cross. |
+| **Brawler** | Wild swings, headbutts, throws whatever is near. | Dodge the haymaker; he's open after it. |
+| **Grappler** | Clinches and holds you for the others; throws you into cars. | Keep him at a kick's length, or reverse his grab. |
+| **Bat / chain** | Long reach, heavy, slow to recover. | Get inside the swing; take the bat. |
+| **Runner** | In, a jab, out (as now). | Easy points; parry him. |
+
+**The mini-boss, THE DRIVER** (a professional, built on the same system), in three phases:
+1. **The boxer:** a tight guard, counters, and combos that punish mashing. Learn his rhythm; parry his cross.
+2. **The tire iron:** he pulls it from the car's boot. Heavy swings, the car's door slammed on you, your head driven into the bonnet. Dodge, get inside, take the iron.
+3. **The car:** beaten and desperate, he gets in and drives at you. Dodge at the last moment; the car hits a lamp post. He staggers out bloodied for a last, close, ugly exchange, then the directed beat.
+
+The Foreman (chapter 1) is re-tuned on the same system: guard, combos and his clinch become real behaviour, not specials.
+
 ---
 
 ## Part 2: the street (the continuation of chapter 2, after the bank)
@@ -137,3 +175,4 @@ The INSTINCT tutorial (chapter 1) is re-taught with the four verbs: strike, grab
 1. **The combat:** go with CONTACT (strike, grab, parry, deterministic context moves with marks, per-chapter kits), **grounded and realistic** (human speeds, short heavy jumps, no flips or wall runs, real weight)?
 2. **The order:** build the new combat system first and re-tune chapter 1 on it, then the street. *(Recommended: the street is built around grabs, doors and bonnets, so the system comes first.)*
 3. **The street:** the four zones and the Driver as its mini-boss: good?
+4. **The enemies:** men who close in, combo, guard, feint, grab, flank and use the place (section 7), with the Driver in three phases?
