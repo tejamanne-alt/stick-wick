@@ -55,8 +55,9 @@ This replaces `story_arc.md` as the source of truth. The sets, fights and bosses
 | 2 | I have a wife and a daughter. The box holds a book of my crimes, and someone wants it badly. | Where are they? |
 | 3 | Elena is dead, killed by Silas, Voss's son, against Voss's order. Maya was taken. V raised me. | Where is Maya? |
 | 4 | Maya is alive and talking to me. She's at Kessel Hill. The boss is Voss. | Can I get her back? |
-| 5 | Everything. Voss did it to make me come back. | What do I do with the book, and with myself? |
-| 6 | (the epilogue) He keeps his promise to Elena, his own way. | |
+| 5 | (the road) Who his daughter is: brave, funny, his. | Will I be the father she needs? |
+| 6 | Everything. Voss did it to make me come back. | What am I now? |
+| 7 | (the epilogue) He keeps his promise to Elena: he comes home. | |
 
 ---
 
@@ -64,16 +65,16 @@ This replaces `story_arc.md` as the source of truth. The sets, fights and bosses
 
 | Thread | Planted | Grows | Pays off |
 |---|---|---|---|
-| **THE BOOK** | Ch1: the note says "Get what's in 417". | Ch2: he opens the box; the book is in it, and he reads one page. Ch2 street: "The box. Hand it over." | Ch5: the trade on the roof. Ch6: what he does with it. |
-| **"V"** | Ch1: the note is signed **— V.** | Ch2: the clerk on the phone: "Yes, Mr. V... he's here." Ch3: a photo in his study, inscribed *"To my best student. — V."* Ch3: V's voice on the Cleaner's phone. Ch4: the Handler: "He made you." | Ch5: VOSS on the roof, the same face as the photo, twelve years older. |
-| **The blow** | Ch1: wakes with the wound; the first flash is just a pipe and a shadow. | Ch3: the second flash is Voss's office, "I'm out, Voss." | Ch5: the third flash is the window, "Then finish it. All of them." The whole night comes back. |
-| **"Promise me you'll always come home"** | Ch2: the wedding memory, Elena's voice. | Ch3: the Cleaner: "They always come home." The words turn sour. | Ch6: he does come home, to her grave, with Maya. |
-| **The red ribbon** | Ch3: Maya's photo, the red ribbon in her hair. | Ch4: the ribbon in the grass, which she left as a trail ("Mama said leave a trail if you're lost"). He ties it round his wrist. | Ch5: he ties it back in her hair. |
-| **The walkie-talkie** (new) | Ch3: a pair of toy walkie-talkies on Maya's shelf, and one is missing. | Ch4: the other one crackles on the swing: her voice. | Ch5: he talks to her through the storm; she guides him to the tower. |
-| **Why now: HARROW** | Ch3: Harrow's card on the hall table, with Elena's note: *"He came again. Says you'd be safe if you talk. Call him?"* | Ch3: Voss on the phone: "A detective at your door, son. You know what that looks like to me." | Ch6: Harrow at the bottom of the hill. He makes the call Elena wanted. |
-| **The dead-man's switch** | Ch1: the Foreman: "Boss wants him breathing. Dead, that box goes straight to the cops." | Ch2: the clerk: "The box has a standing instruction, sir. If anything happens to you, it goes to your lawyer." | Ch5: Voss: "Six years I lived on your mercy." |
-| **SILAS, Voss's son** | Ch3: the photo: young Voss, the hero, and a boy half hidden behind them. | Ch3: in the chair: "Every day of my life it was you." Then the phone: "...Silas? Silas!" | Ch5: "Your boy killed Elena." "...I know. And I still loved him." |
-| **His bosses are his own** | Each boss knows him: the Driver drove for him, the Cleaner he trained, the Handler set up his jobs, the Warden kept Voss's door. | Each one says one line that tells you who he was. | Ch5: Voss says the truth they were all hinting at: "Every one of them, you taught." |
+| **THE BOOK** | Ch1: the note says "Get what's in 417". | Ch2: he opens the box; the book is in it, and he reads one page. Ch2 street: "The box. Hand it over." | Ch6: the trade on the roof. Ch7: he keeps it, locked in a drawer under Elena's photo. |
+| **"V"** | Ch1: the note is signed **— V.** | Ch2: the clerk on the phone: "Yes, Mr. V... he's here." Ch3: a photo in his study, inscribed *"To my best student. — V."* Ch3: V's voice on the Cleaner's phone. Ch4: the Handler: "He made you." | Ch6: VOSS on the roof, the same face as the photo, twelve years older. |
+| **The blow** | Ch1: wakes with the wound; the first flash is just a pipe and a shadow. | Ch3: the second flash is Voss's office, "I'm out, Voss." | Ch6: the third flash is the window, "Then finish it. All of them." The whole night comes back. |
+| **"Promise me you'll always come home"** | Ch2: the wedding memory, Elena's voice. | Ch3: the Cleaner: "They always come home." The words turn sour. | Ch7: he does come home, to her grave, with Maya. |
+| **The red ribbon** | Ch3: Maya's photo, the red ribbon in her hair. | Ch4: the ribbon in the grass, which she left as a trail ("Mama said leave a trail if you're lost"). He ties it round his wrist. | Ch6: he ties it back in her hair. |
+| **The walkie-talkie** (new) | Ch3: a pair of toy walkie-talkies on Maya's shelf, and one is missing. | Ch4: it crackles in his pocket: her voice, from the van. Ch5: the drive, the two of them. | Ch6: "Papa! I see you!" from the tower; Ch7: she leaves it on Elena's stone. |
+| **Why now: HARROW** | Ch3: Harrow's card on the hall table, with Elena's note: *"He came again. Says you'd be safe if you talk. Call him?"* | Ch3: Voss on the phone: "A detective at your door, son. You know what that looks like to me." | Ch7: Harrow at the bottom of the hill: "Then I never saw you." |
+| **The dead-man's switch** | Ch1: the Foreman: "Boss wants him breathing. Dead, that box goes straight to the cops." | Ch2: the clerk: "The box has a standing instruction, sir. If anything happens to you, it goes to your lawyer." | Ch6: Voss: "Six years I lived on your mercy." |
+| **SILAS, Voss's son** | Ch3: the photo: young Voss, the hero, and a boy half hidden behind them. | Ch3: in the chair: "Every day of my life it was you." Then the phone: "...Silas? Silas!" | Ch6: "Your boy killed Elena." "...I know. And I still loved him." |
+| **His bosses are his own** | Each boss knows him: the Driver drove for him, the Cleaner he trained, the Handler set up his jobs, the Warden kept Voss's door. | Each one says one line that tells you who he was. | Ch6: Voss says the truth they were all hinting at: "Every one of them, you taught." |
 
 ---
 
@@ -177,65 +178,91 @@ Dusk. Keep the house, the fights and the Cleaner. The order changes so the grief
 Card: **CHAPTER 3 · THE DAUGHTER.** *"They always come home."*
 
 ### CHAPTER 4 · THE BACKYARD: *"Is she alive?"*
-Night. Keep the set, the fights and the Handler. The fix: **he doesn't remember the kidnapping; he reads it, then he hears her, then he misses her by seconds.**
+Night. Keep the set, the fights and the Handler. One simple line in three acts: **FIND HER, REACH HER, LOSE HER.** There is no puzzle to decode. Maya tells him what happened last night in her own words, and the stills illustrate what she says.
 
-**Last night (never shown live; read from the clues):**
-1. Elena saw them first. On the back step she pushed the walkie into Maya's pocket: *"Run to the slide. Hide, like we practised. I'll find you."*
-2. Silas shot Elena at the back door; Maya heard it from the garden.
-3. Maya ran through the broken back gate into the playground and hid under the slide.
-4. The Handler's men searched with torches; the walkie crackled in her pocket and gave her away.
-5. They dragged her to the white van in the car park. On the way she pulled the ribbon from her hair and dropped it by the swings ("Mama said leave a trail").
-6. The van stayed near the house: Voss's order was *"He'll follow her trail. Let him see her."*
-
-**Tonight:**
+**ACT 1: FIND HER**
 
 | # | Shot | What happens / is said | Player |
 |---|---|---|---|
-| 4.1 | (as built) the footprints; a low truck beside him | Three clues, each a grey still labelled **WHAT HAPPENED HERE** (taken_1–3, retitled): scuffs by the gate (*she ran*), the gap under the slide (*she hid*), a dropped torch and drag marks (*they found her*). **YOU:** "She hid. Good girl... She hid exactly the way I'd have taught her." | **TAP** 3 clues. |
-| 4.2 | (as built) the ribbon in the grass, a crane down | **HER · A MEMORY:** "If you're ever lost, leave a trail, sweetheart." He ties it round his wrist. **YOU:** "I will find you, wherever you are. Trust me, my sweetheart." | **DRAG** the ribbon free. |
-| 4.3 | Static on him; the walkie in his pocket crackles | **MAYA (walkie):** "...Papa? Papa, is that you? Over." | **HOLD** to talk. |
-| 4.4 | Close on him, the walkie at his mouth | **CHOOSE:** "Maya, I'm here." / "Are you hurt?" / "Where are you?" **MAYA:** "I'm in a van. It smells of petrol. I can see the swings through the window." **YOU:** "Stay down. Keep it hidden. I'm coming. Over." A man's voice near her: "Who are you talking to?" Static. | **CHOOSE** |
-| 4.5 | A whip pan down the park: the van's headlights come on at the far end | | |
-| 4.6 | (as built) torches at the fence (a pan) | Voss's order to them (a THUG repeats it): "Take the book off him. Break his legs. Bring him to me." | |
-| 4.7 | (as built) four stretches: the garden, the playground, the pond bridge, the car park; **the van always in sight at the far end** | Between zones, the walkie, more scared each time: **MAYA:** "Papa, they're starting the engine!" | (fight) |
-| 4.8 | The car park; slow motion: the van pulling away, Maya's small hand pressed to the back window (taken_4, now live); he runs after it; a long lens as it goes up the hill road | **MAYA (walkie, breaking up):** "Papa... I can't... hear y—" Static. The music drops out. | **MASH** to run after it (it always gets away). |
-| 4.9 | (as built) THE HANDLER: he stayed to finish it and take the book | **HANDLER:** "I set up your jobs for ten years! You owe me a thank you!" | (fight) |
-| 4.10 | (as built) the Handler against the van's empty bay | **HANDLER:** "Kessel Hill. The old fort, with the observatory. That's where she's going." "He's not going to hurt her. He wants you back. He pulled you off the street at nineteen. You were more his son than Silas ever was... and you just killed Silas." **YOU:** "I'm not his son." | |
-| 4.11 | (as built) the tilt up from the ribbon on his wrist to the fortress, storm clouds gathering; the pull-away | **YOU:** "I'm coming, sweetheart." | |
+| 4.1 | Low beside him, a slow truck: small footprints across the wet lawn to the play area | **YOU:** "Small steps. Running." | |
+| 4.2 | The swings; a crane down to the red ribbon in the grass | **YOU:** "...Her ribbon." | **DRAG** it free. |
+| 4.3 | Close on him, the ribbon in his hand. Then a crackle from his coat pocket: the walkie he took from her shelf | **MAYA (walkie):** "...Papa? Is that you? Over." He freezes. | **HOLD** to talk. |
+| 4.4 | Extreme close on his mouth at the walkie, then his eyes | **YOU:** "Maya. It's me. It's Papa." **MAYA:** "Papa!" (she is crying and trying not to) "I knew you'd answer. Mama said you always answer." | |
+| 4.5 | **Her story, in her words, over the stills** (taken_1–4, soft-edged, her point of view, low to the ground) | **MAYA:** "The bad men came. Mama gave me the walkie and said run to the slide and hide like we practised." (still: the back door, Elena's hand pushing her) "There was a big bang. I didn't look." (still: the slide, from underneath) "I was quiet, but my walkie went *kssh*, and they found me." (still: a torch in her face, a hand) "I dropped my ribbon so you'd find the way. Mama said leave a trail." (still: the ribbon falling) | |
+| 4.6 | Back on him; the ribbon tightening round his wrist as he ties it | **YOU:** "That was so clever, sweetheart. Where are you now?" **MAYA:** "In a van. It smells like petrol. I can see the swings through the little window... and I can see you!" He looks up. | |
+| 4.7 | **Reverse, a long lens down the dark park:** at the far end, in the car park, a white van, and in its back window a tiny pale face | **YOU:** "I see you. Stay down. Keep the walkie hidden. Papa's coming." Then a man's voice by her: "Who are you talking to?" Static. The van's headlights come on. | |
+
+**ACT 2: REACH HER**
+
+| # | Shot | What happens / is said | Player |
+|---|---|---|---|
+| 4.8 | (as built) a pan along the fence: torches coming over it | **THUG:** "There he is. Take the book. Break his legs." | |
+| 4.9 | (as built) four stretches of fighting: the garden, the playground, the pond bridge, the car park. **The van is always in frame at the far end**, a little closer each time. | Between stretches, short walkie moments, each one a beat of their relationship: | (fight) |
+| 4.9a | After the garden | **MAYA:** "There's lots of shouting. Is that you?" **YOU:** "Close your eyes and count to three, like the hopscotch. When you open them, I'll be closer." **MAYA:** "One... two... three." | |
+| 4.9b | After the playground | **MAYA:** "Papa... did you find Mama?" Close on him; he can't answer. | **CHOOSE:** "Not yet, sweetheart." / (silence). Silence: "...Papa?" **YOU:** "Later. I'll tell you later." |
+| 4.9c | After the pond bridge | Engine noise. **MAYA:** "They're starting the van! Papa, hurry!" | |
+
+**ACT 3: LOSE HER**
+
+| # | Shot | What happens / is said | Player |
+|---|---|---|---|
+| 4.10 | The car park. Slow motion: the van pulling away, her small hand pressed to the back window | **MAYA:** "PAPA!" | **MASH** to sprint after it. He gains, he almost touches the door... |
+| 4.11 | A long lens: the van turning onto the hill road, gone. He stops, breathing | **MAYA (walkie, breaking up):** "Papa... I can't... hear y—" Static. The music drops out entirely. | |
+| 4.12 | Behind him, slow clapping: THE HANDLER, who stayed behind | **HANDLER:** "Close. So close. You always did cut it fine." "I set up your jobs for ten years. Now I get the book." | |
+| 4.13 | (as built) THE HANDLER fight: the grip, the knuckles, cornered | | (fight) |
+| 4.14 | (as built) the Handler against the empty parking bay | **YOU:** "Where's the van going?" **HANDLER:** "Kessel Hill. The old fort, with the observatory." "He won't hurt her. He wants you back. He pulled you off the street at nineteen. You were more his son than Silas ever was... and you just killed Silas." **YOU:** "I'm not his son. I'm hers." | |
+| 4.15 | He takes the Handler's car keys. A tilt from the ribbon on his wrist up to the fortress on the horizon, storm clouds gathering | **YOU:** "I'm coming, sweetheart." | |
 
 Card: **CHAPTER 4 · THE PROMISE.** *"I will find you, wherever you are."*
 
-**Why the walkie works:** a toy walkie's range is short. It reaches her while the van is in the park, cuts out as the van leaves, and works again in chapter 5 once he's on the hill.
+### CHAPTER 5 · THE ROAD (new, short: the drive up Kessel Hill, about 4 minutes, no fighting)
+**Why it's needed:** the player needs time alone with him and Maya before the final level. They've heard her cry and lost her; now they get to know her, and the storm builds. The walkie comes back in range as he climbs the hill.
 
-### CHAPTER 5 · THE FORTRESS: *"Who am I now?"*
+The set: the Handler's car, inside, at night: the dashboard glow, wipers, rain on the windscreen growing heavier, the fortress in the headlights' distance. Reuse the Driver's car model with an interior shell.
+
+| # | Shot | What happens / is said | Player |
+|---|---|---|---|
+| 5.1 | Outside, high: a pair of headlights climbing the hairpins of the hill road; the first drops of rain | Silence, the engine. | |
+| 5.2 | Inside, close on his hands on the wheel, the ribbon on his wrist | The walkie on the passenger seat crackles back to life as he climbs. **MAYA:** "...pa? Papa?" | **HOLD** to talk. |
+| 5.3 | Two-shot of nobody: him, and the walkie on the empty seat beside him, framed as if she were sitting there | **MAYA:** "They put me in a big room with a window. There's a giant telescope. The man with the cane gave me hot chocolate." **YOU:** "Don't drink anything he gives you." **MAYA:** "...I already drank it. It was nice." He almost smiles. | |
+| 5.4 | Lightning far off; close on the walkie | **MAYA:** "I don't like the thunder." **YOU:** "Count with me. When the light comes, count, and the thunder comes after. The bigger the number, the further away it is." | **TAP** on each flash, then on the thunder (a gentle game, three times; no failing). **MAYA:** "One... two... three... four!" "It's far away!" |
+| 5.5 | Rain heavier; a slow push-in on his face | **MAYA:** "Papa? The cane man says you used to be like him. Are you a bad man?" | **CHOOSE:** "I was." / "Not any more." / "I don't know, sweetheart." Each gets an answer from her: "Mama says people can change, like caterpillars." / "Good. Because I need a good one." / "I know. You're my papa." |
+| 5.6 | Close on the walkie; then on him | **MAYA:** "Can you sing the music box song? Mama sings it when it's dark." The music-box theme, played softly, unfinished. He hums it, badly. **MAYA** (giggling): "That's wrong." **YOU:** "I'll practise." | **HOLD** to hum: the melody plays while it's held. |
+| 5.7 | The battery light blinking on the walkie (a red pip, one of the few reds) | **MAYA:** "The light is blinking." **YOU:** "That's the battery. Turn it off now and keep it hidden. Turn it on only when you see me. Promise?" **MAYA:** "Promise. Over and out." Click. Silence. | |
+| 5.8 | The car comes round the last hairpin: the fortress fills the windscreen as the storm breaks, the first huge strike | He stops at the floodlight, gets out into the rain. **YOU:** "...Over and out." | |
+
+Card: **CHAPTER 5 · THE ROAD.** *"Over and out."*
+
+### CHAPTER 6 · THE FORTRESS: *"Who am I now?"*
 The storm. Keep everything built: the road, the gate, the trap, the courtyard, the blackout, the Warden, the tower, the roof. Changes:
 
 | # | Shot | What happens / is said | Player |
 |---|---|---|---|
-| 5.1 | (as built) title, aerial, the road | Between zones, the walkie, crackling: **MAYA:** "Papa? It's very loud. Is that you making the thunder?" **YOU:** "That's me, sweetheart." | **HOLD** to answer (optional; she talks anyway). |
-| 5.2 | (as built) the blackout | **MAYA (walkie):** "The lights went out. I'm not scared. Are you scared?" **YOU:** "...No. I don't need to see them." | |
-| 5.3 | (as built) the Warden | **WARDEN:** "I kept his door. Twenty years." After: "Go on up. He's been waiting. He's been waiting years." | (fight) |
-| 5.4 | (as built) the stair, the roof | **VOSS:** "Look at you. Twelve years, and you still walk like one of mine." | |
-| 5.5 | Flash 3: the window, the phone | **VOSS (in the flash):** "Bring them to me. All of them. Alive." Now the whole night comes back. **VOSS:** "Six years I lived on your mercy. A detective at your door, and I'm meant to wait?" **VOSS:** "I told him to bring her. He never listened. Not once in his life." **YOU:** "Your boy killed Elena." **VOSS:** "...I know. And I still loved him. That's what fathers do. You'd know." **YOU:** "And I killed him." **VOSS:** "Yes. So here we are." | |
-| 5.6 | **The trade.** Two-shot down the terrace; the book in his hand, Maya in Voss's | **VOSS:** "The book, and she walks to you. That was always the deal." | **DRAG** the book toward Voss **or** **SWIPE** to throw it off the roof. *Hand it over:* Voss lets Maya go, then raises the silver pistol: "I did teach you better than that." *Throw it:* Voss: "...You'd burn us both. You really did leave." He pushes Maya toward the door and draws. Both lead into the duel. |
-| 5.7 | (as built) the duel: I the teacher (the sword-cane), II the gun (slip the shot, get in close), III the edge | **VOSS**, phase II: "Every one of them down there, you taught. I taught you." Phase III: "Then let's finish what I started." | (fight) |
-| 5.8 | (as built) the fall: Voss hanging at the broken parapet | **VOSS:** "We're the same, you and me." | **CHOOSE:** **REACH FOR HIM** / **LET GO**. *Reach:* he grabs Voss's glove; it slips off empty in his hand, the stone gives, and Voss falls: "...Good boy." *Let go:* **YOU:** "No. I came home." The lightning takes the stone. |
-| 5.9 | (as built) Maya runs to him; the ribbon in her hair | **MAYA:** "Papa... you came." **YOU:** "I promised, sweetheart." **MAYA:** "Mama said you'd always come home." **YOU:** "...Always." | **DRAG** to tie the ribbon. |
-| 5.10 | Dawn on the roof; the storm passes | If the book was thrown, it's gone. If he handed it over, it's lying open in the rain where Voss dropped it, and he picks it up. | |
+| 6.1 | (as built) title, aerial, the road | The walkie stays silent: she promised to turn it on only when she sees him. Between zones he checks it; nothing. **YOU:** "...Good girl." | |
+| 6.2 | (as built) the blackout; the courtyard dark | **YOU** (to himself): "I don't need to see them." | |
+| 6.3 | (as built) the Warden | **WARDEN:** "I kept his door. Twenty years." After: "Go on up. He's been waiting. He's been waiting years." | (fight) |
+| 6.3b | (as built) the tower: the man and the child on the gallery, lit by a strike. Then the walkie in his pocket clicks on | **MAYA (walkie, whispering):** "Papa! I see you! You're tiny!" "The cane man is taking me up to the roof." **YOU:** "I see you too. I'm coming up. Over." | **HOLD** to answer. |
+| 6.4 | (as built) the stair, the roof | **VOSS:** "Look at you. Twelve years, and you still walk like one of mine." | |
+| 6.5 | Flash 3: the window, the phone | **VOSS (in the flash):** "Bring them to me. All of them. Alive." Now the whole night comes back. **VOSS:** "Six years I lived on your mercy. A detective at your door, and I'm meant to wait?" **VOSS:** "I told him to bring her. He never listened. Not once in his life." **YOU:** "Your boy killed Elena." **VOSS:** "...I know. And I still loved him. That's what fathers do. You'd know." **YOU:** "And I killed him." **VOSS:** "Yes. So here we are." | |
+| 6.6 | **The trade.** Two-shot down the terrace; the book in his hand, Maya in Voss's | **VOSS:** "The book, and she walks to you. That was always the deal." **DRAG** the book across the wet stones to him. Voss lets Maya go ("Run along, little one"), weighs the book in his hand, then drops it and raises the silver pistol: "I did teach you better than to trust me." Into the duel. | **DRAG** |
+| 6.7 | (as built) the duel: I the teacher (the sword-cane), II the gun (slip the shot, get in close), III the edge | **VOSS**, phase II: "Every one of them down there, you taught. I taught you." Phase III: "Then let's finish what I started." | (fight) |
+| 6.8 | (as built) the fall: Voss hanging at the broken parapet | **VOSS:** "We're the same, you and me." | **CHOOSE:** **REACH FOR HIM** / **LET GO**. *Reach:* he grabs Voss's glove; it slips off empty in his hand, the stone gives, and Voss falls: "...Good boy." *Let go:* **YOU:** "No. I came home." The lightning takes the stone. |
+| 6.9 | (as built) Maya runs to him; the ribbon in her hair | **MAYA:** "Papa... you came." **YOU:** "I promised, sweetheart." **MAYA:** "Mama said you'd always come home." **YOU:** "...Always." | **DRAG** to tie the ribbon. |
+| 6.10 | Dawn on the roof; the storm passes | The book lies open in the rain where Voss dropped it. He picks it up and puts it inside his coat. | |
 
-Card: **CHAPTER 5 · THE STORM.**
+Card: **CHAPTER 6 · THE STORM.**
 
-### CHAPTER 6 · HOME (new, short: an epilogue, about 3 minutes, no fighting)
+### CHAPTER 7 · HOME (new, short: an epilogue, about 3 minutes, no fighting)
 **Why it's needed:** Elena's promise, the book and his old life all need closing. The roof is a climax, not a resolution.
 
 | # | Shot | What happens / is said | Player |
 |---|---|---|---|
-| 6.1 | Morning. The cliff road at the bottom of the hill, police lights flashing (white only) | A detective by a car. **DETECTIVE HARROW:** "Kessel Hill's full of Voss's men, and half of them are in pieces. Was that you?" | |
-| 6.2 | Close on him; Maya holding his hand, the ribbon in her hair | (if he still has the book) **CHOOSE:** **HAND HARROW THE BOOK** / **KEEP IT**. *Hand it over:* **YOU:** "Forty-one names. Mine's in there too." **HARROW** (reading, quiet): "...I'll need you to come in." **YOU:** "I know. Give me one hour." *Keep it / it's gone:* **HARROW:** "Then I never saw you." | **CHOOSE** |
-| 6.3 | A hillside cemetery, white flowers. Elena's stone | Maya places her walkie-talkie on the stone. **MAYA:** "So Mama can hear us." **YOU** (on his knees, to the stone): "I came home." The dawn wind. | **HOLD** to lay his hand on the stone. |
-| 6.4 | The swing in the backyard, morning; Maya swinging, him pushing | **MAYA:** "Higher, Papa!" (the music box theme returns, complete for the first time) | **TAP** in time to push (no failing; it's a moment). |
-| 6.5 | Wide, from the house: the two of them | If he handed over the book: a police car waits at the gate, and he walks to it with her hand in his: **YOU:** "I'll come home. I always do." Otherwise they go inside together and the door closes. | |
-| 6.6 | Black | **THE END · HE CAME HOME**. Credits over the stills from every chapter. | |
+| 7.1 | Morning. The cliff road at the bottom of the hill, police lights flashing (white only) | A detective by a car. **DETECTIVE HARROW:** "Kessel Hill's full of Voss's men, and half of them are in pieces. Was that you?" | |
+| 7.2 | Close on him; Maya holding his hand, the ribbon in her hair **HARROW:** "Voss had a book, they say. Names. You wouldn't know anything about that?" Close on the book's corner inside his coat. **YOU:** "Voss is at the bottom of the cliff. His son is in my kitchen. That's all the names you need." **HARROW** (a long look at Maya): "...Then I never saw you. Take her home." | |
+| 7.3 | A hillside cemetery, white flowers. Elena's stone | Maya places her walkie-talkie on the stone. **MAYA:** "So Mama can hear us." **YOU** (on his knees, to the stone): "I came home." The dawn wind. | **HOLD** to lay his hand on the stone. |
+| 7.4 | The swing in the backyard, morning; Maya swinging, him pushing | **MAYA:** "Higher, Papa!" (the music box theme returns, complete for the first time) | **TAP** in time to push (no failing; it's a moment). |
+| 7.5 | Wide, from the house: the two of them | They go inside together. In the hallway he puts the book in the drawer under Elena's photo and closes it. **MAYA** (from the kitchen): "Papa, I'm hungry!" **YOU:** "...Coming." The door closes. | |
+| 7.6 | Black | **THE END · HE CAME HOME**. Credits over the stills from every chapter. | |
 
 ---
 
@@ -270,12 +297,13 @@ Card: **CHAPTER 5 · THE STORM.**
    - character props and silhouettes (hats, coat, cane, gloves, apron, chain).
 2. **Ch1–2 text and beats:** the note signed V; the book in box 417 and its page; the clerk's call; the Driver's choice.
 3. **Ch3:** the photo of V, flash 2, the walkies, Elena before the rage, the Cleaner's choices, the phone call.
-4. **Ch4:** the WHAT HAPPENED HERE clues and Maya on the walkie.
-5. **Ch5:**
-   - Maya on the walkie through the storm;
+4. **Ch4:** find her, reach her, lose her: Maya's story over the stills, the van in sight, the walkie moments between fights, the chase.
+5. **Ch5 · The Road (new):** the car interior set, the hill road, the thunder-count, the hum, the battery.
+6. **Ch6 · The Fortress:**
+   - the silent walkie, then "I see you!" at the tower;
    - flash 3 moved here;
    - the trade;
    - REACH or LET GO;
-   - the book on the roof.
-6. **Ch6:** the epilogue (cemetery and swing reuse the Backyard set and the Fortress road; a small new cemetery dressing).
-7. **Docs, test checkpoints** for every new beat, then a play-through script for you to test.
+   - the book back in his coat.
+7. **Ch7 · Home:** the epilogue (Harrow, the cemetery, the swing, the drawer; reuses the Backyard set and the Fortress road, plus a small cemetery dressing).
+8. **Docs, test checkpoints** for every new beat, then a play-through script for you to test.
