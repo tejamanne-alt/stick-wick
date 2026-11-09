@@ -966,6 +966,7 @@ namespace ProjectInk
             // the words last: nothing in the story is drawn over them
             if (phase != Phase.End && (cardAt < 0f)) DrawSubtitle(w, h, bh);
             if (phase == Phase.End) EndCard(w, h);
+            RecapGUI(w, h);
             GUI.matrix = Matrix4x4.identity;
         }
 

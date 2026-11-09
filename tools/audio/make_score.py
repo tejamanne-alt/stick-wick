@@ -367,7 +367,62 @@ def finale():
     save("finale", y, 0.88, 2.5)
 
 
-CUES = {"storm": storm, "fight": fight, "boss": boss, "dark": dark, "duel": duel, "finale": finale}
+def recap():
+    """THE WHOLE STORY (the timeline after the end title), about two and a half minutes, in five
+    movements that follow the recap's cards:
+      0-30    the past: the piano alone, low and slow, Maya's motif in D minor (the student, the book)
+      30-58   the family: the music box joins; strings under it, D major (Elena, Maya, "I'm out")
+      58-86   the night of the trap: the light goes; a low drone, a heartbeat, a pulse in the strings
+      86-124  the chapters: the strings build, the motif climbs, timpani at the storm, the choir swells
+      124-150 the dawn: everything falls away to the music box, then one full chord, home"""
+    L = 150.0
+    buf = np.zeros(int((L + 8) * SR))
+    minor = [(0, 74), (1, 77), (2, 81), (3, 79), (4, 77)]
+    # 1 the past
+    for k, n in enumerate([50, 53, 57, 53, 48, 52, 55, 52, 46, 50, 53, 50, 45, 49, 52, 57]):
+        put(buf, piano(n, 3.4, 0.38), 1.0 + k * 1.7)
+    for b, n in minor:
+        put(buf, piano(n, 3.0, 0.32), 14.0 + b * 1.4)
+    put(buf, strings([38, 45, 50], 16.0, 0.5, 1400, 3.0, 4.0), 12.0)
+    # 2 the family: D major, the music box
+    for rep_ in range(2):
+        for b, n in MOTIF + [(b + 6, n) for b, n in ANSWER]:
+            put(buf, box(n + 12, 2.6, 0.42), 31.0 + rep_ * 13.0 + b * 0.95)
+    for i, ch in enumerate([(50, 57, 62, 66), (47, 54, 62, 66), (43, 50, 59, 62), (45, 52, 57, 61), (50, 57, 62, 66)]):
+        put(buf, strings(ch, 6.0, 0.9, 2200, 1.6, 1.6), 30.0 + i * 5.5)
+    # 3 the trap: a drone, a heartbeat, a pulse
+    x = t(28.0)
+    drone = (np.sin(2 * np.pi * hz(26) * x) + 0.5 * np.sin(2 * np.pi * hz(33) * x)) * np.minimum(1, x / 4) * np.minimum(1, (28 - x) / 4)
+    put(buf, lp(drone, 300) * 0.6, 58.0)
+    for k in range(20):
+        put(buf, heartbeat(0.55 + 0.02 * k), 59.0 + k * 1.35)
+    for k in range(40):
+        put(buf, staccato(38 + (3 if (k // 8) % 2 else 0), 0.25, 0.18), 64.0 + k * 0.5)
+    put(buf, piano(74, 4.0, 0.35), 70.0)
+    put(buf, piano(73, 4.0, 0.35), 78.0)
+    # 4 the chapters: build, the storm
+    prog = [(38, 50, 57, 62), (41, 53, 57, 65), (43, 55, 59, 62), (45, 57, 61, 64)]
+    for i in range(8):
+        ch = prog[i % 4]
+        put(buf, strings(list(ch), 4.8, 0.8 + 0.08 * i, 2400 + 300 * i, 0.6, 1.2), 86.0 + i * 4.6)
+    for k, (b, n) in enumerate(MOTIF + [(b + 6, n) for b, n in ANSWER] + [(b + 12, n + 2) for b, n in MOTIF]):
+        put(buf, strings([n, n - 12], 1.6, 0.8, 3600, 0.1, 0.5), 94.0 + b * 1.25)
+    for k in range(6):
+        put(buf, timpani(38, 2.4, 0.5 + 0.08 * k), 104.0 + k * 3.0)
+    put(buf, choir([50, 57, 62, 66, 69], 12.0, 1.0), 110.0)
+    put(buf, brass([62, 66, 69], 5.0, 0.5), 117.0)
+    put(buf, taiko(1.0), 121.5)
+    # 5 the dawn: the music box alone, then home
+    for b, n in MOTIF + [(b + 6, n) for b, n in ANSWER]:
+        put(buf, box(n + 12, 3.0, 0.45), 125.0 + b * 1.15)
+    put(buf, strings([38, 50, 57, 62, 66, 69, 74], 14.0, 0.8, 4200, 2.5, 6.0), 136.0)
+    put(buf, piano(62, 6.0, 0.4), 136.0)
+    put(buf, box(74 + 12, 7.0, 0.4), 141.0)
+    y = reverb(buf, 3.4, 0.36)[:int(L * SR)]
+    save("recap", y, 0.86, 4.0)
+
+
+CUES = {"storm": storm, "fight": fight, "boss": boss, "dark": dark, "duel": duel, "finale": finale, "recap": recap}
 
 if __name__ == "__main__":
     for name in (sys.argv[1:] or list(CUES)):
