@@ -36,6 +36,8 @@ namespace ProjectInk
         /// <summary>Hands free enough to grab, throw and parry: bare, or with a knife in one of them.</summary>
         bool ContactBare => Contact && (Style == FightStyle.Fists || Style == FightStyle.Knife);
         /// <summary>Holding a man in the clinch, waiting for the next move.</summary>
+        /// <summary>The strike being thrown (enemies read a move used twice).</summary>
+        public string CurrentStrikeClip => currentAttack.clip;
         public bool InClinch => state == State.Clinch && clinchMove == null && clinchFoe != null;
 
         const float ContactRun = 3.3f, ContactStep = 4.6f, ContactJump = 5.6f, VictimGap = 0.62f;

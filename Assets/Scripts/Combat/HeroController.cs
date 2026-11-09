@@ -2516,7 +2516,8 @@ namespace ProjectInk
             state = State.Hurt;
             stateTime = 0f;
             invulnerableUntil = Time.time + 0.45f;
-            body.Play(fromFront ? "hit_front" : "hit_back", 0.04f);
+            if (Contact && fromFront && !string.IsNullOrEmpty(hit.react) && body.Has(hit.react)) body.Play(hit.react, 0.04f);   // the blow's own reaction
+            else body.Play(fromFront ? "hit_front" : "hit_back", 0.04f);
         }
 
         void SetTrails(bool on)

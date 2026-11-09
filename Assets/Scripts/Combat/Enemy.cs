@@ -99,7 +99,7 @@ namespace ProjectInk
         };
         /// <summary>The hero is duelling someone else: the rest circle wider and wait their turn.</summary>
         bool Sidelined => hero != null && hero.Locked != null && hero.Locked != this && !Ranged && !Boss;
-        float Ring => ringDistance + (Sidelined ? 1.7f : 0f);
+        float Ring => ringDistance + (Sidelined ? 1.7f : 0f) + FearRing;
         public bool Ranged => Type == EnemyType.Gunner || Type == EnemyType.Thrower;
         public bool Carried => state == State.Carried;
         public bool HoldingHero => state == State.Holding;
@@ -165,6 +165,7 @@ namespace ProjectInk
                 laser.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 laser.enabled = false;
             }
+            ContactInit();
             state = State.Enter;
             stateTime = 0f;
             if (kind == SpawnKind.Ceiling)
@@ -214,6 +215,7 @@ namespace ProjectInk
                     FaceTowards(hero.transform.position.x);
                     if (Boss && dist > 4f && dist < 13f && Time.time > nextSpecialAt && !hero.IsDead && Random.value < dt * 0.9f && AttackTokens.TryTake(this))
                     { HasToken = true; BeginCharge(dx); break; }
+                    if (ContactFlank(dt, dx)) break;
                     if (dist > Ring + 0.3f) Walk(Mathf.Sign(dx));
                     else if (dist < Ring - 0.7f) Walk(-Mathf.Sign(dx) * 0.6f);
                     else GoWait();
@@ -246,7 +248,8 @@ namespace ProjectInk
                     velocity.x = 0f;
                     Tint(TelegraphColor, 0.05f);
                     if (Gunner) AimLaser();
-                    if (stateTime >= (Gunner ? 0.75f : Type == EnemyType.Thrower ? 0.55f : windupSeconds)) BeginAttack();
+                    if (FeintNow()) break;
+                    if (stateTime >= (Gunner ? 0.75f : Type == EnemyType.Thrower ? 0.55f : WindupTime)) BeginAttack();
                     break;
                 case State.Attack:
                     velocity.x = 0f;
@@ -261,8 +264,10 @@ namespace ProjectInk
                         BeginAttack();
                         break;
                     }
+                    if (body.Finished && NextInChain(dist)) break;
                     if (body.Finished)
                     {
+                        chained = false;
                         ReleaseToken(); state = State.Recover; stateTime = 0f; body.Play(IdleClip, 0.12f);
                         if (Foreman && comboLeft == 1) recoverFor = 1.15f;           // the third swing missed: he is open
                         comboLeft = 0;
@@ -696,6 +701,8 @@ namespace ProjectInk
             stateTime = 0f;
             tauntedThisWait = false;
             waitUntil = Time.time + (Boss ? (Enraged ? Random.Range(0.3f, 0.8f) : Random.Range(0.6f, 1.3f)) : Random.Range(0.3f, 1.2f));
+            if (counterNext) { counterNext = false; waitUntil = Time.time + 0.08f; }        // his turn, at once
+            else if (FearRing > 0f) waitUntil += 0.9f;                                        // hurt: he hesitates
             if (Fleeing) { BeginFlee(false); return; }
             if (Boss && enragePending) { BeginEnrage(); return; }
             if (body.CurrentName != IdleClip) body.Play(IdleClip, 0.15f);
@@ -708,6 +715,7 @@ namespace ProjectInk
             state = State.Windup;
             stateTime = 0f;
             velocity.x = 0f;
+            if (ContactWindup()) return;
             switch (Type)
             {
                 case EnemyType.Swordsman:
@@ -834,6 +842,7 @@ namespace ProjectInk
                     knockback = attack.knockback,
                     heavy = attack.heavy,
                     knockdown = Foreman && attack.knockdown,
+                    react = attack.react,
                     attacker = this
                 });
             }
@@ -1469,8 +1478,9 @@ namespace ProjectInk
             if (OnLedge) { DropFromLedge(); }
             if (ShieldBlocks(hit)) return;
             if (Foreman && ForemanReads(hit)) return;
+            if (ContactDefend(hit)) return;
             bool armored = Boss && ((state == State.Charge && chargeRunning) || state == State.Slam || state == State.Stunned);
-            if (!armored) ReleaseToken();
+            if (!armored) { ReleaseToken(); chain.Clear(); chained = false; feinting = false; }
             float dmg = hit.damage;
             bool brute = Type == EnemyType.Brute;
             if (Boss && state == State.Stunned) dmg *= 1.5f;           // dazed against the wall: everything lands full

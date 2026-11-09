@@ -23,10 +23,11 @@ namespace ProjectInk
         /// <summary>A man the hero can take hold of: on his feet, not a boss, not mid-cutscene.</summary>
         public bool CanBeHeld => Alive && !Boss && !Passive && Targetable && state != State.Scripted && !OnLedge;
         /// <summary>A punch the hero can knock aside: bare hands, coming now.</summary>
-        public bool Parryable => Alive && !Boss && !Armed && Type != EnemyType.Piper && !Ranged &&
-                                 (state == State.Windup || state == State.Attack);
+        public bool Parryable => Alive && !Armed && Type != EnemyType.Piper && !Ranged &&
+                                 (!Boss || (Foreman && Enraged && attack.clip != "grab_attack")) &&    // the Foreman, bare-handed
+                                 (state == State.Windup || state == State.Attack) && !feinting;
         /// <summary>Too big to lift until he is worn down.</summary>
-        public bool TooHeavy => Type == EnemyType.Brute && HealthFraction > 0.4f && !Dazed;
+        public bool TooHeavy => (Type == EnemyType.Brute || Type == EnemyType.Grabber) && HealthFraction > 0.4f && !Dazed;
 
         public void BeginHeld(HeroController by)
         {
@@ -35,6 +36,7 @@ namespace ProjectInk
             stateTime = 0f;
             velocity = Vector3.zero;
             heldBy = by;
+            chain.Clear(); chained = false; feinting = false;
             if (laser != null) laser.enabled = false;
             body.Play(body.Has("clinch_v") ? "clinch_v" : "hit_front", 0.08f);
         }
@@ -96,8 +98,9 @@ namespace ProjectInk
             ReleaseToken();
             state = State.Hurt;
             stateTime = 0f;
-            hurtFor = 1.3f;
-            dazedUntil = Time.time + 1.6f;
+            hurtFor = Boss ? 0.8f : 1.3f;
+            dazedUntil = Time.time + (Boss ? 1.0f : 1.6f);
+            chain.Clear(); chained = false; feinting = false;
             velocity.x = fromDir * 1.5f;
             body.Play(body.Has("hit_chin") ? "hit_chin" : "hit_front", 0.03f);
         }
@@ -116,5 +119,168 @@ namespace ProjectInk
         {
             if (Dazed && body.Finished && body.Has("dazed") && body.CurrentName != "dazed") body.Play("dazed", 0.15f);
         }
+    
+        // ------------------------------------------------------------------ the story brain: men who fight
+        // Closer rings (no hanging about at three metres), real strings of two or three strikes with a
+        // short beat between them (each one parryable), a guard that blocks (and reads a move used
+        // twice), runners that slip punches, feints, flanking, and fear when badly hurt.
+
+        readonly System.Collections.Generic.Queue<AttackData> chain = new System.Collections.Generic.Queue<AttackData>();
+        bool chained, feinting, counterNext;
+        int guardHits, flankSide;
+        string lastTakenClip;
+        float lastTakenAt, flankCheckAt;
+
+        bool flankParity;                                    // half of them are the kind who go round (set in ContactInit)
+        bool StoryBrain => hero != null && hero.Contact && !Ranged && !Boss;
+
+        void ContactInit()
+        {
+            AttackTokens.Max = hero != null && hero.Contact ? 3 : 2;      // story: three may come at once
+            if (!StoryBrain) return;
+            flankParity = Random.value < 0.5f;
+            ringDistance = Type == EnemyType.Runner ? Random.Range(1.5f, 2.1f) : Random.Range(1.4f, 2.2f);
+            walkSpeed *= 0.85f;
+        }
+
+        /// <summary>Choose the string (the first strike now, the rest queued). False: not a story fighter.</summary>
+        bool ContactWindup()
+        {
+            if (!StoryBrain) return false;
+            if (Type == EnemyType.Swordsman || Type == EnemyType.Piper) return false;
+            chain.Clear();
+            chained = false;
+            feinting = false;
+            float r = Random.value;
+            AttackData[] s;
+            switch (Type)
+            {
+                case EnemyType.Runner:
+                    s = r < 0.45f ? new[] { AttackData.EJab, AttackData.ECross } : r < 0.75f ? new[] { AttackData.EJab } : new[] { AttackData.ELowKick, AttackData.EJab };
+                    feinting = Random.value < 0.22f;
+                    break;
+                case EnemyType.Grabber:
+                    if (r < 0.45f) { attack = AttackData.EnemyGrab; body.Play("windup", 0.08f); return true; }
+                    s = r < 0.75f ? new[] { AttackData.EHaymaker } : new[] { AttackData.EElbow, AttackData.EHaymaker };
+                    break;
+                case EnemyType.DoorMan:
+                    s = r < 0.5f ? new[] { AttackData.EJab, AttackData.ECross, AttackData.EHook } : new[] { AttackData.EJab, AttackData.ECross };
+                    break;
+                default:
+                    if (r < 0.12f) { attack = AttackData.EnemyGrab; body.Play("windup", 0.08f); return true; }
+                    s = r < 0.36f ? new[] { AttackData.EJab, AttackData.ECross }
+                      : r < 0.56f ? new[] { AttackData.ELowKick, AttackData.EHook }
+                      : r < 0.72f ? new[] { AttackData.EFrontKick }
+                      : r < 0.86f ? new[] { AttackData.EJab, AttackData.EJab, AttackData.ECross }
+                      : new[] { AttackData.ELunge, AttackData.EHook };
+                    feinting = Random.value < 0.15f;
+                    break;
+            }
+            attack = s[0];
+            for (int i = 1; i < s.Length; i++) chain.Enqueue(s[i]);
+            body.Play("windup", 0.08f);
+            return true;
+        }
+
+        /// <summary>The wind-up's length: a full one to start, a short beat between strikes of a string.</summary>
+        float WindupTime => chained ? 0.2f : windupSeconds;
+
+        /// <summary>A feint: halfway through the wind-up he pulls it and steps back.</summary>
+        bool FeintNow()
+        {
+            if (!feinting || stateTime < WindupTime * 0.55f) return false;
+            feinting = false;
+            chain.Clear();
+            ReleaseToken();
+            state = State.Recover;
+            stateTime = 0f;
+            recoverFor = 0.45f;
+            counterNext = true;                    // and comes straight back in
+            body.Play(body.Has("block_high") ? "block_high" : IdleClip, 0.08f);
+            return true;
+        }
+
+        /// <summary>The string goes on: the next strike after a short beat (red, so it can be parried).</summary>
+        bool NextInChain(float dist)
+        {
+            if (!StoryBrain || chain.Count == 0) return false;
+            if (dist > attackReach() + 0.5f || hero.IsDead) { chain.Clear(); return false; }
+            attack = chain.Dequeue();
+            chained = true;
+            state = State.Windup;
+            stateTime = 0f;
+            FaceTowards(hero.transform.position.x);
+            return true;
+        }
+
+        /// <summary>A blow coming at him from the front, standing: he may block it or slip it.</summary>
+        bool ContactDefend(HitInfo hit)
+        {
+            if (!StoryBrain || hit.attacker != hero || hit.hitsDowned) return false;
+            bool ready = state == State.Wait || state == State.Approach || state == State.Recover || (state == State.Advance && stateTime < 0.35f);
+            if (!ready || hit.direction != -Facing) return false;
+            string clip = hero.CurrentStrikeClip;
+            bool repeat = clip == lastTakenClip && Time.time - lastTakenAt < 2.5f;
+            lastTakenClip = clip;
+            lastTakenAt = Time.time;
+            if (Dazed || (hit.knockdown && hit.heavy) || guardHits >= 2) { guardHits = 0; return false; }   // finishers break the guard
+            if (Type == EnemyType.Runner && !hit.heavy && !hit.low && Random.value < (repeat ? 0.7f : 0.35f))
+            {
+                // the quick ones slip a punch and come back
+                body.Play(body.Has("slip") ? "slip" : "dodge", 0.03f, true, 1.6f);
+                state = State.Recover; stateTime = 0f; recoverFor = 0.3f;
+                velocity.x = -Facing * 1.5f;
+                counterNext = true;
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, repeat ? "HE READ IT: MIX IT UP" : "SLIPPED");
+                return true;
+            }
+            float chance = Type == EnemyType.DoorMan ? 0.4f : Type == EnemyType.Grabber ? 0.3f : Type == EnemyType.Runner ? 0.1f : 0.22f;
+            if (repeat) chance += 0.45f;
+            if (Random.value >= chance) { guardHits = 0; return false; }
+            guardHits++;
+            Health = Mathf.Max(MinHealth, Health - hit.damage * 0.2f);
+            Tint(Color.white, 0.04f);
+            body.Play(body.Has("block_hit") ? "block_hit" : "hit_front", 0.03f);
+            velocity.x = hit.direction * 1.2f;
+            state = State.Recover; stateTime = 0f; recoverFor = 0.35f;
+            counterNext = true;                    // blocked: his turn
+            Sound.Play(Sfx.PunchLight, 0.7f, Chest, 0.8f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, repeat ? "HE READ IT: MIX IT UP" : "BLOCKED");
+            return true;
+        }
+
+        /// <summary>Two men on the same side: one works round to the hero's other side.</summary>
+        bool ContactFlank(float dt, float dx)
+        {
+            if (!StoryBrain) return false;
+            if (Time.time > flankCheckAt)
+            {
+                flankCheckAt = Time.time + 1.2f;
+                int mySide = dx > 0 ? -1 : 1;                       // which side of the hero I am on
+                int same = 0, other = 0;
+                foreach (var e in All)
+                {
+                    if (e == this || e == null || !e.Alive || e.Ranged || e.Boss || e.IsDown) continue;
+                    float ex = e.transform.position.x - hero.transform.position.x;
+                    if (Mathf.Abs(ex) > 6f) continue;
+                    if (Mathf.Sign(ex) == mySide) same++; else other++;
+                }
+                flankSide = same >= 1 && other == 0 && flankParity ? -mySide : 0;
+            }
+            if (flankSide == 0) return false;
+            float goal = hero.transform.position.x + flankSide * Ring;
+            float to = goal - transform.position.x;
+            if (Mathf.Abs(to) < 0.3f) { flankSide = 0; return false; }
+            // round him, a step out of line, then back in
+            var p = transform.position;
+            bool passing = Mathf.Abs(p.x - hero.transform.position.x) < 1.3f || Mathf.Sign(to) == Mathf.Sign(hero.transform.position.x - p.x);
+            p.z = Mathf.MoveTowards(p.z, passing ? 0.85f : 0f, 2.5f * dt);
+            transform.position = p;
+            Walk(Mathf.Sign(to) * 1.1f);
+            return true;
+        }
+
+        /// <summary>Hurt badly, he hangs back further and waits longer.</summary>
+        float FearRing => StoryBrain && HealthFraction < 0.3f ? 0.9f : 0f;
     }
 }

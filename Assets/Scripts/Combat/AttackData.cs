@@ -42,6 +42,16 @@ namespace ProjectInk
         public static readonly AttackData Mawashi = new AttackData { clip = "mawashi_geri", damage = 16, reach = 1.25f, knockback = 4f, hitStopFrames = 5, shake = 0.12f, heavy = true, react = "hit_chin" };
         public static readonly AttackData SideKick = new AttackData { clip = "side_kick", damage = 18, reach = 1.3f, knockback = 6f, hitStopFrames = 5, shake = 0.14f, heavy = true, react = "stumble_back" };
         public static readonly AttackData SBackKick = new AttackData { clip = "back_kick", damage = 16, reach = 1.25f, knockback = 5f, hitStopFrames = 5, shake = 0.12f, heavy = true, behind = true, react = "hit_body" };
+        // ---- CONTACT enemies: short strings of real strikes
+        public static readonly AttackData EJab = new AttackData { clip = "jab", damage = 6, reach = 1.0f, knockback = 1.5f, hitStopFrames = 2, shake = 0.06f, react = "hit_front" };
+        public static readonly AttackData ECross = new AttackData { clip = "cross", damage = 9, reach = 1.05f, knockback = 2.5f, hitStopFrames = 3, shake = 0.08f, react = "hit_chin" };
+        public static readonly AttackData EHook = new AttackData { clip = "lead_hook", damage = 10, reach = 0.95f, knockback = 2.5f, hitStopFrames = 4, shake = 0.1f, react = "hit_chin" };
+        public static readonly AttackData ELowKick = new AttackData { clip = "low_kick", damage = 7, reach = 1.15f, knockback = 1f, hitStopFrames = 3, shake = 0.07f, react = "hit_legs" };
+        public static readonly AttackData EFrontKick = new AttackData { clip = "mae_geri", damage = 10, reach = 1.25f, knockback = 4f, hitStopFrames = 4, shake = 0.1f, react = "hit_body" };
+        public static readonly AttackData ELunge = new AttackData { clip = "oi_zuki", damage = 11, reach = 1.2f, knockback = 3f, hitStopFrames = 4, shake = 0.1f, react = "hit_body" };
+        public static readonly AttackData EElbow = new AttackData { clip = "elbow", damage = 12, reach = 0.8f, knockback = 2.5f, hitStopFrames = 5, shake = 0.12f, react = "hit_chin" };
+        public static readonly AttackData EHaymaker = new AttackData { clip = "hook", damage = 15, reach = 1.0f, knockback = 5f, hitStopFrames = 6, shake = 0.16f, heavy = true, react = "stumble_back" };
+
         public static readonly AttackData Clothesline = new AttackData { clip = "clothesline", damage = 20, reach = 1.0f, knockback = 0f, hitStopFrames = 7, shake = 0.2f, heavy = true, name = "CLOTHESLINE" };
 
         public static readonly AttackData Jab = new AttackData { clip = "jab", damage = 8, reach = 0.95f, knockback = 1.5f, hitStopFrames = 2, shake = 0.04f };
@@ -96,7 +106,7 @@ namespace ProjectInk
         public static readonly AttackData CrowbarA = new AttackData { clip = "sword_a", damage = 12, reach = 1.4f, knockback = 3f, hitStopFrames = 4, shake = 0.12f };
         public static readonly AttackData CrowbarB = new AttackData { clip = "sword_b", damage = 14, reach = 1.45f, knockback = 4f, hitStopFrames = 4, shake = 0.14f };
         public static readonly AttackData CrowbarC = new AttackData { clip = "sword_c", damage = 22, reach = 1.6f, knockback = 9f, hitStopFrames = 7, shake = 0.24f, heavy = true, knockdown = true };
-        public static readonly AttackData Headbutt = new AttackData { clip = "cross", damage = 24, reach = 0.95f, knockback = 8f, hitStopFrames = 7, shake = 0.24f, heavy = true, knockdown = true };
+        public static readonly AttackData Headbutt = new AttackData { clip = "headbutt", damage = 24, reach = 0.95f, knockback = 8f, hitStopFrames = 7, shake = 0.24f, heavy = true, knockdown = true };
         public static readonly AttackData BruteKick = new AttackData { clip = "front_kick", damage = 20, reach = 1.5f, knockback = 10f, hitStopFrames = 6, shake = 0.22f, heavy = true };
         public static readonly AttackData EnemySword = new AttackData { clip = "sword_b", damage = 14, reach = 1.4f, knockback = 4f, hitStopFrames = 4, shake = 0.12f };
         public static readonly AttackData EnemyJab = new AttackData { clip = "jab", damage = 7, reach = 1.0f, knockback = 2f, hitStopFrames = 3, shake = 0.08f };

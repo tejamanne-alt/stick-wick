@@ -1289,3 +1289,12 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - Clinch: swipe at a man or walk into him. From there, knees and a headbutt, a leg sweep, hip and shoulder throws, a suplex or body slam, a DDT, a shove; brutes are too heavy until worn down. Spear and clothesline work from range. Paired clips put the thrown man where he lands (endShift), and he gets up the way he fell.
 - Hit reactions match the blow: body shots fold him, low kicks buckle the leg, chin shots snap the head back, heavy ones stagger him back.
 - ContactHints teach each move at the moment it's possible, until it's learned.
+
+## CONTACT combat, part 3: enemies that fight (story mode)
+- Closer rings (1.4–2.2 m) and up to three attackers at once.
+- Strings, not single swings: jab-cross, low kick-hook, front kick, jab-jab-cross, lunge-hook; the doorman throws a three-piece, the grabber mixes a bear hug with a haymaker and an elbow. Every strike of a string gets a short red beat, so it can be parried.
+- Guard: a man standing ready may block (block_hit, 20% damage) and then counter at once. A move used twice in a row is read ("HE READ IT: MIX IT UP"). Two blocks in a row and the guard opens; finishers and dazed men never block.
+- Runners slip light punches and come straight back. Feints: some pull the wind-up halfway and come again.
+- Flanking: two on the same side and one walks round (a step out of line) to the hero's other side.
+- Fear: below 30% health a man stands further off and waits longer.
+- The hero's hit reactions match the blow too. The Foreman's bare-handed phase can be parried (a shorter daze for him); his headbutt uses the real headbutt clip.
