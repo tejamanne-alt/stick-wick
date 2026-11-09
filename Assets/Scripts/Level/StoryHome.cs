@@ -119,6 +119,8 @@ namespace ProjectInk
             var ink = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.05f, 0.05f, 0.055f) };
             var white = new Material(Shader.Find("Unlit/Color")) { color = Color.white };
             // the kitchen chair (for later) and the bulb over the table
+            var bakedChair = GameObject.Find("KitchenChair");          // the set has one too: the story's is the one that matters
+            if (bakedChair != null) bakedChair.SetActive(false);
             chair = new GameObject("KitchenChair").transform;
             chair.position = new Vector3(29.2f, 0f, 0.9f);
             void Part(Transform p, Vector3 at, Vector3 size, Material m)
