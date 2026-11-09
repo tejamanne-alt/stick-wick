@@ -35,7 +35,7 @@ This replaces `story_arc.md` as the source of truth. The sets, fights and bosses
   - So Voss can't kill him without burying himself. That deal kept them all alive for six years.
 - **Voss's son:** VOSS has a real son, **SILAS**, raised in the hero's shadow ("He'd have done it cleaner"). The hero trained him. Silas is THE CLEANER.
 - **The trigger (why now):** a detective, **HARROW** of Organised Crime, has been closing in on Voss. He has found out the hero exists and has twice come to the house. Elena wanted him to call Harrow back. Voss fears the hero will trade the book for immunity, so he strikes first.
-- **Three nights ago, the trap:** Voss sent for him: one last meeting, the warehouse, "for old times." He went because Voss threatened Maya if he didn't.
+- **Last night, the trap:** (the whole story takes one night, one day and one more night) Voss sent for him: one last meeting, the warehouse, "for old times." He went because Voss threatened Maya if he didn't.
   - In the warehouse a pipe came down from behind (**the blow**).
   - Voss needed him alive: only his living hand opens 417, and his death would send the book to the police.
   - The vault is time-locked until nine. The plan was to walk him in at opening with a gun in his back, take the book, then finish him.
@@ -43,7 +43,8 @@ This replaces `story_arc.md` as the source of truth. The sets, fights and bosses
   - Voss's order was careful: **"Bring them to me. All of them. Alive."** Elena and Maya were leverage, worth nothing dead.
   - **Silas disobeyed on purpose.** Elena ran for the back door with Maya, and he shot her. He wanted to take from the hero what the hero had chosen over his father.
   - Maya was dragged into the HANDLER's van.
-  - Silas stayed in the house to wait, wanting to finish the great man himself: "He'll come home. They always come home."
+  - Voss was furious: a body in the house, with Harrow already watching it. Silas's punishment: **"You made this mess. Go back and clean it. Leave nothing for Harrow."**
+- **Today, at dusk, Silas goes back to the house** with plastic sheeting and bleach. Then the Driver radios in: "He's got the book. He's heading home." Silas stays, and waits for one evening. He wants to be the one who finishes the great man: "They always come home."
 - **Then the blow did more than they meant.** He woke with no memory. The FOREMAN was told to keep him alive until the bank opened, walk him in, get the book, then finish him.
 
 **So every chapter is one question answered, and one new question asked:**
@@ -163,10 +164,10 @@ Dusk. Keep the house, the fights and the Cleaner. The order changes so the grief
 | 3.1b | The hall table | Harrow's business card, with a note in Elena's hand: *"He came again. Says you'd be safe if you talk. Call him?"* **YOU:** "...Someone came asking. That's why." | **TAP** the card. |
 | 3.2 | The study; the photo on the desk | The family photo (him, Elena, Maya with her red ribbon). | **DRAG** to turn it over: on the back, another photo slipped behind it: him at twenty beside a man in a long coat, and a sullen boy half hidden behind them. *"To my best student. — V."* **YOU:** "...You. You raised me." Flash 2: **"I'm out, Voss."** (voss_1, his gun on the desk). **YOU:** "Voss." Now he has the name. |
 | 3.3 | Maya's room | A pair of toy walkie-talkies on the shelf, with one gone. A drawing: three stick figures and a sun. **YOU:** "She took one with her." | **TAP** the walkie, the drawing. |
-| 3.4 | The kitchen, the back door; a high wide shot, then slowly closer | Elena on the floor by the open back door (white flash only, as agreed). He kneels. **YOU:** "...I'm home." | **HOLD** to close her eyes. The music drops out entirely. |
-| 3.5 | A voice from the hall, soft | **THE CLEANER:** "They always come home." Rage begins (as built: red edges). | |
+| 3.4 | The kitchen, the back door; a high wide shot, then slowly closer | Plastic sheeting on the floor, a bleach bottle, the work half done. **YOU:** "...Someone's been cleaning." Elena on the floor by the open back door (white flash only, as agreed). He kneels. **YOU:** "...I'm home." | **HOLD** to close her eyes. The music drops out entirely. |
+| 3.5 | A voice from the hall, soft; Silas steps into the doorway, peeling off a glove | **THE CLEANER:** "You're early. I wasn't finished." "They always come home." Rage begins (as built: red edges). | |
 | 3.6 | (as built) the fight through the rooms, up the stairs; THE CLEANER | **CLEANER**, mid-fight: "You taught me this." "You taught all of us." | (fight) |
-| 3.7 | The kitchen chair (restrained, as built) | **CHOOSE**, three times; each question gets a different answer: "Where is she?" → "Alive. Leverage. That's all you get." / "Why Elena?" → "He said bring her. ...I didn't feel like it." "Every day of my life it was you. *He'd have done it cleaner.* So I did it cleaner." / "Who are you?" → "You don't even remember me. ...Of course you don't." | **CHOOSE** |
+| 3.7 | The kitchen chair (restrained, as built) | **CHOOSE**, three times; each question gets a different answer: "Where is she?" → "Alive. Leverage. That's all you get." / "Why Elena?" → "He said bring her. ...I didn't feel like it." "Every day of my life it was you. *He'd have done it cleaner.* So I did it cleaner." / "Who are you?" → "You don't even remember me. ...Of course you don't." / "Why are you still here?" → "He sent me back to mop up my own mess. Like a dog. ...Then the Driver said you were coming. Why not finish it myself?" | **CHOOSE** |
 | 3.8 | The Cleaner's phone rings on the table. Close on the screen: **V.** | | **SWIPE** to answer. |
 | 3.9 | Close on him, the phone at his ear; the voice is calm and kind | **VOICE ON THE PHONE (Voss):** "Hello, son. A detective at your door... you know what that looks like to me." "I'm sorry about Elena. That was never the plan." "Maya's safe. Bring me the book, and you can take her home." | |
 | 3.9b | Behind him, in the chair: the Cleaner's hand finds a hidden scalpel. A sharp cut to the lunge | Silas lunges; the hero kills him by reflex (one move, a silhouette). The phone lies on the floor, the line still open. | **SWIPE** (the reflex; plays itself if the player waits). |
