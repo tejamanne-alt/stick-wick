@@ -1246,3 +1246,8 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - **Subtitles:** HER · A MEMORY is an off-screen voice.
 - **Menu:** a test button for CHAPTER 2 · THE BANK, next to SKIP TO THE BOSS.
 - Scene version 39.
+- **Elena, and her memories, in detail** (`render_memories.py`):
+  - **Elena is built as her own character** on the game's rig: slimmer limbs, big dark eyes with catchlights, lashes, blush, a smile (or a laugh, or an "oh"), and dark hair with bangs plus long waves, a bun with a ribbon, or a ponytail. Outfits: a dress with a bowed belt, a gown with a lace hem, sash, crown of flowers and veil, a polka-dot sundress with a sun hat, and a jumper and apron with a heart pocket. His wedding suit gets a shirt front, bow tie and flower.
+  - **Eight memories** (24 s): the rainy cafe where they met, the proposal on a bridge, the altar, the first dance, moving day at 14 Alder Lane, the floury kitchen, the sea at sundown, her face.
+  - **Her lines** run across the montage (`MemoryLines`).
+  - **Its own sound** (`memory_elena`): a piano waltz with a chord per memory and a string pad, over each memory's real sounds (rain, river, applause and bell, chimes, birds and keys and a door, the kitchen, the beach, her breath).

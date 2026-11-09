@@ -271,16 +271,18 @@ namespace ProjectInk
 
             // ------------------------------------------------------------ B16 the memory: their wedding, and her
             bankUi = 4; bankUiAt = Time.unscaledTime;
-            Sound.Ambience(0f, 0.2f, 1500f);
-            Sound.Play(Sfx.Piano, 0.7f);
+            Sound.Ambience(0f, 0.15f, 1500f);
+            Sound.Play(Sfx.MemoryElena, 1f);                               // the waltz, and each memory's own sound
             float tm = 0f;
-            bool l1 = false, l2 = false, p2 = false;
+            int said = 0;
             while (tm < MemorySeconds)
             {
                 tm += Time.unscaledDeltaTime;
-                if (!p2 && tm > 5.5f) { p2 = true; Sound.Play(Sfx.Piano, 0.55f, null, 0.89f); }
-                if (!l1 && tm > MemorySeconds - 6.4f) { l1 = true; Say("HER", "Hey... look at me. You're here now.", 2.8f); }
-                if (!l2 && tm > MemorySeconds - 3.4f) { l2 = true; Say("HER", "Promise me you'll always come home.", 3.0f); }
+                while (said < MemoryLines.Length && tm >= MemStart(MemoryLines[said].still) + MemoryLines[said].at)
+                {
+                    var l = MemoryLines[said++];
+                    Say("HER", l.line, l.secs);
+                }
                 boxShot();
                 yield return null;
             }
@@ -535,7 +537,19 @@ namespace ProjectInk
 
         // ---------------------------------------------------------------- what is drawn over the picture
 
-        const float MemorySeconds = 13.5f;
+        // how long each memory holds (tools/blender/render_memories.py and the sound use the same)
+        static readonly float[] MemoryDur = { 2.8f, 2.8f, 2.6f, 2.6f, 2.6f, 2.4f, 2.6f, 5.6f };
+        const float MemorySeconds = 24.0f;
+        static float MemStart(int still) { float t = 0f; for (int i = 0; i < still; i++) t += MemoryDur[i]; return t; }
+        // what she says in them: (which memory, how far in, the line, how long it shows)
+        static readonly (int still, float at, string line, float secs)[] MemoryLines =
+        {
+            (0, 0.5f, "You're soaked! You'll catch a cold, you know.", 2.3f),
+            (1, 1.3f, "Yes... YES!", 1.4f),
+            (4, 0.5f, "Welcome home.", 1.9f),
+            (7, 0.3f, "Hey... look at me. You're here now.", 2.6f),
+            (7, 2.95f, "Promise me you'll always come home.", 2.6f),
+        };
         string cardTitle = "THE HITMAN";
 
         void BankGUI(float w, float h)
@@ -680,17 +694,18 @@ namespace ProjectInk
         /// pushing in and dissolving one into the next.</summary>
         void MemoryGUI(float w, float h, float t)
         {
+            int count = MemoryDur.Length;
             if (memories == null)
             {
-                memories = new Texture2D[5];
-                for (int i = 0; i < 5; i++) memories[i] = Resources.Load<Texture2D>($"Story/Memories/wed_{i + 1}");
+                memories = new Texture2D[count];
+                for (int i = 0; i < count; i++) memories[i] = Resources.Load<Texture2D>($"Story/Memories/wed_{i + 1}");
             }
             float a = Mathf.Clamp01(t / 0.8f) * Mathf.Clamp01((MemorySeconds - t) / 0.8f);
             Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, a));
-            float per = MemorySeconds / 5f;
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < count; i++)
             {
-                float lt = t - i * per;
+                float per = MemoryDur[i];
+                float lt = t - MemStart(i);
                 float ka = Mathf.Clamp01((lt + 0.6f) / 0.9f) * Mathf.Clamp01((per + 0.6f - lt) / 0.9f);
                 if (ka <= 0f || memories[i] == null) continue;
                 float zoom = 1.04f + 0.08f * Mathf.Clamp01(lt / per);

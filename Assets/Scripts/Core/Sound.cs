@@ -20,6 +20,7 @@ namespace ProjectInk
         Thunder, Drip, Splat, Tinnitus, Heartbeat, Static, Whispers, Drone, Latch, Splash, Breath, Wind, Piano, Rotor,
         Chain, BodySplash, Crawl, Glint, KnifeGrab, FlashCut, PhoneBuzz, PhoneClick,
         GunshotIndoor, GunDraw, GunCock, ShellCasing, GunDropWater, Struggle, DeathBreath,
+        MemoryElena,
     }
 
     /// <summary>The mixer. Plays recorded takes with no immediate repeats, small pitch and

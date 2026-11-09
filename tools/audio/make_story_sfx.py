@@ -556,6 +556,113 @@ def death_breath():
         save("death_breath", room(x, 1.6, 0.16, 0.01, 2200), take, peak=0.55)
 
 
+MEMORY_SECONDS = [2.8, 2.8, 2.6, 2.6, 2.6, 2.4, 2.6, 5.6]     # render_memories.py and StoryBank use the same
+
+
+def midi(n):
+    return 440.0 * 2 ** ((n - 69) / 12)
+
+
+def memory_elena():
+    """Chapter 2's memory of Elena (render_memories.py): one take timed to the eight stills. A
+    gentle waltz on the piano in C (a chord for each memory, a melody over it, the last two bars
+    resolving home), a soft string pad under it, and under that each memory's own sound, real
+    recordings, faded in and out with its picture: rain and a cafe's door bell; a river and a
+    city at night, a ring box opening, her gasp; applause, confetti, a church bell; wind chimes
+    while they dance; birds on moving day, keys, a front door; the kitchen (a spoon, a tap); the
+    beach (waves on stones, gulls); and on her face, only her breath and the piano."""
+    D = MEMORY_SECONDS
+    starts = np.concatenate([[0.0], np.cumsum(D)[:-1]])
+    total = sum(D) + 1.5
+    n = int(total * SR)
+    music = np.zeros(n)
+    pad = np.zeros(n)
+    foley = np.zeros(n)
+
+    def put(buf, x, at, gain=1.0):
+        k = int(at * SR)
+        if k >= len(buf):
+            return
+        m = min(len(x), len(buf) - k)
+        buf[k:k + m] += x[:m] * gain
+
+    # one bar of three beats per memory (the last memory has two)
+    chords = [(48, (64, 67)), (45, (60, 64)), (41, (57, 60)), (43, (59, 62)), (48, (64, 67)), (45, (60, 64)), (41, (57, 60))]
+    melody = [((76, 0), (79, 2)), ((81, 0), (79, 1), (76, 2)), ((77, 0), (76, 1), (72, 2)), ((74, 0), (71, 2)),
+              ((76, 0), (79, 1), (84, 2)), ((83, 0), (81, 1), (76, 2)), ((81, 0), (79, 1), (77, 2))]
+    for i, (root, tones) in enumerate(chords):
+        beat = D[i] / 3
+        t0 = starts[i]
+        put(music, piano_note(midi(root), beat * 3 + 0.6, 0.55), t0)
+        for b in (1, 2):
+            for tn in tones:
+                put(music, piano_note(midi(tn), beat * 1.2, 0.28), t0 + b * beat)
+        for note, b in melody[i]:
+            put(music, piano_note(midi(note), beat * 2.2, 0.62), t0 + b * beat)
+        # the strings: the chord held, swelling in and out
+        dur = D[i] + 0.6
+        tt = t(dur)
+        env = np.minimum(1, tt / 0.6) * np.minimum(1, (dur - tt) / 0.5)
+        chord = sum(np.sign(np.sin(2 * np.pi * midi(m) * tt)) * 0.3 + np.sin(2 * np.pi * midi(m) * 1.003 * tt) for m in (root + 12,) + tones)
+        put(pad, lp(chord, 1100, 2) * env * 0.11, t0)
+    # the last memory, her face: G, then home to C, the melody climbing and coming to rest
+    t0, beat = starts[7], D[7] / 6
+    put(music, piano_note(midi(43), beat * 3 + 0.4, 0.5), t0)
+    for b in (1, 2):
+        for tn in (59, 62, 65):
+            put(music, piano_note(midi(tn), beat * 1.2, 0.26), t0 + b * beat)
+    for note, b in ((74, 0), (76, 1), (77, 2)):
+        put(music, piano_note(midi(note), beat * 2.0, 0.6), t0 + b * beat)
+    put(music, piano_note(midi(36), beat * 3 + 2.0, 0.55), t0 + 3 * beat)
+    for tn in (60, 64, 67, 72):
+        put(music, piano_note(midi(tn), beat * 3 + 2.0, 0.3 if tn < 72 else 0.62), t0 + 3 * beat)
+    tt = t(D[7] + 1.4)
+    env = np.minimum(1, tt / 0.8) * np.minimum(1, (D[7] + 1.4 - tt) / 1.2)
+    put(pad, lp(sum(np.sin(2 * np.pi * midi(m) * tt) + 0.3 * np.sign(np.sin(2 * np.pi * midi(m) * 1.002 * tt)) for m in (48, 64, 67)), 900, 2) * env * 0.12, t0)
+
+    # each memory's own sound, faded with its picture
+    def bed(x, i, gain, lo=60, hi=9000, delay=0.0, length=None):
+        L = (length or D[i] + 0.5)
+        x = x[:int(L * SR)]
+        x = bp(x, lo, hi, 2) if lo > 0 else lp(x, hi, 2)
+        x = fades(x, 0.25, 0.45)
+        put(foley, x, starts[i] + delay, gain)
+
+    rain = load(os.path.join(ROOT, "amb_rain", "amb_rain_01.ogg"), 3.0, 4.0)
+    bed(shelf_dark(rain, 3000, 0.6), 0, 0.5, 80, 7000)
+    bed(trim(kit("everyday-props/props-shop-bell")), 0, 0.35, 200, 9000, 0.25, 1.8)
+    bed(oc("WATRFlow_River_LOOP_01", 5.0, 4.0), 1, 0.35, 80, 6000)
+    bed(oc("AMBUrbn_CityAmerican_LOOP_01", 10.0, 4.0), 1, 0.25, 80, 4000)
+    bed(trim(kit("everyday-props/props-box-open")), 1, 0.4, 150, 8000, 0.9, 1.0)
+    gasp = oc("HMNBrth_FemaleBreathing_OS_01")[int(0.0 * SR):int(0.7 * SR)]
+    bed(gasp, 1, 0.45, 150, 6000, 1.35, 0.8)
+    bed(trim(kit("celebration/celebration-applause-small")), 2, 0.4, 100, 8000)
+    bed(trim(kit("celebration/celebration-confetti")), 2, 0.25, 200, 9000, 0.3)
+    tb = t(2.6)
+    bell = sum(a * np.sin(2 * np.pi * 523.25 * r * tb) * np.exp(-tb * d) for r, a, d in ((1, 1.0, 1.2), (2.0, 0.5, 1.8), (2.4, 0.4, 2.2), (3.0, 0.25, 2.6), (4.2, 0.15, 3.5)))
+    bed(bell * 0.4, 2, 0.35, 100, 8000, 0.6, 2.6)
+    bed(oc("MUSCChim_WindChimes_LOOP_01", 2.0, 3.2), 3, 0.25, 300, 9000)
+    bed(trim(oc("CLOTHMvmt_ClothingMovement_OS_03"))[:int(0.8 * SR)], 3, 0.3, 150, 6000, 0.5, 0.9)
+    bed(oc("AMBForst_ForestBirds_OS_01", 0.0, 3.2), 4, 0.35, 300, 9000)
+    bed(trim(oc("OBJKey_KeyDrop_OS_01")), 4, 0.45, 300, 9000, 0.5, 1.2)
+    bed(trim(oc("DOORWood_FrontDoorOpen_OS_01")), 4, 0.35, 100, 7000, 1.5, 1.4)
+    bed(oc("AMBHome_RoomTone_LOOP_01", 2.0, 3.0), 5, 0.25, 60, 4000)
+    bed(oc("WATRPlmb_FaucetWaterRun_LOOP_01", 1.0, 1.4), 5, 0.18, 200, 6000, 0.2, 1.4)
+    bed(trim(oc("FOODTware_SpoonDrop_OS_01")), 5, 0.35, 200, 9000, 1.0, 1.2)
+    bed(oc("AMBSea_BeachWavesStonesBirds_LOOP_01", 6.0, 3.4), 6, 0.5, 60, 8000)
+    breath = oc("HMNBrth_FemaleBreathing_OS_01")[int(0.9 * SR):int(2.4 * SR)]
+    bed(shelf_dark(breath, 2500, 0.6), 7, 0.4, 100, 5000, 0.8, 1.6)
+
+    L = n + int(3.0 * SR)
+    mix = pad_to(room(lp(music, 5200, 2), 2.6, 0.32, 0.03, 2600), L) + pad_to(room(pad, 2.2, 0.25, 0.02, 1800), L)
+    mix = mix + pad_to(room(foley, 1.4, 0.14, 0.01, 3000), L) * 0.9
+    save("memory_elena", fades(mix, 0.05, 1.2), 1, peak=0.8)
+
+
+def pad_to(x, n):
+    return np.concatenate([x, np.zeros(max(0, n - len(x)))])[:n]
+
+
 def phone_buzz():
     """The dead man's phone vibrating on the wet concrete: a real phone on a hard surface,
     darkened and placed in the room, with a motor layer under it to carry the low end."""
@@ -604,6 +711,6 @@ if __name__ == "__main__":
     for name in ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", "static",
                  "whispers", "drone", "latch", "wind", "rotor", "piano",
                  "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click", "gunshot_indoor", "gun_draw", "gun_cock", "shell_casing",
-                 "gun_drop_water", "struggle", "death_breath"):
+                 "gun_drop_water", "struggle", "death_breath", "memory_elena"):
         clear(name)
         globals()[name]()
