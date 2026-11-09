@@ -73,19 +73,11 @@ namespace ProjectInk
                     voss.MakeDriver(voss.maxHealth * 1.45f);
                     voss.transform.localScale = Vector3.one * 1.04f;          // a man, not a monster
                     voss.SetBaseColor(new Color(0.07f, 0.07f, 0.08f));
+                    Dress(voss.body, Look.Voss);
                     voss.Puppet();
                 }
             }
-            if (director != null && maya == null)
-            {
-                maya = director.SpawnScripted(EnemyType.Brawler, SpawnKind.Background);
-                if (maya != null)
-                {
-                    maya.Puppet();
-                    maya.SetBaseColor(new Color(0.9f, 0.9f, 0.89f));
-                    maya.transform.localScale = Vector3.one * 0.58f;
-                }
-            }
+            if (maya == null) maya = SpawnMaya(Roof(159.0f, -0.55f), -1);
             if (voss != null) { voss.PuppetPose(Roof(159.6f, -0.4f)); voss.SetFacing(-1); voss.PuppetPlay("idle", 0f); }
             if (maya != null) { maya.PuppetPose(Roof(159.0f, -0.55f)); maya.SetFacing(-1); maya.PuppetPlay(Pick(maya.body, "struggle", "idle"), 0f); }
             hero.CinePose(Roof(FortressPlan.RoofDoorX - 0.4f, 0f));
@@ -143,51 +135,93 @@ namespace ProjectInk
             System.Func<Vector3> vHead = () => vh != null ? vh.position : Roof(159.6f) + Vector3.up * 1.7f;
             Strike(0.9f, 0.3f);
             yield return Cut(3.0f, u => CineCam.DollyIn(vHead(), new Vector3(1f, -0.12f, 0.5f), u, 10f, 6.5f, 30f), 0.03f);
-            // (c) her: "PAPA!"
             var mh = maya != null ? HeadOf(maya) : null;
             Say("MAYA", "PAPA!", 1.8f, mh);
             yield return Cut(1.8f, u => Static((mh != null ? mh.position : vHead()) + new Vector3(-1.1f, 0.05f, -0.9f), mh != null ? mh.position : vHead(), 30f), 0.015f);
-            // (d) on him: still
             yield return Cut(1.4f, u => Static(HeroHead() + new Vector3(1.0f, 0.0f, -1.0f), HeroHead(), 30f), 0.01f);
-            // (e) Voss, low: the man who knows him
+            // (c) VOSS, low: the face from the photo, twelve years older
             if (director != null) director.ShowBanner("VOSS", 2.6f);
             Sound.Play(Sfx.CineMassive, 0.6f);
             Say("VOSS", "Look at you. Twelve years, and you still walk like one of mine.", 3.4f, vh);
             yield return Cut(3.4f, u => CineCam.LowAngleArc(vHead() + Vector3.down * 0.5f, u, 2.8f, -40f, -20f, 34f), 0.015f);
-            Say("VOSS", "You wanted to be a father. A man like you.", 3.0f, vh);
-            yield return Cut(3.0f, u => Static(Roof(154f, -6.5f) + Vector3.up * 1.6f, Roof(154.5f, 0f) + Vector3.up * 1.2f, 40f), 0.025f,
-                u => hero.CinePose(Roof(FortressPlan.RoofDoorX + 0.4f + u * 1.4f)));
-            hero.body.Play("walk", 0.2f, true, 0.7f);
-            var hx = hero.transform.position;
             Say("YOU", "Let her go.", 1.8f);
-            yield return Cut(2.0f, u => CineCam.DollyIn(HeroHead(), new Vector3(-0.5f, -0.05f, 1f), u, 2.2f, 1.4f, 30f), 0.015f,
-                u => hero.CinePose(hx + Vector3.right * u * 0.9f));
-            hero.body.Play("idle", 0.3f);
-            // the flash: what he did, and what was done to him
-            Say("VOSS", "You walked away from a contract. From me. Nobody walks away.", 3.4f, vh);
-            yield return Cut(2.0f, u => Static(vHead() + new Vector3(-1.4f, -0.1f, -1.2f), vHead(), 28f), 0.015f);
-            yield return VossFlash(1, 2.6f, "YOU", "I'm out, Voss.");
-            Say("VOSS", "So I sent them for your family.", 2.6f, vh);
-            yield return Cut(2.4f, u => CineCam.DollyIn(vHead(), new Vector3(1f, -0.1f, 0.6f), u, 2.4f, 1.6f, 28f), 0.015f);
-            yield return VossFlash(2, 2.8f, "VOSS", "Then finish it. All of them.");
-            Say("VOSS", "And you... I left you in a warehouse with a hole in your head. You should have stayed lost.", 4.0f, vh);
-            yield return Cut(2.2f, u => Static(vHead() + new Vector3(-0.9f, 0.3f, -0.9f), vHead(), 28f), 0.015f);
-            yield return VossFlash(3, 2.2f, null, null);
-            // he remembers
-            Sound.Play(Sfx.Heartbeat, 1f);
+            yield return Cut(2.0f, u => CineCam.DollyIn(HeroHead(), new Vector3(-0.5f, -0.05f, 1f), u, 2.2f, 1.4f, 30f), 0.015f);
+            // flash 3: three nights... last night, the window, the phone: the order he gave
+            Say("VOSS", "You know why we're here. You remember now. That night.", 3.0f, vh);
+            yield return Cut(2.4f, u => Static(vHead() + new Vector3(-1.4f, -0.1f, -1.2f), vHead(), 28f), 0.015f);
+            yield return VossFlash(2, 3.0f, "VOSS", "Bring them to me. All of them. Alive.");
+            Say("VOSS", "Six years I lived on your mercy. One phone call, and I'm finished.", 3.6f, vh);
+            yield return Cut(3.6f, u => CineCam.DollyIn(vHead(), new Vector3(1f, -0.1f, 0.6f), u, 2.4f, 1.6f, 28f), 0.015f);
+            Say("VOSS", "Then a detective at your door. What was I meant to do? Wait?", 3.4f, vh);
+            yield return Cut(3.4f, u => Static(Roof(154f, -6.5f) + Vector3.up * 1.6f, Roof(154.5f, 0f) + Vector3.up * 1.2f, 40f), 0.025f);
+            Say("VOSS", "I told him to bring her. He never listened. Not once in his life.", 3.6f, vh);
+            yield return Cut(3.6f, u => Static(vHead() + new Vector3(-0.9f, 0.3f, -0.9f), vHead(), 28f), 0.015f);
+            Say("YOU", "Your boy killed Elena.", 2.2f);
+            Sound.Play(Sfx.Heartbeat, 0.9f);
+            yield return Cut(2.4f, u => CineCam.DollyIn(HeroHead(), new Vector3(0.4f, 0.2f, 1f), u, 1.5f, 1.0f, 28f), 0.01f);
+            Say("VOSS", "...I know. And I still loved him. That's what fathers do. You'd know.", 4.0f, vh);
+            yield return Cut(4.0f, u => Static(vHead() + new Vector3(-0.8f, -0.2f, -0.8f), vHead(), 26f), 0.01f);
+            Say("YOU", "And I killed him.", 2.0f);
+            yield return Cut(2.2f, u => Static(HeroHead() + new Vector3(-0.8f, -0.3f, -0.8f), HeroHead(), 30f), 0.01f);
+            Say("VOSS", "Yes. So here we are.", 2.2f, vh);
             Strike(1f, 0f);
-            Say("YOU", "I remember now.", 2.2f);
-            yield return Cut(2.4f, u => CineCam.DollyIn(HeroHead(), new Vector3(0.4f, 0.2f, 1f), u, 1.5f, 0.9f, 28f), 0.01f);
-            Say("YOU", "All of it.", 1.8f);
-            yield return Cut(1.8f, u => Static(HeroHead() + new Vector3(-0.8f, -0.3f, -0.8f), HeroHead(), 30f), 0.01f);
-            // he lets her go: she runs
-            Say("VOSS", "Run along, little one. Watch your father die.", 3.0f, vh);
+            yield return Cut(2.4f, u => Static(Roof(156f, -7.5f) + Vector3.up * 2.2f, Roof(156.5f, 0f) + Vector3.up * 1.1f, 44f), 0.03f);
+            // THE TRADE: everything he sent has failed; this is his last card, and it's force
+            if (maya != null) { maya.PuppetPose(Roof(FortressPlan.EdgeX - 0.6f, -2.4f)); maya.PuppetPlay(Pick(maya.body, "struggle", "idle"), 0.1f); }
+            if (voss != null) voss.PuppetPose(Roof(FortressPlan.EdgeX - 1.2f, -2.0f));
+            Sound.Play(Sfx.Struggle, 0.6f, mh != null ? mh.position : vHead());
+            Say("VOSS", "You've killed my whole house to get here. Now: the book. Or she learns to fly.", 4.0f, vh);
+            yield return Cut(4.0f, u => Static(Roof(FortressPlan.EdgeX - 3.0f, -5.2f) + Vector3.up * 0.6f, Roof(FortressPlan.EdgeX - 0.8f, -2.2f) + Vector3.up * 0.9f, 36f), 0.03f);
+            Walkie("...Papa?", 1.4f);
+            yield return Cut(1.6f, u => Static((mh != null ? mh.position : vHead()) + new Vector3(-0.9f, 0.0f, -0.8f), mh != null ? mh.position : vHead(), 30f), 0.015f);
+            // he slides it across the wet stones to him
+            bookProp = MakeBook();
+            bookProp.position = hero.Chest + Vector3.right * 0.3f;
+            var b0 = Roof(hero.transform.position.x + 0.6f, -0.4f) + Vector3.up * 0.04f;
+            var b1 = Roof(FortressPlan.EdgeX - 1.8f, -1.8f) + Vector3.up * 0.04f;
+            System.Action tradeShot = () => Cine(Static(Roof((b0.x + b1.x) * 0.5f, -5.0f) + Vector3.up * 0.8f, Roof((b0.x + b1.x) * 0.5f, -1.0f) + Vector3.up * 0.3f, 40f));
+            StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, tradeShot));
+            yield return DragTo("SLIDE THE BOOK TO HIM", Vector2.right, p => { if (bookProp != null) bookProp.position = Vector3.Lerp(b0, b1, p); }, b0);
+            Sound.Play(Sfx.Cloth, 0.6f, b1);
+            yield return Cut(1.2f, u => Static(b1 + new Vector3(-0.6f, 0.4f, -0.8f), b1, 30f), 0.01f);
+            // he lets her go: she runs to the door
+            Say("VOSS", "Run along, little one.", 2.0f, vh);
+            if (voss != null) { voss.PuppetPose(Roof(FortressPlan.EdgeX - 1.9f, -1.6f)); voss.PuppetPlay(Pick(voss.body, "kneel_hold", "idle"), 0.2f); }
             if (maya != null) maya.PuppetPlay(Pick(maya.body, "run", "walk"), 0.1f, 1.3f);
             var m0 = maya != null ? maya.transform.position : Vector3.zero;
             var m1 = Roof(FortressPlan.RoofDoorX + 1.6f, 3.4f);
-            yield return Cut(3.0f, u => Static(Roof(155.5f, -5.5f) + Vector3.up * 1.4f, Roof(155.5f, 0.5f) + Vector3.up * 0.8f, 44f), 0.02f,
+            yield return Cut(2.6f, u => Static(Roof(155.5f, -5.5f) + Vector3.up * 1.4f, Roof(155.5f, 0.5f) + Vector3.up * 0.8f, 44f), 0.02f,
                 u => { if (maya != null) { maya.SetFacing(-1); maya.PuppetPose(Vector3.Lerp(m0, m1, Mathf.SmoothStep(0f, 1f, u))); } });
             if (maya != null) maya.PuppetPlay(Pick(maya.body, "kneel_hurt", "idle"), 0.2f);
+            // he weighs the book, lets it fall, and draws the blade from his cane
+            if (bookProp != null) bookProp.position = Roof(FortressPlan.EdgeX - 1.9f, -1.5f) + Vector3.up * 0.04f;
+            if (voss != null) voss.PuppetPlay("idle", 0.2f);
+            Say("VOSS", "...I did teach you better than to trust me.", 2.8f, vh);
+            Sound.Play(Sfx.SwordSwing, 0.9f, vHead());
+            Sound.Play(Sfx.Glint, 0.8f, vHead());
+            yield return Cut(2.8f, u => CineCam.LowAngleArc(vHead() + Vector3.down * 0.6f, u, 2.4f, -20f, 10f, 32f), 0.015f);
+            Say("YOU", "...I remember. All of it.", 2.4f);
+            yield return Cut(2.4f, u => CineCam.DollyIn(HeroHead(), new Vector3(0.4f, 0.2f, 1f), u, 1.5f, 0.9f, 28f), 0.01f);
+        }
+
+        Transform bookProp;
+
+        /// <summary>The black book: a small dark block with a pale page edge.</summary>
+        static Transform MakeBook()
+        {
+            var root = new GameObject("TheBook").transform;
+            var cover = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Destroy(cover.GetComponent<Collider>());
+            cover.transform.SetParent(root, false);
+            cover.transform.localScale = new Vector3(0.2f, 0.035f, 0.14f);
+            cover.GetComponent<Renderer>().sharedMaterial = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.03f, 0.03f, 0.035f) };
+            var pages = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Destroy(pages.GetComponent<Collider>());
+            pages.transform.SetParent(root, false);
+            pages.transform.localPosition = new Vector3(0.005f, 0f, 0f);
+            pages.transform.localScale = new Vector3(0.19f, 0.026f, 0.142f);
+            pages.GetComponent<Renderer>().sharedMaterial = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.86f, 0.85f, 0.8f) };
+            return root;
         }
 
         /// <summary>A memory, broken: one of Voss's stills, flickering, a line over it.</summary>
@@ -220,7 +254,7 @@ namespace ProjectInk
             voss.PuppetPlay(Pick(voss.body, "block_high", "idle"), 0.2f);
             Sound.Music("duel", 0.7f, true, 1.2f);
             Strike(1f, 0.1f);
-            Say("VOSS", "Show me what I taught you.", 2.4f, HeadOf(voss));
+            Say("VOSS", "Show me what's left of my best student.", 2.6f, HeadOf(voss));
             yield return Cut(2.6f, u => CineCam.LowAngleArc(new Vector3(155f, FortressPlan.RoofY + 1.2f, 0f), u, 5.0f, -70f, -110f, 40f), 0.02f);
             SetArena(138f, FortressPlan.RoofX1);
             FortressCheckpoint = 7;
@@ -233,6 +267,7 @@ namespace ProjectInk
             vossStage = 1;
             shotsFired = 0;
             ShowStreetBanner("I  ·  THE TEACHER");
+            Sound.Music("duel", 0.7f, true, 1.0f);
             Sound.Tension(true);
         }
 
@@ -248,7 +283,7 @@ namespace ProjectInk
                 vossStage = 2;
                 nextAim = Time.time + 0.8f;
                 ShowStreetBanner("II  ·  THE GUN");
-                Say("VOSS", "You always were slow on the draw.", 2.2f, HeadOf(voss));
+                Say("VOSS", "Every one of them down there, you taught. I taught you.", 3.0f, HeadOf(voss));
                 ShowGun(true);
                 Sound.Play(Sfx.GunDraw, 0.9f, voss.Chest);
             }
@@ -410,7 +445,7 @@ namespace ProjectInk
             Sound.Play(Sfx.SlowmoOut, 0.6f);
             if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(400, "DISARMED");
             // him: furious now
-            Say("VOSS", "...Then we do it the old way.", 2.4f, HeadOf(voss));
+            Say("VOSS", "...Then let's finish what I started.", 2.4f, HeadOf(voss));
             Strike(0.9f, 0.2f);
             yield return Cut(2.2f, u => CineCam.DollyIn(HeadOf(voss).position, new Vector3(-d * 1f, -0.15f, 0.6f), u, 2.4f, 1.5f, 30f), 0.015f);
             vossStage = 3;
@@ -463,10 +498,28 @@ namespace ProjectInk
             yield return Cut(2.4f, u => Static(edge + new Vector3(-0.8f, 2.6f, 1.2f), vh.position + Vector3.down * 0.6f, 44f), 0.03f);
             Say("VOSS", "We're the same, you and me. You know we are.", 3.2f, vh);
             yield return Cut(3.2f, u => Static(vh.position + new Vector3(0.7f, -1.2f, -1.6f), vh.position + Vector3.up * 0.4f, 30f), 0.02f);
-            Say("YOU", "No.", 1.4f);
-            yield return Cut(1.5f, u => Static(HeroHead() + new Vector3(0.6f, -0.6f, -1.0f), HeroHead(), 30f), 0.01f);
-            Say("YOU", "I came home.", 2.4f);
-            yield return Cut(2.6f, u => CineCam.DollyIn(HeroHead(), new Vector3(-0.3f, 0.2f, 1f), u, 1.5f, 1.0f, 28f), 0.01f);
+            Say("VOSS", "Give me your hand, son.", 2.2f, vh);
+            StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () => Cine(Static(edge + new Vector3(-0.8f, 2.6f, 1.2f), vh.position + Vector3.down * 0.6f, 44f))));
+            yield return ChooseFrom("REACH FOR HIM", "LET GO");
+            reached = chosen == 0;
+            if (reached)
+            {
+                // he reaches; Voss's glove comes off in his hand, empty
+                hero.body.Play(Pick(hero.body, "kneel_hand", "kneel_hold", "idle"), 0.1f);
+                Sound.Play(Sfx.Cloth, 0.8f, vh.position);
+                Say("YOU", "Take it.", 1.4f);
+                yield return Cut(1.6f, u => Static(edge + new Vector3(-0.3f, 0.9f, 0.6f), edge + Vector3.down * 0.6f, 32f), 0.02f);
+                Sound.Play(Sfx.Crate, 0.7f, edge, 0.8f);
+                Say("VOSS", "...Good boy.", 1.8f, vh);
+                yield return Cut(2.0f, u => Static(vh.position + new Vector3(0.7f, -1.2f, -1.6f), vh.position + Vector3.up * 0.4f, 30f), 0.02f);
+            }
+            else
+            {
+                Say("YOU", "No. We're not.", 1.8f);
+                yield return Cut(2.0f, u => Static(HeroHead() + new Vector3(0.6f, -0.6f, -1.0f), HeroHead(), 30f), 0.01f);
+                Say("YOU", "I came home.", 2.4f);
+                yield return Cut(2.6f, u => CineCam.DollyIn(HeroHead(), new Vector3(-0.3f, 0.2f, 1f), u, 1.5f, 1.0f, 28f), 0.01f);
+            }
             // the lightning finds the broken parapet; the stone gives
             Lightning(1f, 1f, 0f);
             if (LightningSwap.Instance != null) LightningSwap.Instance.Bolt(edge + new Vector3(2f, 40f, 4f), edge + Vector3.up * 0.2f, 0.9f);
@@ -521,7 +574,12 @@ namespace ProjectInk
             Say("YOU", "...Always.", 2.2f);
             Sound.Play(Sfx.MemoryMaya, 0.5f);
             yield return Cut(2.6f, u => Static(HeroHead() + new Vector3(0.5f, 0.1f, -0.9f), HeroHead(), 26f), 0.01f);
-            // the ribbon, off his wrist, back in her hair
+            // the ribbon, off his wrist, back in her hair: the player ties it
+            {
+                var hairAt = mh.position + Vector3.up * 0.09f;
+                StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () => Cine(CineCam.DollyIn(hairAt, new Vector3(0.3f, -0.4f, 1f), 1f, 0.9f, 0.6f, 26f))));
+                yield return DragTo("TIE HER RIBBON", Vector2.up, null, hairAt);
+            }
             TieRibbon();
             Sound.Play(Sfx.Cloth, 0.7f, mh.position);
             Sound.Play(Sfx.MusicNote, 0.5f);
@@ -558,6 +616,8 @@ namespace ProjectInk
             lensRain = Mathf.MoveTowards(lensRain, 0f, Time.unscaledDeltaTime * 0.15f);
         }
 
+        bool reached;
+
         IEnumerator Dawn()
         {
             // the storm goes over: the rain thins and stops, the sky comes up
@@ -568,35 +628,26 @@ namespace ProjectInk
             LightningSwap.Held = true;
             yield return Cut(5.0f, u => Static(Roof(FortressPlan.EdgeX + 4f, -8f) + Vector3.up * 2.6f, Roof(FortressPlan.EdgeX - 3f) + Vector3.up * 0.8f, Mathf.Lerp(30f, 46f, u)), 0.01f,
                 u => dawn = u);
-            // fade, and down the road: her hand in his
-            for (float t = 0f; t < 0.8f; t += Time.unscaledDeltaTime) { blackout = t / 0.8f; yield return null; }
-            blackout = 1f;
-            var h0 = new Vector3(24f, 0f, 0f);
-            hero.CinePose(h0);
-            hero.SetFacing(-1);
-            hero.body.Play("walk", 0.2f, true, 0.75f);
-            if (maya != null)
-            {
-                maya.gameObject.SetActive(true);
-                maya.SetFacing(-1);
-                maya.PuppetPlay("walk", 0.1f, 1.15f);
-            }
-            void Pair(float x)
-            {
-                hero.CinePose(new Vector3(x, 0f, 0f));
-                if (maya != null) maya.PuppetPose(new Vector3(x - 0.5f, 0f, -0.35f));
-            }
-            Pair(h0.x);
-            StartCoroutine(FadeIn(1.2f));
-            // alongside them, low; then up and away, the fortress behind them in the morning
-            yield return Cut(4.5f, u => Static(hero.transform.position + new Vector3(-0.6f, 0.6f, -4.2f), hero.transform.position + Vector3.up * 0.7f, 38f), 0.01f,
-                u => Pair(h0.x - u * 3.4f));
-            float x1 = hero.transform.position.x;
-            yield return Cut(8.0f, u => CineCam.DronePullAway(hero.transform.position + Vector3.up * 0.8f, u, 3.0f, 26f, 1.0f, 18f, 42f), 0.01f,
-                u => Pair(x1 - u * 6f));
-            theEndAt = Time.unscaledTime;
-            yield return RealWait(6.5f);
-            finaleOver = true;
+            // 6.10 the book lies open in the rain where he dropped it: he picks it up, and puts it inside his coat
+            var bp = bookProp != null ? bookProp.position : Roof(FortressPlan.EdgeX - 1.9f, -1.5f);
+            hero.CinePose(new Vector3(bp.x - 0.7f, FortressPlan.RoofY, bp.z + 0.2f));
+            hero.SetFacing(1);
+            hero.body.Play(Pick(hero.body, "kneel_hand", "idle"), 0.3f);
+            if (maya != null) { maya.PuppetPose(new Vector3(bp.x - 1.3f, FortressPlan.RoofY, bp.z + 0.4f)); maya.SetFacing(1); maya.PuppetPlay("idle", 0.2f); }
+            yield return Cut(3.0f, u => Static(bp + new Vector3(-0.5f, 0.6f, -0.9f), bp, 30f), 0.01f);
+            if (bookProp != null) bookProp.gameObject.SetActive(false);
+            Sound.Play(Sfx.Cloth, 0.7f, hero.Chest);
+            Say("YOU", "...Forty-one names.", 2.2f);
+            yield return Cut(2.4f, u => Static(HeroHead() + new Vector3(0.7f, -0.1f, -1.0f), HeroHead(), 30f), 0.01f);
+            hero.body.Play("idle", 0.3f);
+            Walkie("Papa? ...Can we go home now? Over.", 2.8f);
+            yield return Cut(3.0f, u => Static(Roof(bp.x - 1.0f, -3.5f) + Vector3.up * 1.0f, Roof(bp.x - 1.0f, bp.z) + Vector3.up * 0.8f, 36f), 0.01f);
+            Say("YOU", "...Over and out, sweetheart. We're going home.", 3.0f);
+            yield return Cut(5.0f, u => CineCam.DronePullAway(hero.transform.position + Vector3.up * 0.8f, u, 2.4f, 22f, 0.8f, 14f, 44f), 0.01f);
+            cardAt = Time.unscaledTime;
+            cardLine = reached ? "He reached for him anyway." : "No. I came home.";
+            cardTitle = "THE STORM";
+            yield return RealWait(6.0f);
             CineOff();
             Sound.MusicStop(4f);
             phase = Phase.End;
@@ -650,7 +701,7 @@ namespace ProjectInk
                 GUI.Label(new Rect(0, h * 0.24f, w, 30), Application.isMobilePlatform ? "SWIPE TO SLIP THE SHOT   ·   OR GET IN CLOSE" : "DODGE TO SLIP THE SHOT   ·   OR GET IN CLOSE", cap);
                 cap.alignment = TextAnchor.MiddleLeft;
             }
-            if (theEndAt > 0f && phase != Phase.End)
+            if (false && theEndAt > 0f && phase != Phase.End)
             {
                 float t0 = Time.unscaledTime - theEndAt;
                 float a = Mathf.Clamp01(t0 / 1.6f);

@@ -214,8 +214,10 @@ namespace ProjectInk
                     if (g != null) { g.Puppet(); g.PuppetPose(new Vector3(x, FortressPlan.Up + 8.05f, 4.1f)); g.SetFacing(-1); g.PuppetPlay("idle", 0f); GiveTorch(g); }
                 yield return Cut(2.4f, u => Static(new Vector3(58.5f, FortressPlan.Up + 9.6f, 4.8f), hero.transform.position + Vector3.up * 0.8f, 26f), 0.03f);
                 // (b) on the guards: "Movement on the road!"
-                Say("GUARD", "Movement on the road!", 2.0f, g1 != null ? HeadOf(g1) : null);
+                Say("GUARD", "It's him! The book's on him!", 2.0f, g1 != null ? HeadOf(g1) : null);
                 yield return Cut(2.0f, u => Static(new Vector3(55.0f, FortressPlan.Up + 8.8f, 0.6f), new Vector3(56.8f, FortressPlan.Up + 9.2f, 4.1f), 34f), 0.03f);
+                Say("GUARD", "Whoever brings the boss that book gets the son's place!", 2.6f, g2 != null ? HeadOf(g2) : null);
+                yield return Cut(2.6f, u => Static(new Vector3(57.6f, FortressPlan.Up + 8.6f, 0.4f), new Vector3(57.4f, FortressPlan.Up + 9.2f, 4.1f), 32f), 0.03f);
                 // (c) back on him, low: he doesn't stop
                 hero.body.Play("walk", 0.2f, true, 0.9f);
                 float wx3 = hero.transform.position.x;
@@ -327,8 +329,20 @@ namespace ProjectInk
             Sound.Music(fBlackout ? "dark" : "fight", 0.55f, true, 1.2f);
         }
 
+        static readonly string[] BookBarks =
+        {
+            "The book! Get the book!", "Silas's place is mine!", "Take it off his body!", "The chair goes to whoever gets the book!",
+            "He's one man! ONE MAN!", "Boss is watching! Make it count!",
+        };
+        float nextBark;
+
         void UpdateFortress()
         {
+            if (fZone >= 0 && fZone <= 3 && !fClear && fortMen.Count > 0 && Time.unscaledTime > nextBark)
+            {
+                nextBark = Time.unscaledTime + Random.Range(7f, 12f);
+                Say("THUG", BookBarks[Random.Range(0, BookBarks.Length)], 2.0f);
+            }
             UpdateStorm();
             UpdateChandeliers();
             UpdateVoss();
@@ -387,7 +401,7 @@ namespace ProjectInk
             if (InkFx.Instance != null) InkFx.Instance.Splash(new Vector3(FortressPlan.GateArchX, FortressPlan.Up + 0.1f, -1.4f), Vector3.up, 30, new Color(0.9f, 0.9f, 0.9f));
             // (c) on him: he doesn't turn
             hero.body.Play("idle", 0.3f);
-            Say("VOICE, FROM THE WALLS", "He's in. Close it.", 2.0f);
+            Say("VOICE, FROM THE WALLS", "He's in. Close it. Nobody touches the girl. Everybody touches him.", 3.0f);
             yield return Cut(2.2f, u => CineCam.DollyIn(HeroHead(), new Vector3(-0.6f, -0.05f, 1f), u, 2.0f, 1.3f, 32f), 0.015f);
             // (d) high: men stepping out of every doorway into the floodlight
             Strike(0.8f, 0.4f);
@@ -451,8 +465,9 @@ namespace ProjectInk
             // (a) a lateral reveal down the hall: the table, the fire, the chandeliers
             yield return Cut(3.6f, u => CineCam.LateralReveal(new Vector3(FortressPlan.HallX0 + 0.6f, FortressPlan.Up + 2.2f, -1.6f), new Vector3(FortressPlan.HallX0 + 4f, FortressPlan.Up + 2.4f, -2.4f), new Vector3(150f, FortressPlan.Up + 1.6f, 2f), u, 46f), 0.02f);
             // (b) a slow dolly in on the far end: the man at the head of the table
-            Say("THE WARDEN", "The boss said to let you get this far.", 3.0f, HeadOf(warden));
-            yield return Cut(3.2f, u => CineCam.DollyIn(HeadOf(warden).position, new Vector3(1f, -0.1f, 0.4f), u, 7f, 3.2f, 30f), 0.015f);
+            Dress(warden.body, Look.Warden);
+            Say("THE WARDEN", "Twenty years I kept his door. Boss says whoever brings the book gets the chair.", 3.6f, HeadOf(warden));
+            yield return Cut(3.6f, u => CineCam.DollyIn(HeadOf(warden).position, new Vector3(1f, -0.1f, 0.4f), u, 7f, 3.2f, 30f), 0.015f);
             // (c) low as he comes round the table, the chain dragging
             warden.PuppetPlay("walk", 0.2f, 0.7f);
             var w0 = warden.transform.position;
@@ -598,8 +613,7 @@ namespace ProjectInk
             Sound.Play(Sfx.BruteLaugh, 0.7f, at);
             Say("THE WARDEN", "Go on up. He's waiting. He's been waiting years.", 3.4f, wh);
             yield return Cut(3.6f, u => Static(at + new Vector3(1.6f, 0.5f, -1.8f), wh != null ? wh.position : at + Vector3.up * 0.6f, 32f), 0.015f);
-            // (b) a cry from far above, through the storm
-            Say("MAYA", "PAPA!", 2.0f);
+            // (b) far above, through the storm: the tower, lit by a strike
             Strike(0.9f, 0.2f);
             yield return Cut(1.6f, u => CineCam.TiltUp(new Vector3(147f, FortressPlan.Up + 1.0f, -2.0f), new Vector3(148f, FortressPlan.Up + 2.0f, 2f), new Vector3(150f, FortressPlan.Up + 9f, 4f), u, 42f), 0.03f);
             // (c) on him: his head snaps up
@@ -641,6 +655,16 @@ namespace ProjectInk
             // (b) a dolly zoom on the gallery: for a flash, the man and the child
             Strike(1f, 0.1f);
             yield return Cut(2.6f, u => CineCam.DollyZoom(gal + Vector3.up * 0.9f, u, 18f, 8f, 3.4f), 0.02f);
+            // (c2) the walkie in his pocket clicks on: she sees him
+            Sound.Play(Sfx.Static, 0.6f, hero.Chest, 1.6f);
+            HoldWalkie(true);
+            Walkie("Papa! I see you! You're tiny!", 2.6f);
+            yield return Cut(2.8f, u => Static(HeroHead() + new Vector3(0.45f, -0.12f, -0.6f), HeroHead() + Vector3.down * 0.1f, 28f), 0.015f);
+            Walkie("The cane man is taking me up to the roof.", 2.8f);
+            yield return Cut(3.0f, u => Static(gal + new Vector3(-2.6f, -1.4f, -3.4f), gal + Vector3.up * 1.0f, 30f), 0.03f);
+            Say("YOU", "I see you too. I'm coming up. Over.", 2.6f);
+            yield return Cut(2.8f, u => Static(HeroHead() + new Vector3(0.45f, -0.12f, -0.6f), HeroHead() + Vector3.down * 0.1f, 28f), 0.015f);
+            HoldWalkie(false);
             // (c) his voice, down through the storm
             Say("VOICE, FROM THE TOWER", "Come up, old friend. She's been asking for you.", 3.6f);
             yield return Cut(3.6f, u => Static(gal + new Vector3(-2.6f, -1.4f, -3.4f), gal + Vector3.up * 1.0f, 30f), 0.03f, u => { if (u > 0.5f && u - Time.unscaledDeltaTime / 3.6f <= 0.5f) Strike(0.9f, 0.1f); });
@@ -687,7 +711,7 @@ namespace ProjectInk
                     cap.alignment = TextAnchor.MiddleCenter;
                     cap.fontSize = 22;
                     cap.normal.textColor = new Color(1f, 1f, 1f, 0.8f * a);
-                    GUI.Label(new Rect(0, h * 0.38f, w, 30), Spaced("CHAPTER 5"), cap);
+                    GUI.Label(new Rect(0, h * 0.38f, w, 30), Spaced("CHAPTER 6"), cap);
                     int bs = big.fontSize;
                     big.fontSize = 84;
                     big.normal.textColor = new Color(1f, 1f, 1f, a);

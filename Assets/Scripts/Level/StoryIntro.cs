@@ -96,7 +96,7 @@ namespace ProjectInk
             runSpeed = hero.runSpeed;
             StoryCameraFX.Set(0f, 0f);
             string sceneName = SceneManager.GetActiveScene().name;
-            chapter = sceneName == "Story_Bank" ? 2 : sceneName == "Story_Street" ? 3 : sceneName == "Story_Home" ? 4 : sceneName == "Story_Backyard" ? 5 : sceneName == "Story_Fortress" ? 6 : 1;      // 4: chapter 3, home
+            chapter = sceneName == "Story_Bank" ? 2 : sceneName == "Story_Street" ? 3 : sceneName == "Story_Home" ? 4 : sceneName == "Story_Backyard" ? 5 : sceneName == "Story_Fortress" ? 6 : sceneName == "Story_Road" ? 9 : sceneName == "Story_Epilogue" ? 10 : 1;      // 4: chapter 3, home
             HeroController.RageScale = 1f;
             Enemy.RageFear = false;
             CutawayWall.ShowAll = false;      // 3: the street, chapter 2's second half
@@ -1195,7 +1195,7 @@ namespace ProjectInk
         }
 
         /// <summary>The chapter just finished, as the player knows it (the street is chapter 2's second half).</summary>
-        string ChapterDone => chapter >= 6 ? (finaleOver ? "THE END" : "CHAPTER 5 COMPLETE") : chapter >= 5 ? "CHAPTER 4 COMPLETE" : chapter >= 4 ? "CHAPTER 3 COMPLETE" : chapter >= 2 ? "CHAPTER 2 COMPLETE" : "CHAPTER 1 COMPLETE";
+        string ChapterDone => chapter == 10 ? "THE END" : chapter == 9 ? "CHAPTER 5 COMPLETE" : chapter == 6 ? "CHAPTER 6 COMPLETE" : chapter == 5 ? "CHAPTER 4 COMPLETE" : chapter == 4 ? "CHAPTER 3 COMPLETE" : chapter >= 2 ? "CHAPTER 2 COMPLETE" : "CHAPTER 1 COMPLETE";
 
         void EndCard(float w, float h)
         {
@@ -1207,8 +1207,10 @@ namespace ProjectInk
             cap.alignment = TextAnchor.MiddleCenter;
             cap.fontSize = 22;
             cap.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
-            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), chapter >= 6 ? Spaced("STICK WICK") + "     ·     " + Spaced("HE CAME HOME")
-                                                              : chapter >= 5 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 5") + "  ·  THE FORTRESS"
+            GUI.Label(new Rect(0, h * 0.26f + 100, w, 30), chapter == 10 ? Spaced("STICK WICK") + "     ·     " + Spaced("HE CAME HOME")
+                                                              : chapter == 6 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 7") + "  ·  HOME"
+                                                              : chapter == 9 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 6") + "  ·  THE FORTRESS"
+                                                              : chapter == 5 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 5") + "  ·  THE ROAD"
                                                               : chapter >= 4 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 4") + "  ·  THE BACKYARD"
                                                               : chapter >= 2 ? Spaced("NEXT") + "     " + Spaced("CHAPTER 3") + "  ·  HOME"
                                                               : Spaced("NEXT") + "     " + Spaced("CHAPTER 2") + "  ·  THE BANK", cap);
@@ -1224,8 +1226,10 @@ namespace ProjectInk
             if (chapter == 1 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Bank"); }
             if (chapter >= 2 && chapter <= 3 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Home"); }
             if (chapter == 4 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Backyard"); }
-            if (chapter == 5 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Fortress"); }
-            if (chapter >= 6 && GUI.Button(next, Spaced("PLAY FROM CHAPTER 1") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
+            if (chapter == 5 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Road"); }
+            if (chapter == 9 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Fortress"); }
+            if (chapter == 6 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Epilogue"); }
+            if (chapter == 10 && GUI.Button(next, Spaced("PLAY FROM CHAPTER 1") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
             btn.fontSize = 24;
             if (GUI.Button(again, Spaced("PLAY AGAIN"), btn)) { Retry = false; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
             if (GUI.Button(menu, Spaced("MAIN MENU"), btn)) { Retry = false; SceneManager.LoadScene("Menu"); }
