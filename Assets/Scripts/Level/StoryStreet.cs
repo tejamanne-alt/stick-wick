@@ -178,15 +178,15 @@ namespace ProjectInk
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f);
             var lead = men[0];
             yield return Hold(0.6f, () => EndShot(new Vector3(4.5f, 1.4f, -4.2f), new Vector3(8.5f, 1.3f, 0f), 34f));
-            Say("THUG", "The box. Hand it over.", 2.4f, lead != null ? HeadOf(lead) : null);
+            Say("THUG", "The book. Hand it over.", 2.4f, lead != null ? HeadOf(lead) : null);
             yield return Hold(2.4f, () => EndShot(new Vector3(6.8f, 1.5f, -2.6f), new Vector3(9.6f, 1.55f, 0f), 30f));
-            Say("YOU", "It's empty.", 1.6f);
+            Say("YOU", "You want it?", 1.6f);
             yield return Hold(2.2f, () => EndShot(new Vector3(6.6f, 1.45f, -2.4f), new Vector3(1.6f, 1.45f, 0f), 30f));
             if (hero.body.Has("idle")) hero.body.Play("idle", 0.25f);              // the guard comes up
             Sound.Play(Sfx.Cloth, 0.8f);
             Say("YOU", "...Come and look.", 2.0f);
             yield return Hold(2.0f, () => EndShot(new Vector3(4.6f, 1.3f, -3.8f), new Vector3(9.0f, 1.25f, 0f), 34f));
-            Say("THUG", "Have it your way.", 1.8f, lead != null ? HeadOf(lead) : null);
+            Say("THUG", "Have it your way. V wants it off your body.", 2.4f, lead != null ? HeadOf(lead) : null);
             Sound.Tension(true);
             if (director != null) director.ShowBanner("THE STREET  ·  1  ·  " + StreetPlan.ZoneName[0], 2.4f);
             foreach (var m0 in men)
@@ -378,6 +378,7 @@ namespace ProjectInk
             WaveDirector.BossWeapon = FightStyle.Fists;
             if (driver == null) return;
             driver.MakeDriver(driver.maxHealth * 0.85f);
+            Dress(driver.body, Look.Driver);
             driver.Puppet();
             driver.PuppetPose(at);
             driver.SetFacing(-1);
@@ -422,9 +423,9 @@ namespace ProjectInk
             }
             driver.PuppetPlay("idle", 0.2f);
             Sound.Play(Sfx.Cloth, 0.8f, driver.Chest);
-            Say("THE DRIVER", "Kovac said you were dead. Kovac was always wrong about something.", 3.2f, HeadOf(driver));
+            Say("THE DRIVER", "Remember me? I drove you. Every job, eleven years.", 3.2f, HeadOf(driver));
             yield return Hold(3.0f, () => EndShot(driver.transform.position + new Vector3(-2.4f, 1.3f, -2.4f), HeadOf(driver).position, 30f));
-            Say("THE DRIVER", "Let's see what's left of you.", 2.2f, HeadOf(driver));
+            Say("THE DRIVER", "No? Then let's see what's left of you.", 2.4f, HeadOf(driver));
             if (director != null) director.ShowBanner("THE DRIVER", 2.6f);
             Sound.Play(Sfx.CineMassive, 0.7f);
             yield return Hold(2.0f, () => EndShot(driver.transform.position + new Vector3(-3.4f, 1.1f, -3.2f), driver.transform.position + Vector3.up * 1.4f, 34f));
@@ -629,11 +630,30 @@ namespace ProjectInk
             System.Action onHim = () => EndShot(new Vector3(dx + 1.4f, 0.7f, -1.4f), dh != null ? dh.position : d.Chest, 30f);
             System.Action onYou = () => EndShot(new Vector3(dx + 0.6f, 1.0f, -1.6f), HeadC(), 28f);
             yield return Hold(1.0f, close);
-            Say("YOU", "Who sent you?", 2.0f);
-            yield return Hold(2.2f, onYou);
-            Sound.Play(Sfx.BruteLaugh, 0.7f, d.Chest, 1.1f);
-            Say("THE DRIVER", "...You'll find out at home.", 2.6f, dh);
-            yield return Hold(2.8f, onHim);
+            Say("THE DRIVER", "I used to drive you, you know. You'd sit in the back and never say a word.", 3.4f, dh);
+            yield return Hold(3.6f, onHim);
+            // the player asks
+            StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, onYou));
+            yield return ChooseFrom("\"Who is V?\"", "\"What's waiting at home?\"");
+            if (chosen == 0)
+            {
+                Say("YOU", "Who is V?", 1.6f);
+                yield return Hold(1.8f, onYou);
+                Sound.Play(Sfx.BruteLaugh, 0.7f, d.Chest, 1.1f);
+                Say("THE DRIVER", "Ha... Ask him yourself. You two go way back.", 2.8f, dh);
+                yield return Hold(3.0f, onHim);
+                Say("THE DRIVER", "And go home first. You'll want to see what's waiting.", 3.0f, dh);
+                yield return Hold(3.2f, onHim);
+            }
+            else
+            {
+                Say("YOU", "What's waiting at home?", 1.8f);
+                yield return Hold(2.0f, onYou);
+                Say("THE DRIVER", "...", 1.4f, dh);
+                yield return Hold(1.6f, onHim);
+                Say("THE DRIVER", "You'll see.", 1.8f, dh);
+                yield return Hold(2.0f, onHim);
+            }
             Say("THE DRIVER", "We got there first.", 2.4f, dh);
             Sound.Play(Sfx.Heartbeat, 0.9f);
             yield return Hold(2.6f, onHim);

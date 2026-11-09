@@ -214,7 +214,7 @@ namespace ProjectInk
                 }
                 harrow.PuppetPlay("idle", 0.2f);
             }
-            Say("HARROW", "This way, sir.", 1.6f, HeadT(harrow));
+            Say("MR. PELL", "This way, sir.", 1.6f, HeadT(harrow));
             yield return Hold(1.6f, () => EndShot(new Vector3(TellerX + 0.6f, 1.6f, -3.6f), new Vector3(TellerX + 1.0f, 1.3f, 0.3f), 38f));
             // both walk: Harrow a step ahead
             if (harrow != null) { harrow.SetFacing(1); harrow.PuppetPlay("walk", 0.1f, 0.9f); }
@@ -233,7 +233,7 @@ namespace ProjectInk
                 if (harrow != null) harrow.PuppetPose(new Vector3(x + 1.3f, 0f, 0.35f));
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.55f; Sound.Play(Sfx.Footstep, 0.45f, hero.transform.position, 1.05f); }
                 if (!buzzed && x > GateX - 3.5f) { buzzed = true; Sound.Play(Sfx.Static, 0.25f, new Vector3(GateX, 1f, 0f), 1.4f); Sound.Play(Sfx.Latch, 0.7f, new Vector3(GateX, 1f, 0f)); }
-                if (!spoke && x > GateX - 1.5f) { spoke = true; Say("HARROW", "We haven't seen you in a long time, sir.", 2.8f, HeadT(harrow)); Sound.Play(Sfx.Drone, 0.25f); }
+                if (!spoke && x > GateX - 1.5f) { spoke = true; Say("MR. PELL", "We haven't seen you in a long time, sir.", 2.8f, HeadT(harrow)); Sound.Play(Sfx.Drone, 0.25f); }
                 // tracking alongside, then on through the round door
                 var cp = new Vector3(x + 0.8f, 1.55f, -2.9f);
                 EndShot(cp, new Vector3(x + 1.6f, 1.3f, 0.6f), x > VaultX - 2f ? 46f : 40f);
@@ -244,10 +244,16 @@ namespace ProjectInk
             System.Action twoShot = () => EndShot(new Vector3(endX + 0.65f, 1.5f, -2.4f), new Vector3(endX + 0.65f, 1.35f, 0.3f), 36f);
             Say("YOU", "How long has it been?", 1.8f);
             yield return Hold(2.0f, twoShot);
-            Say("HARROW", "Eleven years, sir. Paid in cash. Twenty years in advance.", 3.0f, HeadT(harrow));
+            Say("MR. PELL", "Six years, sir. Paid in cash. Twenty years in advance.", 3.0f, HeadT(harrow));
             yield return Hold(3.2f, twoShot);
             Say("YOU", "...Of course I did.", 1.8f);
             yield return Hold(2.0f, twoShot);
+            Say("MR. PELL", "And your standing instruction is still in place, sir.", 2.8f, HeadT(harrow));
+            yield return Hold(3.0f, twoShot);
+            Say("MR. PELL", "If anything happens to you, the box goes to your lawyer. Your instructions, sir.", 3.4f, HeadT(harrow));
+            yield return Hold(3.6f, twoShot);
+            Say("YOU", "...So that's what keeps me breathing.", 2.4f);
+            yield return Hold(2.6f, twoShot);
 
             }
 
@@ -279,18 +285,32 @@ namespace ProjectInk
             }
             System.Action wallShot = () => EndShot(new Vector3(Box417.x, 1.65f, 0.4f), new Vector3(Box417.x, 1.35f, 2.6f), 40f);
             System.Action keysShot = () => EndShot(Box417 + new Vector3(-0.25f, 0.06f, -0.62f), Box417 + new Vector3(0f, 0f, 0.05f), 24f);
-            Say("HARROW", "Box four-seventeen. My key goes in first, sir...", 2.6f, HeadT(harrow));
+            Say("MR. PELL", "Box four-seventeen. My key goes in first, sir...", 2.6f, HeadT(harrow));
             yield return Hold(1.4f, wallShot);
             if (bankKey != null) bankKey.gameObject.SetActive(true);
             Sound.Play(Sfx.KnifeGrab, 0.4f, Box417, 1.7f);
             yield return Hold(1.3f, keysShot);
-            Say("HARROW", "...and then yours.", 1.6f, HeadT(harrow));
+            Say("MR. PELL", "...and then yours.", 1.6f, HeadT(harrow));
             yield return Hold(1.0f, keysShot);
             if (hisKey != null) hisKey.gameObject.SetActive(true);
             Sound.Play(Sfx.KnifeGrab, 0.45f, Box417, 1.55f);
             yield return Hold(1.0f, keysShot);
-            Say("HARROW", "Together.", 1.2f, HeadT(harrow));
+            Say("MR. PELL", "And your hand on the glass, sir. It reads the palm and the pulse.", 3.2f, HeadT(harrow));
+            yield return Hold(3.0f, wallShot);
+            {
+                var glass = Box417 + new Vector3(-0.7f, 0.05f, -0.05f);
+                bool scanning = true;
+                StartCoroutine(HoldWhile(() => scanning, () => EndShot(glass + new Vector3(-0.2f, 0.12f, -0.75f), glass, 26f)));
+                palmAt = Time.unscaledTime;
+                yield return HoldTo("PALM ON THE GLASS", 1.8f, p => palmScan = p, glass);
+                scanning = false;
+                palmScan = 1f;
+                Sound.Play(Sfx.Latch, 0.5f, glass, 1.6f);
+                Sound.Play(Sfx.Glint, 0.4f, glass, 1.3f);
+            }
+            Say("MR. PELL", "Together.", 1.2f, HeadT(harrow));
             yield return Hold(0.5f, keysShot);
+            palmScan = 0f;
             float tk = 0f;
             while (tk < 0.45f)
             {
@@ -369,7 +389,7 @@ namespace ProjectInk
                 if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.2f);
                 if (harrow != null) { harrow.SetFacing(-1); harrow.PuppetPlay("idle_loose", 0.2f); }
             }
-            Say("HARROW", "Take all the time you need, sir. Ring the bell when you're finished.", 3.0f, HeadT(harrow));
+            Say("MR. PELL", "Take all the time you need, sir. Ring the bell when you're finished.", 3.0f, HeadT(harrow));
             yield return Hold(3.2f, () => EndShot(new Vector3(TableX - 1.6f, 1.8f, -1.6f), tableAt + Vector3.up * 0.3f, 40f));
             Say("YOU", "Thank you.", 1.2f);
             yield return Hold(1.2f, () => EndShot(new Vector3(TableX - 1.6f, 1.8f, -1.6f), tableAt + Vector3.up * 0.3f, 40f));
@@ -396,7 +416,7 @@ namespace ProjectInk
                 clerk.SetFacing(1);
                 AttachPhone(clerk);
             }
-            Say("CLERK", "He's here. Box four-seventeen.", 2.6f, HeadT(clerk));
+            Say("CLERK", "Yes, Mr. V... He's here. He's opening it now.", 3.0f, HeadT(clerk));
             yield return Hold(3.0f, () => EndShot(Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)) + new Vector3(1.3f, 0.1f, -1.6f), Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)), 30f));
             if (phoneProp != null) phoneProp.gameObject.SetActive(false);
 
@@ -427,10 +447,12 @@ namespace ProjectInk
             bankUi = 2; bankUiAt = Time.unscaledTime;
             Sound.Play(Sfx.Cloth, 0.5f, null, 1.4f);
             yield return Hold(1.8f, boxShot);
-            Say("YOU", "Three passports. Three names...", 2.2f);
-            yield return Hold(2.3f, boxShot);
-            Say("YOU", "...and every one of them is me.", 2.4f);
-            yield return Hold(2.6f, boxShot);
+            Say("YOU", "Three passports. New names, all of them...", 2.4f);
+            yield return Hold(2.5f, boxShot);
+            Say("YOU", "Me... a woman... and a little girl.", 2.6f);
+            yield return Hold(2.8f, boxShot);
+            Say("YOU", "I was getting someone out.", 2.2f);
+            yield return Hold(2.4f, boxShot);
             bankUi = 0;
             Sound.Play(Sfx.Cloth, 0.4f, null, 1.2f);
 
@@ -470,6 +492,42 @@ namespace ProjectInk
             Sound.Play(Sfx.Breath, 0.6f, null, 0.9f);
             Say("YOU", "...Elena.", 2.6f);
             yield return Hold(2.8f, () => EndShot(HeadC() + new Vector3(0.35f, 0.02f, -0.75f), HeadC(), 28f));
+            // the passports again: her face; and the child's
+            bankUi = 2; bankUiAt = Time.unscaledTime - 2f;
+            Sound.Play(Sfx.Cloth, 0.4f, null, 1.3f);
+            Say("YOU", "It's her. Elena.", 2.0f);
+            yield return Hold(2.2f, boxShot);
+            passportFocus = 2;
+            Sound.Play(Sfx.MusicNote, 0.5f);
+            Say("YOU", "And the girl... \"Maya.\"", 2.4f);
+            yield return Hold(2.6f, boxShot);
+            Say("YOU", "...I have a daughter.", 2.4f);
+            Sound.Play(Sfx.Heartbeat, 0.6f);
+            yield return Hold(2.8f, () => EndShot(HeadC() + new Vector3(0.3f, 0.0f, -0.7f), HeadC(), 27f));
+            bankUi = 0; passportFocus = -1;
+
+            // ------------------------------------------------------------ B17b the book: forty-one names, in his hand, every order signed V.
+            yield return WaitTap("THE BLACK BOOK", "TAP", boxShot);
+            Sound.Play(Sfx.Cloth, 0.6f, null, 1.1f);
+            bankUi = 7; bankUiAt = Time.unscaledTime; bookPage = 0f;
+            yield return Hold(1.6f, boxShot);
+            Say("YOU", "My handwriting.", 1.8f);
+            yield return Hold(2.0f, boxShot);
+            Say("YOU", "Names. Dates. Money.", 2.2f);
+            yield return Hold(2.4f, boxShot);
+            StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, boxShot));
+            yield return DragTo("TURN THE PAGE", Vector2.left, p => bookPage = p);
+            Sound.Play(Sfx.Cloth, 0.5f, null, 1.6f);
+            Say("YOU", "And every order signed... \"V.\"", 2.6f);
+            Sound.Play(Sfx.Drone, 0.35f);
+            yield return Hold(2.8f, boxShot);
+            Say("YOU", "Forty-one names.", 2.0f);
+            yield return Hold(2.2f, boxShot);
+            Say("YOU", "I didn't keep this to remember them. I kept it so he'd leave us alone.", 3.6f);
+            yield return Hold(3.8f, () => EndShot(HeadC() + new Vector3(0.3f, 0.0f, -0.75f), HeadC(), 28f));
+            Say("YOU", "This is what V wants.", 2.2f);
+            yield return Hold(2.4f, boxShot);
+            bankUi = 0;
 
             // ------------------------------------------------------------ B18 play: put it on
             yield return WaitTap("PUT IT ON", "TAP", () => EndShot(HeadC() + new Vector3(0.35f, 0.02f, -0.75f), HeadC(), 28f));
@@ -483,16 +541,23 @@ namespace ProjectInk
             });
 
             // ------------------------------------------------------------ B19 play: the envelope; an address in her hand
-            yield return WaitTap("THE ENVELOPE", "TAP", boxShot);
+            yield return WaitTap("THE LETTER", "TAP", boxShot);
             Sound.Play(Sfx.Cloth, 0.7f, null, 1.5f);
             bankUi = 5; bankUiAt = Time.unscaledTime;
-            yield return Hold(2.6f, boxShot);
-            Say("YOU", "Fourteen Alder Lane...", 2.0f);
-            yield return Hold(2.2f, boxShot);
-            Say("YOU", "She wrote this. She wanted me to find my way back.", 2.8f);
-            yield return Hold(3.0f, boxShot);
-            Say("YOU", "...Home.", 2.0f);
             yield return Hold(2.4f, boxShot);
+            Say("YOU", "A letter. From me... to me.", 2.4f);
+            yield return Hold(2.6f, boxShot);
+            Say("YOU", "\"If you're reading this, it went wrong.\"", 2.6f);
+            yield return Hold(2.8f, boxShot);
+            Say("YOU", "\"They'll come for E. and M.\"", 2.4f);
+            yield return Hold(2.6f, boxShot);
+            Say("YOU", "\"Fourteen Alder Lane. Get them out.\"", 2.8f);
+            Sound.Play(Sfx.Heartbeat, 0.8f);
+            yield return Hold(3.0f, boxShot);
+            Say("YOU", "...Elena. Maya.", 2.2f);
+            yield return Hold(2.4f, () => EndShot(HeadC() + new Vector3(0.35f, 0.02f, -0.75f), HeadC(), 28f));
+            Say("YOU", "Home.", 1.8f);
+            yield return Hold(2.2f, boxShot);
             bankUi = 0;
             Sound.Play(Sfx.Cloth, 0.6f);
 
@@ -507,6 +572,19 @@ namespace ProjectInk
             if (clerk != null) clerk.SetFacing(1);                      // she won't meet his eyes
             if (guard != null) { guard.PuppetPose(new Vector3(3.2f, 0f, 1.3f)); guard.SetFacing(1); }
             Sound.Play(Sfx.Heartbeat, 0.35f);
+            yield return PlayerWalk(TellerX + 0.4f, 1.0f, 2.4f, Application.isMobilePlatform ? "HOLD THE LEFT SIDE TO WALK OUT" : "HOLD  A  OR  LEFT ARROW  TO WALK OUT", -1);
+            // past the counter: she's on the phone again, low, her back to him
+            hero.CineLock();
+            if (clerk != null) { clerk.SetFacing(1); AttachPhone(clerk); }
+            if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f);
+            Say("CLERK", "...Yes, Mr. V. He took it with him. He's leaving now.", 3.0f, HeadT(clerk));
+            yield return Hold(3.2f, () => EndShot(Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)) + new Vector3(-1.1f, 0.0f, -1.4f), Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)), 30f));
+            Sound.Play(Sfx.Heartbeat, 0.7f);
+            Say("YOU", "...\"Mr. V.\"", 1.8f);
+            yield return Hold(2.0f, () => EndShot(HeadC() + new Vector3(-0.45f, 0.02f, -0.9f), HeadC(), 28f));
+            Say("YOU", "Then he knows I have it.", 2.0f);
+            yield return Hold(2.2f, () => EndShot(HeadC() + new Vector3(-0.4f, 0.0f, -0.85f), HeadC(), 27f));
+            if (phoneProp != null) phoneProp.gameObject.SetActive(false);
             yield return PlayerWalk(-1.2f, 1.0f, 2.4f, Application.isMobilePlatform ? "HOLD THE LEFT SIDE TO WALK OUT" : "HOLD  A  OR  LEFT ARROW  TO WALK OUT", -1);
 
             // ------------------------------------------------------------ B21 outside: the white morning; across the road, a door opens
@@ -585,6 +663,7 @@ namespace ProjectInk
             }
             // civilians are greys (only fighters carry colour in this world)
             clerk = Person(new Vector3(TellerX, 0f, ClerkZ), -1, new Color(0.2f, 0.2f, 0.22f), "idle_loose");
+            if (clerk != null) Dress(clerk.body, Look.Clerk);
             harrow = Person(new Vector3(24.5f, 0f, 0.3f), -1, new Color(0.3f, 0.3f, 0.32f), "idle_loose");
             guard = Person(new Vector3(3.2f, 0f, 0.4f), -1, new Color(0.08f, 0.08f, 0.1f), "idle");
             waitA = Person(new Vector3(3.0f, 0f, 7.6f), 1, new Color(0.24f, 0.24f, 0.26f), "idle_loose");
@@ -852,7 +931,9 @@ namespace ProjectInk
                 case 3: RingGUI(w, h, t); break;
                 case 4: MemoryGUI(w, h, t); break;
                 case 5: EnvelopeGUI(w, h, t); break;
+                case 7: BookGUI(w, h, t); break;
             }
+            PalmGUI(w, h);
             PromptsGUI(w, h);
             cap.alignment = oldCapAlign; cap.fontSize = capSize; big.fontSize = bigSize;
         }
@@ -924,14 +1005,15 @@ namespace ProjectInk
         {
             float bh = barsPx * (h / 720f);
             float ph = Mathf.Min(h - bh * 2f - 70f, 330f), pw = ph * 0.72f;
-            string[] names = { "DANIEL REYES", "MARCUS VALE", "VIKTOR SAND" };
-            string[] lands = { "CANADA", "IRELAND", "SWEDEN" };
+            string[] names = { "DANIEL REYES", "ELENA REYES", "MAYA REYES" };
+            string[] lands = { "CANADA", "CANADA", "CANADA" };
             for (int i = 0; i < 3; i++)
             {
                 float a = Mathf.Clamp01((t - i * 0.5f) / 0.35f);
                 if (a <= 0f) continue;
                 float x = w * 0.5f + (i - 1) * (pw + 24f) - pw * 0.5f;
                 var r = new Rect(x, (h - ph) * 0.5f + (1f - a) * 30f, pw, ph);
+                if (passportFocus >= 0 && passportFocus != i) a *= 0.35f;
                 Fill(new Rect(r.x - 4, r.y - 4, r.width + 8, r.height + 8), new Color(0.05f, 0.05f, 0.055f, a));
                 Fill(r, new Color(0.82f, 0.82f, 0.8f, a));
                 float u = ph / 100f;
@@ -940,7 +1022,10 @@ namespace ProjectInk
                 GUI.Label(new Rect(r.x, r.y + 3 * u, pw, 6 * u), Spaced("PASSPORT") + "  ·  " + lands[i], cap);
                 var o = GUI.color;
                 GUI.color = new Color(1f, 1f, 1f, a);
-                GUI.DrawTexture(new Rect(r.x + pw * 0.2f, r.y + 12 * u, pw * 0.6f, pw * 0.6f * 1.22f), Portrait());
+                var photo = new Rect(r.x + pw * 0.2f, r.y + 12 * u, pw * 0.6f, pw * 0.6f * 1.22f);
+                var face = i == 0 ? Portrait() : PassportFace(i);
+                if (i == 0 || face == null) GUI.DrawTexture(photo, i == 0 || face == null ? Portrait() : face);
+                else GUI.DrawTextureWithTexCoords(photo, face, i == 1 ? new Rect(0.38f, 0.3f, 0.24f, 0.5f) : new Rect(0.4f, 0.12f, 0.22f, 0.48f));
                 GUI.color = o;
                 cap.fontSize = Mathf.RoundToInt(5.2f * u);
                 cap.normal.textColor = new Color(0.08f, 0.08f, 0.09f, a);
@@ -1025,12 +1110,98 @@ namespace ProjectInk
             var style = new GUIStyle(sub) { font = hand != null ? hand : sub.font, fontSize = Mathf.RoundToInt(eh * 0.1f), alignment = TextAnchor.MiddleCenter };
             float ta = Mathf.Clamp01((t - 0.5f) / 0.8f);
             style.normal.textColor = new Color(0.12f, 0.12f, 0.14f, a * ta);
-            GUI.Label(new Rect(r.x, r.y + eh * 0.16f, ew, eh * 0.22f), "For when you need to come home.", style);
-            style.fontSize = Mathf.RoundToInt(eh * 0.09f);
-            GUI.Label(new Rect(r.x, r.y + eh * 0.38f, ew, eh * 0.16f), "— E.", style);
-            style.fontSize = Mathf.RoundToInt(eh * 0.15f);
-            style.normal.textColor = new Color(0.08f, 0.08f, 0.1f, a * Mathf.Clamp01((t - 1.2f) / 0.8f));
-            GUI.Label(new Rect(r.x, r.y + eh * 0.6f, ew, eh * 0.26f), "14 ALDER LANE", style);
+            style.fontSize = Mathf.RoundToInt(eh * 0.085f);
+            GUI.Label(new Rect(r.x, r.y + eh * 0.08f, ew, eh * 0.2f), "If you're reading this, it went wrong.", style);
+            style.normal.textColor = new Color(0.12f, 0.12f, 0.14f, a * Mathf.Clamp01((t - 1.4f) / 0.8f));
+            GUI.Label(new Rect(r.x, r.y + eh * 0.3f, ew, eh * 0.2f), "They'll come for E. and M.", style);
+            style.fontSize = Mathf.RoundToInt(eh * 0.13f);
+            style.normal.textColor = new Color(0.08f, 0.08f, 0.1f, a * Mathf.Clamp01((t - 2.4f) / 0.8f));
+            GUI.Label(new Rect(r.x, r.y + eh * 0.52f, ew, eh * 0.24f), "14 ALDER LANE", style);
+            style.fontSize = Mathf.RoundToInt(eh * 0.1f);
+            style.normal.textColor = new Color(0.08f, 0.08f, 0.1f, a * Mathf.Clamp01((t - 3.2f) / 0.8f));
+            GUI.Label(new Rect(r.x, r.y + eh * 0.74f, ew, eh * 0.2f), "Get them out.", style);
+        }
+    
+        // ---------------------------------------------------------------- story v2: the palm, the faces, the book
+
+        float palmScan, palmAt = -1f, bookPage;
+        int passportFocus = -1;
+        Texture2D[] passportFaces;
+
+        Texture2D PassportFace(int i)
+        {
+            if (passportFaces == null)
+            {
+                passportFaces = new Texture2D[3];
+                passportFaces[1] = Resources.Load<Texture2D>("Story/Memories/wed_5");
+                passportFaces[2] = Resources.Load<Texture2D>("Story/Memories/maya_2");
+            }
+            return passportFaces[i];
+        }
+
+        /// <summary>The palm scanner as he holds his hand on it: a pale bar sweeping down the glass,
+        /// the outline of a hand, ACCEPTED when it's done.</summary>
+        void PalmGUI(float w, float h)
+        {
+            if (palmScan <= 0.001f || palmAt < 0f) return;
+            float s = Mathf.Min(h * 0.3f, 200f);
+            var r = new Rect(w - s - 40f, h * 0.5f - s * 0.65f, s, s * 1.3f);
+            Fill(new Rect(r.x - 3, r.y - 3, r.width + 6, r.height + 6), new Color(0f, 0f, 0f, 0.7f));
+            Fill(r, new Color(0.12f, 0.13f, 0.14f, 0.9f));
+            // the hand: a palm and four fingers and a thumb, drawn in light
+            var hc = new Color(0.8f, 0.85f, 0.9f, 0.35f + 0.5f * palmScan);
+            Fill(new Rect(r.x + s * 0.28f, r.y + s * 0.62f, s * 0.44f, s * 0.46f), hc);
+            for (int i = 0; i < 4; i++) Fill(new Rect(r.x + s * (0.29f + i * 0.11f), r.y + s * (0.22f + (i == 1 || i == 2 ? -0.04f : 0f)), s * 0.08f, s * 0.42f), hc);
+            Fill(new Rect(r.x + s * 0.12f, r.y + s * 0.7f, s * 0.18f, s * 0.08f), hc);
+            float y = r.y + r.height * Mathf.Repeat(Time.unscaledTime * 0.8f, 1f);
+            Fill(new Rect(r.x, y, r.width, 2f), new Color(1f, 1f, 1f, 0.8f));
+            Fill(new Rect(r.x, r.yMax + 8, r.width * palmScan, 4), new Color(0.8f, 0.06f, 0.07f));
+            cap.alignment = TextAnchor.MiddleCenter;
+            cap.normal.textColor = Color.white;
+            GUI.Label(new Rect(r.x, r.yMax + 16, r.width, 24), palmScan >= 0.999f ? Spaced("ACCEPTED") : Spaced("READING"), cap);
+            cap.alignment = TextAnchor.MiddleLeft;
+        }
+
+        /// <summary>The black book open on the table: his own hand, a name, a date, a sum and "V." on
+        /// every line. Dragging turns the page.</summary>
+        void BookGUI(float w, float h, float t)
+        {
+            float a = Mathf.Clamp01(t / 0.45f);
+            float bh = barsPx * (h / 720f);
+            float ph = Mathf.Min(h - bh * 2f - 70f, 360f), pw = ph * 0.74f;
+            var left = new Rect(w * 0.5f - pw, (h - ph) * 0.5f, pw, ph);
+            var right = new Rect(w * 0.5f, (h - ph) * 0.5f, pw, ph);
+            Fill(new Rect(left.x - 10, left.y - 8, pw * 2f + 20, ph + 16), new Color(0.03f, 0.03f, 0.035f, a));       // the black cover
+            if (hand == null) hand = Resources.Load<Font>("Fonts/PermanentMarker-Regular");
+            var style = new GUIStyle(sub) { font = hand != null ? hand : sub.font, fontSize = Mathf.RoundToInt(ph * 0.042f), alignment = TextAnchor.MiddleLeft };
+            string[][] pages =
+            {
+                new[] { "03.02  K. ADLER  ·  the docks  ·  40  ·  V.", "17.04  R. MOSS  ·  Hotel Lark  ·  25  ·  V.", "09.06  T. VANCE  ·  his car  ·  30  ·  V.", "22.08  S. ORLOV  ·  the bridge  ·  50  ·  V.", "11.11  P. KANE  ·  the opera  ·  35  ·  V.", "30.12  M. HOLT  ·  at home  ·  20  ·  V." },
+                new[] { "14.01  D. GRAY  ·  the station  ·  45  ·  V.", "02.03  L. FINCH  ·  the casino  ·  60  ·  V.", "19.05  A. STROM  ·  the yard  ·  30  ·  V.", "28.07  J. LOWE  ·  his office  ·  40  ·  V.", "06.09  E. NASH  ·  the river  ·  25  ·  V.", "41 — I'M OUT." },
+            };
+            for (int side = 0; side < 2; side++)
+            {
+                var r = side == 0 ? left : right;
+                Fill(r, new Color(0.84f, 0.83f, 0.79f, a));
+                int pg = side == 0 ? 0 : 1;
+                if (side == 1 && bookPage < 0.5f) pg = 0;
+                for (int i = 0; i < 6; i++)
+                {
+                    Fill(new Rect(r.x + pw * 0.06f, r.y + ph * (0.14f + i * 0.13f) + ph * 0.06f, pw * 0.88f, 1f), new Color(0.6f, 0.6f, 0.62f, 0.5f * a));
+                    bool last = pages[pg][i].StartsWith("41");
+                    style.normal.textColor = last ? new Color(0.62f, 0.05f, 0.06f, a) : new Color(0.1f, 0.1f, 0.12f, a);
+                    if (side == 0 && pg == 0 || side == 1) GUI.Label(new Rect(r.x + pw * 0.07f, r.y + ph * (0.14f + i * 0.13f), pw * 0.9f, ph * 0.08f), pages[side == 0 ? 0 : (bookPage < 0.5f ? 0 : 1)][i], style);
+                }
+            }
+            // the page, turning
+            if (bookPage > 0.02f && bookPage < 0.98f)
+            {
+                float k = bookPage;
+                float x = Mathf.Lerp(right.xMax, left.x, k);
+                Fill(new Rect(Mathf.Min(x, w * 0.5f), right.y, Mathf.Abs(w * 0.5f - x), ph), new Color(0.92f, 0.91f, 0.88f, a));
+                Fill(new Rect(x - 2, right.y, 4, ph), new Color(0f, 0f, 0f, 0.25f * a));
+            }
+            Fill(new Rect(w * 0.5f - 1, left.y, 2, ph), new Color(0f, 0f, 0f, 0.4f * a));               // the spine
         }
     }
 }

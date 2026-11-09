@@ -22,8 +22,27 @@ import bpy  # noqa: E402
 rnd = random.Random(83)
 
 
+def wear(arm, bone, loc, size, g):
+    """A piece of his look on a bone (bone parenting: loc is from the bone's tail, y along it)."""
+    bpy.ops.mesh.primitive_cube_add(size=1)
+    o = bpy.context.object
+    o.scale = size
+    o.data.materials.append(F.flat(g))
+    o.parent = arm
+    o.parent_type = "BONE"
+    o.parent_bone = bone
+    o.location = loc
+    return o
+
+
 def voss(pose, at, facing=1):
-    return F.figure(pose, at=at, facing=facing, ink=0.09)
+    """VOSS (story_v2 §4): a long dark coat to the knees, silver hair, gloves."""
+    arm = F.figure(pose, at=at, facing=facing, ink=0.09)
+    wear(arm, "head", (0, -0.06, 0.0), (0.27, 0.12, 0.27), 0.78)          # the silver hair
+    wear(arm, "chest", (0, -0.02, 0.0), (0.36, 0.1, 0.27), 0.04)           # the coat's shoulders
+    wear(arm, "hips", (0, -0.34, 0.0), (0.34, 0.66, 0.26), 0.04)           # and its skirt, to the knees
+    bpy.context.view_layer.update()
+    return arm
 
 
 def v1_out():
@@ -60,6 +79,8 @@ def v3_blow():
     swing = B.pose(B.STRAIGHT, upperarm_R=150, forearm_R=120, hand_R=60, upperarm_L=60, forearm_L=90, chest=165)
     MY.thug(swing, (-0.45, 0.6, 0), facing=1)
     F.box((0.05, 0.55, 1.55), (0.7, 0.05, 0.05), F.flat(0.4), rot=(0, 0.7, 0))      # the pipe, coming down
+    walk = B.pose(B.STRAIGHT, thigh_L=25, shin_L=10, thigh_R=-15, shin_R=20, upperarm_L=-15, upperarm_R=15)
+    voss(walk, (1.6, 1.9, 0), facing=1)                                              # and him, walking away, not looking back
     F.camera((0.4, -2.8, 1.1), (0.0, 0.6, 1.05), 50, roll=-9)
 
 
