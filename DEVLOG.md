@@ -1259,3 +1259,8 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
   - The key: "What is this...? A key. Too small for a door... It's a locker key. Meridian Trust. A bank."
   - The decision: "Whoever I was... I locked something away there... Maybe the reason they want me dead. Then that's where I'm going."
 - **More of his lines through chapter 2:** at the mark, the street, Harrow ("Eleven years, sir. Paid in cash."), the passports, the ring ("Who is E...?"), the envelope, and walking out ("Elena... I'm coming home.").
+- **The bank, fixed after a look in the editor:**
+  - **The clerk was hidden.** The counter's glass had been baked as an opaque dark pane. It's now real clear glass (`CounterGlass`) with glints, and the bank's people are darker greys so they read against the pale stone.
+  - **The front doors:** the baked revolving door (an opaque block) is gone. Two glass leaves in bronze frames are locked overnight. The guard walks to them, turns the key, drops the floor bolt, pushes both leaves open and holds one. "Morning, sir." He follows the hero in to his post.
+  - **Box 417, by dual control, as a real bank does it:** Harrow's guard key in first, then the hero's key, "Together"; both keys are shown turning. Harrow draws the box out (the slot left empty), carries it in both hands to the viewing table and sets it down beside a bell. "Ring the bell when you're finished." Then he leaves him alone.
+  - The bank set was rebaked without the counter glass and the revolving door.

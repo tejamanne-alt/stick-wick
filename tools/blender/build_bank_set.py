@@ -190,7 +190,7 @@ def build_shell(coll, M):
     cx0, cx1, cy0, cy1 = COUNTER
     g.box(((cx0 + cx1) / 2, (cy0 + cy1) / 2, 0.55), (cx1 - cx0, cy1 - cy0, 1.1), M["wood_dark"])
     g.box(((cx0 + cx1) / 2, (cy0 + cy1) / 2, 1.13), (cx1 - cx0 + 0.1, cy1 - cy0 + 0.12, 0.06), M["stone"])
-    g.box(((cx0 + cx1) / 2, cy0 + 0.25, 1.85), (cx1 - cx0, 0.02, 1.4), M["glass"])
+    # (the glass itself is the game's own, transparent: StoryBank.BuildBankProps; the clerk is seen through it)
     x = cx0
     while x <= cx1 + 0.01:
         g.box((x, cy0 + 0.25, 1.85), (0.06, 0.06, 1.4), M["brass"])
@@ -304,10 +304,7 @@ def build_shell(coll, M):
     for y in (-1.25, 1.25):
         g.box((X0 - 0.42, y, 1.8), (0.12, 0.12, 3.6), M["brass"])
     g.box((X0 - 0.42, 0.0, 3.62), (0.12, 2.6, 0.12), M["brass"])
-    g.cyl((X0 - 0.2, 0.0, 3.4), 1.15, 0.12, M["brass"], n=32)
-    for k in range(3):                                                                          # its wings, stopped
-        a = k / 3 * math.pi + 0.4
-        g.box((X0 - 0.2, 0.0, 1.7), (2.2 * abs(math.cos(a)) + 0.04, 2.2 * abs(math.sin(a)) * 0.35 + 0.04, 3.2), M["glass"])
+    # (the doors are the game's own: glass double doors the guard unlocks and opens, StoryBank)
     return g.finish(coll)
 
 

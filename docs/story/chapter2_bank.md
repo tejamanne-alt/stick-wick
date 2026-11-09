@@ -34,15 +34,16 @@ The phone call is gone from here (see `story_arc.md`).
 |---|---|---|---|
 | B1 | High, wide, the street at dawn | Wet road, fog, the city waking. **CHAPTER 2 · THE BANK.** | Wind, drips, a far-off horn. |
 | B2 | **Match cut** | The key tag in his palm (full screen) dissolves to **the same mark carved in stone** above the bank's doors. | A low drone. |
-| B3 | Across the street | He stands under an awning in the coat. A guard unlocks the doors; the clock strikes nine. | Lock, chime. |
-| B4 | **Play** | **HOLD TO WALK**: across the street, up the steps, through the revolving door. | Footsteps on wet stone, then echoing on marble. |
+| B3 | Down the street | He stands under an awning in the coat; the clock strikes nine. **YOU:** *"Nine o'clock. They're opening."* | Chimes. |
+| B3b | Outside the glass doors | **The guard** walks through the lobby to the front doors (two glass leaves in bronze, locked overnight). He turns the key and drops the floor bolt, pushes both leaves out, and steps out holding one. **YOU:** *"If I've been here before... someone in there knows my face."* | Footsteps on marble, key, bolt, the doors. |
+| B4 | **Play**, then held | **HOLD TO WALK** to the doors. **GUARD:** *"Morning, sir."* He walks in; the guard follows him in and takes his post. | Footsteps on wet stone, then echoing on marble. |
 | B5 | Lobby, wide | Quiet. Two customers waiting. The guard by the door watches him pass. | Room tone; a pen; a cough. |
 | B6 | **Play** | Walk to the teller window. | |
 | B7 | Over his shoulder, through the glass | **CLERK:** *"Good morning. How can I help you?"* He slides the key under the glass. **YOU:** *"Box four-seventeen."* | |
 | B8 | Insert: her screen (only we see it) | **BOX 417 · HOLDER: ██████ · FLAG: NOTIFY ON ACCESS** blinking red. | A soft alert tone. |
 | B9 | Close, the clerk | Her smile is a beat too bright. **CLERK:** *"Of course. Mr. Harrow will take you down."* | |
 | B10 | Tracking, the corridor | **HARROW** (the manager) leads him through the barred gate (a buzz) to the vault's round door. **HARROW:** *"We haven't seen you in a long time, sir."* | Buzzer, footsteps, the vault's hum. |
-| B11 | Close, two keys | The bank's key and his, turning together in box 417. The long box slides out onto the table. **HARROW:** *"Take all the time you need."* He leaves; the door closes. | Two clicks, metal sliding. |
+| B11 | The wall of boxes; close on box 417's door | **Dual control, as a real bank does it:** they step up to the wall side by side. **HARROW:** *"Box four-seventeen. My key goes in first, sir... and then yours."* His guard key, then the hero's key. *"Together."* Both turn; the little door opens. Harrow draws out the long box, carries it in both hands to the table in the viewing booth and sets it down. The hero comes to the table; Harrow steps back. **HARROW:** *"Take all the time you need, sir. Ring the bell when you're finished."* **YOU:** *"Thank you."* Harrow leaves him alone (the bank never sees what's inside: he opens the lid himself). | Keys in, two clicks, metal sliding, the box set down. |
 | B12 | **Cut away: the lobby** | The clerk picks up a phone and turns away. **CLERK** (low): *"He's here. Box four-seventeen."* | |
 | B13 | Alone. **Play** | **TAP TO OPEN**: the lid. Inside: a velvet pouch, three passports, a thick envelope. | Hinge. |
 | B14 | Insert: the passports | Three passports, three names, **the same face**. He drops them back. | Paper. |

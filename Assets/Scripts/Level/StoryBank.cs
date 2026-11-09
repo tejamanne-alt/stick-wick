@@ -20,7 +20,10 @@ namespace ProjectInk
         static readonly Vector3 Box417 = new Vector3(37.25f, 1.45f, 2.72f);
 
         Enemy clerk, harrow, guard, waitA, waitB;
-        Transform depositBox, boxLid, pouch, ringOnHand, phoneProp, carDoor;
+        Transform depositBox, boxLid, pouch, ringOnHand, phoneProp, carDoor, doorL, doorR, bankKey, hisKey, emptySlot;
+
+        /// <summary>Where a box is when a man carries it in both hands before him.</summary>
+        static Vector3 CarriedBy(Enemy e) => e.transform.position + new Vector3(e.Facing * 0.36f, 0.95f, -0.08f);
         string tapTitle, tapHow;
         float tapAt = -1f;
         string walkTitle;
@@ -77,25 +80,75 @@ namespace ProjectInk
                 yield return null;
             }
 
-            // ------------------------------------------------------------ B3 down the street: nine o'clock, the doors open
+            // ------------------------------------------------------------ B3 down the street: nine o'clock
             Bell(3);
-            if (guard != null) { guard.PuppetPose(new Vector3(-0.9f, 0f, 0.9f)); guard.SetFacing(-1); }
-            Sound.PlayLater(Sfx.Latch, 1.6f, 0.8f, new Vector3(BankDoorX, 1f, 0f));
             yield return Hold(1.2f, () => EndShot(new Vector3(-23.2f, 1.5f, -2.4f), new Vector3(-6f, 2.4f, 0.8f), 40f));
             Say("YOU", "Nine o'clock. They're opening.", 2.0f);
             yield return Hold(2.2f, () => EndShot(new Vector3(-23.2f, 1.5f, -2.4f), new Vector3(-6f, 2.4f, 0.8f), 40f));
+
+            // ------------------------------------------------------------ B3b the guard comes to the glass doors, unlocks them, opens them
+            System.Action doorsShot = () => EndShot(new Vector3(-4.8f, 1.55f, -2.2f), new Vector3(-0.5f, 1.35f, 0.1f), 36f);
+            if (guard != null)
+            {
+                guard.PuppetPlay("walk", 0.1f, 0.85f);
+                guard.SetFacing(-1);
+                float tg = 0f;
+                while (tg < 2.2f)
+                {
+                    tg += Time.unscaledDeltaTime;
+                    guard.PuppetPose(Vector3.Lerp(new Vector3(3.2f, 0f, 0.4f), new Vector3(0.0f, 0f, 0.15f), Mathf.SmoothStep(0f, 1f, tg / 2.1f)));
+                    if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.55f; Sound.Play(Sfx.Footstep, 0.3f, guard.transform.position, 1.1f); }
+                    doorsShot();
+                    yield return null;
+                }
+                guard.PuppetPlay("idle_loose", 0.15f);
+                // keys from his belt, into the lock: the key turns, the bolt drops
+                Sound.Play(Sfx.KnifeGrab, 0.3f, new Vector3(-0.6f, 1.1f, 0f), 1.6f);
+                guard.PuppetPlay("cross", 0.12f, 0.3f);
+                yield return Hold(0.7f, doorsShot);
+                Sound.Play(Sfx.Latch, 0.8f, new Vector3(-0.6f, 1.1f, 0f), 1.3f);
+                yield return Hold(0.5f, doorsShot);
+                Sound.Play(Sfx.Latch, 0.7f, new Vector3(-0.6f, 0.2f, 0f), 0.9f);       // the floor bolt
+                yield return Hold(0.4f, doorsShot);
+                // he pushes both leaves out and steps out onto the step, holding one
+                guard.PuppetPlay("walk", 0.1f, 0.7f);
+                Sound.Play(Sfx.Door, 0.6f, new Vector3(-0.6f, 1f, 0f), 1.0f);
+                float tdo = 0f;
+                while (tdo < 1.4f)
+                {
+                    tdo += Time.unscaledDeltaTime;
+                    float k = Mathf.SmoothStep(0f, 1f, tdo / 1.2f);
+                    if (doorL != null) doorL.localRotation = Quaternion.Euler(0f, -78f * k, 0f);
+                    if (doorR != null) doorR.localRotation = Quaternion.Euler(0f, 78f * k, 0f);
+                    guard.PuppetPose(Vector3.Lerp(new Vector3(0.0f, 0f, 0.15f), new Vector3(-1.25f, 0f, 1.55f), k));
+                    doorsShot();
+                    yield return null;
+                }
+                guard.SetFacing(-1);
+                guard.PuppetPlay("idle", 0.2f);
+            }
             Say("YOU", "If I've been here before... someone in there knows my face.", 2.8f);
             yield return Hold(3.0f, () => EndShot(HeadC() + new Vector3(0.5f, 0.0f, -1.2f), HeadC(), 32f));
 
-            // ------------------------------------------------------------ B4 play: walk to the doors
-            if (guard != null) { guard.PuppetPose(new Vector3(1.8f, 0f, 1.4f)); guard.SetFacing(-1); }
-            yield return PlayerWalk(-1.2f, StreetLo(), 2.5f, Application.isMobilePlatform ? "HOLD THE RIGHT SIDE TO WALK" : "HOLD  D  OR  RIGHT ARROW  TO WALK");
-            // through the revolving door: the street's air gives way to the hush of marble
-            Sound.Play(Sfx.Door, 0.6f, new Vector3(0f, 1f, 0f), 0.8f);
-            Sound.Play(Sfx.WhooshBig, 0.25f, null, 0.6f);
-            Sound.Ambience(0.03f, 0.75f, 5000f);
+            // ------------------------------------------------------------ B4 play: walk to the doors; the guard's good morning
+            yield return PlayerWalk(-2.0f, StreetLo(), 2.5f, Application.isMobilePlatform ? "HOLD THE RIGHT SIDE TO WALK" : "HOLD  D  OR  RIGHT ARROW  TO WALK");
             hero.CinePuppet();
-            yield return PuppetWalk(2.2f, 1.6f, () => EndShot(new Vector3(3.6f, 1.7f, -1.4f), hero.transform.position + Vector3.up * 1.2f, 40f));
+            Say("GUARD", "Morning, sir.", 1.6f, HeadT(guard));
+            yield return Hold(1.7f, () => EndShot(new Vector3(-2.6f, 1.6f, -2.0f), new Vector3(-1.5f, 1.3f, 0.8f), 36f));
+            // in through the open doors: the street's air gives way to the hush of marble
+            Sound.Play(Sfx.Footstep, 0.5f, null, 1.0f);
+            Sound.Ambience(0.03f, 0.75f, 5000f);
+            yield return PuppetWalk(2.2f, 2.2f, () =>
+            {
+                if (guard != null && hero.transform.position.x > 0.2f)
+                {
+                    guard.SetFacing(1);
+                    if (guard.body.CurrentName != "walk") guard.PuppetPlay("walk", 0.1f, 0.8f);
+                    guard.PuppetPose(Vector3.MoveTowards(guard.transform.position, new Vector3(1.8f, 0f, 1.4f), Time.unscaledDeltaTime * 1.6f));
+                }
+                EndShot(new Vector3(3.6f, 1.7f, -1.4f), hero.transform.position + Vector3.up * 1.2f, 40f);
+            });
+            if (guard != null) { guard.PuppetPose(new Vector3(1.8f, 0f, 1.4f)); guard.PuppetPlay("idle", 0.2f); }
 
             // ------------------------------------------------------------ B5 the lobby, wide; the guard watches him pass
             if (guard != null) guard.FaceTowards(hero.transform.position.x);
@@ -184,55 +237,136 @@ namespace ProjectInk
             Say("YOU", "...Of course I did.", 1.8f);
             yield return Hold(2.0f, twoShot);
 
-            // ------------------------------------------------------------ B11 two keys; the long box comes out
-            if (harrow != null)
+            // ------------------------------------------------------------ B11 two keys: the bank's and his (dual control)
+            // they step up to the wall of boxes, side by side
             {
-                harrow.PuppetPlay("walk", 0.1f, 0.8f);
+                var hFrom = hero.transform.position;
+                var mFrom = harrow != null ? harrow.transform.position : Vector3.zero;
+                var hTo = new Vector3(Box417.x - 0.55f, 0f, 2.05f);
+                var mTo = new Vector3(Box417.x + 0.5f, 0f, 2.05f);
+                if (hero.body.Has("walk")) hero.body.Play("walk", 0.2f, true, 0.8f);
+                if (harrow != null) { harrow.SetFacing(-1); harrow.PuppetPlay("walk", 0.1f, 0.8f); }
                 float tb = 0f;
-                var from = harrow.transform.position;
-                while (tb < 1.2f)
+                while (tb < 1.6f)
                 {
                     tb += Time.unscaledDeltaTime;
-                    harrow.PuppetPose(Vector3.Lerp(from, new Vector3(Box417.x + 0.5f, 0f, 1.9f), Mathf.SmoothStep(0f, 1f, tb / 1.2f)));
-                    EndShot(new Vector3(Box417.x - 0.2f, 1.6f, -0.6f), new Vector3(Box417.x, 1.4f, 2.6f), 42f);
+                    float k = Mathf.SmoothStep(0f, 1f, tb / 1.5f);
+                    hero.CinePose(Vector3.Lerp(hFrom, hTo, k));
+                    if (harrow != null) harrow.PuppetPose(Vector3.Lerp(mFrom, mTo, k));
+                    EndShot(new Vector3(Box417.x, 1.7f, -0.7f), new Vector3(Box417.x, 1.35f, 2.6f), 44f);
                     yield return null;
                 }
-                harrow.SetFacing(-1);
-                harrow.PuppetPlay("idle", 0.2f);
+                hero.SetFacing(1);
+                if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.2f);
+                if (harrow != null) { harrow.SetFacing(-1); harrow.PuppetPlay("idle_loose", 0.2f); }
             }
-            System.Action keysShot = () => EndShot(Box417 + new Vector3(-0.35f, 0.08f, -0.75f), Box417, 26f);
-            yield return Hold(0.6f, keysShot);
-            Sound.Play(Sfx.Latch, 0.7f, Box417, 1.5f);                     // the bank's key
-            yield return Hold(0.6f, keysShot);
-            Sound.Play(Sfx.Latch, 0.8f, Box417, 1.35f);                    // and his
+            System.Action wallShot = () => EndShot(new Vector3(Box417.x, 1.65f, 0.4f), new Vector3(Box417.x, 1.35f, 2.6f), 40f);
+            System.Action keysShot = () => EndShot(Box417 + new Vector3(-0.25f, 0.06f, -0.62f), Box417 + new Vector3(0f, 0f, 0.05f), 24f);
+            Say("HARROW", "Box four-seventeen. My key goes in first, sir...", 2.6f, HeadT(harrow));
+            yield return Hold(1.4f, wallShot);
+            if (bankKey != null) bankKey.gameObject.SetActive(true);
+            Sound.Play(Sfx.KnifeGrab, 0.4f, Box417, 1.7f);
+            yield return Hold(1.3f, keysShot);
+            Say("HARROW", "...and then yours.", 1.6f, HeadT(harrow));
+            yield return Hold(1.0f, keysShot);
+            if (hisKey != null) hisKey.gameObject.SetActive(true);
+            Sound.Play(Sfx.KnifeGrab, 0.45f, Box417, 1.55f);
+            yield return Hold(1.0f, keysShot);
+            Say("HARROW", "Together.", 1.2f, HeadT(harrow));
             yield return Hold(0.5f, keysShot);
-            // the box slides out of the wall and is set on the table
-            Sound.Play(Sfx.KnifeGrab, 0.6f, Box417, 0.7f);
-            float ts = 0f;
-            var tableAt = new Vector3(TableX, TableY + 0.13f, TableZ);
-            while (ts < 2.0f)
+            float tk = 0f;
+            while (tk < 0.45f)
             {
-                ts += Time.unscaledDeltaTime;
-                float k = Mathf.SmoothStep(0f, 1f, ts / 2f);
-                var p = k < 0.45f ? Vector3.Lerp(Box417 + Vector3.back * 0.1f, Box417 + Vector3.back * 0.75f, k / 0.45f)
-                                  : Vector3.Lerp(Box417 + Vector3.back * 0.75f, tableAt, (k - 0.45f) / 0.55f);
-                if (depositBox != null) depositBox.position = p;
-                EndShot(new Vector3(TableX - 1.6f, 1.8f, -1.6f), Vector3.Lerp(Box417, tableAt, k), 40f);
+                tk += Time.unscaledDeltaTime;
+                float k = Mathf.SmoothStep(0f, 1f, tk / 0.4f);
+                if (bankKey != null) bankKey.localRotation = Quaternion.Euler(0f, 0f, -90f * k);
+                if (hisKey != null) hisKey.localRotation = Quaternion.Euler(0f, 0f, -90f * k);
+                keysShot();
                 yield return null;
             }
+            Sound.Play(Sfx.Latch, 0.8f, Box417, 1.45f);
+            Sound.Play(Sfx.Latch, 0.6f, Box417, 1.2f);
+            yield return Hold(0.6f, keysShot);
+            // the little door swings, and Harrow draws the long box out of the wall
+            Sound.Play(Sfx.KnifeGrab, 0.6f, Box417, 0.7f);
+            if (harrow != null) harrow.PuppetPlay("cross", 0.1f, 0.4f);
+            var slotIn = Box417 + new Vector3(0f, 0f, 0.33f);
+            var slotOut = Box417 + new Vector3(0f, 0f, -0.36f);
+            float tp = 0f;
+            while (tp < 1.0f)
+            {
+                tp += Time.unscaledDeltaTime;
+                if (depositBox != null) depositBox.position = Vector3.Lerp(slotIn, slotOut, Mathf.SmoothStep(0f, 1f, tp / 0.95f));
+                EndShot(new Vector3(Box417.x - 0.6f, 1.55f, 0.6f), Box417 + new Vector3(0.1f, -0.05f, -0.2f), 34f);
+                yield return null;
+            }
+            if (bankKey != null) bankKey.gameObject.SetActive(false);
+            if (hisKey != null) hisKey.gameObject.SetActive(false);
+            if (emptySlot != null) emptySlot.gameObject.SetActive(true);
+            // he carries it, both hands, to the table in the viewing booth, and sets it down
+            var tableAt = new Vector3(TableX, TableY + 0.13f, TableZ);
+            if (harrow != null)
+            {
+                harrow.SetFacing(1);
+                harrow.PuppetPlay("walk", 0.1f, 0.7f);
+                var mFrom = harrow.transform.position;
+                var mTo = new Vector3(TableX - 0.62f, 0f, TableZ);
+                float tc = 0f;
+                while (tc < 2.0f)
+                {
+                    tc += Time.unscaledDeltaTime;
+                    float k = Mathf.SmoothStep(0f, 1f, tc / 1.9f);
+                    harrow.PuppetPose(Vector3.Lerp(mFrom, mTo, k));
+                    if (depositBox != null) depositBox.position = Vector3.Lerp(slotOut, CarriedBy(harrow), Mathf.Clamp01(tc / 0.4f));
+                    EndShot(new Vector3(TableX - 1.4f, 1.7f, -1.9f), harrow.transform.position + new Vector3(0.4f, 1.0f, 0f), 40f);
+                    yield return null;
+                }
+                harrow.PuppetPlay("idle_loose", 0.15f);
+                var held = depositBox != null ? depositBox.position : tableAt;
+                float td = 0f;
+                while (td < 0.7f)
+                {
+                    td += Time.unscaledDeltaTime;
+                    if (depositBox != null) depositBox.position = Vector3.Lerp(held, tableAt, Mathf.SmoothStep(0f, 1f, td / 0.6f));
+                    EndShot(new Vector3(TableX - 1.4f, 1.7f, -1.9f), tableAt + Vector3.up * 0.2f, 38f);
+                    yield return null;
+                }
+            }
+            else if (depositBox != null) depositBox.position = tableAt;
             Sound.Play(Sfx.Crate, 0.35f, tableAt, 1.4f);
-            Say("HARROW", "Take all the time you need.", 2.2f, HeadT(harrow));
-            yield return Hold(2.2f, () => EndShot(new Vector3(TableX - 1.6f, 1.8f, -1.6f), tableAt + Vector3.up * 0.3f, 40f));
+            // the hero comes to the table; Harrow steps back
+            hero.SetFacing(1);
+            if (hero.body.Has("walk")) hero.body.Play("walk", 0.2f, true, 0.8f);
+            {
+                var hFrom = hero.transform.position;
+                var mFrom = harrow != null ? harrow.transform.position : Vector3.zero;
+                float tw2 = 0f;
+                while (tw2 < 1.4f)
+                {
+                    tw2 += Time.unscaledDeltaTime;
+                    float k = Mathf.SmoothStep(0f, 1f, tw2 / 1.3f);
+                    hero.CinePose(Vector3.Lerp(hFrom, new Vector3(TableX - 0.85f, 0f, 0f), k));
+                    if (harrow != null) harrow.PuppetPose(Vector3.Lerp(mFrom, new Vector3(TableX + 1.1f, 0f, 0.6f), k));
+                    EndShot(new Vector3(TableX - 1.6f, 1.8f, -1.6f), tableAt + Vector3.up * 0.3f, 40f);
+                    yield return null;
+                }
+                if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.2f);
+                if (harrow != null) { harrow.SetFacing(-1); harrow.PuppetPlay("idle_loose", 0.2f); }
+            }
+            Say("HARROW", "Take all the time you need, sir. Ring the bell when you're finished.", 3.0f, HeadT(harrow));
+            yield return Hold(3.2f, () => EndShot(new Vector3(TableX - 1.6f, 1.8f, -1.6f), tableAt + Vector3.up * 0.3f, 40f));
+            Say("YOU", "Thank you.", 1.2f);
+            yield return Hold(1.2f, () => EndShot(new Vector3(TableX - 1.6f, 1.8f, -1.6f), tableAt + Vector3.up * 0.3f, 40f));
             if (harrow != null)
             {
                 harrow.SetFacing(-1);
                 harrow.PuppetPlay("walk", 0.1f, 0.9f);
                 var from = harrow.transform.position;
                 float tl = 0f;
-                while (tl < 1.8f)
+                while (tl < 2.2f)
                 {
                     tl += Time.unscaledDeltaTime;
-                    harrow.PuppetPose(Vector3.Lerp(from, new Vector3(VaultX - 1.5f, 0f, 0.4f), tl / 1.8f));
+                    harrow.PuppetPose(Vector3.Lerp(from, new Vector3(VaultX - 1.5f, 0f, 1.0f), tl / 2.2f));
                     EndShot(new Vector3(TableX + 1.4f, 1.6f, -1.8f), new Vector3(VaultX + 1f, 1.4f, 0.4f), 44f);
                     yield return null;
                 }
@@ -398,11 +532,11 @@ namespace ProjectInk
                 return e;
             }
             // civilians are greys (only fighters carry colour in this world)
-            clerk = Person(new Vector3(TellerX, 0f, ClerkZ), -1, new Color(0.42f, 0.42f, 0.43f), "idle_loose");
-            harrow = Person(new Vector3(24.5f, 0f, 0.3f), -1, new Color(0.26f, 0.26f, 0.27f), "idle_loose");
-            guard = Person(new Vector3(-0.9f, 0f, 3.5f), -1, new Color(0.1f, 0.1f, 0.11f), "idle");
-            waitA = Person(new Vector3(3.0f, 0f, 7.6f), 1, new Color(0.55f, 0.55f, 0.56f), "idle_loose");
-            waitB = Person(new Vector3(8.6f, 0f, 7.7f), -1, new Color(0.34f, 0.34f, 0.35f), "idle_loose");
+            clerk = Person(new Vector3(TellerX, 0f, ClerkZ), -1, new Color(0.2f, 0.2f, 0.22f), "idle_loose");
+            harrow = Person(new Vector3(24.5f, 0f, 0.3f), -1, new Color(0.3f, 0.3f, 0.32f), "idle_loose");
+            guard = Person(new Vector3(3.2f, 0f, 0.4f), -1, new Color(0.08f, 0.08f, 0.1f), "idle");
+            waitA = Person(new Vector3(3.0f, 0f, 7.6f), 1, new Color(0.24f, 0.24f, 0.26f), "idle_loose");
+            waitB = Person(new Vector3(8.6f, 0f, 7.7f), -1, new Color(0.34f, 0.34f, 0.36f), "idle_loose");
         }
 
         static Transform HeadT(Enemy e) => e != null && e.body != null ? (e.body.Bone("head") ?? e.transform) : null;
@@ -445,7 +579,7 @@ namespace ProjectInk
             }
             // box 417: a long steel box with a hinged lid; inside, three passports, a velvet pouch, an envelope
             depositBox = new GameObject("Box417").transform;
-            depositBox.position = Box417 + Vector3.back * 0.1f;
+            depositBox.position = Box417 + new Vector3(0f, 0f, 0.33f);        // in the wall, its face flush with the others
             var steel = new Color(0.32f, 0.33f, 0.34f);
             Part(depositBox, "Bottom", new Vector3(0f, -0.12f, 0f), new Vector3(0.46f, 0.02f, 0.62f), steel);
             Part(depositBox, "SideL", new Vector3(-0.22f, 0f, 0f), new Vector3(0.02f, 0.24f, 0.62f), steel);
@@ -461,6 +595,68 @@ namespace ProjectInk
                 Part(depositBox, "Passport", new Vector3(-0.1f + i * 0.015f, -0.1f + i * 0.008f, 0.12f), new Vector3(0.09f, 0.006f, 0.13f), new Color(0.07f + i * 0.02f, 0.07f, 0.075f));
             pouch = Part(depositBox, "Pouch", new Vector3(0.1f, -0.08f, 0.1f), new Vector3(0.09f, 0.05f, 0.11f), new Color(0.04f, 0.04f, 0.045f));
             Part(depositBox, "Envelope", new Vector3(0f, -0.105f, -0.12f), new Vector3(0.3f, 0.01f, 0.18f), new Color(0.82f, 0.81f, 0.78f));
+            // the two keys in box 417's door (the bank's guard key, his key), shown when they go in
+            Transform Key(string n, Vector3 at)
+            {
+                var k = new GameObject(n).transform;
+                k.position = at;
+                Part(k, "Bow", new Vector3(0f, 0.035f, -0.03f), new Vector3(0.05f, 0.05f, 0.008f), new Color(0.82f, 0.81f, 0.76f));
+                Part(k, "Shank", new Vector3(0f, 0f, -0.012f), new Vector3(0.012f, 0.05f, 0.03f), new Color(0.82f, 0.81f, 0.76f));
+                k.gameObject.SetActive(false);
+                return k;
+            }
+            bankKey = Key("BankKey", Box417 + new Vector3(-0.1f, -0.02f, -0.02f));
+            hisKey = Key("HisKey", Box417 + new Vector3(0.1f, -0.02f, -0.02f));
+            emptySlot = Part(new GameObject("EmptySlot").transform, "Hole", Box417 + new Vector3(0f, 0f, -0.035f), new Vector3(0.47f, 0.29f, 0.01f), new Color(0.02f, 0.02f, 0.025f));
+            emptySlot.parent.gameObject.SetActive(true);
+            emptySlot.gameObject.SetActive(false);
+            // the bell on the viewing table
+            var bell = new GameObject("TableBell").transform;
+            bell.position = new Vector3(TableX + 0.75f, TableY + 0.02f, TableZ + 0.25f);
+            Part(bell, "Base", new Vector3(0f, 0.01f, 0f), new Vector3(0.1f, 0.02f, 0.1f), new Color(0.12f, 0.12f, 0.13f));
+            Part(bell, "Dome", new Vector3(0f, 0.05f, 0f), new Vector3(0.08f, 0.06f, 0.08f), new Color(0.82f, 0.81f, 0.76f));
+
+            // the front doors: two glass leaves in bronze frames, locked overnight; they swing out
+            var glassMat = new Material(Shader.Find("Sprites/Default")) { color = new Color(0.78f, 0.8f, 0.84f, 0.22f) };
+            var bronze = new Color(0.5f, 0.49f, 0.45f);
+            Transform Leaf(string n, float hingeZ, float dir)
+            {
+                var hinge = new GameObject(n).transform;
+                hinge.position = new Vector3(-0.6f, 0f, hingeZ);
+                float w = 1.16f;
+                var pane = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                Destroy(pane.GetComponent<Collider>());
+                pane.transform.SetParent(hinge, false);
+                pane.transform.localPosition = new Vector3(0f, 1.6f, dir * w * 0.5f);
+                pane.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+                pane.transform.localScale = new Vector3(w, 3.1f, 1f);
+                pane.GetComponent<Renderer>().material = glassMat;
+                Part(hinge, "Stile", new Vector3(0f, 1.6f, 0.02f * dir), new Vector3(0.06f, 3.2f, 0.06f), bronze);
+                Part(hinge, "StileOut", new Vector3(0f, 1.6f, dir * (w - 0.03f)), new Vector3(0.06f, 3.2f, 0.06f), bronze);
+                Part(hinge, "Rail", new Vector3(0f, 0.06f, dir * w * 0.5f), new Vector3(0.06f, 0.12f, w), bronze);
+                Part(hinge, "Top", new Vector3(0f, 3.15f, dir * w * 0.5f), new Vector3(0.06f, 0.08f, w), bronze);
+                Part(hinge, "PushBar", new Vector3(-0.05f, 1.05f, dir * w * 0.55f), new Vector3(0.04f, 0.04f, w * 0.7f), new Color(0.75f, 0.74f, 0.7f));
+                return hinge;
+            }
+            doorL = Leaf("FrontDoorL", -1.2f, 1f);
+            doorR = Leaf("FrontDoorR", 1.2f, -1f);
+            // the teller counter's glass, clear: the clerk is seen through it
+            var counterGlass = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Destroy(counterGlass.GetComponent<Collider>());
+            counterGlass.name = "CounterGlass";
+            counterGlass.transform.position = new Vector3(17.5f, 1.85f, 1.95f);
+            counterGlass.transform.localScale = new Vector3(11f, 1.4f, 1f);
+            counterGlass.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default")) { color = new Color(0.8f, 0.82f, 0.86f, 0.14f) };
+            for (int i = 0; i < 3; i++)                                               // a few glints across it
+            {
+                var gl = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                Destroy(gl.GetComponent<Collider>());
+                gl.transform.position = new Vector3(13.2f + i * 3.6f, 1.95f, 1.94f);
+                gl.transform.rotation = Quaternion.Euler(0f, 0f, -30f);
+                gl.transform.localScale = new Vector3(0.08f, 1.1f, 1f);
+                gl.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default")) { color = new Color(1f, 1f, 1f, 0.18f) };
+            }
+
             // the car across the road: its driver's door, which will open
             carDoor = new GameObject("CarDoorHinge").transform;
             carDoor.position = new Vector3(-6.0f + 1.0f, 0.65f, -25.75f);
