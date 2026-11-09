@@ -35,9 +35,9 @@ namespace ProjectInk
             for (int i = 0; i < 4; i++)                                                                  // ruled lines
                 Fill(new Rect(r.x + nw * 0.06f, r.y + nh * (0.3f + i * 0.17f), nw * 0.88f, 1f), new Color(0.7f, 0.7f, 0.72f, 0.6f * a));
             if (noteHand == null) noteHand = Resources.Load<Font>("Fonts/PermanentMarker-Regular");
-            var style = new GUIStyle(sub) { font = noteHand != null ? noteHand : sub.font, fontSize = Mathf.RoundToInt(nh * 0.11f), alignment = TextAnchor.MiddleLeft, wordWrap = true };
+            var style = new GUIStyle(sub) { font = noteHand != null ? noteHand : sub.font, fontSize = Mathf.RoundToInt(nh * 0.095f), alignment = TextAnchor.MiddleLeft, wordWrap = true };
             style.normal.textColor = new Color(0.1f, 0.1f, 0.12f, a);
-            GUI.Label(new Rect(r.x + nw * 0.08f, r.y + nh * 0.08f, nw * 0.86f, nh * 0.84f), "Get what's in 417 before the contract closes.\nThen finish him.", style);
+            GUI.Label(new Rect(r.x + nw * 0.08f, r.y + nh * 0.08f, nw * 0.86f, nh * 0.84f), "Only his hand opens 417.\nKeep him alive till nine.\nGet the book.\nThen finish him.\n\n                    \u2014 V.", style);
             GUI.matrix = m;
         }
 

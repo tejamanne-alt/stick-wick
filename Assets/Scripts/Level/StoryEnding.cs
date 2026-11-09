@@ -117,7 +117,7 @@ namespace ProjectInk
             if (boss != null) boss.SetBaseColor(new Color(0.02f, 0.02f, 0.025f));       // the light takes his colour away
             yield return Hold(1.4f, wide);
 
-            Say("YOU", "Why are you trying to kill me?", 2.4f);
+            Say("YOU", "What do you want from me?", 2.4f);
             Sound.Play(Sfx.Heartbeat, 0.6f);
             yield return Hold(2.4f, wide);
             if (boss != null) Sound.Play(Sfx.BruteLaugh, 0.55f, boss.Chest, 0.8f);
@@ -126,9 +126,13 @@ namespace ProjectInk
             Say("YOU", "Tell me who I am. WHO SENT YOU?", 2.4f);
             Sound.Play(Sfx.Tinnitus, 0.25f);
             yield return Hold(2.4f, close);
-            Say("THE FOREMAN", "Nobody had to send us. Five million reasons, friend.", 3.0f);
+            Say("THE FOREMAN", "The old man wants his book back. Nine o'clock, you open a box for him.", 3.4f);
             Sound.Play(Sfx.Heartbeat, 0.8f);
-            yield return Hold(3.0f, close);
+            yield return Hold(3.4f, close);
+            Say("YOU", "What book? What old man?", 2.0f);
+            yield return Hold(2.0f, wide);
+            Say("THE FOREMAN", "...You really are empty.", 2.2f);
+            yield return Hold(2.4f, close);
 
             // ---------------------------------------------------------------- 4a the draw: his hand, going under the jacket (only we see it)
             heartBpm = 62f; nextBeat = Time.unscaledTime;
@@ -172,7 +176,7 @@ namespace ProjectInk
 
             // ---------------------------------------------------------------- 4d the hammer: the gun in profile against the light
             Sound.Play(Sfx.GunCock, 1f);
-            Say("THE FOREMAN", "Nothing personal.", 1.9f);
+            Say("THE FOREMAN", "He wanted you breathing till nine. I'll tell him you didn't make it.", 2.6f);
             heartBpm = 120f;
             yield return Hold(1.6f, () =>
             {
@@ -365,7 +369,15 @@ namespace ProjectInk
             if (hero.body.Has("kneel_hold")) hero.body.Play("kneel_hold", 0.35f);
             Sound.Play(Sfx.Cloth, 0.9f);
             yield return Hold(1.0f, overBody);
-            // the outer pockets
+            // the outer pockets: he searches (the player taps the coat)
+            {
+                var coat = new Vector3(landX - 0.05f, 0.3f, -0.1f);
+                bool shot = true;
+                System.Action hold = () => { if (shot) handsShot(); };
+                StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, handsShot));
+                yield return TapThings(new[] { coat }, new[] { "HIS COAT" }, i => null);
+                shot = false;
+            }
             Sound.Play(Sfx.Cloth, 0.8f, null, 1.15f);
             yield return Hold(1.0f, handsShot);
             Say("YOU", "Cigarettes... a lighter. Nothing.", 2.2f);
@@ -383,7 +395,11 @@ namespace ProjectInk
             Sound.Play(Sfx.Cloth, 0.9f, null, 1.1f);
             Sound.Play(Sfx.KnifeGrab, 0.35f, null, 1.6f);                  // metal, and folded paper
             Say("YOU", "Inside pocket... wait.", 1.8f);
-            yield return Hold(2.0f, handsShot);
+            yield return Hold(1.2f, handsShot);
+            {
+                StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, handsShot));
+                yield return TapThings(new[] { new Vector3(landX + 0.05f, 0.34f, -0.12f) }, new[] { "INSIDE POCKET" }, i => null);
+            }
 
             // ---------------------------------------------------------------- 11 the key: his
             ShowKey(true);
@@ -405,33 +421,42 @@ namespace ProjectInk
 
             // ---------------------------------------------------------------- 12 and his orders
             yield return Hold(0.5f, handsShot);
-            Sound.Play(Sfx.Cloth, 0.5f, null, 1.7f);                       // paper unfolding
+            // the player unfolds it
+            StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, handsShot));
+            yield return DragTo("UNFOLD IT", Vector2.down, p => { if (p > 0.5f && noteUiTarget < 0.5f) { ShowNote(true); Sound.Play(Sfx.Cloth, 0.5f, null, 1.7f); } });
             ShowNote(true);
             Sound.Play(Sfx.Drone, 0.35f);
             yield return Hold(1.0f, handsShot);
-            Say("YOU", "\"Get what's in four-seventeen...\"", 2.2f);
-            yield return Hold(2.4f, handsShot);
-            Say("YOU", "\"...before the contract closes. Then finish him.\"", 2.8f);
+            Say("YOU", "\"Only his hand opens four-one-seven.\"", 2.4f);
+            yield return Hold(2.6f, handsShot);
+            Say("YOU", "\"Keep him alive till nine. Get the book.\"", 2.6f);
+            yield return Hold(2.8f, handsShot);
+            Say("YOU", "\"Then finish him.\"", 1.8f);
             Sound.Play(Sfx.Heartbeat, 0.8f);
-            yield return Hold(3.2f, handsShot);
+            yield return Hold(2.2f, handsShot);
+            Say("YOU", "...\"V.\"", 1.6f);
+            Sound.Play(Sfx.Piano, 0.4f, null, 0.8f);
+            yield return Hold(2.0f, handsShot);
             ShowNote(false);
 
             // ---------------------------------------------------------------- 13 so that's why
             Say("YOU", "So that's why I'm still breathing.", 2.2f);
             yield return Hold(2.4f, () => EndShot(HeadC() + new Vector3(0.6f, 0.05f, -1.4f), HeadC(), 32f));
-            Say("YOU", "They didn't want me dead. Not yet.", 2.2f);
-            yield return Hold(2.4f, () => EndShot(HeadC() + new Vector3(0.5f, 0.02f, -1.2f), HeadC(), 30f));
-            Say("YOU", "They wanted what's in that box.", 2.2f);
-            yield return Hold(2.4f, () => EndShot(HeadC() + new Vector3(0.45f, 0.0f, -1.05f), HeadC(), 28f));
+            Say("YOU", "Only my hand opens it. They need me alive until nine.", 3.0f);
+            yield return Hold(3.2f, () => EndShot(HeadC() + new Vector3(0.5f, 0.02f, -1.2f), HeadC(), 30f));
+            Say("YOU", "A book... What did I write down that's worth all this?", 3.0f);
+            yield return Hold(3.2f, () => EndShot(HeadC() + new Vector3(0.45f, 0.0f, -1.05f), HeadC(), 28f));
+            Say("YOU", "And who the hell is V?", 2.2f);
+            yield return Hold(2.4f, () => EndShot(HeadC() + new Vector3(0.4f, -0.02f, -0.95f), HeadC(), 27f));
 
             // ---------------------------------------------------------------- 14 the decision: he stands
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.6f);
             Sound.Play(Sfx.Cloth, 0.7f);
             yield return Hold(1.0f, () => EndShot(new Vector3(landX - 2.4f, 0.4f, -1.8f), HeadC() + Vector3.down * 0.2f, 36f));     // low, as he rises over the body
-            Say("YOU", "Whoever sent you is going after it.", 2.4f);
-            yield return Hold(2.6f, () => EndShot(HeadC() + new Vector3(0.4f, -0.05f, -0.9f), HeadC(), 28f));
+            Say("YOU", "Whoever V is, he'll be waiting at that bank at nine.", 2.8f);
+            yield return Hold(3.0f, () => EndShot(HeadC() + new Vector3(0.4f, -0.05f, -0.9f), HeadC(), 28f));
             Sound.Play(Sfx.Thunder, 0.6f);
-            Say("YOU", "Then I'll get there first.", 2.2f);
+            Say("YOU", "If my hand opens it... then I'll open it first.", 2.8f);
             yield return Hold(2.6f, () => EndShot(HeadC() + new Vector3(0.32f, -0.05f, -0.75f), HeadC(), 26f));
 
             // ---------------------------------------------------------------- 12 wide, high: small in the empty hall
@@ -926,6 +951,13 @@ namespace ProjectInk
             sub.normal.textColor = new Color(1f, 1f, 1f, Mathf.Clamp01((t - 2.8f) / 0.8f));
             GUI.Label(new Rect(0, h * 0.36f + 140, w, 40), "\u201C" + cardLine + "\u201D", sub);
             cap.alignment = TextAnchor.MiddleLeft;
+        }
+    
+        /// <summary>Keep a shot running while a story prompt waits for the player.</summary>
+        IEnumerator HoldWhile(System.Func<bool> cond, System.Action frame)
+        {
+            yield return null;
+            while (cond()) { frame(); yield return null; }
         }
     }
 }

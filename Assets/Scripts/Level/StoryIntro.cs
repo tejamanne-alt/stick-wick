@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -150,8 +151,10 @@ namespace ProjectInk
             switch (phase)
             {
                 case Phase.Cinematic:
-                    prevT = t; t += dt / Pace;
+                    prevT = t;
+                    if (!OpeningGate()) t += dt / Pace;
                     Cinematic();
+                    UpdateTies();
                     break;
                 case Phase.Walk: UpdateWalk(); break;
                 case Phase.Escape:
@@ -776,8 +779,9 @@ namespace ProjectInk
                     float k = Mathf.InverseLerp(2.4f, 0.4f, men[i].transform.position.z);
                     men[i].SetBaseColor(Color.Lerp(new Color(0.015f, 0.015f, 0.02f), menColor[i], k * k));
                 }
-            if (AtB(2.7f)) Say("YOU", "Wait... who are you?", 1.25f);
-            if (AtB(4.0f)) Say("THUG", "He's awake. Finish it.", 1.5f);
+            if (AtB(2.5f)) Say("YOU", "Wait... who are you?", 1.1f);
+            if (AtB(3.4f)) Say("THUG", "He's awake. Easy... boss wants him breathing.", 1.6f);
+            if (AtB(4.9f)) Say("THUG", "Put him back in the chair.", 1.4f);
 
             // the camera: hero and door together, then back to the fight view
             if (cam != null)
@@ -958,6 +962,7 @@ namespace ProjectInk
             if (chapter == 6) FortressGUI(w, h);
             EndingGUI(w, h);
             BlackoutGUI(w, h);
+            ControlsGUI(w, h);
             // the words last: nothing in the story is drawn over them
             if (phase != Phase.End && (cardAt < 0f)) DrawSubtitle(w, h, bh);
             if (phase == Phase.End) EndCard(w, h);
@@ -1075,6 +1080,14 @@ namespace ProjectInk
         void Void(float w, float h)
         {
             Fill(new Rect(0, 0, w, h), Color.black);
+            // flash 1: the blow. A pipe, a shadow, a man in a long coat walking away (render_finale.py voss_3)
+            if (blowStill == null) blowStill = Resources.Load<Texture2D>("Story/Flash/voss_3");
+            if (blowStill != null && Random.value > 0.18f)
+            {
+                float iw = w * 1.08f, ih = iw * 9f / 16f;
+                if (ih < h * 1.08f) { ih = h * 1.08f; iw = ih * 16f / 9f; }
+                GUI.DrawTexture(new Rect((w - iw) * 0.5f + Random.Range(-10f, 10f), (h - ih) * 0.5f + Random.Range(-6f, 6f), iw, ih), blowStill);
+            }
             for (int i = 0; i < 240; i++)
                 Fill(new Rect(Random.value * w, Random.value * h, Random.Range(1f, 3f), Random.Range(1f, 3f)), new Color(1f, 1f, 1f, Random.Range(0.2f, 0.9f)));
             for (int i = 0; i < 7; i++)
@@ -1344,6 +1357,93 @@ namespace ProjectInk
                 }
             tex.SetPixels32(px); tex.Apply();
             return tex;
+        }
+    
+        // ================================================================ the opening, his part in it (story v2)
+
+        Texture2D blowStill;
+        int openingGate;                 // 0 none passed, 1 his eyes, 2 the ties
+        Coroutine gateRun;
+        bool gateBusy, tied = true;
+        Transform ties;
+
+        /// <summary>The opening holds at two moments until the player does them: OPEN YOUR EYES (hold:
+        /// the voices beyond the shutter while he fights his way up out of the dark), and BREAK THE TIES
+        /// (mash: his wrists are zip-tied; he snaps them, and only then looks at his hands).</summary>
+        bool OpeningGate()
+        {
+            if (gateBusy) return true;
+            if (openingGate == 0 && t >= S2 + 2.0f)
+            {
+                gateBusy = true;
+                gateRun = StartCoroutine(GateEyes());
+                return true;
+            }
+            if (openingGate == 1 && t >= S4 + 2.35f)
+            {
+                gateBusy = true;
+                gateRun = StartCoroutine(GateTies());
+                return true;
+            }
+            return false;
+        }
+
+        IEnumerator GateEyes()
+        {
+            StartCoroutine(VoicesBeyond());
+            yield return HoldTo("OPEN YOUR EYES", 2.2f, p => StoryCameraFX.Set(Mathf.Lerp(0.85f, 0.3f, p), 0f));
+            openingGate = 1;
+            gateBusy = false;
+        }
+
+        IEnumerator VoicesBeyond()
+        {
+            Say("VOICE, BEYOND THE SHUTTER", "He's waking up.", 1.6f);
+            yield return RealWait(1.9f);
+            Say("VOICE, BEYOND THE SHUTTER", "Leave him. Boss wants him breathing.", 2.2f);
+            yield return RealWait(2.5f);
+            Say("VOICE, BEYOND THE SHUTTER", "Dead, that box goes straight to the cops.", 2.4f);
+            yield return RealWait(2.7f);
+            Say("VOICE, BEYOND THE SHUTTER", "Nine o'clock, the bank opens. Then he's yours.", 2.6f);
+        }
+
+        IEnumerator GateTies()
+        {
+            Sound.Play(Sfx.Struggle, 0.6f);
+            yield return MashTo("BREAK THE TIES", 9, p => { if (hero.body != null && Random.value < 0.2f) Sound.Play(Sfx.Cloth, 0.3f, null, 1.4f); });
+            tied = false;
+            Sound.Play(Sfx.Bone, 0.8f, null, 1.7f);
+            Sound.Play(Sfx.HeroEffort, 0.8f, null, 0.85f);
+            Haptics.Vibrate();
+            if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.04f);
+            openingGate = 2;
+            gateBusy = false;
+        }
+
+        /// <summary>The zip tie between his wrists (pale plastic), until he snaps it.</summary>
+        void UpdateTies()
+        {
+            if (phase != Phase.Cinematic) { if (gateRun != null) { StopCoroutine(gateRun); gateRun = null; gateBusy = false; ScEnd(); } tied = false; }
+            bool show = tied && t >= S3 && hero.body != null;
+            if (show && ties == null)
+            {
+                var g = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Destroy(g.GetComponent<Collider>());
+                g.name = "ZipTie";
+                g.GetComponent<Renderer>().sharedMaterial = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.85f, 0.85f, 0.82f) };
+                ties = g.transform;
+            }
+            if (ties == null) return;
+            ties.gameObject.SetActive(show);
+            if (!show) return;
+            var l = hero.body.Bone("hand.L");
+            var r = hero.body.Bone("hand.R");
+            if (l == null || r == null) return;
+            var a = l.position; var b2 = r.position;
+            ties.position = (a + b2) * 0.5f;
+            var d = b2 - a;
+            ties.rotation = d.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(d.normalized) : Quaternion.identity;
+            ties.localScale = new Vector3(0.025f, 0.025f, Mathf.Max(0.04f, d.magnitude));
         }
     }
 }

@@ -54,6 +54,7 @@ namespace ProjectInk
             WaveDirector.BossWeapon = FightStyle.Fists;
             if (foreman == null) { BeginEnding(null); return; }
             foreman.Foreman = true;
+            Dress(foreman.body, Look.Foreman);
             foreman.Guard = true;
             foreman.SetMaxHealth(foreman.maxHealth * 1.4f);          // three phases: a longer fight
             foreman.Puppet();
@@ -97,6 +98,7 @@ namespace ProjectInk
                     Sound.Play(Sfx.BruteLaugh, 1f, foreman.Chest);
                     Sound.Play(Sfx.CineMassive, 0.8f);
                     if (director != null) director.ShowBanner("THE FOREMAN", 2.6f);
+                    Say("THE FOREMAN", "Boss wants you breathing. For now. Arms and legs are optional.", 3.0f, HeadOf(foreman));
                     if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.05f);
                 }
                 if (cam != null)
@@ -136,6 +138,7 @@ namespace ProjectInk
             {
                 // III: the crowbar goes, and so does the guard
                 bossPhase = 3;
+                Say("THE FOREMAN", "You don't even know who you are. Do you?", 2.6f, HeadOf(foreman));
                 foreman.Guard = false;
                 foreman.DamageScale = 1.2f;
                 foreman.QueueEnrage();

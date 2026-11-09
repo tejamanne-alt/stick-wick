@@ -42,8 +42,9 @@ namespace ProjectInk
         {
             string w = who.ToUpperInvariant();
             if (w == "HIM" || w == "YOU") { subKind = VoiceKind.You; subSpeaker = "YOU"; }
-            else if (w == "THE FOREMAN" || w == "THE DRIVER" || w == "THE CLEANER" || w == "THE HANDLER" || w == "THE WARDEN" || w == "VOSS") { subKind = VoiceKind.Boss; subSpeaker = w; }
+            else if (w == "THE FOREMAN" || w == "THE DRIVER" || w == "THE CLEANER" || w == "THE HANDLER" || w == "THE WARDEN" || w == "VOSS" || w == "V." || w == "SILAS") { subKind = VoiceKind.Boss; subSpeaker = w; }
             else if (w == "MAYA" && mayaHere) { subKind = VoiceKind.Enemy; subSpeaker = "MAYA"; }
+            else if (w == "WALKIE") { subKind = VoiceKind.OffScreen; subSpeaker = "MAYA  ·  ON THE WALKIE"; }
             else if (w == "MAYA")
             {
                 subKind = VoiceKind.OffScreen;                 // her voice, out of a memory
