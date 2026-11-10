@@ -17,7 +17,7 @@ namespace ProjectInk.EditorTools
     public static class PrototypeBuilder
     {
         const string GenDir = "Assets/Generated";
-        const string ScenePath = "Assets/Scenes/Prototype.unity";
+        public const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
         public const int SceneVersion = 46;
@@ -73,19 +73,7 @@ namespace ProjectInk.EditorTools
             BuildMenu();
             File.WriteAllText(VersionFile, SceneVersion.ToString());
             AssetDatabase.ImportAsset(VersionFile);
-            EditorBuildSettings.scenes = new[]
-            {
-                new EditorBuildSettingsScene(MenuScenePath, true),
-                new EditorBuildSettingsScene(StoryScenePath, true),
-                new EditorBuildSettingsScene(BankScenePath, true),
-                new EditorBuildSettingsScene(StreetScenePath, true),
-                new EditorBuildSettingsScene(HomeScenePath, true),
-                new EditorBuildSettingsScene(ParkScenePath, true),
-                new EditorBuildSettingsScene(RoadScenePath, true),
-                new EditorBuildSettingsScene(FortressScenePath, true),
-                new EditorBuildSettingsScene(EpilogueScenePath, true),
-                new EditorBuildSettingsScene(ScenePath, true),
-            };
+            BuildScenes.Apply();                         // the shared list and the active build profile's (Unity 6)
             AssetDatabase.SaveAssets();
             EditorSceneManager.OpenScene(MenuScenePath);
             Debug.Log("[Stick Wick] built: menu, story (warehouse) and fight mode (tower). Press Play.");

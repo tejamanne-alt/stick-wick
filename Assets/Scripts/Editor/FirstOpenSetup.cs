@@ -40,6 +40,7 @@ namespace ProjectInk.EditorTools
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
 
             PrototypeBuilder.ConfigurePlayer();
+            BuildScenes.Apply();                          // every chapter in the build, whatever the build profile held
             if (!File.Exists(ScenePath) || Outdated())
             {
                 if (AssetDatabase.LoadAssetAtPath<GameObject>(StickmanImport.ModelPath) == null)

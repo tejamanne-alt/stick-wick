@@ -56,6 +56,23 @@ namespace ProjectInk
 #endif
         }
 
+        static string notice;
+        static float noticeAt = -10f;
+
+        /// <summary>Open a scene, or say plainly why not (a chapter missing from this build: its
+        /// scene must be in the build's scene list; Stick Wick → Add All Scenes To The Build).</summary>
+        static void Go(string scene)
+        {
+            if (!Application.CanStreamedLevelBeLoaded(scene))
+            {
+                notice = scene.Replace("_", " ").ToUpperInvariant() + " IS NOT IN THIS BUILD  ·  IN UNITY: STICK WICK  >  ADD ALL SCENES TO THE BUILD, THEN BUILD AGAIN";
+                noticeAt = Time.unscaledTime;
+                Debug.LogError("[Stick Wick] scene '" + scene + "' is not in the build's scene list");
+                return;
+            }
+            SceneManager.LoadScene(scene);
+        }
+
         bool pressing;
         Vector2 pressAt;
         Vector2? tapScreen, tapGui;
@@ -139,8 +156,8 @@ namespace ProjectInk
             // (IMGUI gives a click to the first button drawn under the pointer, and these come first)
             bool open = DevShortcuts && testOpen;
             GUI.enabled = !open;
-            if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true, !open)) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
-            if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false, !open)) SceneManager.LoadScene("Prototype");
+            if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true, !open)) { StoryIntro.NewRun(); Go("Story_Warehouse"); }
+            if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false, !open)) Go("Prototype");
             var whole = new Rect(w * 0.5f - 150, y - 56, 300, 38);
             Fill(whole, new Color(1f, 1f, 1f, whole.Contains(Event.current.mousePosition) ? 0.14f : 0.07f));
             btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
@@ -159,6 +176,15 @@ namespace ProjectInk
                 else if (Clicked(dev, true)) testOpen = true;
             }
             GUI.enabled = true;
+            if (notice != null && Time.unscaledTime - noticeAt < 8f)
+            {
+                var nr = new Rect(20, h - 70, w - 40, 50);
+                Fill(nr, new Color(0.5f, 0.04f, 0.05f, 0.92f));
+                btnSub.normal.textColor = Color.white;
+                btnSub.wordWrap = true;
+                GUI.Label(nr, notice, btnSub);
+                btnSub.wordWrap = false;
+            }
             if (Event.current.type == EventType.Repaint) tapGui = null;          // a tap lasts one frame
             GUI.matrix = Matrix4x4.identity;
         }
@@ -228,7 +254,7 @@ namespace ProjectInk
         {
             StoryIntro.NewRun();
             setUp();
-            SceneManager.LoadScene("Story_Warehouse");
+            Go("Story_Warehouse");
         }
 
         static void Hall(int zone)
@@ -241,21 +267,21 @@ namespace ProjectInk
         {
             StoryIntro.NewRun();
             StoryIntro.BankFrom = at;
-            SceneManager.LoadScene("Story_Bank");
+            Go("Story_Bank");
         }
 
         static void Fortress(int at)
         {
             StoryIntro.NewRun();
             StoryIntro.FortressFrom = at;
-            SceneManager.LoadScene("Story_Fortress");
+            Go("Story_Fortress");
         }
 
         static void Road(int at)
         {
             StoryIntro.NewRun();
             StoryIntro.RoadFrom = at;
-            SceneManager.LoadScene("Story_Road");
+            Go("Story_Road");
         }
 
         static void Epilogue(int at)
@@ -263,28 +289,28 @@ namespace ProjectInk
             StoryIntro.NewRun();
             StoryIntro.EpilogueFrom = at;
             StoryIntro.RecapOnly = at >= 5;
-            SceneManager.LoadScene("Story_Epilogue");
+            Go("Story_Epilogue");
         }
 
         static void Backyard(int at)
         {
             StoryIntro.NewRun();
             StoryIntro.BackyardFrom = at;
-            SceneManager.LoadScene("Story_Backyard");
+            Go("Story_Backyard");
         }
 
         static void Home(int at)
         {
             StoryIntro.NewRun();
             StoryIntro.HomeFrom = at;
-            SceneManager.LoadScene("Story_Home");
+            Go("Story_Home");
         }
 
         static void Street(int at)
         {
             StoryIntro.NewRun();
             StoryIntro.StreetFrom = at;
-            SceneManager.LoadScene("Story_Street");
+            Go("Story_Street");
         }
 
         int testChapter;
