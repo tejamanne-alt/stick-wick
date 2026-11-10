@@ -1,5 +1,8 @@
 using System.Collections;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using SKey = UnityEngine.InputSystem.Key;
+#endif
 
 namespace ProjectInk
 {

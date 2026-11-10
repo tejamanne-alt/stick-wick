@@ -23,6 +23,9 @@ EDITOR=$(find Assets/Scripts -path "*/Editor/*" -name "*.cs")
 COMMON="-nologo -noconfig -nostdlib -langversion:9 -target:library -nowarn:1701,1702 -warnaserror- -warn:4"
 echo "== runtime (legacy input)"
 $CSC $COMMON -define:ENABLE_LEGACY_INPUT_MANAGER -out:$OUT/Runtime.dll $REFS $RUNTIME
+echo "== runtime (Input System, as the project builds)"
+ISYS=$(find $D/Resources/PackageManager/ProjectTemplates/libcache -name Unity.InputSystem.dll | head -1)
+$CSC $COMMON -define:ENABLE_INPUT_SYSTEM -out:$OUT/RuntimeIS.dll $REFS -r:$ISYS $RUNTIME
 echo "== editor"
 $CSC $COMMON -define:UNITY_EDITOR -define:ENABLE_LEGACY_INPUT_MANAGER -out:$OUT/Editor.dll $REFS -r:$OUT/Runtime.dll $EDITOR
 echo "compile check OK"
