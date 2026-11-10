@@ -153,7 +153,7 @@ def maya(pose, at, facing=1, size=0.6, smile="smile", eyes="open", hair="pigtail
                 face.append(sph(hc + Vector((-0.08, s * (0.27 + 0.04 * t), 0.06 - 0.18 * t)), 0.06 - 0.012 * t, RM.HAIR, mat=hm))
             face.append(sph(hc + Vector((-0.08, s * 0.25, 0.08)), 0.025, 0.95))                                 # bobbles
     # the ribbon, a satin bow on top (the loops twist, the knot gathers, the tails end in a V)
-    face.extend(ribbon_bow(hc + Vector((-0.04, 0, 0.27)), 0.13, (1, 0, 0.35), (0, 0, 1), F.flat(0.97)))
+    face.extend(ribbon_bow(hc + Vector((-0.06, 0, 0.255)), 0.26, (0, -1, 0.25), (0, 0, 1), F.flat(0.97)))
     to_bone(face, arm, "head")
     B.apply_pose(arm, pose)
     arm.location = at
