@@ -126,7 +126,7 @@ The same grammar throughout; the verbs change meaning. Reach and speed differ re
 | Swipe down on him | hammer fist; a stomp if he is on the floor |
 | Pull & release | a heavy straight right; from far, a running superman punch |
 | Hold on him | **clinch** (combat_v2's throws: knees, hip throw, shoulder throw, suplex, DDT) |
-| Hold, then swipe towards a wall, table, rail, car or glass | **slam him into it** (the setting as a weapon, §6) |
+| Hold, then swipe towards a wall, table, rail, car or glass | **slam him into it** (the setting as a weapon, §8) |
 | Counters | parry → arm trap and elbow · under → liver shot and uppercut · inside → headbutt and hip throw · whiff → rear naked choke · over → knee to the ribs |
 
 ### 5.1 Knife (Ch1 onwards: the one he grabs off the floor)
@@ -194,7 +194,138 @@ him**. This is the disarm the story already uses.
 
 ---
 
-## 6. Moving
+## 6. Combos: the heart of it
+
+Combos are where Stick Wick becomes a film. They must feel like **the player's own hands doing it**,
+not a list remembered from a menu. That decides everything below.
+
+### 6.1 How muscle memory is made (the rules)
+
+1. **The finger's motion is the body's motion.** A zig-zag through a man *is* a left-right flurry; a loop
+   *is* a spin; a hook up the screen *is* an uppercut. You never learn "P-P-K"; you learn shapes your hand
+   already knows. That is muscle memory: the shape is the move.
+2. **One stroke, one combo.** Keep your finger down and **draw** through the man: every corner of your
+   path is a blow, and lifting your finger ends it. A whole combo becomes one gesture, like a signature.
+   The more you draw it, the faster and cleaner it gets. No controller can do this.
+3. **Rhythm is the other half.** Taps in a steady beat flow into each other. The beat is the fighter's
+   own: about 3 to 4 a second, the pace of a real flurry. You *feel* the rhythm because the sound and the
+   phone's pulse land on it.
+4. **There's nothing to look up.** The game reads intent: the shape, the speed, the height and what the
+   man is doing. It plays the best real move for it. A sloppy shape still does something good; a clean
+   one does something great. You are rewarded, never punished, for trying.
+5. **The same shape means the same idea with every weapon.** A loop is a spinning backfist bare-handed, a
+   spinning slash with the knife, a full-circle swing with the rod, and a turning cut with the sword. Learn
+   it once.
+
+### 6.2 The shape alphabet (seven shapes, all of them)
+
+| Shape (drawn through or at him) | Name | Body | Bare hands | Knife | Rod | Sword |
+|---|---|---|---|---|---|---|
+| **tap** (on his head, body or legs) | Strike | a short, fast blow at that height | jab / body shot / low kick | slash / stab / thigh cut | end-jab | quick cut |
+| **line** (one straight swipe) | Swing | a full swing along the line | hook / roundhouse / sweep | a long slash | a swing (hits the arc) | a cut on that exact line |
+| **zig-zag** (two or more corners) | Flurry | left-right-left, a blow at each corner | hook-hook-hook | criss-cross slashes | a figure-of-eight | a two- or three-line cut combination |
+| **hook** (down, then curving up through him) | Rise | low, then exploding upward | uppercut (a man lifted off his heels) | a gut stab ripped up | an under-the-chin lift | a rising cut |
+| **slam** (a sharp line downward) | Drop | everything down | hammer fist / axe kick | a downward stab | an overhead smash | a vertical cut to the head |
+| **loop** (a circle through him) | Spin | a full turn | spinning back-fist / back-kick | a spinning slash | a 360° swing (hits all round) | a turning cut |
+| **pull & release** (drag back from him, let go) | Load | a coil, then everything | the heavy straight | a lunging thrust | the home-run swing | a thrust |
+
+Combos are **any mix of these, joined by rhythm or by never lifting your finger**. The game chains them
+into real fighting: what comes after what follows the body. A rising blow wants to be followed by a
+blow to the exposed body; a spin by a strike from the other side.
+
+### 6.3 Shape of a combo: Opener → Builders → Ender
+
+- **Opener:** the first touch (a tap, a line, or a counter after a perfect defence: the best opener).
+- **Builders:** taps and shapes in rhythm, each changing his state: guard broken, staggered, bent double,
+  lifted, turned round.
+- **Ender:** the shape that finishes. **It is chosen by his state**, so you don't pick it, you earn it:
+
+| He is... | and you... | Ender |
+|---|---|---|
+| bent double (body shots) | slam | **hammer fist to the back of the neck**: face down on the floor |
+| lifted (a rise) | line | **hook in mid-air**: he spins out and lands in a heap |
+| staggering, guard gone | pull & release | **the heavy straight**: he's thrown off his feet |
+| turned round (after a spin) | hold | **rear choke** / knife to the throat (a threat, the cut away) |
+| near a wall, rail, car or table | hold, then swipe towards it | **slammed into it** (the setting finisher, §7) |
+| armed, wrist caught | swipe away | **disarm**: the weapon is yours, and the next blow uses it |
+| on the floor | slam | **the stomp** / the rod's smash |
+| any state, after 6+ clean beats | lift your finger and tap once more | **the last word**: his named finisher, from the chapter (below) |
+
+**Named combos** appear as a lower-third caption the first time ("BOXER'S FOUR", "THE KATA OF THREE"),
+each with a memory flash of where he learned it. After that only the name appears: a small, proud
+caption, never a score.
+
+### 6.4 Combos across a crowd
+
+Mid-combo, **tap or draw onto a different man**: the hero turns into him with a whip of the head and
+shoulders, and the combo carries on. A line drawn through two men hits both. A loop with the rod hits
+everyone in reach. The finisher of one man can **launch him into the next** (a throw into his friend
+knocks both down). This is the "one against many" choreography of a great action film, and the player
+draws it.
+
+### 6.5 The film language (how a combo looks)
+
+The rule: **the camera and time serve the hit, never take control from the player.** While you draw, the
+camera only frames; when you finish, it performs.
+
+| Moment | Time | Camera | Effects |
+|---|---|---|---|
+| **Wind-up** (pull & release, the start of a loop) | normal | a slight push in, low | his limbs **stretch back** with your finger (anticipation) |
+| **Each builder hit** | a **2–3 frame impact freeze**, then a short **speed-up** (×1.15) into the next | tiny shake *in the direction of the blow* | an impact flash on the contact point; dust or rain shaken off; a limb **smear** (the arm stretched along its path for one frame); a sound and a phone pulse |
+| **Flurry** (zig-zag) | builds speed: each beat a little faster (×1.0 → ×1.3) | follows, tightening | motion trails on the fists or blade; the music's percussion locks to your beats |
+| **Rise** (uppercut, rising cut) | at the top of his lift: **slow motion ×0.25 for 0.4 s** | **drops low**, looking up past him into the light | his body stretched at the apex; sweat or rain hanging in the air |
+| **Spin** | real speed through the turn, **slow on contact** | a **quarter orbit** round the two of them | a full-circle trail |
+| **Ender** | **speed ramp**: fast in (×1.3), **freeze 4 frames at impact**, then **slow motion ×0.3 for 0.8 s** as he goes down, then back up to speed | **a cut** to the best angle for that ender: **top-down** for a slam to the floor, **side-on and low** for a throw, a **push-in** on the face for a knockout, a **wide** for a man thrown through glass | a **shockwave ring** on the ground; debris and glass in 3D; a **colour pulse** (a heartbeat of saturation and contrast); for a blade, the cut line lingers as light |
+| **Counter** (perfect defence) | **time drops to ×0.33** the moment you defend; it holds as long as you keep combo-ing within the window | **pushes in** over the hero's shoulder | everything else desaturates; only the two of them in full contrast |
+| **The last man of a fight** | the ender at **×0.15**, with the sound sinking to a ringing | a slow **orbit** round the final blow | the fight's chapter title lands on the cut |
+
+**Stretches** (the stick figure's advantage). At the peak of every blow the striking limb lengthens
+about 10–15% along its path, then snaps back. The body twists further than it can at rest (the coil),
+and his head and shoulders lead the turn. The man hit **deforms the same way**: his head whips, his body
+folds round the fist, and his legs go out from under him. Squash on the landing, stretch on the hit.
+This is what makes a stickman's blow feel heavier than a realistic body's.
+
+**3D in a 2.5D fight.** The fighting stays on the lane, but the *effects* use depth:
+- debris, glass and blood (white ink) fly towards the camera;
+- the cameras on enders leave the side view and use the full 3D set;
+- rain bursts off a body in all directions;
+- a thrown man can go *through* the set's depth: into the racking behind, or through a window into the street.
+
+### 6.6 What I'm holding back on (debate)
+
+- **Slow motion only where it means something.** On enders, counters and the last man: about once every
+  few seconds at most. If every hit is slow, none of them is.
+- **Cuts only on enders.** A camera that jumps while you're drawing a combo breaks the drawing; the
+  player loses the man. While your finger is down, the camera only frames.
+- **No combo counter or score in story mode.** The reward is the film: the move, the slow motion, the
+  name, the music. (Fight mode in the tower can keep its counter.)
+- **The enemies push back.** A long combo against a guarding man gets parried; repeating one shape gets
+  read ("He's seen that one"); a sloppy rhythm can be countered. That is what stops one shape winning every fight, and it forces the variety that looks best.
+- **Effects stay readable.** The flash, smear, trail and ring are short, and the bodies are never hidden.
+  Performance is budgeted for phones (a capped number of particles and lights; the colour pulse and blur
+  are full-screen passes of a few milliseconds only).
+
+### 6.7 The named combos (each one a memory)
+
+| Weapon | Name | Drawn | Ender |
+|---|---|---|---|
+| Hands | **Boxer's Four** | tap head, tap head, line, slam | jab, cross, hook, hammer fist: face down |
+| Hands | **Liver and Lights** | tap body ×2, hook | two body shots, the uppercut: he's lifted, slow motion low |
+| Hands | **The Long Night** | zig-zag (three corners), pull & release | hook, hook, hook, the heavy straight: off his feet |
+| Hands | **Turn Away** | loop, hold | spinning back-fist, then the rear choke |
+| Knife | **Pass and Cut** | perfect step-out, then line | the arm cut on his way past |
+| Knife | **The X** | zig-zag (two corners), pull & release | two criss-cross slashes, the thrust |
+| Rod | **Clearing the Room** | loop | the 360° swing; everyone in reach down |
+| Rod | **Hook and Drop** | low line pulled towards you, slam | the leg hooked, the smash on the floor |
+| Sword | **The Kata of Three** | zig-zag of three lines, without lifting | three cuts in one flowing stroke, the blade cleaned in slow motion |
+| Sword | **Quick-Draw** | hold on the hero, then line | the lightning cut from the hip; he stands a beat, then falls |
+| Gun | **Close Work** | tap (pistol-whip), hold, release | a whip, the gun to his ribs: one round |
+| Any | **The Building Is a Weapon** | any builders, then hold and swipe at the setting | into the racking, the counter, the car, the rail |
+
+Each chapter adds one named combo that comes from its story (the warehouse teaches *Boxer's Four*,
+the kitchen the frying pan's *Hook and Drop*, the fortress the *Kata of Three*).
+
+## 7. Moving
 
 | Touch | Movement |
 |---|---|
@@ -212,7 +343,7 @@ On wet stone (the fortress) he slides a little further, and so do they.
 
 ---
 
-## 7. The setting is a weapon (by chapter)
+## 8. The setting is a weapon (by chapter)
 
 With a man held, **swipe towards an object** to use it; walk past a usable thing and **hold on it** to
 pick it up. Each chapter has its own furniture, and each one teaches one new idea.
@@ -227,7 +358,7 @@ pick it up. Each chapter has its own furniture, and each one teaches one new ide
 
 ---
 
-## 8. Teaching it (no tutorial wall)
+## 9. Teaching it (no tutorial wall)
 
 - He has lost his memory, so **learning is the story**. Each new move appears when the moment needs it,
   with a single ghost-finger hint *drawn on the scene*: a dotted swipe through the enemy, a pulsing hold
@@ -237,7 +368,7 @@ pick it up. Each chapter has its own furniture, and each one teaches one new ide
 
 ---
 
-## 9. What changes in the code (for the implementation, later)
+## 10. What changes in the code (for the implementation, later)
 
 1. **TouchGrammar** (new, replacing the gesture classifier for story mode). Each touch is sorted by
    where it started (enemy, hero or ground, using screen projections of the bodies), what it is (tap,
@@ -253,22 +384,24 @@ pick it up. Each chapter has its own furniture, and each one teaches one new ide
 6. **Breath** shown in the body (stance and animation speed), as designed in combat_v2.
 7. **Haptic patterns** per event.
 8. **The setting**: tagged objects (slam targets, pick-ups) per set, and the slam moves.
-9. **New clips**: guard walk, duck, hop-over, step inside, the counters, the knife (reverse grip), rod,
+9. **Combo engine** (§6): the stroke reader (corners, loops, hooks and slams in one finger path), rhythm windows, the state-based enders, and the film layer (impact freezes, speed ramps, ender cameras, smears and stretches, rings, colour pulse).
+10. **New clips**: guard walk, duck, hop-over, step inside, the counters, the knife (reverse grip), rod,
    sword cut lines and quick-draw, gun aim and reload, the disarms, and the slams.
 
 **Order of work** (each step is playable on its own):
 1. TouchGrammar, bare hands, the three zones and movement.
 2. Telegraphs, defence and counters.
-3. Knife.
-4. Rod.
-5. The setting moves.
-6. Sword.
-7. Gun.
-8. The chapter-by-chapter fights, bosses and teaching beats, starting with chapter 1.
+3. **The combo engine and its film layer** (strokes, rhythm, enders, slow motion and speed ramps, ender cameras, stretches and effects), with bare hands.
+4. Knife.
+5. Rod.
+6. The setting finishers.
+7. Sword (the kata strokes, the quick-draw).
+8. Gun.
+9. The chapter-by-chapter fights, bosses, named combos and teaching beats, starting with chapter 1.
 
 ---
 
-## 10. Open questions for you
+## 11. Open questions for you
 
 1. **Retire the old tap-left/right scheme in story mode** and use only "touch the man / yourself / the
    ground"? (Recommended. Fight Mode in the tower can keep the old scheme.)
