@@ -12,7 +12,7 @@ namespace ProjectInk
         public float swaySpeed = 0.7f;
 
         static readonly int TintId = Shader.PropertyToID("_TintColor");
-        MaterialPropertyBlock block;
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
         float phase, flickerUntil, nextFlicker, kick;
 
         void Awake()

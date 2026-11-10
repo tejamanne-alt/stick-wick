@@ -30,7 +30,7 @@ namespace ProjectInk
 
         struct Strip { public Mesh mesh; public Vector3[] mid, half, verts; public Renderer r; }
         Strip sLip, sCut, sBlood;
-        MaterialPropertyBlock block;
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
         int shown = -1;
         static readonly int ColorId = Shader.PropertyToID("_Color");
 

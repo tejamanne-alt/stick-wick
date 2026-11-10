@@ -217,7 +217,7 @@ namespace ProjectInk
         // ---------------------------------------------------------------- stains that stay
         readonly System.Collections.Generic.Queue<GameObject> stains = new System.Collections.Generic.Queue<GameObject>();
         Material stainMaterial;
-        MaterialPropertyBlock stainBlock;
+        MaterialPropertyBlock stainBlock = new MaterialPropertyBlock();
         static readonly int TintId = Shader.PropertyToID("_TintColor");
 
         GameObject NewStain(Vector3 pos, Quaternion rot, float size, Color color)

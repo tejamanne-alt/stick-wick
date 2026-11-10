@@ -63,13 +63,16 @@ namespace ProjectInk
         {
             if (hero == null) { Destroy(gameObject); return; }
             if (pool == null) { Build(); if (pool == null) return; }
+            if (block == null) block = new MaterialPropertyBlock();             // lost if scripts recompile during play
+            if (mr == null) mr = pool.GetComponent<MeshRenderer>();
+            if (mr == null) return;
             var p = hero.transform.position;
             float ground = Fighter.GroundY(p, 0.3f);
             float height = Mathf.Max(0f, p.y - ground);
             // crowded: someone within 1.6 m makes the pool brighter
             float crowd = 0f;
             foreach (var e in Enemy.All)
-                if (e.Alive && Mathf.Abs(e.transform.position.x - p.x) < 1.6f && Mathf.Abs(e.transform.position.y - p.y) < 1f) crowd = 1f;
+                if (e != null && e.Alive && Mathf.Abs(e.transform.position.x - p.x) < 1.6f && Mathf.Abs(e.transform.position.y - p.y) < 1f) crowd = 1f;
             float want = hero.IsDead ? 0f : Mathf.Lerp(0.16f, 0.3f, crowd) * Mathf.Clamp01(1f - height / 3f);
             var wd = WaveDirector.Instance;
             if (wd != null && wd.FlowReady && !hero.InRampage && hero.InTrouble) want = Mathf.Max(want, 0.32f + 0.14f * Mathf.Sin(Time.unscaledTime * 6f));   // charged: the light pulses
