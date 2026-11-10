@@ -46,6 +46,7 @@ namespace ProjectInk
             CutawayWall.ShowAll = false;
             lensRain = 0f;
             Sound.Ambience(0f, 0.15f, 22000f);
+            Sound.MusicStop(1.0f);
             SetRipple(0f);
             if (voss != null) voss.gameObject.SetActive(false);
             if (bookProp != null) bookProp.gameObject.SetActive(false);
@@ -293,7 +294,7 @@ namespace ProjectInk
             mayaYaw = Mathf.Lerp(mayaYaw, mayaYawWant, 1f - Mathf.Exp(-7f * Time.unscaledDeltaTime));
             mayaHop = 0f;
             if (t > 12.6f && t < 13.7f) mayaHop = 0.07f * Mathf.Abs(Mathf.Sin((t - 12.6f) / 1.1f * Mathf.PI * 2f));          // she skips
-            swing = t > 50.6f && t < 51.9f ? Mathf.Sin((t - 50.6f) / 1.3f * Mathf.PI) : 0f;
+            swing = t > 50.2f && t < 52.6f ? Mathf.Sin((t - 50.2f) / 2.4f * Mathf.PI) : 0f;          // (slow motion: a long, floating swing)
             if (swing > 0f) mayaHop = 0.1f * swing;
             holdBack = t > 19.3f && t < 20.4f ? 0.12f * Mathf.Sin((t - 19.3f) / 1.1f * Mathf.PI) : 0f;          // her tug
             WoPlace();

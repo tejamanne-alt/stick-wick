@@ -61,7 +61,7 @@ namespace ProjectInk
 
         void LateUpdate()
         {
-            float dt = Time.unscaledDeltaTime;
+            float dt = Time.deltaTime;                       // scaled: in a slow motion the hands slow too
             Solve(L, dt);
             Solve(R, dt);
             float k = 1f - Mathf.Exp(-headRate * dt);

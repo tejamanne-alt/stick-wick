@@ -1339,3 +1339,25 @@ Feedback: the shots should be richer and premium, mixing emotion, thriller and a
 - One silhouette per character (Dress): the Foreman's hard hat, the clerk's glasses, the Driver's cap, Silas's apron and gloves, the Handler's tracksuit and knuckles, the Warden's chain, Voss's long coat, silver hair, gloves and cane, Harrow's hat, Maya's pigtails.
 - Maya's walkie-talkie: missing from her shelf (ch3), her voice from the van (ch4), the whole drive (ch5), "I see you!" from the tower (ch6), left on Elena's stone (ch7).
 - New stills: the old photo of V with the young hero and the boy Silas; the blow redrawn with Voss walking away into the light. New rig poses for driving, the walkie, the grave, the swing.
+
+## Chapter 6: the walk-out ("Over and out", docs/story/walkout.md)
+
+The game's highlight: one long take of the father and daughter walking out of Kessel Hill at dawn while it blows up behind them, with slow motion on the bridge at the end. It follows the camera work and timing of a famous TV walk-out; nothing else is taken from it.
+
+- **The set.** `tools/blender/build_fortress_front.py`, imported by `build_fortress_set.py`, builds the fortress's front: facade, porch, forecourt, gate, bridge, gorge and moor.
+  - The front exists only in this scene. FortressBuilder gives it to LightningSwap as `dawnOnly` renderers.
+  - Every part seen from it gets a third bake, `Story_<part>_Dawn.png`. `LightningSwap.Dawn` swaps the whole set to that bake; the roof's dawn uses it too.
+  - The script has three modes:
+    - `--walkout-preview`: the set's shots;
+    - `--walkout-board`: the take's key frames with stand-ins;
+    - `--dawn [--parts=A,B] [--export]`: the dawn bakes only. UV unwraps are deterministic (checked against the old FBX), so the night and lightning bakes stay valid.
+- **The scene.** `StoryWalkout.cs` keeps a clock for the take and an event list. The camera is a reverse dolly that waits at the porch, backs away in front of them, creeps in while they talk, and pulls out, up and wide in the slow motion.
+- **PuppetRig** (Core) adds hand business on top of any clip: a two-bone reach with a pole and blend weights, and head nod and turn. The hands are joined, the walkies raised, a hand put on her head, she hugs his leg, the man grips the plunger.
+- **BlastFx**: flash, fireball, black smoke burst and column, stone blocks thrown out that bounce on a ground plane, sparks, a dust ring, a fire that stays, and ash drifting round the lens. It runs on scaled time, so the slow motion floats it.
+- **Sound:** explosion, debris, fire roar, walkie click, plunger, birds and embers, plus the `walkout` score cut to the take. `Sound.PlayTake` picks a take; `Sound.KeepClear` keeps a directed slow motion's sound unmuffled and at true pitch.
+- **Setups:**
+  - ch5: two clicks means you're okay;
+  - the Warden: "Boss falls... hill burns.";
+  - Voss: "If I fall, Kessel falls with me.";
+  - ch7, Harrow: "Kessel Hill's still burning."
+- **Checkpoint:** chapter 6, "The walk-out" (`FortressFrom = 10`).

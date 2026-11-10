@@ -69,6 +69,8 @@ namespace ProjectInk
             phase = Phase.Fortress;
             HeadWound.Chapter = 3;
             storm = true;
+            Sound.KeepClear = false;
+            RibbonFlutter.Wind = 1f;
             Sound.Ambience(0.35f, 0.25f, 22000f);                    // a dry storm: wind, thunder, no rain yet
             LightningSwap.Held = false;
             Sound.Music("storm", 0.5f, true, 2.5f);
