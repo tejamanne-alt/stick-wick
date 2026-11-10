@@ -291,7 +291,22 @@ This is what makes a stickman's blow feel heavier than a realistic body's.
 - rain bursts off a body in all directions;
 - a thrown man can go *through* the set's depth: into the racking behind, or through a window into the street.
 
-### 6.6 What I'm holding back on (debate)
+### 6.6 The body and its shading (decided)
+
+The new body has arms 25% longer, visible fists, and shoulders and hips set wider apart
+(`tools/blender/strike_lab.py`, `docs/previews/strike_lab.png`). Strikes are hand-keyed in five key poses:
+load, launch, impact (with the stretch), follow and recover.
+
+**Shading: option C.** He is pure black ink; that is his identity. **In fights only**, the limbs further
+from the camera are drawn a touch lighter (a near-black charcoal), so you can tell which arm threw the
+punch. It is worked out by depth each frame, so it is right facing either way, and through a turn the two
+sides meet at the same shade. It fades to pure ink over a third of a second whenever the camera goes
+cinematic: cutscenes, close-ups and silhouettes are always solid black.
+- **Enemies:** the same rule in their own colours.
+- **Maya:** she stays pure white.
+- **Posing does most of the work:** arms are kept clear of the body at launch, impact and finish.
+
+### 6.7 What I'm holding back on (debate)
 
 - **Slow motion only where it means something.** On enders, counters and the last man: about once every
   few seconds at most. If every hit is slow, none of them is.
@@ -305,7 +320,7 @@ This is what makes a stickman's blow feel heavier than a realistic body's.
   Performance is budgeted for phones (a capped number of particles and lights; the colour pulse and blur
   are full-screen passes of a few milliseconds only).
 
-### 6.7 The named combos (each one a memory)
+### 6.8 The named combos (each one a memory)
 
 | Weapon | Name | Drawn | Ender |
 |---|---|---|---|

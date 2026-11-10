@@ -265,7 +265,7 @@ def main():
     for o in [o for o in bpy.data.objects if o.name.startswith("Old")]:
         bpy.data.objects.remove(o, do_unlink=True)
     bs.BONES.clear(); bs.BONES.update(new_bones())
-    hero = rig("Hero", 0.02, 0.26)
+    hero = rig("Hero", 0.02, 0.10)          # far limbs: near-black charcoal (fights only; pure ink in cutscenes)
     put(hero, STANCE)
     img_new = shot(TMP)
     tgt = rig("Target", 0.55, 0.72, x=0.98, facing=-1)
@@ -280,9 +280,13 @@ def main():
     r0.paste(img_old, (0, head_h)); r0.paste(img_new, (W, head_h))
     d0.text((8, 8), "OLD BODY  ·  old guard", fill=(255, 210, 0), font=font)
     d0.text((W + 8, 8), "NEW BODY  ·  new guard", fill=(255, 210, 0), font=font)
-    notes = ["Arms +25%, fists you can see,", "shoulders and hips wider apart,", "far-side limbs a shade lighter:",
-             "you always see which hand.", "", "Guard: side-on, chin down,", "lead fist forward, rear fist",
-             "at the cheek, knees soft."]
+    notes = ["Arms +25%, fists you can see, shoulders and hips wider apart.",
+             "Far limbs a touch lighter (charcoal) IN FIGHTS ONLY, by depth",
+             "from the camera, so it is right facing either way; it fades",
+             "to pure ink in every cutscene, close-up and silhouette shot.",
+             "",
+             "Guard: side-on, chin down, lead fist forward,",
+             "rear fist at the cheek, knees soft."]
     for i, line in enumerate(notes):
         d0.text((2 * W + 16, head_h + 14 + i * 26), line, fill=(230, 230, 230), font=font)
     rows.append(r0)
