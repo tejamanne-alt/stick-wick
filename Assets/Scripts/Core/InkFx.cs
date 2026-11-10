@@ -217,7 +217,9 @@ namespace ProjectInk
         // ---------------------------------------------------------------- stains that stay
         readonly System.Collections.Generic.Queue<GameObject> stains = new System.Collections.Generic.Queue<GameObject>();
         Material stainMaterial;
-        MaterialPropertyBlock stainBlock = new MaterialPropertyBlock();
+        MaterialPropertyBlock _stainBlock;
+        /// <summary>Made on first use (Unity forbids it in a field initializer); survives a script reload.</summary>
+        MaterialPropertyBlock stainBlock => _stainBlock ??= new MaterialPropertyBlock();
         static readonly int TintId = Shader.PropertyToID("_TintColor");
 
         GameObject NewStain(Vector3 pos, Quaternion rot, float size, Color color)
@@ -226,7 +228,7 @@ namespace ProjectInk
             {
                 if (particleMaterial == null) return null;
                 stainMaterial = new Material(particleMaterial) { mainTexture = BlotTexture(64, 7) };
-                stainBlock = new MaterialPropertyBlock();
+                _stainBlock = new MaterialPropertyBlock();
             }
             var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Destroy(go.GetComponent<Collider>());

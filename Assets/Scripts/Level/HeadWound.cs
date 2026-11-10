@@ -30,13 +30,15 @@ namespace ProjectInk
 
         struct Strip { public Mesh mesh; public Vector3[] mid, half, verts; public Renderer r; }
         Strip sLip, sCut, sBlood;
-        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        MaterialPropertyBlock _block;
+        /// <summary>Made on first use (Unity forbids it in a field initializer); survives a script reload.</summary>
+        MaterialPropertyBlock block => _block ??= new MaterialPropertyBlock();
         int shown = -1;
         static readonly int ColorId = Shader.PropertyToID("_Color");
 
         void Start()
         {
-            block = new MaterialPropertyBlock();
+            _block = new MaterialPropertyBlock();
             sLip = Prepare(lip); sCut = Prepare(cut); sBlood = Prepare(blood);
             Apply(Stage);
         }

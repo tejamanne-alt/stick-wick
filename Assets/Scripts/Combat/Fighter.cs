@@ -45,7 +45,9 @@ namespace ProjectInk
         /// <summary>How fast the body is moving (props read it: a man flung through a rack shakes it).</summary>
         public Vector3 Velocity => velocity;
         Renderer[] renderers;
-        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        MaterialPropertyBlock _block;
+        /// <summary>Made on first use (Unity forbids it in a field initializer); survives a script reload.</summary>
+        MaterialPropertyBlock block => _block ??= new MaterialPropertyBlock();
         Color baseColor = Color.black, tintColor;
         float tintUntil;
         static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -56,7 +58,7 @@ namespace ProjectInk
             if (body == null) body = GetComponentInChildren<ClipPlayer>();
             body.CalibrateFacing();
             renderers = GetComponentsInChildren<SkinnedMeshRenderer>(); // body only, not the motion trails
-            block = new MaterialPropertyBlock();
+            _block = new MaterialPropertyBlock();
             if (renderers.Length > 0 && renderers[0].sharedMaterial != null && renderers[0].sharedMaterial.HasProperty(ColorId))
                 baseColor = renderers[0].sharedMaterial.GetColor(ColorId);
             SetFacing(1);

@@ -12,12 +12,14 @@ namespace ProjectInk
         public float swaySpeed = 0.7f;
 
         static readonly int TintId = Shader.PropertyToID("_TintColor");
-        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        MaterialPropertyBlock _block;
+        /// <summary>Made on first use (Unity forbids it in a field initializer); survives a script reload.</summary>
+        MaterialPropertyBlock block => _block ??= new MaterialPropertyBlock();
         float phase, flickerUntil, nextFlicker, kick;
 
         void Awake()
         {
-            block = new MaterialPropertyBlock();
+            _block = new MaterialPropertyBlock();
             phase = Random.value * 10f;
             nextFlicker = Time.time + Random.Range(4f, 14f);
         }
