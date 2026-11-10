@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         public const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 47;
+        public const int SceneVersion = 48;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
@@ -108,14 +108,17 @@ namespace ProjectInk.EditorTools
             AssetDatabase.Refresh();                     // so the asset database knows the folders (they may have been deleted)
             // chapter 1 is Combat 3.0's test bed: it runs on the V3 body (both the NEW controls and the
             // CLASSIC ones, chosen in its pause card); every other scene keeps the classic body
-            bool v3 = kind == LayoutKind.Warehouse && storySet == StorySet.None &&
-                      File.Exists(StickmanImport.ModelPathV3) && File.Exists(StickmanImport.ClipJsonPathV3);
-            string modelPath = v3 ? StickmanImport.ModelPathV3 : StickmanImport.ModelPath;
+            // (the 29-bone V4 body when it is there, else the V3 one)
+            bool ch1 = kind == LayoutKind.Warehouse && storySet == StorySet.None;
+            bool v4 = ch1 && File.Exists(StickmanImport.ModelPathV4) && File.Exists(StickmanImport.ClipJsonPathV4);
+            bool v3 = ch1 && (v4 || (File.Exists(StickmanImport.ModelPathV3) && File.Exists(StickmanImport.ClipJsonPathV3)));
+            string modelPath = v4 ? StickmanImport.ModelPathV4 : v3 ? StickmanImport.ModelPathV3 : StickmanImport.ModelPath;
             AssetDatabase.ImportAsset(modelPath, ImportAssetOptions.ForceUpdate);
 
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
             if (model == null) throw new BuildFailedException(modelPath + " not found - run tools/blender/build_stickman.py (and build_stickman_v3.py)");
-            var moves = v3 ? BuildMoveSet(modelPath, StickmanImport.ClipJsonPathV3, GenDir + "/StickmanMovesV3.asset")
+            var moves = v4 ? BuildMoveSet(modelPath, StickmanImport.ClipJsonPathV4, GenDir + "/StickmanMovesV4.asset")
+                      : v3 ? BuildMoveSet(modelPath, StickmanImport.ClipJsonPathV3, GenDir + "/StickmanMovesV3.asset")
                            : BuildMoveSet(modelPath, StickmanImport.ClipJsonPath, GenDir + "/StickmanMoves.asset");
 
             // Look of the reference: flat black silhouettes on a soft grey backdrop. Everything is

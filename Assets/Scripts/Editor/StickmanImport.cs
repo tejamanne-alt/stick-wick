@@ -14,7 +14,12 @@ namespace ProjectInk.EditorTools
         /// fists, every clip carried over, the strikes, guard and reactions hand-keyed anew.</summary>
         public const string ModelPathV3 = "Assets/Art/StickmanV3/StickmanV3.fbx";
         public const string ClipJsonPathV3 = "Assets/Art/StickmanV3/stickman_v3_clips.json";
-        static bool Ours(string p) => p == ModelPath || p == ModelPathV3;
+        /// <summary>The 29-bone body (chapter 1): spine in three, neck, collarbones, wrists and fingers,
+        /// feet and toes; every clip carried over (tools/blender/build_stickman_v4.py).</summary>
+        public const string ModelPathV4 = "Assets/Art/StickmanV4/StickmanV4.fbx";
+        public const string ClipJsonPathV4 = "Assets/Art/StickmanV4/stickman_v4_clips.json";
+        static bool Ours(string p) => p == ModelPath || p == ModelPathV3 || p == ModelPathV4;
+        static string JsonFor(string p) => p == ModelPathV4 ? ClipJsonPathV4 : p == ModelPathV3 ? ClipJsonPathV3 : ClipJsonPath;
 
         [System.Serializable] public class ClipInfo { public string name; public int frames; public int fps; public bool loop; public int hitFrame; public float endShift; public int loadFrame = -1; public float reach; }
         [System.Serializable] public class ClipList { public ClipInfo[] clips; }
@@ -56,7 +61,7 @@ namespace ProjectInk.EditorTools
         {
             if (!Ours(assetPath)) return;
             var importer = (ModelImporter)assetImporter;
-            var info = LoadClipInfo(assetPath == ModelPathV3 ? ClipJsonPathV3 : ClipJsonPath);
+            var info = LoadClipInfo(JsonFor(assetPath));
             var clips = importer.defaultClipAnimations;
             foreach (var c in clips)
             {

@@ -819,7 +819,6 @@
       "loop": true,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -830,7 +829,6 @@
       "loop": false,
       "hitFrame": 3,
       "loadFrame": 1,
-      "v3": true,
       "reach": 0.95,
       "endShift": 0.0
     },
@@ -841,7 +839,6 @@
       "loop": false,
       "hitFrame": 5,
       "loadFrame": 2,
-      "v3": true,
       "reach": 1.0,
       "endShift": 0.0
     },
@@ -852,7 +849,6 @@
       "loop": false,
       "hitFrame": 6,
       "loadFrame": 2,
-      "v3": true,
       "reach": 0.9,
       "endShift": 0.0
     },
@@ -863,7 +859,6 @@
       "loop": false,
       "hitFrame": 8,
       "loadFrame": 3,
-      "v3": true,
       "reach": 0.95,
       "endShift": 0.0
     },
@@ -874,7 +869,6 @@
       "loop": false,
       "hitFrame": 6,
       "loadFrame": 3,
-      "v3": true,
       "reach": 0.95,
       "endShift": 0.0
     },
@@ -885,7 +879,6 @@
       "loop": false,
       "hitFrame": 5,
       "loadFrame": 3,
-      "v3": true,
       "reach": 0.85,
       "endShift": 0.0
     },
@@ -896,7 +889,6 @@
       "loop": false,
       "hitFrame": 7,
       "loadFrame": 3,
-      "v3": true,
       "reach": 0.95,
       "endShift": 0.0
     },
@@ -907,7 +899,6 @@
       "loop": false,
       "hitFrame": 9,
       "loadFrame": 6,
-      "v3": true,
       "reach": 0.95,
       "endShift": 0.0
     },
@@ -918,7 +909,6 @@
       "loop": false,
       "hitFrame": 7,
       "loadFrame": 5,
-      "v3": true,
       "reach": 0.95,
       "endShift": 0.0
     },
@@ -929,7 +919,6 @@
       "loop": false,
       "hitFrame": 6,
       "loadFrame": 3,
-      "v3": true,
       "reach": 0.6,
       "endShift": 0.0
     },
@@ -940,7 +929,6 @@
       "loop": false,
       "hitFrame": 5,
       "loadFrame": 2,
-      "v3": true,
       "reach": 0.75,
       "endShift": 0.0
     },
@@ -951,7 +939,6 @@
       "loop": false,
       "hitFrame": 7,
       "loadFrame": 4,
-      "v3": true,
       "reach": 0.8,
       "endShift": 0.0
     },
@@ -962,7 +949,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -973,7 +959,6 @@
       "loop": false,
       "hitFrame": 5,
       "loadFrame": 0,
-      "v3": true,
       "reach": 1.15,
       "endShift": 0.3
     },
@@ -984,7 +969,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -995,7 +979,6 @@
       "loop": true,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1006,7 +989,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1017,7 +999,6 @@
       "loop": false,
       "hitFrame": 3,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1028,7 +1009,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1039,7 +1019,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": -0.32
     },
@@ -1050,7 +1029,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.32
     },
@@ -1061,7 +1039,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1072,7 +1049,6 @@
       "loop": false,
       "hitFrame": 6,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.8,
       "endShift": 0.12
     },
@@ -1083,7 +1059,6 @@
       "loop": false,
       "hitFrame": 3,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.75,
       "endShift": 0.0
     },
@@ -1094,7 +1069,6 @@
       "loop": false,
       "hitFrame": 4,
       "loadFrame": -1,
-      "v3": true,
       "reach": 1.1,
       "endShift": 0.26
     },
@@ -1105,7 +1079,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1116,7 +1089,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1127,7 +1099,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1138,7 +1109,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1149,7 +1119,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1160,7 +1129,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1171,7 +1139,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1182,7 +1149,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.0
     },
@@ -1193,7 +1159,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.12
     },
@@ -1204,7 +1169,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.42
     },
@@ -1215,7 +1179,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": 0.24
     },
@@ -1226,7 +1189,6 @@
       "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
-      "v3": true,
       "reach": 0.0,
       "endShift": -0.24
     }

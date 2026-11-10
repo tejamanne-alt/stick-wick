@@ -77,16 +77,17 @@ namespace ProjectInk.EditorTools
         /// COMBAT NEW / CLASSIC switch. A scene built before the V3 body existed stops the build.</summary>
         static void CheckCombatV3()
         {
-            if (!System.IO.File.Exists(StickmanImport.ModelPathV3)) return;          // no V3 body in this checkout
+            string want = System.IO.File.Exists(StickmanImport.ModelPathV4) ? StickmanImport.ModelPathV4 : StickmanImport.ModelPathV3;
+            if (!System.IO.File.Exists(want)) return;                                 // no new body in this checkout
             var deps = AssetDatabase.GetDependencies(PrototypeBuilder.StoryScenePath, true);
-            bool model = deps.Contains(StickmanImport.ModelPathV3);
+            bool model = deps.Contains(want);
             bool shader = deps.Any(d => d.EndsWith("InkDepth.shader"));
             if (model && shader)
             {
-                Debug.Log("[Stick Wick] chapter 1 builds on the Combat 3.0 body (StickmanV3 + InkDepth)");
+                Debug.Log("[Stick Wick] chapter 1 builds on the new body (" + System.IO.Path.GetFileNameWithoutExtension(want) + " + InkDepth)");
                 return;
             }
-            throw new BuildFailedException("[Stick Wick] chapter 1's scene is not on the Combat 3.0 body (" + (model ? "" : "StickmanV3 missing ") +
+            throw new BuildFailedException("[Stick Wick] chapter 1's scene is not on the Combat 3.0 body (" + (model ? "" : System.IO.Path.GetFileNameWithoutExtension(want) + " missing ") +
                                            (shader ? "" : "InkDepth missing") + "). Run Stick Wick → Build All Scenes (or Build Android APK), then build again.");
         }
     }
