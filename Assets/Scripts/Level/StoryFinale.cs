@@ -640,20 +640,12 @@ namespace ProjectInk
             if (maya == null) return;
             var hd = HeadOf(maya);
             if (wristBand != null) { Destroy(wristBand.gameObject); wristBand = null; }
-            var red = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.78f, 0.05f, 0.06f) };
-            var bow = new GameObject("MayaBow").transform;
-            bow.SetParent(hd, false);
-            bow.position = hd.position + Vector3.up * 0.09f + Vector3.left * 0.03f;
-            foreach (float s in new[] { -1f, 1f })
-            {
-                var c = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                Destroy(c.GetComponent<Collider>());
-                c.transform.SetParent(bow, true);
-                c.transform.position = bow.position + Vector3.right * s * 0.045f;
-                c.transform.rotation = Quaternion.Euler(0f, 0f, s * 25f);
-                c.transform.localScale = new Vector3(0.07f, 0.045f, 0.02f) / Mathf.Max(0.01f, bow.lossyScale.x) * bow.localScale.x;
-                c.GetComponent<Renderer>().sharedMaterial = red;
-            }
+            var bow = Ribbon.Bow(hd, 0.08f, true);
+            // the bow is built in world metres: undo the head's scale (she is small), then sit it on top, facing out
+            float ls = Mathf.Max(0.01f, hd.lossyScale.x);
+            bow.localScale = Vector3.one / ls;
+            bow.position = hd.position + Vector3.up * 0.13f - hd.right * 0.0f;
+            bow.rotation = Quaternion.LookRotation(Vector3.back, Vector3.up);
         }
 
         // ================================================================ the dawn

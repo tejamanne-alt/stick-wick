@@ -32,6 +32,70 @@ MAYA_SECONDS = [2.8, 2.6, 2.6, 2.6, 2.6, 3.4]
 sph, rod, to_bone, rest = RM.sph, RM.rod, RM.to_bone, RM.rest
 
 
+def satin(pts, nrms, width, thick, mat, name="Ribbon"):
+    """A ribbon strip as a real mesh: through points, its face along the normals, a width and a thickness,
+    the edges turned (a slightly thinner rim) and a stitch line along each side."""
+    verts, faces = [], []
+    n = len(pts)
+    for i in range(n):
+        p = Vector(pts[i])
+        d = (Vector(pts[min(i + 1, n - 1)]) - Vector(pts[max(i - 1, 0)])).normalized()
+        nr = Vector(nrms[i]).normalized()
+        side = d.cross(nr).normalized()
+        for sx, sz in ((-0.5, -0.35), (-0.42, 0.5), (0.42, 0.5), (0.5, -0.35), (0.42, -0.5), (-0.42, -0.5)):
+            verts.append(p + side * width * sx + nr * thick * sz)
+    k = 6
+    for i in range(n - 1):
+        for j in range(k):
+            a, b = i * k + j, i * k + (j + 1) % k
+            faces.append((a, b, b + k, a + k))
+    faces.append(tuple(range(k))[::-1])
+    faces.append(tuple(range((n - 1) * k, n * k)))
+    me = bpy.data.meshes.new(name)
+    me.from_pydata([tuple(v) for v in verts], [], faces)
+    for poly in me.polygons:
+        poly.use_smooth = True
+    ob = bpy.data.objects.new(name, me)
+    ob.data.materials.append(mat)
+    bpy.context.scene.collection.objects.link(ob)
+    return ob
+
+
+def ribbon_bow(c, size, face, up, mat, tails=True):
+    """A bow: two teardrop loops that twist as they turn, a gathered knot with wrinkles, two tails with
+    V-cut ends. c: the knot; face: where the bow looks; up: its up."""
+    c, face, up = Vector(c), Vector(face).normalized(), Vector(up).normalized()
+    side = up.cross(face).normalized()
+    w, t = size * 0.34, size * 0.05
+    obs = []
+    for s in (1, -1):
+        pts, nrs = [], []
+        for i in range(25):
+            th = i / 24 * 2 * math.pi
+            out = size * (0.5 - 0.5 * math.cos(th))
+            hgt = size * 0.38 * math.sin(th)
+            pts.append(c + side * s * out + up * hgt + face * 0.15 * size * math.sin(th / 2))
+            ang = math.sin(th) * 0.4 * s
+            nrs.append(face * math.cos(ang) + up * math.sin(ang))
+        obs.append(satin(pts, nrs, w, t, mat))
+    knot = sph(c + face * w * 0.2, w * 0.55, 0.97, scale=(1.0, 0.8, 1.15), mat=mat)
+    obs.append(knot)
+    if tails:
+        for s, ang in ((1, -0.35), (-1, 0.42)):
+            d = (-up * math.cos(ang) + side * math.sin(ang)).normalized()
+            pts, nrs = [], []
+            for i in range(11):
+                u = i / 10
+                pts.append(c + d * size * 0.95 * u + side * s * math.sin(u * 4.0) * size * 0.06 + face * 0.02 * size * u)
+                nrs.append(face)
+            obs.append(satin(pts, nrs, w * 0.9, t, mat))
+            end = pts[-1]
+            for v in (1, -1):                                               # the V-cut
+                tip = end + d * w * 0.45 + side * v * w * 0.25
+                obs.append(satin([end + side * v * w * 0.05, tip], [face, face], w * 0.42, t, mat))
+    return obs
+
+
 def maya(pose, at, facing=1, size=0.6, smile="smile", eyes="open", hair="pigtails", name="Maya"):
     """Maya: the rig at a child's size, her head a size up, a short dress, the ribbon."""
     arm = B.build_armature()
@@ -88,11 +152,8 @@ def maya(pose, at, facing=1, size=0.6, smile="smile", eyes="open", hair="pigtail
                 t = k / 3
                 face.append(sph(hc + Vector((-0.08, s * (0.27 + 0.04 * t), 0.06 - 0.18 * t)), 0.06 - 0.012 * t, RM.HAIR, mat=hm))
             face.append(sph(hc + Vector((-0.08, s * 0.25, 0.08)), 0.025, 0.95))                                 # bobbles
-    # the ribbon, a bow on top
-    for s in (1, -1):
-        face.append(rod(hc + Vector((-0.04, 0, 0.25)), hc + Vector((-0.04, s * 0.12, 0.3)), 0.045, 0.97, r2=0.008, verts=10))
-        face.append(rod(hc + Vector((-0.04, 0, 0.24)), hc + Vector((-0.08, s * 0.05, 0.12)), 0.012, 0.97, verts=6))
-    face.append(sph(hc + Vector((-0.04, 0, 0.255)), 0.03, 0.97))
+    # the ribbon, a satin bow on top (the loops twist, the knot gathers, the tails end in a V)
+    face.extend(ribbon_bow(hc + Vector((-0.04, 0, 0.27)), 0.13, (1, 0, 0.35), (0, 0, 1), F.flat(0.97)))
     to_bone(face, arm, "head")
     B.apply_pose(arm, pose)
     arm.location = at

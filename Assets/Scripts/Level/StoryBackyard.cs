@@ -74,12 +74,8 @@ namespace ProjectInk
                 c.transform.localScale = size;
                 c.GetComponent<Renderer>().sharedMaterial = m;
             }
-            // her ribbon in the grass under the swing
-            ribbonProp = new GameObject("Ribbon").transform;
-            ribbonProp.position = new Vector3(ParkPlan.RibbonX, 0.02f, 1.1f);
-            Part(ribbonProp, new Vector3(-0.07f, 0f, 0f), new Vector3(0.12f, 0.02f, 0.07f), red, 20f);
-            Part(ribbonProp, new Vector3(0.07f, 0f, 0f), new Vector3(0.12f, 0.02f, 0.07f), red, -20f);
-            Part(ribbonProp, new Vector3(0.02f, 0f, -0.08f), new Vector3(0.03f, 0.015f, 0.14f), red, 15f);
+            // her ribbon in the grass under the swing: crumpled, the tails trailing
+            ribbonProp = Ribbon.Lying(new Vector3(ParkPlan.RibbonX, 0.02f, 1.1f), 20f);
             // her footprints across the lawn, small and bare, to the swing
             var prints = new GameObject("SmallPrints").transform;
             for (int i = 0; i < 26; i++)
@@ -102,14 +98,7 @@ namespace ProjectInk
             if (wristBand != null || hero.body == null) return;
             var arm = hero.body.Bone("forearm.L");
             if (arm == null) return;
-            var c = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            Destroy(c.GetComponent<Collider>());
-            c.name = "Ribbon";
-            c.transform.SetParent(arm, false);
-            c.transform.localPosition = new Vector3(0f, 0.16f, 0f);
-            c.transform.localScale = new Vector3(0.11f, 0.018f, 0.11f);
-            c.GetComponent<Renderer>().sharedMaterial = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.78f, 0.05f, 0.06f) };
-            wristBand = c.transform;
+            wristBand = Ribbon.WristBand(arm);          // wound twice round his wrist, a small bow, the tails moving
         }
 
         void EnsureTorchMat()

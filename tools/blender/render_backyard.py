@@ -30,13 +30,16 @@ def red_mat():
     m.use_nodes = True
     p = m.node_tree.nodes["Principled BSDF"]
     p.inputs["Base Color"].default_value = (*RED, 1)
-    p.inputs["Roughness"].default_value = 0.55
+    p.inputs["Roughness"].default_value = 0.28                      # satin: a soft sheen along the folds
     for name in ("Specular IOR Level", "Specular"):
         if name in p.inputs:
-            p.inputs[name].default_value = 0.15
+            p.inputs[name].default_value = 0.6
+    for name, v in (("Sheen Weight", 0.8), ("Sheen", 0.8), ("Sheen Roughness", 0.35)):
+        if name in p.inputs:
+            p.inputs[name].default_value = v
     try:
         p.inputs["Emission Color"].default_value = (*RED, 1)
-        p.inputs["Emission Strength"].default_value = 0.35
+        p.inputs["Emission Strength"].default_value = 0.04
     except KeyError:
         pass
     return m
@@ -50,14 +53,16 @@ def ribbon():
         RM.rod((x, y, 0), (x + rnd.uniform(-0.03, 0.03), y + rnd.uniform(-0.02, 0.02), rnd.uniform(0.03, 0.09)), 0.004, 0.1, verts=4)
     m = red_mat()
     c = Vector((0.0, 0.2, 0.03))
-    for s in (1, -1):                                                                # the two loops
-        RM.sph(c + Vector((s * 0.09, 0, 0.012)), 0.07, 0.5, scale=(1.3, 0.75, 0.32), mat=m)
-    RM.sph(c + Vector((0, 0, 0.02)), 0.028, 0.5, mat=m)                              # the knot
-    for s, a in ((1, -0.6), (-1, 0.5)):                                              # the tails
-        RM.rod(c + Vector((s * 0.02, -0.01, 0.01)), c + Vector((s * 0.06 + a * 0.1, -0.16, 0.004)), 0.022, 0.5, r2=0.016, mat=m, verts=10)
+    MY.ribbon_bow(c, 0.16, (0, -0.25, 1), (0, 1, 0.1), m)                             # the bow, lying on its back
+    pts, nrs = [], []                                                                 # a long loose end across the grass
+    for i in range(14):
+        u = i / 13
+        pts.append(c + Vector((0.06 + u * 0.42, -0.08 + math.sin(u * 5) * 0.05, 0.006 + 0.01 * math.sin(u * 9))))
+        nrs.append(Vector((0, math.sin(u * 3) * 0.3, 1)))
+    MY.satin(pts, nrs, 0.05, 0.007, m)
     for _ in range(6):                                                               # drops
         F.ball((c.x + rnd.uniform(-0.16, 0.16), c.y + rnd.uniform(-0.1, 0.06), c.z + 0.04), rnd.uniform(0.003, 0.005), F.flat(0.9))
-    for (loc, e, size) in (((0.2, -0.3, 0.9), 60, 0.6), ((-0.5, 0.6, 0.5), 25, 0.8)):  # the moon on it, a rim from behind
+    for (loc, e, size) in (((0.2, -0.3, 0.9), 26, 0.5), ((-0.5, 0.6, 0.5), 14, 0.8)):  # the moon on it, a rim from behind
         ld = bpy.data.lights.new("RibbonLight", "AREA")
         ld.energy = e
         ld.size = size
@@ -129,7 +134,7 @@ def keep_red(path):
             r, g, b = px[x, y]
             lum = int(0.3 * r + 0.59 * g + 0.11 * b)
             if r > 45 and r > g * 1.25 and r > b * 1.25:
-                px[x, y] = (min(255, int(40 + lum * 1.6)), int(lum * 0.22), int(lum * 0.24))
+                px[x, y] = (min(255, int(28 + lum * 1.25)), min(255, int(lum * 0.3)), min(255, int(lum * 0.3)))
             else:
                 px[x, y] = (lum, lum, lum)
     im.save(path)
