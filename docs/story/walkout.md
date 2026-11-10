@@ -97,13 +97,13 @@ whole of Kessel Hill is in frame behind them when it goes, as the house is in th
 | 4.3 | They step out. The camera backs away in front of them. | The pulse: a kick on the steps. |
 | 4.3-16 | The forecourt at a walk. The fountain slides past on the left; she skips. | |
 | 16 | They slow to a stroll. She raises her walkie: "Papa? ...I can see you. Over." | The music thins. |
-| 19.4 | His walkie from his coat: "I see you too, sweetheart. Over." | |
+| 19 | **HOLD to talk**: his walkie comes up while it is held; held long enough, he answers: "I see you too, sweetheart. Over." (If the player does nothing, he answers anyway.) | |
 | 24 | The stables' door bangs. The last man runs in from the right, past the lens, and kneels at a box by the gate. | The door, running feet. |
 | 28.6 | He comes into frame low on the right, his hands on the plunger: "Boss said... if he falls, the hill burns." | The ratchet. |
 | 31.3 | **YOU:** "...Then burn it." Through the gate onto the bridge. | The build begins. |
 | 31-47 | **The reveal.** Down the bridge, the camera falls back, widens and tilts up until the whole fortress fills the frame behind them. | Strings and pulse, rising, timpani. |
 | 41.5 | "Can we go home now? Over." | |
-| 44.6 | "Over and out." The click. | *Click.* |
+| 44.6-46.3 | "Over and out." **TAP**: the player makes the click that ends it (it clicks by itself at 46.3). | *Click.* |
 | 46.8 | Far behind them, small, the man pushes the plunger down. | The music cuts dead. |
 | **47.2** | **The whole hill goes up, left to right, over five seconds:** the great door, the balcony, every window low then high, the corner turrets (their spirelets topple), the roof terrace, the chimneys falling, the stables, the courtyard, the towers behind, the keep (a pillar of fire), then the observatory dome blown off the tower and falling. | Each blast arrives late by its distance; the pressure wave hits them; glass rains; masonry collapses; a roar under it all. One huge chord. |
 | 47.4 | She flinches; his hand on her head; she holds his leg. They falter, then walk on. | |
@@ -112,7 +112,7 @@ whole of Kessel Hill is in frame behind them when it goes, as the house is in th
 | 54.4 | A last vast fireball rises slowly out of the roof. | Deep and slow. |
 | 55.6-60 | She looks up at him; he looks down; his shoulders drop. She takes his hand again and swings it; the ribbon whips red. | |
 | 62.0 | Two clicks on her dead walkie. | *click... click.* |
-| 63.6 | Two back from his coat. | *click... click.* |
+| 63.2-65 | **TAP TWICE**: two clicks back to her from his coat (they come on their own if the player waits). | *click... click.* |
 | 66.6-69 | Fade to black. **OVER AND OUT.** | |
 
 **The blasts** (BlastFx), each built in layers:
@@ -141,3 +141,15 @@ reverse dolly at their walking speed:
 
 In the slow motion it pulls out to 5.5 m, rises 0.5 m and widens to 41°, so the whole burning
 fortress gets into the frame. A handheld breath stays on the whole time.
+
+## The player's part
+
+Three moments, all walkie, all things a father would do, and none of them can fail (the take is
+timed to the score, so it never waits):
+1. **HOLD to talk**, answering her. Ch4-6 already teach HOLD for the walkie, so this is that same gesture.
+2. **TAP for "Over and out"**: the player's click is what brings the fortress down.
+3. **TAP TWICE** to answer her two clicks: the last thing the player does in chapter 6.
+
+Nothing is asked of the player during the blast itself, so they can watch it. A plain "tap to lift
+the walkie" was considered and dropped. Lifting it means nothing on its own; holding to talk
+(the walkie's real gesture) and the click that detonates carry the meaning.

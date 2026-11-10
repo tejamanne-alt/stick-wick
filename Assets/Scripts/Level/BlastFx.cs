@@ -104,6 +104,15 @@ namespace ProjectInk
             return ps;
         }
 
+        /// <summary>Velocity over lifetime, all three axes in the same mode (Unity insists).</summary>
+        static void Vel(ParticleSystem ps, ParticleSystem.MinMaxCurve x, ParticleSystem.MinMaxCurve y, ParticleSystem.MinMaxCurve z)
+        {
+            var v = ps.velocityOverLifetime;
+            v.enabled = true;
+            v.space = ParticleSystemSimulationSpace.World;
+            v.x = x; v.y = y; v.z = z;
+        }
+
         static void Burst(ParticleSystem ps, int n) { ps.Play(); ps.Emit(Mathf.Max(1, n)); }
         static ParticleSystem.MinMaxCurve R(float a, float b) => new ParticleSystem.MinMaxCurve(a, b);
         static ParticleSystem.MinMaxCurve Grow(float a, float b) => new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, a, 1f, b));
@@ -196,7 +205,7 @@ namespace ProjectInk
                 var sh = ps.shape; sh.enabled = true; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 60f; sh.radius = 0.8f * k;
                 sh.rotation = Quaternion.LookRotation(outward).eulerAngles;
                 var lv = ps.limitVelocityOverLifetime; lv.enabled = true; lv.limit = 1.2f * k; lv.dampen = 0.15f;
-                var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.World; vel.y = R(1.2f, 3.2f);
+                Vel(ps, R(0f, 0f), R(1.2f, 3.2f), R(0f, 0f));
                 var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = GrowFast(0.35f, 1.9f);
                 var col = ps.colorOverLifetime; col.enabled = true;
                 col.color = Grad(new[] { Color.white, Color.white }, new[] { 0f, 1f }, new[] { 1f, 1f, 0f }, new[] { 0f, 0.7f, 1f });
@@ -302,7 +311,7 @@ namespace ProjectInk
                 main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.58f, 0.55f, 0.5f, 0.75f), new Color(0.42f, 0.4f, 0.37f, 0.7f));
                 var sh = ps.shape; sh.enabled = true; sh.shapeType = ParticleSystemShapeType.Circle; sh.radius = 1.2f * k; sh.rotation = new Vector3(90f, 0f, 0f);
                 var lv = ps.limitVelocityOverLifetime; lv.enabled = true; lv.limit = 0.8f; lv.dampen = 0.12f;
-                var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.World; vel.y = R(0.3f, 1.2f);
+                Vel(ps, R(0f, 0f), R(0.3f, 1.2f), R(0f, 0f));
                 var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = Grow(0.5f, 2.6f);
                 var col = ps.colorOverLifetime; col.enabled = true;
                 col.color = Grad(new[] { Color.white, Color.white }, new[] { 0f, 1f }, new[] { 0f, 1f, 0.6f, 0f }, new[] { 0f, 0.1f, 0.6f, 1f });
@@ -321,7 +330,7 @@ namespace ProjectInk
                 main.gravityModifier = -0.05f;
                 var sh = ps.shape; sh.enabled = true; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = 1.6f * k;
                 var lv = ps.limitVelocityOverLifetime; lv.enabled = true; lv.limit = 1.4f; lv.dampen = 0.07f;
-                var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.World; vel.x = R(0.8f, 2.2f); vel.y = R(2.0f, 4.5f); vel.z = R(0.4f, 1.4f);
+                Vel(ps, R(0.8f, 2.2f), R(2.0f, 4.5f), R(0.4f, 1.4f));
                 var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = Grow(0.55f, 3.2f);
                 var col = ps.colorOverLifetime; col.enabled = true;
                 col.color = Grad(new[] { new Color(1f, 0.6f, 0.35f), Color.white, Color.white }, new[] { 0f, 0.12f, 1f }, new[] { 0f, 1f, 0.9f, 0f }, new[] { 0f, 0.06f, 0.65f, 1f });
@@ -348,7 +357,7 @@ namespace ProjectInk
             main.startSpeed = R(1f, 3f);
             main.startRotation = R(0f, 6.28f);
             var em = ps.emission; em.rateOverTime = 24f;
-            var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.World; vel.y = R(9f, 15f);
+            Vel(ps, R(0f, 0f), R(9f, 15f), R(0f, 0f));
             var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = Grow(0.5f, 2.0f);
             var col = ps.colorOverLifetime; col.enabled = true;
             col.color = Grad(new[] { Color.white, Color.white }, new[] { 0f, 1f }, new[] { 1f, 1f, 0f }, new[] { 0f, 0.75f, 1f });
@@ -364,7 +373,7 @@ namespace ProjectInk
             cm.startColor = new ParticleSystem.MinMaxGradient(new Color(0.08f, 0.075f, 0.07f, 1f), new Color(0.2f, 0.19f, 0.18f, 0.95f));
             var ce = cap.emission; ce.rateOverTime = 18f;
             var csh = cap.shape; csh.enabled = true; csh.shapeType = ParticleSystemShapeType.Circle; csh.radius = 6f; csh.rotation = new Vector3(90f, 0f, 0f);
-            var cv = cap.velocityOverLifetime; cv.enabled = true; cv.space = ParticleSystemSimulationSpace.World; cv.y = R(3f, 6f); cv.x = R(1f, 3f);
+            Vel(cap, R(1f, 3f), R(3f, 6f), R(0f, 0f));
             var csz = cap.sizeOverLifetime; csz.enabled = true; csz.size = Grow(0.6f, 3.0f);
             var cc = cap.colorOverLifetime; cc.enabled = true;
             cc.color = Grad(new[] { Color.white, Color.white }, new[] { 0f, 1f }, new[] { 0f, 1f, 0.85f, 0f }, new[] { 0f, 0.1f, 0.7f, 1f });
@@ -387,7 +396,7 @@ namespace ProjectInk
             main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.07f, 0.065f, 0.06f, 1f), new Color(0.22f, 0.2f, 0.19f, 0.9f));
             var em = ps.emission; em.rateOverTime = 2.2f * k;
             var sh = ps.shape; sh.enabled = true; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = 1.8f * k;
-            var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.World; vel.x = R(1.2f, 3.0f); vel.y = R(3.5f, 6.5f); vel.z = R(0.5f, 2.0f);
+            Vel(ps, R(1.2f, 3.0f), R(3.5f, 6.5f), R(0.5f, 2.0f));
             var sz = ps.sizeOverLifetime; sz.enabled = true; sz.size = Grow(0.5f, 4.0f);
             var col = ps.colorOverLifetime; col.enabled = true;
             col.color = Grad(new[] { new Color(1f, 0.55f, 0.3f), Color.white, Color.white }, new[] { 0f, 0.1f, 1f }, new[] { 0f, 1f, 0.8f, 0f }, new[] { 0f, 0.08f, 0.7f, 1f });
@@ -446,7 +455,7 @@ namespace ProjectInk
                 var em = ps.emission; em.rateOverTime = 10f * k;
                 var sh = ps.shape; sh.enabled = true; sh.shapeType = ParticleSystemShapeType.Sphere; sh.radius = 1.2f * k;
                 var nz = ps.noise; nz.enabled = true; nz.strength = 1.4f; nz.frequency = 0.5f;
-                var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.World; vel.x = R(0.5f, 2.5f); vel.y = R(1f, 2.5f); vel.z = R(-0.5f, -2.5f);
+                Vel(ps, R(0.5f, 2.5f), R(1f, 2.5f), R(-0.5f, -2.5f));
                 var col = ps.colorOverLifetime; col.enabled = true;
                 col.color = Grad(new[] { Color.white, Ember }, new[] { 0f, 1f }, new[] { 1f, 1f, 0f }, new[] { 0f, 0.6f, 1f });
                 ps.Play();
@@ -507,7 +516,7 @@ namespace ProjectInk
             main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.7f, 0.35f, 0.9f), new Color(0.6f, 0.58f, 0.55f, 0.7f));
             var em = ps.emission; em.rateOverTime = 30f;
             var sh = ps.shape; sh.enabled = true; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(10f, 6f, 8f);
-            var vel = ps.velocityOverLifetime; vel.enabled = true; vel.space = ParticleSystemSimulationSpace.World; vel.x = R(0.3f, 1.2f); vel.y = R(-0.4f, 0.3f); vel.z = R(-1.2f, -0.3f);
+            Vel(ps, R(0.3f, 1.2f), R(-0.4f, 0.3f), R(-1.2f, -0.3f));
             var nz = ps.noise; nz.enabled = true; nz.strength = 0.6f; nz.frequency = 0.4f;
             var col = ps.colorOverLifetime; col.enabled = true;
             col.color = Grad(new[] { Color.white, Color.white }, new[] { 0f, 1f }, new[] { 0f, 1f, 0f }, new[] { 0f, 0.2f, 1f });
@@ -523,7 +532,7 @@ namespace ProjectInk
             hm.startColor = new Color(0.3f, 0.28f, 0.26f, 0.22f);
             var he = hz.emission; he.rateOverTime = 3f;
             var hs = hz.shape; hs.enabled = true; hs.shapeType = ParticleSystemShapeType.Box; hs.scale = new Vector3(24f, 6f, 20f);
-            var hv = hz.velocityOverLifetime; hv.enabled = true; hv.space = ParticleSystemSimulationSpace.World; hv.x = R(0.4f, 1.0f); hv.y = R(0.1f, 0.4f);
+            Vel(hz, R(0.4f, 1.0f), R(0.1f, 0.4f), R(0f, 0f));
             var hc = hz.colorOverLifetime; hc.enabled = true;
             hc.color = Grad(new[] { Color.white, Color.white }, new[] { 0f, 1f }, new[] { 0f, 1f, 0f }, new[] { 0f, 0.4f, 1f });
             Flipbook(hz, 8, true);

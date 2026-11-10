@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using SKey = UnityEngine.InputSystem.Key;
+#endif
 
 namespace ProjectInk
 {
@@ -24,7 +27,8 @@ namespace ProjectInk
 
         // ---------------------------------------------------------------- the take's state
         float woT = -1f;                    // the take's clock (real seconds); -1 when not in the take
-        float heroZ, mayaOff = -0.55f, mayaOffWant = -0.55f, mayaYaw = 90f, mayaYawWant = 90f, mayaHop;
+        float heroZ, mayaOff = -0.55f, mayaOffWant = -0.55f, mayaYaw = 90f, mayaYawWant = 90f, mayaHop, mayaZ, mayaZWant;
+        bool woHeld;
         float swing, holdBack, plungerUp, woShake, woFlash, woOverText = -1f, heroHeight = 1.45f, woBurn;
         bool woWalking, pipDead;
         float nextStep, nextMayaStep, nextFire;
@@ -141,6 +145,7 @@ namespace ProjectInk
                 WoHold(hWalkie, hFree.hand);
                 hWalkie.gameObject.SetActive(false);
             }
+            WoFreeRest(50f);
             // hand in hand from the first frame
             hNear.To(WoHoldPoint, () => -rigH.Forward + Vector3.down * 0.3f, 50f);
             if (rigM != null) mNear.To(WoHoldPoint, () => Vector3.down + WoSide() * 0.4f, 50f);
@@ -197,6 +202,115 @@ namespace ProjectInk
                 woGlows.Add(BlastFx.Glow(WoAt(FortressPlan.DoorX + s * 1.95f, 3.78f, FortressPlan.GateZ - 0.75f), 0.8f, 0.35f));
                 woGlows.Add(BlastFx.Glow(WoAt(FortressPlan.DoorX + s * 5.2f, 2.95f, -4.05f), 0.8f, 0.3f));
             }
+        }
+
+        /// <summary>His free arm at rest: hanging a hand's width out from his side (so it reads against
+        /// the ground, not lost on his body), swinging with his steps.</summary>
+        void WoFreeRest(float rate) => hFree.To(WoFreeHand, () => Vector3.down * 0.4f - rigH.Forward * 0.6f - WoSide() * 0.5f, rate);
+
+        Vector3 WoFreeHand()
+        {
+            if (hFree == null || hFree.upper == null) return hero.transform.position + Vector3.up * 0.6f;
+            var sh = hFree.upper.position;
+            float swingK = woWalking ? Mathf.Sin(Time.time * 7.3f + Mathf.PI) : 0f;
+            return sh - WoSide() * 0.17f + Vector3.down * 0.37f + rigH.Forward * (0.02f + 0.11f * swingK);
+        }
+
+        // ================================================================ the player's part (no fail: it carries on without them)
+
+        bool WoTapped()
+        {
+            bool down = PointerDown();
+            var gi = GestureInput.Instance;
+            bool tap = (down && !pointerWasDown) || AnyKeyTapped() || (gi != null && gi.AnyPressThisFrame);
+            if (gi != null) gi.Flush();
+            pointerWasDown = down;
+            return tap;
+        }
+
+        /// <summary>HOLD to talk: his walkie comes up while it's held; held long enough, he answers her.
+        /// If the player does nothing, he answers anyway (the take never stops).</summary>
+        IEnumerator WoHoldTalk()
+        {
+            ScBegin(ScAsk.Hold, "ANSWER HER", M("PRESS AND HOLD TO TALK", "HOLD  E  TO TALK"));
+            scHasWorld = true;
+            float held = 0f, start = woT;
+            bool said = false;
+            while (!said)
+            {
+                woHeld = PointerDown() || KeyHeld(SKey.E, SKey.Space, SKey.Enter);
+                bool auto = woT - start > 2.6f;
+                if (woHeld || auto)
+                {
+                    held += Time.unscaledDeltaTime;
+                    if (hWalkie != null && !hWalkie.gameObject.activeSelf) hWalkie.gameObject.SetActive(true);
+                    hFree.To(() => WoMouth(rigH, 1f), () => Vector3.down - WoSide() * 0.5f, 3.2f);
+                }
+                else
+                {
+                    held = Mathf.Max(0f, held - Time.unscaledDeltaTime);
+                    WoFreeRest(3f);
+                }
+                scWorld = HeroHead() + Vector3.up * 0.4f;
+                scProgress = Mathf.Clamp01(held / 0.6f);
+                if (held >= 0.6f)
+                {
+                    said = true;
+                    Sound.PlayTake(Sfx.WalkieClick, 2, 0.35f, hero.transform.position);
+                    Say("YOU", "I see you too, sweetheart. Over.", 2.6f);
+                }
+                yield return null;
+            }
+            ScEnd();
+            for (float t0 = 0f; t0 < 2.6f; t0 += Time.unscaledDeltaTime) yield return null;
+            WoFreeRest(2.5f);
+            if (hWalkie != null) hWalkie.gameObject.SetActive(false);
+            rigH.nod = 4f; rigH.turn = 0f; rigM.nod = 0f;
+        }
+
+        /// <summary>TAP: the click on "Over and out". It is the player's hand that ends it.</summary>
+        IEnumerator WoTapClick()
+        {
+            ScBegin(ScAsk.Mash, "OVER AND OUT", M("TAP", "TAP  E"));
+            scHasWorld = true;
+            while (woT < 46.3f && !WoTapped())
+            {
+                scWorld = HeroHead() + Vector3.up * 0.4f;
+                yield return null;
+            }
+            scProgress = 1f;
+            Sound.PlayTake(Sfx.WalkieClick, 0, 0.85f, hero.transform.position);
+            Haptics.Vibrate();
+            ScEnd();
+            for (float t0 = 0f; t0 < 0.3f; t0 += Time.unscaledDeltaTime) yield return null;
+            hFree.To(WoCoat, () => Vector3.down - WoSide() * 0.6f, 4f);
+        }
+
+        /// <summary>TAP TWICE: two clicks back to her, from the walkie in his coat.</summary>
+        IEnumerator WoTwoClicks()
+        {
+            hFree.To(WoCoat, () => Vector3.down - WoSide() * 0.6f, 3f);
+            ScBegin(ScAsk.Mash, "ANSWER HER", M("TAP TWICE", "TAP  E  TWICE"));
+            scHasWorld = true;
+            int clicks = 0;
+            float last = woT;
+            while (clicks < 2)
+            {
+                scWorld = HeroHead() + Vector3.up * 0.4f;
+                bool auto = woT > 64.6f && woT - last > 0.55f;
+                if (WoTapped() || auto)
+                {
+                    Sound.PlayTake(Sfx.WalkieClick, clicks == 0 ? 2 : 0, 0.8f, hero.transform.position, 0.96f);
+                    Haptics.Vibrate();
+                    clicks++;
+                    last = woT;
+                    scProgress = clicks / 2f;
+                }
+                yield return null;
+            }
+            ScEnd();
+            for (float t0 = 0f; t0 < 0.8f; t0 += Time.unscaledDeltaTime) yield return null;
+            WoFreeRest(2f);
         }
 
         /// <summary>A prop in a hand, kept at its real size whatever the body's scale.</summary>
@@ -288,7 +402,7 @@ namespace ProjectInk
             hero.transform.rotation = Quaternion.Euler(0f, 90f, 0f);          // facing the camera (-z)
             if (maya != null)
             {
-                maya.PuppetPose(WoAt(147.3f + mayaOff, mayaHop, heroZ + 0.04f));
+                maya.PuppetPose(WoAt(147.3f + mayaOff, mayaHop, heroZ + 0.04f + mayaZ));
                 maya.transform.rotation = Quaternion.Euler(0f, mayaYaw, 0f);
             }
         }
@@ -301,6 +415,7 @@ namespace ProjectInk
             // her place beside him, her turn, her hop
             float k = 1f - Mathf.Exp(-5f * Time.unscaledDeltaTime);
             mayaOff = Mathf.Lerp(mayaOff, mayaOffWant, k);
+            mayaZ = Mathf.Lerp(mayaZ, mayaZWant, k);
             mayaYaw = Mathf.Lerp(mayaYaw, mayaYawWant, 1f - Mathf.Exp(-7f * Time.unscaledDeltaTime));
             mayaHop = 0f;
             if (t > 12.6f && t < 13.7f) mayaHop = 0.07f * Mathf.Abs(Mathf.Sin((t - 12.6f) / 1.1f * Mathf.PI * 2f));          // she skips
@@ -412,10 +527,7 @@ namespace ProjectInk
             At(16.3f, () => { Sound.PlayTake(Sfx.WalkieClick, 1, 0.35f, maya.transform.position); Walkie("Papa? ...I can see you. Over.", 2.6f); });
             At(18.9f, () => { mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 3f); rigM.turn = 0f; });
             // ---- his walkie from his coat
-            At(19.0f, () => { if (hWalkie != null) hWalkie.gameObject.SetActive(true); hFree.To(() => WoMouth(rigH, 1f), () => Vector3.down - WoSide() * 0.5f, 3.2f); });
-            At(19.3f, () => Sound.PlayTake(Sfx.WalkieClick, 2, 0.35f, hero.transform.position));
-            At(19.4f, () => Say("YOU", "I see you too, sweetheart. Over.", 2.6f));
-            At(22.2f, () => { hFree.Off(2.5f); rigH.nod = 4f; rigH.turn = 0f; rigM.nod = 0f; });
+            At(18.9f, () => StartCoroutine(WoHoldTalk()));                     // the player answers her: HOLD to talk
             // ---- 24 the stables' door bangs: the last man runs in from the right
             At(24.0f, () =>
             {
@@ -438,10 +550,9 @@ namespace ProjectInk
             At(44.1f, () => { mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 3f); rigM.nod = 0f; });
             At(44.3f, () => hFree.To(() => WoMouth(rigH, 1f), () => Vector3.down - WoSide() * 0.5f, 3.4f));
             At(44.6f, () => Say("YOU", "Over and out.", 1.5f));
-            At(45.8f, () => Sound.PlayTake(Sfx.WalkieClick, 0, 0.85f, hero.transform.position));
-            At(46.1f, () => hFree.To(WoCoat, () => Vector3.down - WoSide() * 0.6f, 4f));
+            At(45.0f, () => StartCoroutine(WoTapClick()));                     // the player's click: "Over and out"
             At(46.8f, () => { Sound.PlayTake(Sfx.Plunger, 1, 0.5f, plungerBox.position); StartCoroutine(WoLerp(0.18f, u => plungerUp = 1f - u)); });
-            At(46.95f, () => { if (hWalkie != null) hWalkie.gameObject.SetActive(false); hFree.Off(2.5f); });
+            At(46.95f, () => { if (hWalkie != null) hWalkie.gameObject.SetActive(false); WoFreeRest(2.5f); });
 
             // ================================================================ the whole hill goes up
             float B = WoB;
@@ -494,9 +605,10 @@ namespace ProjectInk
                 rigM.nod = 18f; mayaYawWant = 25f;
                 hNear.To(WoHerHead, () => -rigH.Forward + WoSide() * 0.6f, 5f);
                 mNear.Off(6f);
-                mayaOffWant = -0.3f;
+                mayaOffWant = -0.46f; mayaZWant = -0.14f;                   // close in, but clear of him: in sight
             });
             At(B + 0.5f, () => mNear.To(WoHisLeg, () => Vector3.down - rigM.Forward * 0.5f, 4f));
+            At(B + 6.0f, () => mayaZWant = -0.05f);
             At(B + 1.6f, () => { mayaYawWant = 90f; rigM.nod = 8f; rigH.nod = 6f; });
             At(B + 1.2f, () => { Sound.Play(Sfx.Tinnitus, 0.22f); if (Camera.main != null) woDrift = BlastFx.Drift(Camera.main.transform); });
 
@@ -520,10 +632,8 @@ namespace ProjectInk
             At(62.0f, () => Sound.PlayTake(Sfx.WalkieClick, 0, 0.9f, maya.transform.position));
             At(62.55f, () => Sound.PlayTake(Sfx.WalkieClick, 1, 0.9f, maya.transform.position));
             At(63.0f, () => { rigM.nod = -30f; rigM.LookTowards(hero.transform.position, 30f); });
-            At(63.2f, () => hFree.To(WoCoat, () => Vector3.down - WoSide() * 0.6f, 3f));
-            At(63.6f, () => Sound.PlayTake(Sfx.WalkieClick, 2, 0.75f, hero.transform.position, 0.96f));
-            At(64.15f, () => Sound.PlayTake(Sfx.WalkieClick, 0, 0.75f, hero.transform.position, 0.96f));
-            At(64.6f, () => { hFree.Off(2f); mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 2f); });
+            At(63.2f, () => StartCoroutine(WoTwoClicks()));                    // the player answers: two clicks back
+            At(65.2f, () => mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 2f));
             At(65.4f, () => { rigM.nod = -6f; rigM.turn = 0f; rigH.nod = 4f; rigH.turn = 0f; });
             At(66.6f, () => StartCoroutine(WoLerp(2.6f, u => blackout = u * u)));
             e.Sort((a, b) => a.t.CompareTo(b.t));
