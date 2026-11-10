@@ -29,6 +29,7 @@ import bpy  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_story_set as S  # noqa: E402
 import detail as D  # noqa: E402
+import build_fortress_front as F  # noqa: E402
 
 ROOT = S.ROOT
 OUT = os.path.join(ROOT, "Assets", "Art", "Fortress")
@@ -490,6 +491,168 @@ def lightning_lights():
     bpy.context.scene.world.node_tree.nodes["Background"].inputs[0].default_value = (0.2, 0.21, 0.24, 1)
 
 
+def dawn_lights():
+    """The morning after (docs/story/walkout.md): the storm gone over, a pale sky behind the hill,
+    a low sun from the back right rimming every edge, a soft cool light on the faces towards us.
+    The lanterns and the windows still burn, small now."""
+    from mathutils import Vector as V
+    for ob in list(bpy.context.scene.objects):
+        if ob.type == "LIGHT":
+            bpy.data.objects.remove(ob, do_unlink=True)
+    sun = add_light("SUN", "DawnSun", (0, 0, 60), 4.2)
+    sun.data.angle = math.radians(3.0)
+    sun.data.color = (1.0, 0.97, 0.93)
+    d = V((-0.55, -0.8, -0.2)).normalized()
+    sun.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
+    add_light("AREA", "DawnFront", (147.0, -120.0, 40.0), 60000, size=160.0, rot=(math.radians(68), 0, 0)).data.color = (0.9, 0.93, 1.0)
+    add_light("AREA", "DawnCourtFill", (147.0, -40.0, UP + 14.0), 9000, size=60.0, rot=(math.radians(64), 0, 0)).data.color = (0.92, 0.94, 1.0)
+    w = bpy.context.scene.world
+    if w is None:
+        w = bpy.data.worlds.new("Dawn")
+        w.use_nodes = True
+        bpy.context.scene.world = w
+    w.node_tree.nodes["Background"].inputs[0].default_value = (0.36, 0.38, 0.42, 1)
+    w.node_tree.nodes["Background"].inputs[1].default_value = 1.0
+    # the sky panel: bright and pale low down behind the hill, grey-blue above
+    for m in bpy.data.materials:
+        if m.name.startswith("FortStormSky"):
+            nt = m.node_tree
+            bsdf = nt.nodes["Principled BSDF"]
+            geo = nt.nodes.new("ShaderNodeNewGeometry")
+            sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+            nt.links.new(geo.outputs["Position"], sep.inputs[0])
+            mr = nt.nodes.new("ShaderNodeMapRange")
+            mr.inputs["From Min"].default_value = -10.0
+            mr.inputs["From Max"].default_value = 90.0
+            nt.links.new(sep.outputs["Z"], mr.inputs["Value"])
+            ramp = nt.nodes.new("ShaderNodeValToRGB")
+            e = ramp.color_ramp.elements
+            e[0].position, e[0].color = 0.0, (1.0, 0.98, 0.95, 1)
+            e[1].position, e[1].color = 1.0, (0.3, 0.33, 0.39, 1)
+            mid = e.new(0.3)
+            mid.color = (0.72, 0.73, 0.75, 1)
+            nt.links.new(mr.outputs["Result"], ramp.inputs["Fac"])
+            nt.links.new(ramp.outputs["Color"], bsdf.inputs["Emission Color"])
+            bsdf.inputs["Emission Strength"].default_value = 1.5
+    # the storm's clouds: thinned to faint shapes against the morning (the same sky, a breath darker)
+    for m in bpy.data.materials:
+        if m.name.startswith("FortCloud"):
+            nt = m.node_tree
+            bsdf = nt.nodes["Principled BSDF"]
+            bsdf.inputs["Base Color"].default_value = (0.0, 0.0, 0.0, 1)
+            geo = nt.nodes.new("ShaderNodeNewGeometry")
+            sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+            nt.links.new(geo.outputs["Position"], sep.inputs[0])
+            mr = nt.nodes.new("ShaderNodeMapRange")
+            mr.inputs["From Min"].default_value = -10.0
+            mr.inputs["From Max"].default_value = 90.0
+            nt.links.new(sep.outputs["Z"], mr.inputs["Value"])
+            ramp = nt.nodes.new("ShaderNodeValToRGB")
+            e = ramp.color_ramp.elements
+            e[0].position, e[0].color = 0.0, (0.9, 0.89, 0.87, 1)
+            e[1].position, e[1].color = 1.0, (0.26, 0.28, 0.33, 1)
+            mid = e.new(0.3)
+            mid.color = (0.6, 0.61, 0.63, 1)
+            nt.links.new(mr.outputs["Result"], ramp.inputs["Fac"])
+            nt.links.new(ramp.outputs["Color"], bsdf.inputs["Emission Color"])
+            bsdf.inputs["Emission Strength"].default_value = 1.5
+
+
+DAWN_PARTS = {          # part: (size, samples) of its dawn bake
+    "FortFacade": (4096, 16), "FortPorch": (4096, 16), "FortForecourt": (4096, 16),
+    "FortBridge": (4096, 16), "FortGorge": (4096, 12),
+    "FortHall": (2048, 10), "FortRoof": (2048, 10), "FortBack": (2048, 8), "FortSky": (1024, 8),
+    "FortCourt": (2048, 10), "FortGate": (1024, 8), "FortFore": (1024, 8),
+}
+
+
+def walkout_board(name):
+    """The take's key frames as the game frames them (StoryWalkout.WoCamera), with stand-ins: him
+    (black) and her (white, 0.58 his size), walking at the camera."""
+    U = UP
+    frames = [   # label, hero z, cam (x, y, z), look (x, y, z), fov
+        ("1.5 s  the doorway, two shapes in it", -0.98, (147.05, U + 0.92, -8.6), (147.0, U + 1.55, -3.35), 36),
+        ("8 s  out of the porch", -7.05, (147.53, U + 0.92, -10.45), (147.03, U + 0.81, -6.45), 36),
+        ("22 s  stopped: the walkies", -18.7, (147.05, U + 0.92, -21.98), (147.03, U + 0.81, -18.1), 36),
+        ("35 s  'Over and out.'", -23.25, (147.05, U + 0.92, -26.55), (147.03, U + 0.81, -22.65), 36),
+        ("40 s  through the gate, the hill going up", -27.95, (147.05, U + 0.92, -31.25), (147.03, U + 0.81, -27.35), 36),
+        ("52 s  slow motion: two clicks", -35.35, (146.97, U + 1.14, -39.4), (147.03, U + 1.75, -34.75), 40.4),
+        ("60 s  the last frame", -37.9, (146.9, U + 1.32, -42.6), (147.03, U + 2.51, -37.3), 44),
+    ]
+    white = S.mat("MayaInk", (0.85, 0.85, 0.84), 0.9)
+    shots = []
+    arms = []
+    for i, (label, hz, cp, lk, fov) in enumerate(frames):
+        h, fr = S.stickman("walk", 6, 0.0, -90.0)
+        h.location = (147.3, hz, UP)
+        m, _ = S.stickman("walk", 18, 0.0, -90.0)
+        m.location = (146.75, hz + 0.04, UP)
+        m.scale = (0.58, 0.58, 0.58)
+        for o in bpy.data.objects:
+            if o.type == "MESH" and o.parent == m:
+                o.data.materials.clear()
+                o.data.materials.append(white)
+        arms.append((h, m))
+        shots.append((label, S.shot_camera("B%d" % i, cp, lk, fov), fr))
+    sc = bpy.context.scene
+    # one pair visible per shot
+    import types
+    cams = []
+    for i, (label, cam, fr) in enumerate(shots):
+        cams.append((label, cam, fr, i))
+    S.PREVIEW = os.path.join(ROOT, "docs", "previews")
+    def show(k):
+        for j, (h, m) in enumerate(arms):
+            for a in (h, m):
+                hide = j != k
+                a.hide_render = hide
+                for o in bpy.data.objects:
+                    if o.parent == a:
+                        o.hide_render = hide
+    orig = S.preview
+    tiles = []
+    for (label, cam, fr, i) in cams:
+        show(i)
+        tiles.append((label, cam, fr))
+    # render each with its pair shown
+    sc.render.engine = "CYCLES"
+    from PIL import Image, ImageDraw, ImageFont
+    out = []
+    tmp = os.path.join(OUT, "_board.png")
+    sc.cycles.samples = 10
+    sc.render.resolution_x, sc.render.resolution_y = 768, 432
+    sc.view_settings.view_transform = "Standard"
+    for (label, cam, fr, i) in cams:
+        show(i)
+        sc.camera = cam
+        sc.frame_set(fr)
+        sc.render.filepath = tmp
+        bpy.ops.render.render(write_still=True)
+        out.append((label, Image.open(tmp).convert("RGB").copy()))
+    font = ImageFont.truetype(os.path.join(ROOT, "Assets", "Resources", "Fonts", "BarlowCondensed-SemiBold.ttf"), 26)
+    rows = (len(out) + 1) // 2
+    sheet = Image.new("RGB", (778 * 2, 472 * rows), (20, 20, 20))
+    d = ImageDraw.Draw(sheet)
+    for i, (label, img) in enumerate(out):
+        x, y = (i % 2) * 778, (i // 2) * 472
+        sheet.paste(img, (x, y + 36))
+        d.text((x + 8, y + 4), label, fill=(255, 210, 0), font=font)
+    sheet.save(os.path.join(ROOT, "docs", "previews", name))
+
+
+def walkout_preview(name):
+    cams = [
+        ("W0  establishing: Kessel Hill at dawn", S.shot_camera("W0", (147.0, UP + 3.0, -104.0), (140.0, UP + 10.0, 0.0), 40), None),
+        ("W1  the doorway", S.shot_camera("W1", (147.0, UP + 1.35, -8.6), (147.0, UP + 1.7, -3.0), 36), None),
+        ("W2  the forecourt (they stop here)", S.shot_camera("W2", (147.0, UP + 1.25, -21.4), (147.0, UP + 1.7, -17.0), 36), None),
+        ("W3  the gate", S.shot_camera("W3", (147.0, UP + 1.3, -31.0), (147.0, UP + 1.5, -26.5), 36), None),
+        ("W4  the bridge, the end of the slow motion", S.shot_camera("W4", (147.0, UP + 1.8, -48.0), (147.0, UP + 2.8, -40.0), 41), None),
+        ("W5  overview", S.shot_camera("W5", (180.0, UP + 10.0, -75.0), (147.0, UP + 2.0, -22.0), 42), None),
+    ]
+    S.PREVIEW = os.path.join(ROOT, "docs", "previews")
+    S.preview(cams, name)
+
+
 def export(objs):
     for o in bpy.context.scene.objects:
         o.select_set(False)
@@ -518,6 +681,43 @@ def main():
     roof, back, fore = build_roof(coll, M), build_back(coll, M), build_fore(coll, M)
     for o in (road, gate, court, hall, front, port, roof, fore):
         D.bevel(o, 0.03)
+    fparts = F.build_all(S, coll, M)
+    for o in fparts[:4]:
+        D.bevel(o, 0.02)
+    if "--walkout-board" in sys.argv:
+        front.hide_render = True
+        dawn_lights()
+        walkout_board("walkout_board.png")
+        return
+    if "--walkout-preview" in sys.argv:
+        front.hide_render = True
+        dawn_lights()
+        if "--fast" in sys.argv:
+            S.PREVIEW_SAMPLES = 8
+        walkout_preview("fortress_walkout.png")
+        return
+    if "--dawn" in sys.argv:
+        # the dawn bakes only (the night and lightning bakes are kept: unwraps are deterministic)
+        allp = [road, gate, court, hall, front, sky, port, roof, back, fore] + fparts
+        for o in allp:
+            S.unwrap(o)
+        sel = [a.split("=", 1)[1].split(",") for a in sys.argv if a.startswith("--parts=")]
+        want = sel[0] if sel else list(DAWN_PARTS)
+        front.hide_render = True
+        dawn_lights()
+        for o in allp:
+            if o.name in want and o.name in DAWN_PARTS:
+                size, smp = DAWN_PARTS[o.name]
+                S.bake(o, size, smp, "_Dawn")
+        if "--export" in sys.argv:
+            marks = []
+            for n, p in (("Mark_X", (10, 0, 0)), ("Mark_Y", (0, 10, 0)), ("Mark_Z", (0, 0, 10))):
+                e = bpy.data.objects.new(n, None)
+                e.location = p
+                coll.objects.link(e)
+                marks.append(e)
+            export(allp + marks)
+        return
     lights()
     if preview_only or lit:
         if lit:
@@ -536,7 +736,7 @@ def main():
         S.PREVIEW = os.path.join(ROOT, "docs", "previews")
         S.preview(cams, "fortress_set_lightning.png" if lit else "fortress_set.png")
         return
-    parts = [road, gate, court, hall, front, sky, port, roof, back, fore]
+    parts = [road, gate, court, hall, front, sky, port, roof, back, fore] + fparts
     for o in parts:
         S.unwrap(o)
     front.hide_render = True

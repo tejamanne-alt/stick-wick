@@ -12,6 +12,14 @@ namespace ProjectInk
         public Renderer[] renderers = new Renderer[0];
         public Material[] normal = new Material[0];
         public Material[] flash = new Material[0];
+        /// <summary>The dawn bake for each renderer (null: it has none); and the parts that exist only
+        /// in the dawn (the way out the front: the walk-out), hidden until then.</summary>
+        public Material[] dawn = new Material[0];
+        public Renderer[] dawnOnly = new Renderer[0];
+
+        /// <summary>The morning after: the whole set in its dawn bake, the way out shown (the walk-out).</summary>
+        public static bool Dawn;
+        int mode = -1;
 
         float struckAt = -10f, length;
         bool lit;
@@ -20,7 +28,7 @@ namespace ProjectInk
         LineRenderer[] bolt;
         float boltUntil;
 
-        void Awake() { Instance = this; }
+        void Awake() { Instance = this; Dawn = false; Held = false; }
         void OnDestroy() { if (Instance == this) Instance = null; }
 
         /// <summary>Hold the strike's bake on (the dawn after the storm: the set in its brightest light).</summary>
@@ -39,17 +47,20 @@ namespace ProjectInk
             float u = (Time.unscaledTime - struckAt) / Mathf.Max(0.05f, length);
             // on, off, on, then fading out: the stutter of a real strike
             bool on = Held || (u >= 0f && u < 1f && !(u > 0.16f && u < 0.3f) && !(u > 0.62f && u < 0.7f));
-            if (on != lit)
+            int want = Dawn ? 2 : on ? 1 : 0;
+            lit = on && !Dawn;
+            if (want != mode)
             {
-                lit = on;
+                mode = want;
                 for (int i = 0; i < renderers.Length; i++)
                 {
                     if (renderers[i] == null) continue;
-                    var m = on ? flash[i] : normal[i];
+                    var m = want == 2 && i < dawn.Length && dawn[i] != null ? dawn[i] : want == 1 ? flash[i] : normal[i];
                     var arr = renderers[i].sharedMaterials;
                     for (int k = 0; k < arr.Length; k++) arr[k] = m;
                     renderers[i].sharedMaterials = arr;
                 }
+                foreach (var r in dawnOnly) if (r != null) r.enabled = Dawn;
             }
             if (bolt != null)
             {

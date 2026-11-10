@@ -972,6 +972,7 @@ namespace ProjectInk
             if (chapter == 10) EpilogueGUI(w, h);
             EndingGUI(w, h);
             BlackoutGUI(w, h);
+            if (chapter == 6) WalkoutTextGUI(w, h);
             ControlsGUI(w, h);
             // the words last: nothing in the story is drawn over them
             if (phase != Phase.End && (cardAt < 0f)) DrawSubtitle(w, h, bh);

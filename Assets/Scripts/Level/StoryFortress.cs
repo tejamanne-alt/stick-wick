@@ -636,6 +636,9 @@ namespace ProjectInk
             Sound.Play(Sfx.BruteLaugh, 0.7f, at);
             Say("THE WARDEN", "Go on up. He's waiting. He's been waiting years.", 3.4f, wh);
             yield return Cut(3.6f, u => Static(at + new Vector3(1.6f, 0.5f, -1.8f), wh != null ? wh.position : at + Vector3.up * 0.6f, 32f), 0.015f);
+            // the dead man's switch (paid off in the walk-out): the whole hill is rigged to go with him
+            Say("THE WARDEN", "Boss falls... hill burns. Nothing left... for Harrow.", 3.4f, wh);
+            yield return Cut(3.4f, u => Static(at + new Vector3(0.9f, 0.3f, -1.2f), wh != null ? wh.position : at + Vector3.up * 0.6f, 28f), 0.012f);
             // (b) far above, through the storm: the tower, lit by a strike
             Strike(0.9f, 0.2f);
             yield return Cut(1.6f, u => CineCam.TiltUp(new Vector3(147f, FortressPlan.Up + 1.0f, -2.0f), new Vector3(148f, FortressPlan.Up + 2.0f, 2f), new Vector3(150f, FortressPlan.Up + 9f, 4f), u, 42f), 0.03f);
@@ -758,6 +761,7 @@ namespace ProjectInk
                 cap.alignment = TextAnchor.MiddleLeft;
             }
             FinaleGUI(w, h);
+            WalkoutGUI(w, h);
             PromptsGUI(w, h);
         }
     }

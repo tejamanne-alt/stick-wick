@@ -31,6 +31,24 @@ namespace ProjectInk
             FortressCheckpoint = 7;
             hero.CinePuppet();
             barsPx = 92f;
+            if (from == 10)
+            {
+                // TEST: the walk-out alone (her ribbon tied, the storm over)
+                AttachRibbon();
+                maya = SpawnMaya(new Vector3(146.75f, FortressPlan.Up, 0.3f), 1);
+                mayaHere = true;
+                TieRibbon();
+                storm = false;
+                yield return WalkOut();
+                CineOff();
+                cardAt = Time.unscaledTime;
+                cardLine = "No. I came home.";
+                cardTitle = "THE STORM";
+                yield return RealWait(6.0f);
+                Sound.MusicStop(4f);
+                phase = Phase.End;
+                yield break;
+            }
             if (from <= 7 || from == -1)
             {
                 if (from == 7) yield return FadeIn(0.4f);
@@ -153,6 +171,8 @@ namespace ProjectInk
             yield return VossFlash(2, 3.0f, "VOSS", "Bring them to me. All of them. Alive.");
             Say("VOSS", "Six years I lived on your mercy. One phone call, and I'm finished.", 3.6f, vh);
             yield return Cut(3.6f, u => CineCam.DollyIn(vHead(), new Vector3(1f, -0.1f, 0.6f), u, 2.4f, 1.6f, 28f), 0.015f);
+            Say("VOSS", "So I learned your trick. If I fall, Kessel falls with me. Every page of it.", 3.6f, vh);
+            yield return Cut(3.6f, u => Static(vHead() + new Vector3(-1.0f, 0.1f, -1.0f), vHead(), 30f), 0.015f);
             Say("VOSS", "Then a detective at your door. What was I meant to do? Wait?", 3.4f, vh);
             yield return Cut(3.4f, u => Static(Roof(154f, -6.5f) + Vector3.up * 1.6f, Roof(154.5f, 0f) + Vector3.up * 1.2f, 40f), 0.025f);
             Say("VOSS", "I told him to bring her. He never listened. Not once in his life.", 3.6f, vh);
@@ -665,7 +685,7 @@ namespace ProjectInk
             if (rainPs != null) rainPs.Stop(true, ParticleSystemStopBehavior.StopEmitting);
             Sound.Ambience(0.25f, 0.25f, 22000f);
             Sound.Play(Sfx.Wind, 0.35f);
-            LightningSwap.Held = true;
+            LightningSwap.Dawn = true;                                   // the morning bake (docs/story/walkout.md)
             yield return Cut(5.0f, u => Static(Roof(FortressPlan.EdgeX + 4f, -8f) + Vector3.up * 2.6f, Roof(FortressPlan.EdgeX - 3f) + Vector3.up * 0.8f, Mathf.Lerp(30f, 46f, u)), 0.01f,
                 u => dawn = u);
             // 6.10 the book lies open in the rain where he dropped it: he picks it up, and puts it inside his coat
@@ -680,10 +700,20 @@ namespace ProjectInk
             Say("YOU", "...Forty-one names.", 2.2f);
             yield return Cut(2.4f, u => Static(HeroHead() + new Vector3(0.7f, -0.1f, -1.0f), HeroHead(), 30f), 0.01f);
             hero.body.Play("idle", 0.3f);
-            Walkie("Papa? ...Can we go home now? Over.", 2.8f);
-            yield return Cut(3.0f, u => Static(Roof(bp.x - 1.0f, -3.5f) + Vector3.up * 1.0f, Roof(bp.x - 1.0f, bp.z) + Vector3.up * 0.8f, 36f), 0.01f);
-            Say("YOU", "...Over and out, sweetheart. We're going home.", 3.0f);
-            yield return Cut(5.0f, u => CineCam.DronePullAway(hero.transform.position + Vector3.up * 0.8f, u, 2.4f, 22f, 0.8f, 14f, 44f), 0.01f);
+            // she comes to him; her hand finds his
+            if (maya != null) { maya.PuppetPose(new Vector3(bp.x - 0.95f, FortressPlan.RoofY, bp.z + 0.1f)); maya.PuppetPlay("idle", 0.2f); }
+            Say("MAYA", "Papa?", 1.4f, maya != null ? HeadOf(maya) : null);
+            yield return Cut(1.8f, u => Static(Roof(bp.x - 1.0f, -3.5f) + Vector3.up * 1.0f, Roof(bp.x - 1.0f, bp.z) + Vector3.up * 0.8f, 36f), 0.01f);
+            Say("YOU", "...Let's go home.", 2.2f);
+            yield return Cut(2.6f, u => Static(Roof(bp.x - 1.0f, -3.2f) + Vector3.up * 0.9f, Roof(bp.x - 1.0f, bp.z) + Vector3.up * 0.75f, Mathf.Lerp(36f, 33f, u)), 0.01f);
+            Sound.MusicStop(2.0f);
+            for (float t0 = 0f; t0 < 1.4f; t0 += Time.unscaledDeltaTime) { blackout = t0 / 1.4f; yield return null; }
+            blackout = 1f;
+            dawn = 0f;
+            yield return RealWait(0.6f);
+            // the walk-out: the highlight (docs/story/walkout.md)
+            yield return WalkOut();
+            CineOff();
             cardAt = Time.unscaledTime;
             cardLine = reached ? "He reached for him anyway." : "No. I came home.";
             cardTitle = "THE STORM";

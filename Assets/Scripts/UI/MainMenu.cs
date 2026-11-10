@@ -177,6 +177,7 @@ namespace ProjectInk
             ("CHAPTER 6  ·  THE FORTRESS", "The last roof  ·  Voss, the trade", () => Fortress(7)),
             ("CHAPTER 6  ·  THE FORTRESS", "Voss (the duel)", () => Fortress(8)),
             ("CHAPTER 6  ·  THE FORTRESS", "The fall  ·  her  ·  the dawn", () => Fortress(9)),
+            ("CHAPTER 6  ·  THE FORTRESS", "The walk-out  ·  \"Over and out\"", () => Fortress(10)),
             ("CHAPTER 7  ·  HOME", "Harrow  ·  \"Then I never saw you\"", () => Epilogue(0)),
             ("CHAPTER 7  ·  HOME", "The grave", () => Epilogue(1)),
             ("CHAPTER 7  ·  HOME", "The swing", () => Epilogue(2)),

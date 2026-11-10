@@ -122,7 +122,7 @@ namespace ProjectInk
                 System.Func<Vector3> hHead = () => hh != null ? hh.position : EpiloguePlan.HarrowSpot + Vector3.up * 1.2f;
                 System.Action onHarrow = () => Cine(new CineCam.Shot(HeroHead() + new Vector3(-0.3f, 0.1f, -1.2f) + (hHead() - HeroHead()) * -0.25f, hHead(), 32f));
                 System.Action onHim = () => Cine(new CineCam.Shot(hHead() + new Vector3(0.3f, 0.0f, -1.3f), HeroHead(), 32f));
-                Say("DETECTIVE HARROW", "Kessel Hill's full of Voss's men. Half of them are in pieces.", 3.4f, hh);
+                Say("DETECTIVE HARROW", "Kessel Hill's still burning. Half of Voss's men are in pieces.", 3.4f, hh);
                 yield return Hold(3.6f, onHarrow);
                 Say("DETECTIVE HARROW", "Was that you?", 1.8f, hh);
                 yield return Hold(2.0f, onHarrow);

@@ -23,6 +23,8 @@ namespace ProjectInk
         MemoryElena,
         TrainPass, CarRev, CarDoor,
         MemoryMaya, MusicNote, Creak, Buzz, FridgeHum, SwingCreak, Crickets,
+        // the walk-out (chapter 6, docs/story/walkout.md)
+        Explosion, Debris, FireRoar, WalkieClick, Plunger, Birds, Ember,
     }
 
     /// <summary>The mixer. Plays recorded takes with no immediate repeats, small pitch and
@@ -80,6 +82,7 @@ namespace ProjectInk
             foreach (Sfx s in System.Enum.GetValues(typeof(Sfx)))
             {
                 var clips = Resources.LoadAll<AudioClip>("Audio/" + Folder(s));
+                System.Array.Sort(clips, (a, b) => string.CompareOrdinal(a.name, b.name));      // takes in order: _1, _2, ...
                 if (clips.Length > 0) banks[s] = new Bank { clips = clips };
             }
             voices = new AudioSource[Voices];
@@ -248,6 +251,13 @@ namespace ProjectInk
                 case Sfx.Glint: level = 0.4f; spread = 0.03f; gap = 0.5f; slows = false; break;
                 case Sfx.KnifeGrab: level = 0.75f; spread = 0.03f; gap = 0.3f; slows = false; break;
                 case Sfx.FlashCut: level = 0.7f; spread = 0.06f; gap = 0.05f; slows = false; break;
+                case Sfx.Explosion: level = 1f; spread = 0.06f; gap = 0.15f; slows = false; break;
+                case Sfx.Debris: level = 0.6f; spread = 0.08f; gap = 0.2f; break;
+                case Sfx.FireRoar: level = 0.5f; spread = 0.02f; gap = 1f; slows = false; break;
+                case Sfx.WalkieClick: level = 0.7f; spread = 0.03f; gap = 0.08f; slows = false; break;
+                case Sfx.Plunger: level = 0.75f; spread = 0.02f; gap = 0.3f; break;
+                case Sfx.Birds: level = 0.3f; spread = 0.04f; gap = 2f; slows = false; break;
+                case Sfx.Ember: level = 0.3f; spread = 0.06f; gap = 0.8f; slows = false; break;
             }
         }
 
@@ -256,6 +266,16 @@ namespace ProjectInk
         {
             if (Instance != null) Instance.PlayNow(s, volume, at, pitch);
         }
+
+        /// <summary>Play one particular take (0 = the first: e.g. the plunger pulled up, 1 = pushed down).</summary>
+        public static void PlayTake(Sfx s, int take, float volume = 1f, Vector3? at = null, float pitch = 1f)
+        {
+            if (Instance != null) Instance.PlayNow(s, volume, at, pitch, take);
+        }
+
+        /// <summary>A directed slow motion that keeps the sound clear (the walk-out): no muffling, no
+        /// bent pitch on the score or the sounds while it's on.</summary>
+        public static bool KeepClear;
 
         /// <summary>Play after a delay in real seconds (shell casings hitting the floor, tails).</summary>
         public static void PlayLater(Sfx s, float seconds, float volume = 1f, Vector3? at = null)
@@ -269,16 +289,16 @@ namespace ProjectInk
             PlayNow(s, volume, at, 1f);
         }
 
-        void PlayNow(Sfx s, float volume, Vector3? at, float pitch)
+        void PlayNow(Sfx s, float volume, Vector3? at, float pitch, int take = -1)
         {
             if (!banks.TryGetValue(s, out var bank)) return;
             Traits(s, out float level, out float spread, out float gap, out bool slows);
             float now = Time.unscaledTime;
-            if (now - bank.lastTime < gap) return;
+            if (now - bank.lastTime < gap && take < 0) return;
             bank.lastTime = now;
 
-            int pick = Random.Range(0, bank.clips.Length);
-            if (bank.clips.Length > 1 && pick == bank.last) pick = (pick + 1) % bank.clips.Length;
+            int pick = take >= 0 ? Mathf.Min(take, bank.clips.Length - 1) : Random.Range(0, bank.clips.Length);
+            if (take < 0 && bank.clips.Length > 1 && pick == bank.last) pick = (pick + 1) % bank.clips.Length;
             bank.last = pick;
 
             var v = voices[nextVoice];
@@ -306,7 +326,7 @@ namespace ProjectInk
         static float SlowPitch()
         {
             float ts = Time.timeScale;
-            if (ts <= 0.02f) return 1f;                   // hit-stop: a frozen frame, not slow motion
+            if (ts <= 0.02f || KeepClear) return 1f;      // hit-stop: a frozen frame, not slow motion
             return Mathf.Lerp(0.72f, 1f, Mathf.InverseLerp(0.15f, 1f, ts));
         }
 
@@ -334,7 +354,7 @@ namespace ProjectInk
             if (!slow && wasSlow) PlayNow(Sfx.SlowmoOut, 1f, null, 1f);
             wasSlow = slow;
 
-            float ts = Time.timeScale <= 0.02f ? 1f : Time.timeScale;
+            float ts = Time.timeScale <= 0.02f || KeepClear ? 1f : Time.timeScale;
             float cutoff = Mathf.Lerp(1600f, 22000f, Mathf.Pow(Mathf.InverseLerp(0.15f, 1f, ts), 1.6f));
             float k = 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime);
             for (int i = 0; i < Voices; i++)
@@ -357,7 +377,7 @@ namespace ProjectInk
                 if (musA.volume <= 0f && musWantA <= 0f && musA.isPlaying) musA.Stop();
                 if (musB.volume <= 0f && musWantB <= 0f && musB.isPlaying) musB.Stop();
                 // the score bends into slow motion with everything else
-                float p = Time.timeScale < 0.8f && Time.timeScale > 0.02f ? Mathf.Lerp(0.85f, 1f, Time.timeScale) : 1f;
+                float p = !KeepClear && Time.timeScale < 0.8f && Time.timeScale > 0.02f ? Mathf.Lerp(0.85f, 1f, Time.timeScale) : 1f;
                 musA.pitch = musB.pitch = p;
             }
         }

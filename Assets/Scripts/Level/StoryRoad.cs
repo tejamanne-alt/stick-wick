@@ -229,6 +229,13 @@ namespace ProjectInk
                 SeatHero(true);
                 yield return Talk("That's the battery. Turn it off now, and keep it hidden.", 3.0f, () => Face(0.85f));
                 yield return Talk("Turn it on only when you see me. Promise?", 2.6f, () => Face(0.9f));
+                // the setup for the walk-out (docs/story/walkout.md): two clicks means you're okay
+                yield return Talk("And if you can't talk, click it twice. Two clicks means you're okay.", 3.2f, () => Face(0.88f));
+                yield return Her("Two clicks. Okay.", 1.8f, OnWalkie);
+                Sound.PlayTake(Sfx.WalkieClick, 0, 0.7f, RoadPlan.PassengerSeat);
+                yield return Cut(0.5f, u => OnWalkie(), 0.004f);
+                Sound.PlayTake(Sfx.WalkieClick, 1, 0.7f, RoadPlan.PassengerSeat);
+                yield return Cut(0.9f, u => OnWalkie(), 0.004f);
                 yield return Her("Promise. Over and out.", 2.2f, OnWalkie);
                 Sound.Play(Sfx.PhoneClick, 0.6f, RoadPlan.PassengerSeat);
                 if (batteryPip != null) batteryPip.gameObject.SetActive(false);

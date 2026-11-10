@@ -5,7 +5,9 @@ the warehouse with a convolution reverb; synthesis only where synthesis is the r
 the bowed cello under the drone).
 
     python tools/audio/make_story_sfx.py --oculus <meta-open-sound>/corpora/oculus-audio-pack/ogg \\
-                                         --kit <sfx-kit>/sounds
+                                         --kit <sfx-kit>/sounds [sound ...]
+
+With sound names (e.g. `explosion walkie_click`), builds only those; with none, all of them.
 
 The two libraries are the same ones build_audio.py uses (Oculus Audio Pack 01, CC BY 4.0;
 SFX Kit, CC0). Needs numpy, scipy and ffmpeg. Writes 16-bit mono WAVs into
@@ -139,13 +141,14 @@ def room(x, rt60=2.0, wet=0.3, predelay=0.018, dark=2800, size="hall"):
     return dry * (1 - wet) + w * wet * 0.9
 
 
-def save(name, x, take=1, peak=0.89):
+def save(name, x, take=1, peak=0.89, loop=False):
     x = np.asarray(x, dtype=np.float64)
     x = x - np.mean(x)
-    # drop the inaudible tail
-    a = np.abs(x)
-    end = len(x) - np.argmax(a[::-1] > a.max() * 10 ** (-60 / 20))
-    x = fades(x[:min(len(x), end + int(0.02 * SR))], 0.0005, 0.06)
+    if not loop:                                   # a loop keeps every sample: no trim, no fades
+        # drop the inaudible tail
+        a = np.abs(x)
+        end = len(x) - np.argmax(a[::-1] > a.max() * 10 ** (-60 / 20))
+        x = fades(x[:min(len(x), end + int(0.02 * SR))], 0.0005, 0.06)
     x = x / (np.max(np.abs(x)) or 1.0) * peak
     d = os.path.join(ROOT, name)
     os.makedirs(d, exist_ok=True)
@@ -851,18 +854,306 @@ def crickets():
     save("crickets", room(y, 1.2, 0.2, 0.02, 7000), 1, peak=0.35)
 
 
+# ------------------------------------------------------------------ the walk-out (chapter 6, docs/story/walkout.md)
+
+def outdoors(x, wet=0.16, slap=0.0, slap_gain=0.0, dark=2400):
+    """Open air at dawn: no room, only a short diffuse spread off the forecourt's stone and,
+    for the big ones, a slap-back off the hill's walls a fraction of a second later."""
+    y = room(x, 1.1, wet, 0.012, dark)
+    if slap > 0:
+        y = mix((y, 1.0, 0.0), (lp(y, dark * 0.5, 2), slap_gain, slap), (lp(y, dark * 0.3, 2), slap_gain * 0.45, slap * 2.3))
+    return y
+
+
+def loopable(y, L, xf):
+    """Fold a render of L + xf seconds into an L-second loop: the overhang crossfades
+    (equal power, for noise) into the start, so the seam is inaudible."""
+    n, k = int(L * SR), int(xf * SR)
+    out = y[:n].copy()
+    w = np.linspace(0, 1, k)
+    out[:k] = y[:k] * np.sqrt(w) + y[n:n + k] * np.sqrt(1 - w)
+    return out
+
+
+def crackle(n, rate, lo=1200, hi=6000, decay=0.0015, amp_env=None, r=None):
+    """Sparse little snaps: Poisson-timed clicks of random size, each a decaying burst."""
+    r = r or rng
+    y = np.zeros(n)
+    k = int(decay * SR * 8)
+    for i in np.flatnonzero(r.random(n) < rate / SR):
+        a = r.pareto(2.2) * 0.3
+        if amp_env is not None:
+            a *= amp_env[i]
+        m = min(k, n - i)
+        y[i:i + m] += r.standard_normal(m) * np.exp(-np.arange(m) / (decay * SR * r.uniform(0.5, 1.6))) * a
+    return bp(y, lo, hi, 2)
+
+
+def explosion():
+    """A great building going up, heard from 30-80 m away across the forecourt: the crack
+    (the shock wave, already dulled by distance), the deep boom with its sub that you feel in
+    the chest, then the long rumble of the masonry going with stone and glass crackling in it.
+    Three sizes: the door, a wing, the dome."""
+    thunder = trim(kit("cinematic-hits/cinematic-thunder-massive"))
+    slam = trim(kit("cinematic-hits/cinematic-slam-massive"))
+    drum = trim(kit("cinematic-hits/cinematic-drum-massive"))
+    hit = trim(kit("booms-and-bass/boom-hit-strong"))
+    rumble = trim(kit("booms-and-bass/bass-rumble-long"))
+    glass = trim(oc("GLASBrk_WindowPaneSmallBreak_OS_01"))
+    for take, (size, dist, rr) in ((1, (1.0, 40, 0.92)), (2, (1.15, 60, 0.85)), (3, (1.35, 75, 0.78))):
+        r = np.random.default_rng(600 + take)                            # its own seed: the same takes however it is built
+        L = 6.0
+        n = int(L * SR)
+        x = t(L)
+        air = 9000 - dist * 55                                            # air eats the top with distance
+        # the crack: an N-wave and a burst of torn air
+        cn = int(0.03 * SR)
+        nw = np.zeros(cn)
+        a = int(0.0009 * size * SR)
+        nw[:a] = np.linspace(1, -1, a)
+        burst = r.standard_normal(cn) * np.exp(-np.arange(cn) / (0.006 * SR))
+        crack = lp(hp(nw + burst * 0.8, 300, 2), air, 2)
+        s = lp(shelf_dark(pitch(slam, rr), 3000, 0.5), air, 2)
+        # the boom: real hits pitched down, and a synthesised sub sweeping from 60 Hz into the floor
+        b1 = lp(pitch(drum, rr * 0.8), 1800, 2)
+        b2 = lp(pitch(hit, rr * 0.9), 400, 2)
+        f = 26 + 34 * np.exp(-x / (0.35 * size))
+        sub = np.sin(2 * np.pi * np.cumsum(f) / SR) * env(n, 0.006, 0.9 * size)
+        # the rumble: thunder and a bass rumble, darkened, and a moving brown-noise body
+        th = lp(shelf_dark(pitch(thunder, rr), 1500, 0.7), 2200, 2)
+        ru = lp(pitch(rumble, rr), 300, 2)
+        brown = hp(np.cumsum(r.standard_normal(n)), 20, 2)
+        body = lp(brown, 180, 3)
+        body /= np.max(np.abs(body)) + 1e-9
+        surge = np.clip(lp(np.abs(r.standard_normal(n)), 3, 1) * 10, 0.3, 1.6)
+        body *= surge * np.minimum(1, x / 0.15) * np.exp(-x / (1.6 * size))
+        # the debris in the tail: crackle thinning out, a little glass
+        deb = crackle(n, 70 * size, 900, 5000, 0.002, np.minimum(1, x / 0.3) * np.exp(-x / 1.4), r)
+        deb = lp(deb, air * 0.7, 2)
+        gl = lp(shelf_dark(pitch(glass, 0.9 + 0.05 * take), 5000, 0.4), air, 2)
+        dry = mix((crack, 0.9, 0.0), (s, 0.7, 0.0), (b1, 0.8, 0.004), (b2, 0.8, 0.0), (sub, 0.85 * size, 0.0),
+                  (th, 0.65, 0.05), (ru, 0.55, 0.12), (body, 0.55, 0.08), (deb, 0.6, 0.0), (gl, 0.12, 0.5 + 0.2 * take))
+        dry = np.tanh(dry * 1.3) / np.tanh(1.3)                           # weight, without hard clipping
+        y = outdoors(dry, 0.2, 0.32 + 0.04 * take, 0.28, 2200)[:n]
+        y *= np.minimum(1, (L - x) / 1.2) ** 1.5                          # the tail sinks away by ~6 s
+        save("explosion", y, take, peak=0.93)
+
+
+def debris():
+    """Stone coming down after a blast, on the gravel and the paving: a few heavy chunks
+    (thuds with a stony clack on top), a rain of smaller stones and grit, a little glass."""
+    wood = trim(oc("WOODImpt_LargeWoodDrop_OS_01"))
+    cer = trim(oc("CERMImpt_CeramicSmallImpact_OS_01"))
+    dirt = [trim(oc(s)) for s in ("FEETHmn_ShoeDirtLand_OS_01", "FEETHmn_ShoeDirtLand_OS_02", "FEETHmn_ShoeConcreteLand_OS_01")]
+    glass = [trim(oc("GLASBrk_WindowPaneSmallBreak_OS_01")), trim(oc("GLASBrk_GlassBottleBreak_OS_01"))]
+
+    def clack(r):
+        """One stone striking another: a burst through two or three stony resonances."""
+        m = int(0.08 * SR)
+        nz = r.standard_normal(m) * np.exp(-np.arange(m) / (0.004 * SR))
+        y = sum(bp(nz, f * 0.85, f * 1.15, 2) * g for f, g in ((r.uniform(700, 1400), 1.0), (r.uniform(1800, 3200), 0.7), (r.uniform(3500, 5500), 0.3)))
+        return y * np.exp(-np.arange(m) / (0.012 * SR))
+
+    for take in (1, 2, 3):
+        r = np.random.default_rng(100 + take)
+        L = 3.2
+        n = int(L * SR)
+        parts = []
+        for i in range(3 + take % 2):                                     # the big chunks
+            at = r.uniform(0.0, 1.8) if i else 0.0
+            ch = lp(pitch(wood, r.uniform(0.45, 0.6)), 2500, 2)
+            parts += [(ch, r.uniform(0.6, 1.0), at), (clack(r), r.uniform(0.35, 0.6), at + 0.002),
+                      (lp(pitch(dirt[i % 3], r.uniform(0.7, 0.9)), 4000, 2), 0.5, at)]
+        for i in range(int(40 + 10 * take)):                              # the rain of smaller stones
+            at = min(L - 0.4, r.gamma(1.8, 0.7))
+            g = 0.7 * np.exp(-at / 2.0) * r.uniform(0.3, 1.0)
+            if r.random() < 0.3:
+                c = lp(pitch(cer, r.uniform(0.55, 0.9)), 6000, 2)[:int(0.25 * SR)]
+                parts.append((fades(c, 0.0005, 0.08), g * 0.5, at))
+            else:
+                parts.append((clack(r), g * 0.55, at))
+        grit = crackle(n, 260, 1500, 6500, 0.0008, np.exp(-t(L) / 1.6), r)  # grit and gravel hiss-free pitter
+        gl = shelf_dark(pitch(glass[take % 2], r.uniform(1.0, 1.15)), 6000, 0.4)
+        parts += [(grit, 0.5, 0.05), (gl, 0.18, r.uniform(0.2, 0.6))]
+        y = mix(*parts)[:n]
+        y = lp(y, 7500, 2)
+        y *= np.minimum(1, (L - t(len(y) / SR)) / 0.8)
+        save("debris", outdoors(y, 0.18, 0.0, 0.0, 2600), take, peak=0.8)
+
+
+def fire_roar():
+    """A big fire going in the ruins, from across the forecourt: a low broadband roar that
+    breathes with the draught, the flames' flutter, wood snapping. Loops (6 s)."""
+    for take in (1, 2):
+        r = np.random.default_rng(200 + take)
+        L, xf = 6.0, 1.2
+        n = int((L + xf + 1.2) * SR)
+        x = np.arange(n) / SR
+        fall = oc("WATRFall_Waterfall_LOOP_01", 5.0 + 11.0 * take, n / SR)  # water's roar, darkened, reads as flame
+        fall = pad(fall, n)[:n]
+        roar = lp(hp(fall, 40, 2), 650, 3)
+        roar /= np.max(np.abs(roar)) + 1e-9
+        breath = 0.75 + 0.25 * np.sin(2 * np.pi * 0.31 * x + r.uniform(0, 6)) * np.sin(2 * np.pi * 0.13 * x + 1)
+        brown = hp(np.cumsum(r.standard_normal(n)), 25, 2)
+        low = lp(brown, 220, 3)
+        low /= np.max(np.abs(low)) + 1e-9
+        flut = bp(r.standard_normal(n), 120, 900, 2)
+        flut *= np.clip(lp(r.standard_normal(n), 9, 1) * 25 + 0.5, 0, 2)  # flames licking
+        flut /= np.max(np.abs(flut)) + 1e-9
+        cr = crackle(n, 40, 900, 5500, 0.0015, None, r)
+        snaps = crackle(n, 2.5, 500, 3500, 0.006, None, r)
+        y = roar * breath * 0.8 + low * 0.55 + flut * 0.3 + cr * 0.8 + snaps * 1.2
+        y = lp(y, 6000, 2)
+        y = outdoors(y, 0.22, 0.0, 0.0, 2000)[int(1.0 * SR):]           # drop the reverb's run-in
+        y = loopable(y, L, xf)
+        save("fire_roar", y, take, peak=0.75, loop=True)
+
+
+def walkie_click():
+    """A toy walkie-talkie's talk button, close in the hush: a crisp little plastic click, then
+    the briefest burst of squelch as the radio keys (band-limited like a tiny speaker)."""
+    clicks = [trim(kit("interface/click-rocker-firm")), trim(oc("MECHSwtch_SwitchSmallOn_OS_01"))[:int(0.05 * SR)],
+              trim(kit("interface/click-toggle-on-firm"))]
+    body = trim(kit("foley/foley-plastic-touch"))
+    for take in (1, 2, 3):
+        r = np.random.default_rng(300 + take)
+        c = fades(hp(clicks[take - 1], 400, 2), 0.0003, 0.012)
+        b = lp(fades(pitch(body, 1.3), 0.0003, 0.02), 5000, 2)
+        sn = int(r.uniform(0.11, 0.15) * SR)
+        sq = bp(r.standard_normal(sn), 700, 3200, 3)                    # the squelch, through a tiny speaker
+        sq = bp(sq + 0.4 * np.sign(np.sin(2 * np.pi * r.uniform(900, 1300) * np.arange(sn) / SR)) * 0.2, 500, 3500, 2)
+        e = np.minimum(1, np.arange(sn) / (0.006 * SR)) * np.exp(-np.arange(sn) / (0.06 * SR))
+        e[-int(0.01 * SR):] *= np.linspace(1, 0, int(0.01 * SR))
+        sq *= e * (0.85 + 0.15 * np.sign(np.sin(2 * np.pi * 60 * np.arange(sn) / SR)))
+        sq /= np.max(np.abs(sq)) + 1e-9
+        y = mix((c, 1.0, 0.0), (b, 0.35, 0.0), (sq, 0.22, r.uniform(0.035, 0.05)))
+        y = pad(y, int(0.25 * SR))
+        save("walkie_click", room(y, 0.25, 0.06, 0.003, 5000), take, peak=0.7)
+
+
+def plunger():
+    """The detonator's T-handle. Take 1: pulled up, the rod ratcheting out of the box, a
+    catch at the top. Take 2: rammed down, a heavy hollow thunk in the box."""
+    lever = oc("MECHLvr_LeverPull_OS_01")
+    ratchet = trim(kit("mechanical/mechanical-ratchet-heavy"))
+    latch = trim(kit("mechanical/mechanical-latch-heavy"))
+    box = trim(oc("METLHndl_ElectricBoxOpen_OS_01", 0.3))
+    # 1: up
+    lv = fades(lp(lever[int(0.22 * SR):int(0.9 * SR)], 7000, 2), 0.01, 0.08)
+    ra = lp(pitch(ratchet, 1.05), 7000, 2)
+    top = fades(lp(pitch(latch, 1.15), 7000, 2), 0.0005, 0.05)
+    y = mix((ra, 1.0, 0.0), (lv, 0.35, 0.0), (top, 0.7, 0.52))
+    save("plunger", outdoors(y, 0.1), 1, peak=0.75)
+    # 2: down
+    slide = fades(lp(pitch(ratchet[:int(0.2 * SR)], 1.6), 6000, 2), 0.002, 0.03)
+    thunk = lp(trim(kit("impacts/impact-deep-firm")), 1800, 2)
+    m = lp(pitch(box, 0.85), 4000, 2)
+    n = int(0.4 * SR)
+    body = np.sin(2 * np.pi * (95 - 30 * t(0.4)) * t(0.4)) * env(n, 0.002, 0.07)
+    y = mix((slide, 0.5, 0.0), (thunk, 1.0, 0.11), (fades(pitch(latch, 0.8), 0.0005, 0.04), 0.8, 0.11), (m, 0.35, 0.115), (body, 0.6, 0.11))
+    save("plunger", outdoors(y, 0.12), 2, peak=0.8)
+
+
+def birds():
+    """Dawn over the moor, small and far away. Takes 1-2: a few birds trying their first
+    phrases, sparse chirps and trills (synthesised, every one a little different) over a whisper
+    of a real chorus a long way off. Take 3: crows cawing far off over the tower."""
+    chorus = oc("AMBForst_ForestBirds_OS_02", 0.3, 6.6)
+
+    def chirp(r, kind):
+        if kind == 0:                                                     # a down-sweep "tsiu"
+            d = r.uniform(0.05, 0.12)
+            x = t(d)
+            f = r.uniform(4500, 6500) - r.uniform(1500, 2800) * (x / d)
+        elif kind == 1:                                                   # an up-slur "wheet"
+            d = r.uniform(0.1, 0.18)
+            x = t(d)
+            f = r.uniform(2600, 3400) + r.uniform(800, 1800) * (x / d) ** 2
+        else:                                                             # a trill
+            d = r.uniform(0.25, 0.5)
+            x = t(d)
+            f = r.uniform(3800, 5200) + 700 * np.sin(2 * np.pi * r.uniform(18, 28) * x)
+        y = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.sin(np.pi * x / d) ** 1.5
+        return y
+
+    for take in (1, 2):
+        r = np.random.default_rng(400 + take)
+        L = 6.0
+        parts = [(fades(lp(hp(chorus, 1500, 2), 6000, 2), 0.8, 1.2), 0.12, 0.0)]
+        at = r.uniform(0.2, 0.6)
+        while at < L - 0.6:
+            g = r.uniform(0.25, 0.7)
+            kind = int(r.integers(0, 3))
+            for k in range(int(r.integers(1, 4)) if kind < 2 else 1):    # a phrase of one to three notes
+                c = chirp(r, kind)
+                parts.append((c, g * (0.9 ** k), at + k * r.uniform(0.12, 0.2)))
+            at += r.uniform(0.5, 1.4)
+        y = mix(*parts)[:int(L * SR)]
+        y = lp(y, 6500, 2)                                                # far away: the top goes
+        y *= np.minimum(1, t(len(y) / SR) / 0.5) * np.minimum(1, (L - t(len(y) / SR)) / 0.8)
+        save("birds", outdoors(y, 0.3, 0.0, 0.0, 4000), take, peak=0.45)
+
+    # crows: a harsh nasal caw, a buzzy tone through the beak's formants, in twos and threes
+    r = np.random.default_rng(410)
+    L = 6.0
+    parts = []
+    for at, count in ((0.3, 3), (2.6, 2), (4.4, 3)):
+        f0 = r.uniform(430, 520)
+        for k in range(count):
+            d = r.uniform(0.28, 0.4)
+            x = t(d)
+            f = f0 * (1.05 - 0.15 * x / d) * (1 + 0.03 * r.standard_normal(len(x)).cumsum() / np.sqrt(len(x)))
+            src = sum(np.sin(2 * h * np.pi * np.cumsum(f) / SR) / h ** 0.7 for h in range(1, 14))
+            src += 0.3 * r.standard_normal(len(x))                       # the rasp
+            v = bp(src, 1000, 1700, 2) + 0.7 * bp(src, 1900, 2600, 2) + 0.3 * bp(src, 600, 900, 2)
+            v *= np.minimum(1, x / 0.025) * np.minimum(1, (d - x) / 0.08) * (0.8 + 0.2 * np.sin(2 * np.pi * 28 * x))
+            parts.append((v, r.uniform(0.7, 1.0) * (1 if at < 4 else 0.7), at + k * r.uniform(0.45, 0.6)))
+    y = mix(*parts)
+    y = lp(y, 3200, 2)
+    y = pad(y, int(L * SR))[:int(L * SR)]
+    save("birds", outdoors(y, 0.35, 0.28, 0.2, 2500), 3, peak=0.45)
+
+
+def ember():
+    """The slow motion: hot wind off the fire, embers drifting past. A soft airy swell, never
+    a hiss, with the faintest ticks of burning flakes in it. Very quiet."""
+    wh = trim(kit("whooshes/whoosh-slow-soft"))
+    for take in (1, 2):
+        r = np.random.default_rng(500 + take)
+        L = 3.2
+        n = int(L * SR)
+        x = t(L)
+        src = r.standard_normal(n)
+        sw = np.sin(np.pi * x / L) ** 2
+        air = bp(src, 250, 1600, 2) * sw + 0.4 * bp(src, 1600, 3200, 2) * sw ** 2
+        air *= 0.8 + 0.2 * np.sin(2 * np.pi * 0.7 * x + r.uniform(0, 6))
+        air /= np.max(np.abs(air)) + 1e-9
+        w = fades(lp(pitch(wh, 0.55 + 0.05 * take), 2500, 2), 0.3, 0.6)
+        ticks = crackle(n, 6, 2000, 5000, 0.0007, sw, r)
+        y = mix((air, 0.6, 0.0), (w, 0.6, 0.4 + 0.2 * take), (ticks, 0.35, 0.0))[:n]
+        y = lp(y, 4500, 2) * np.minimum(1, x / 0.6) * np.minimum(1, (L - x) / 0.8)
+        save("ember", outdoors(y, 0.25), take, peak=0.35)
+
+
+ALL = ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", "static",
+       "whispers", "drone", "latch", "wind", "rotor", "piano",
+       "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click", "gunshot_indoor", "gun_draw", "gun_cock", "shell_casing",
+       "gun_drop_water", "struggle", "death_breath", "memory_elena", "train_pass", "car_rev", "car_door",
+       "memory_maya", "music_note", "creak", "buzz", "fridge_hum", "swing_creak", "crickets",
+       "explosion", "debris", "fire_roar", "walkie_click", "plunger", "birds", "ember")
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
+    ap.add_argument("sounds", nargs="*", help="only these (default: all)")
     ap.add_argument("--oculus", default="/home/user/facebookincubator/meta-open-sound/corpora/oculus-audio-pack/ogg")
     ap.add_argument("--kit", default="/home/user/wyzowl/sfx-kit/sounds")
     a = ap.parse_args()
     O, K = a.oculus, a.kit
     if not os.path.isdir(O) or not os.path.isdir(K):
         sys.exit("need the two sound libraries: --oculus <...>/oculus-audio-pack/ogg --kit <...>/sounds")
-    for name in ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", "static",
-                 "whispers", "drone", "latch", "wind", "rotor", "piano",
-                 "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click", "gunshot_indoor", "gun_draw", "gun_cock", "shell_casing",
-                 "gun_drop_water", "struggle", "death_breath", "memory_elena", "train_pass", "car_rev", "car_door",
-                 "memory_maya", "music_note", "creak", "buzz", "fridge_hum", "swing_creak", "crickets"):
+    bad = [s for s in a.sounds if s not in ALL]
+    if bad:
+        sys.exit("unknown sound(s): " + ", ".join(bad))
+    for name in (a.sounds or ALL):
         clear(name)
         globals()[name]()

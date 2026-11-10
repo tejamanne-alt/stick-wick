@@ -24,7 +24,8 @@
 | 5 · The Road | 0–4 | `RoadFrom`: the drive and her voice; counting the thunder (tap each flash); "Are you a bad man?" (CHOOSE) and HOLD to hum; the battery ("Over and out"); the last hairpin ("It was never a trade"). |
 | 6 · The Fortress | 0–6 | As before, plus: the guards' bounty ("Whoever brings the boss that book gets the son's place!"), the barks, the trap's line, the Warden's chair, and at the tower the walkie: "Papa! I see you! You're tiny!" |
 | | The last roof | Flash 3 ("Bring them to me. All of them. Alive."), six years of mercy, Silas ("Your boy killed Elena." "...I know. And I still loved him."), the trade: DRAG the book across to him, she runs, he draws the blade from his cane. |
-| | The duel, the fall | The teacher, the gun, the edge; then CHOOSE REACH FOR HIM or LET GO; Maya; DRAG to tie her ribbon; the dawn, the book back in his coat. CHAPTER 6 COMPLETE. |
+| | The duel, the fall | The teacher, the gun, the edge; then CHOOSE REACH FOR HIM or LET GO; Maya; DRAG to tie her ribbon; the dawn, the book back in his coat. |
+| | The walk-out | `FortressFrom = 10` (docs/story/walkout.md): the dawn wide, then the one take: out of the great door hand in hand, the walkies ("I can see you. Over."), the last man at the plunger ("...Then burn it."), "Over and out." and the hill goes up; the slow motion on the bridge, two clicks and two back; OVER AND OUT. CHAPTER 6 COMPLETE. |
 | 7 · Home | 0–3 | `EpilogueFrom`: Harrow ("...Then I never saw you. Take her home."), the grave (HOLD your hand on the stone), the swing (SWIPE to push), the drawer (DRAG to close it), THE END, then the recap. |
 | The whole story | Timeline | `EpilogueFrom = 5` (also the main menu's THE WHOLE STORY button): the recap alone. |
 

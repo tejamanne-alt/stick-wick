@@ -188,6 +188,9 @@ namespace ProjectInk
     /// <summary>The ribbon's tails, moving in the wind (gently, out of step with each other).</summary>
     public class RibbonFlutter : MonoBehaviour
     {
+        /// <summary>How hard the wind blows (1 = a breeze; the blast's hot wind in the walk-out: 3).</summary>
+        public static float Wind = 1f;
+
         readonly List<Transform> tails = new List<Transform>();
         readonly List<float> amps = new List<float>();
         readonly List<Quaternion> rest = new List<Quaternion>();
@@ -196,12 +199,15 @@ namespace ProjectInk
 
         void Update()
         {
-            float t0 = Time.unscaledTime;
+            float t0 = Time.time;                     // scaled: the slow motion slows them
+            float w = Mathf.Max(0f, Wind);
             for (int i = 0; i < tails.Count; i++)
             {
                 if (tails[i] == null) continue;
-                float a = amps[i] * (0.6f * Mathf.Sin(t0 * 2.3f + i * 1.7f) + 0.4f * Mathf.Sin(t0 * 5.1f + i));
-                tails[i].localRotation = rest[i] * Quaternion.Euler(a, 0f, a * 0.5f);
+                float f = 1f + 0.6f * (w - 1f);
+                float a = amps[i] * w * (0.6f * Mathf.Sin(t0 * 2.3f * f + i * 1.7f) + 0.4f * Mathf.Sin(t0 * 5.1f * f + i));
+                float lift = (w - 1f) * 14f;              // blown out and up
+                tails[i].localRotation = rest[i] * Quaternion.Euler(a + lift, 0f, a * 0.5f);
             }
         }
     }

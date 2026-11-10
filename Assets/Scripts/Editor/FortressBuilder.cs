@@ -29,27 +29,39 @@ namespace ProjectInk.EditorTools
             var swapR = new List<Renderer>();
             var swapN = new List<Material>();
             var swapF = new List<Material>();
+            var swapD = new List<Material>();
+            var dawnOnly = new List<Renderer>();
             foreach (var r in set.GetComponentsInChildren<Renderer>(true))
             {
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 r.receiveShadows = false;
                 string n = r.gameObject.name;
                 var tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/Fortress/Story_{n}.png");
-                var m = EnvironmentBuilder.TexMat("Fort_" + n, "Unlit/Texture", tex, Vector2.one);
+                var dawnTex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/Fortress/Story_{n}_Dawn.png");
+                var dawnMat = dawnTex != null ? EnvironmentBuilder.TexMat("Fort_" + n + "_Dawn", "Unlit/Texture", dawnTex, Vector2.one) : null;
+                var m = tex != null || dawnMat == null ? EnvironmentBuilder.TexMat("Fort_" + n, "Unlit/Texture", tex, Vector2.one) : dawnMat;
                 var mats = new Material[r.sharedMaterials.Length];
                 for (int i = 0; i < mats.Length; i++) mats[i] = m;
                 r.sharedMaterials = mats;
-                var flash = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/Fortress/Story_{n}_Lightning.png");
-                if (flash != null)
+                if (tex == null && dawnMat != null)
                 {
-                    swapR.Add(r); swapN.Add(m);
-                    swapF.Add(EnvironmentBuilder.TexMat("Fort_" + n + "_Lightning", "Unlit/Texture", flash, Vector2.one));
+                    // the way out the front (the walk-out): there only at dawn
+                    dawnOnly.Add(r);
+                    r.enabled = false;
+                    continue;
+                }
+                var flash = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/Fortress/Story_{n}_Lightning.png");
+                if (flash != null || dawnMat != null)
+                {
+                    swapR.Add(r); swapN.Add(m); swapD.Add(dawnMat);
+                    swapF.Add(flash != null ? EnvironmentBuilder.TexMat("Fort_" + n + "_Lightning", "Unlit/Texture", flash, Vector2.one) : m);
                 }
                 if (n == "FortHallFront") r.gameObject.AddComponent<CutawayWall>().insideZ = -3.2f;
             }
             foreach (var c in set.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c);
             var swap = room.gameObject.AddComponent<LightningSwap>();
             swap.renderers = swapR.ToArray(); swap.normal = swapN.ToArray(); swap.flash = swapF.ToArray();
+            swap.dawn = swapD.ToArray(); swap.dawnOnly = dawnOnly.ToArray();
 
             // the ground (the road) and the hill's level (the gate, the courtyard, the hall)
             var hidden = PrototypeBuilder.Mat("FortGroundHidden", "Unlit/Color", Color.black);
