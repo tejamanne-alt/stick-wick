@@ -1393,3 +1393,18 @@ The old controls are kept on the branch `backup/combat-v2`. Chapter 1 now runs o
 - **Feel:** `LimbStretch` (the striking limb stretches through the impact, in real time, so it shows in the freeze); `Haptics` patterns (block thud, parry tick, counter double knock, heavy jolt, hurt buzz; Android amplitude control).
 - **Shading option C:** `ProjectInk/InkDepth` draws the far limbs a charcoal by depth behind the hips, in fights only; it fades to pure ink in cutscenes (`CombatV3.Shade`).
 - **Teaching:** a card at the first fight, GUARD and RED · EVADE calls at the first telegraphs, and a MOVES page for the new grammar.
+
+### Combat 3.0's touch grammar: dropped, the body kept
+Playing it on the phone: touching the man to hit him puts your thumb over the man, so you can't see his wind-up, the flash or his reaction. The controls go back to classic everywhere. Chapter 1 keeps:
+- the V3 body and its hand-keyed clips, which the classic strings now play;
+- each clip's keyed reach;
+- the impact stretch (`LimbStretch`);
+- the far-limb shade in fights (`ProjectInk/InkDepth`).
+
+Removed:
+- `GestureInputV3`, `HeroV3`, `EnemyV3`;
+- the COMBAT NEW / CLASSIC button;
+- the V3 hint cards and MOVES page;
+- the new haptic patterns.
+
+The classic controls are the base for the next improvements.

@@ -416,7 +416,11 @@ pick it up. Each chapter has its own furniture, and each one teaches one new ide
 
 ---
 
-## 10a. Step 1 as built (the chapter 1 experiment)
+## 10a. Verdict on step 1: the touch grammar is dropped
+
+Played on the phone, touching the man hides him under the thumb: his wind-up, the white or red flash and his reaction all vanish exactly when they matter. The controls are back to classic. Kept from step 1: the V3 body and its hand-keyed moves (the classic strings play them), the keyed reach, the impact stretch, and the option C far-limb shade. Next: improve the classic controls.
+
+What step 1 built (removed since; in the history at commit 5e236c2):
 
 - Chapter 1 only, on the new body; the pause card's **COMBAT NEW / CLASSIC** switches the controls (both on the new body). The old system is on `backup/combat-v2`.
 - Built: the three zones and four touches for bare hands; the guard; the four evasions; perfect defence and the five counters; the white and red telegraphs (the wind-up is the blow's own clip, slowed to its loaded pose); the pull-and-release power shot with a live coil; the boxer's step; impact stretch; haptics; option C shading.

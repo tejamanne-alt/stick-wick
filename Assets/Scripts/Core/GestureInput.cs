@@ -31,7 +31,7 @@ namespace ProjectInk
     /// Keys: A/D or arrows run · J strike · Space/W/Up jump · L or Shift dodge · S/Down duck or
     /// throw · F throw · E rampage · R restart · Tab or 1/2/3 give a weapon (testing).
     /// Commands queue briefly so fast taps are never lost.</summary>
-    public partial class GestureInput : MonoBehaviour
+    public class GestureInput : MonoBehaviour
     {
         public static GestureInput Instance { get; private set; }
 
@@ -103,7 +103,7 @@ namespace ProjectInk
         }
 
         /// <summary>Forget every buffered command (taps made during a cutscene).</summary>
-        public void Flush() { queue.Clear(); v3Queue.Clear(); }
+        public void Flush() { queue.Clear(); }
 
         public Command Peek()
         {
@@ -202,7 +202,6 @@ namespace ProjectInk
             foreach (var r in Blocked) if (r.Contains(pos)) { consumed.Add(id); LastButtonTap = pos; return; }
             if (TimeController.Paused) { consumed.Add(id); return; }
             AnyPressThisFrame = true;
-            if (CombatV3.On) { V3Began(id, pos); return; }
             if (InStickZone(pos) && stickId == int.MinValue)
             {
                 stickId = id;
@@ -227,7 +226,6 @@ namespace ProjectInk
 
         void TouchMoved(int id, Vector2 pos)
         {
-            if (V3Owns(id)) { V3Moved(id, pos); return; }
             if (Classic)
             {
                 // a still press held a moment becomes a run towards that half of the screen
@@ -247,7 +245,6 @@ namespace ProjectInk
 
         void TouchEnded(int id, Vector2 pos)
         {
-            if (V3Owns(id)) { V3Ended(id, pos); return; }
             if (id == stickId) { stickId = int.MinValue; return; }
             if (holding.Remove(id)) { consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
             if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s)) Push(Classify(s, pos));
@@ -297,8 +294,7 @@ namespace ProjectInk
                 bool left = kb.aKey.isPressed || kb.leftArrowKey.isPressed, right = kb.dKey.isPressed || kb.rightArrowKey.isPressed;
                 bool leftDown = kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
                 bool rightDown = kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame;
-                if (CombatV3.On) V3Keys(kb);
-                else if (Classic)
+                if (Classic)
                 {
                     ClassicKeys(left, right, leftDown, rightDown);
                     if (kb.zKey.wasPressedThisFrame) Push(Command.KickLeft);
@@ -389,7 +385,6 @@ namespace ProjectInk
                 float dx = (stickNow.x - stickOrigin.x) / (Screen.height * stickRange);
                 axis = Mathf.Abs(dx) < 0.15f ? 0f : Mathf.Clamp(dx, -1f, 1f);
             }
-            if (CombatV3.On) { V3Update(); axis = v3Axis; }
             MoveAxis = axis;
         }
     }

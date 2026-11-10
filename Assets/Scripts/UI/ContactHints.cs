@@ -40,7 +40,6 @@ namespace ProjectInk
             if (what == "parry") { parries++; PlayerPrefs.SetInt(KeyP, parries); }
             else if (what == "clinch") { grabs++; PlayerPrefs.SetInt(KeyG, grabs); }
             else if (what == "throw") { throws++; PlayerPrefs.SetInt(KeyT, throws); }
-            OnDidV3(what);
         }
 
         bool Showing
@@ -73,21 +72,6 @@ namespace ProjectInk
             keys.fontSize = Mathf.RoundToInt(14 * k);
 
             // the clinch: what each gesture does
-            if (hero.InClinch && throws < 3 && CombatV3.On)
-            {
-                string[] rows =
-                {
-                    "TAP HIM  ·  knee  (third: headbutt)",
-                    "TAP HIS LEGS  ·  leg sweep",
-                    "SWIPE TOWARDS HIM  ·  hip throw",
-                    "SWIPE AWAY  ·  shoulder throw, over you",
-                    "SWIPE UP  ·  suplex   (worn down: body slam)",
-                    "SWIPE DOWN  ·  DDT",
-                    "SWIPE AWAY FROM YOURSELF  ·  shove him off",
-                };
-                Card("THE CLINCH", rows, null, k);
-                return;
-            }
             if (hero.InClinch && throws < 3)
             {
                 string[] rows =
@@ -105,7 +89,6 @@ namespace ProjectInk
             }
 
             if (firstSeen < 0f && AnyEnemyNear(6f)) firstSeen = Time.unscaledTime;
-            if (CombatV3.On) { V3Cards(k); return; }
             if (!stringsShown && firstSeen > 0f && Time.unscaledTime - firstSeen > 1.2f)
             {
                 stringsShown = true;
@@ -130,49 +113,6 @@ namespace ProjectInk
             if (e == null) return;
             if (parries < 2 && e.Parryable && gap < 1.8f) { Banner("TAP HIM NOW", "PARRY", k); return; }
             if (grabs < 2 && hero.Free && e.CanBeHeld && !e.Telegraphing && gap < 1.4f) { Banner("SWIPE AT HIM", "GRAB", k); return; }
-        }
-
-        // ---------------------------------------------------------------- Combat 3.0
-        const string KeyV3 = "v3_intro", KeyV3Guard = "v3_guards", KeyV3Evade = "v3_evades";
-        float v3Until = -1f;
-        int v3Guards = -1, v3Evades = -1;
-
-        /// <summary>The new controls: one card at the first fight, then a call to action at each kind of
-        /// telegraph (white: guard it; red: evade it) until it has been done a few times.</summary>
-        void V3Cards(float k)
-        {
-            if (v3Guards < 0) { v3Guards = PlayerPrefs.GetInt(KeyV3Guard, 0); v3Evades = PlayerPrefs.GetInt(KeyV3Evade, 0); }
-            if (v3Until < 0f && firstSeen > 0f && Time.unscaledTime - firstSeen > 1.0f && PlayerPrefs.GetInt(KeyV3, 0) < 2)
-            {
-                v3Until = Time.unscaledTime + 8f;
-                PlayerPrefs.SetInt(KeyV3, PlayerPrefs.GetInt(KeyV3, 0) + 1);
-            }
-            if (Time.unscaledTime < v3Until)
-            {
-                stringsUntil = v3Until;
-                string[] rows =
-                {
-                    "TAP HIM  ·  strike where you touch: head, body, legs",
-                    "SWIPE THROUGH HIM  ·  hook, roundhouse, uppercut",
-                    "DRAG BACK FROM HIM, LET GO  ·  the power right",
-                    "HOLD ON YOURSELF  ·  guard  (WHITE flash)",
-                    "SWIPE FROM YOURSELF  ·  duck, hop, step out  (RED)",
-                    "HOLD THE GROUND  ·  walk there",
-                };
-                Card("NEW CONTROLS   ·   WHERE YOU TOUCH", rows, "pause → COMBAT  NEW / CLASSIC", k, true);
-                return;
-            }
-            var e = Nearest(2.4f, out float gap);
-            if (e == null || !e.Telegraphing) return;
-            if (e.V3Red && v3Evades < 3) { Banner("SWIPE FROM YOURSELF", "RED · EVADE", k); return; }
-            if (!e.V3Red && v3Guards < 3) Banner("HOLD ON YOURSELF", "GUARD", k);
-        }
-
-        void OnDidV3(string what)
-        {
-            if (v3Guards < 0) return;
-            if (what == "guard") { v3Guards++; PlayerPrefs.SetInt(KeyV3Guard, v3Guards); }
-            else if (what == "dodge") { v3Evades++; PlayerPrefs.SetInt(KeyV3Evade, v3Evades); }
         }
 
         bool AnyEnemyNear(float r) => Nearest(r, out _) != null;

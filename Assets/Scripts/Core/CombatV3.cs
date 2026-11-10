@@ -2,30 +2,14 @@ using UnityEngine;
 
 namespace ProjectInk
 {
-    /// <summary>Combat 3.0 (docs/design/combat_v3.md), the experiment: chapter 1 only, for now.
-    /// Chapter 1 runs on the V3 body (longer arms, fists, the hand-keyed strikes) whichever controls
-    /// are chosen; the pause card's COMBAT button picks NEW (the touch grammar: touch the man to hit
-    /// him where you touch, yourself to defend, the ground to move) or CLASSIC (the old taps and
-    /// swipes). The choice is saved. The old controls are kept intact on the backup/combat-v2 branch.</summary>
+    /// <summary>The V3 body (chapter 1): the strike lab's stickman, with longer arms, fists and the
+    /// hand-keyed strikes, guard and reactions (tools/blender/build_stickman_v3.py). The classic
+    /// controls drive it. (Combat 3.0's touch grammar was tried on it and dropped: a thumb on the man
+    /// hides the man; see docs/design/combat_v3.md.)</summary>
     public static class CombatV3
     {
-        const string Key = "combat_v3";
-        static int chosen = -1;
-
-        /// <summary>The player wants the new controls (default: yes, it is the experiment).</summary>
-        public static bool Chosen
-        {
-            get { if (chosen < 0) chosen = PlayerPrefs.GetInt(Key, 1); return chosen == 1; }
-            set { chosen = value ? 1 : 0; PlayerPrefs.SetInt(Key, chosen); PlayerPrefs.Save(); }
-        }
-
-        /// <summary>This scene can run the new controls: chapter 1 (the warehouse), on the V3 body.</summary>
-        public static bool Available => StoryIntro.Instance != null && StoryIntro.Instance.Chapter == 1 && V3Body;
-
-        /// <summary>The scene's fighters are the V3 body (their move set has the guard).</summary>
+        /// <summary>The scene's fighters are the V3 body (their move set has its guard).</summary>
         public static bool V3Body;
-
-        public static bool On => Chosen && Available;
 
         // ---------------------------------------------------------------- the far-limb shade
         static readonly int ShadeId = Shader.PropertyToID("_InkDepthShade");
