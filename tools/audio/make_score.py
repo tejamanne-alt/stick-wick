@@ -11,7 +11,7 @@ storm and the fights, back in the major for the end.
   duel    32 s loop  140 bpm: the last fight: everything at once, the motif in the brass
   finale  56 s       the reunion and the dawn: piano, strings, the music box, the choir, a full swell
   recap  150 s       the whole story, after the end title
-  walkout 62 s       chapter 6's walk-out (docs/story/walkout.md), timed to the take, not a loop
+  walkout 70 s       chapter 6's walk-out (docs/story/walkout.md), timed to the take, not a loop
 
     python tools/audio/make_score.py [cue ...]
 
@@ -444,40 +444,44 @@ def kick(vel=0.8):
 
 def walkout():
     """OVER AND OUT (chapter 6, docs/story/walkout.md): the walk out of Kessel Hill, one take,
-    timed to the second. Not a loop; t = 0 is the start of the take.
-      0-4.3     a low drone, cello and basses on D, very quiet (the dark doorway)
-      4.3-19.5  his steps: a deep kick every 0.86 s, a dark plucked ostinato in D minor coming
-                in over it and building, low strings under it from 11 s
-      19.5-30   they stop and talk: no kick, the drone and a quiet pluck on the step
-      30-35.9   they walk on: the kick back, harder; strings swell Bb into A, a timpani roll
-      35.9      everything cuts (the plunger goes down: half a second of nothing)
-      36.3      the door blows: one huge D minor hit, gone by 37.5
-      37.5-44.5 near silence for the explosions, one faint high string
-      44.5-62   the slow motion: Maya's music box, slow, over a warm pad, with room left at 53 and
-                55 s for the walkie clicks, ending on the A over G, unresolved"""
-    L = 62.0
-    STEP, T0, CUT, HIT = 0.86, 4.3, 35.9, 36.3
+    timed to the second. Not a loop; t = 0 is the start of the take, 70 s in all.
+      0-4.3      a low drone, cello and basses on D, fading in (the dark doorway)
+      4.3-16     his steps: a deep kick every 0.86 s, a dark plucked ostinato in D minor coming
+                 in over it and building
+      16-25      they stop and talk on the walkies: no kick, the drone and a quiet pluck
+      25-46.7    the long walk to the gate: the kick back and growing, the ostinato, the strings
+                 swelling Dm Bb Gm A, the tension climbing, a timpani roll in the last 4 s
+      46.7       everything cuts (the plunger goes down: half a second of nothing)
+      47.2       one huge low D minor hit, brass, strings and timpani, gone by 48.5
+      48.5-53.5  silence: the fortress goes up in a chain, the explosions own this
+      53.5-70    the slow motion: Maya's music box, slow, over a soft string pad; no note starts
+                 in 61.2-64.6 (the walkie clicks at 62.0-62.9 and 63.6-64.5); her last note, on
+                 the A over G, unresolved at 68, left to ring out by 70"""
+    L = 70.0
+    STEP, T0, TALK, BUILD, CUT, HIT, HUSH, SLOW = 0.86, 4.3, 16.0, 25.0, 46.7, 47.2, 48.5, 53.5
 
     # --- A: the walk, 0 to the cut
     a = np.zeros(int((CUT + 4) * SR))
     x = t(CUT)
-    grow = np.interp(x, [0, 4.3, 19.5, 30, CUT], [0.6, 0.75, 1.0, 1.0, 1.5])
-    drone = strings([38, 45], CUT, 0.5, 520, 3.0, 0.05) * grow
-    drone += lp(np.sin(2 * np.pi * hz(26) * x), 120) * 0.25 * np.minimum(1, x / 4) * grow   # the basses' D under it
+    grow = np.interp(x, [0, T0, TALK, BUILD, 38.0, CUT], [0.55, 0.75, 1.0, 0.85, 1.15, 1.6])
+    drone = strings([38, 45], CUT, 0.5, 520, 3.8, 0.05) * grow
+    drone += lp(np.sin(2 * np.pi * hz(26) * x), 120) * 0.25 * np.minimum(1, x / 4.3) ** 2 * grow   # the basses' D
     put(a, drone, 0.0)
 
-    def chord_at(tt):
-        if tt < 19.5:
-            return int((tt - T0 + 1e-6) // (4 * STEP)) % 4                # Dm Bb Gm A, a bar of four steps
-        if tt < 24.6:
-            return 0
-        if tt < 30.0:
-            return 2
-        return 1 if tt < 33.5 else 3
     OST = [[50, 57, 53, 57, 50, 57, 55, 57],                              # Dm: D A F A D A G A
            [46, 53, 50, 53, 46, 53, 55, 53],                              # Bb
            [43, 50, 46, 50, 43, 50, 53, 50],                              # Gm
            [45, 52, 49, 52, 45, 52, 53, 52]]                              # A (with the F rubbing)
+
+    def chord_at(tt):
+        if tt < TALK:
+            return int((tt - T0 + 1e-6) // (4 * STEP)) % 4                # Dm Bb Gm A, a bar of four steps
+        if tt < BUILD:
+            return 0 if tt < 20.5 else 2
+        if tt < 40.0:
+            return int((tt - BUILD + 1e-6) // (8 * STEP)) % 3             # Dm Bb Gm, two bars each
+        return 3                                                          # then A, held to the cut
+
     for j in range(int((CUT - T0) / (STEP / 2)) + 1):
         tt = T0 + j * STEP / 2
         if tt >= CUT - 0.02:
@@ -485,46 +489,54 @@ def walkout():
         ch = OST[chord_at(tt)]
         k = j % 8
         on_step = j % 2 == 0
-        if tt < 11.0:                                                     # first only the step, the root
+        if tt < 8.5:                                                      # first only the step, the root
             if on_step:
                 put(a, pluck(ch[0], 0.16 + 0.01 * (tt - T0)), tt)
-        elif tt < 19.5:                                                   # the full ostinato, building
-            v = 0.2 + 0.1 * (tt - 11.0) / 8.5
+        elif tt < TALK:                                                   # the full ostinato, building
+            v = 0.2 + 0.1 * (tt - 8.5) / (TALK - 8.5)
             put(a, pluck(ch[k], v), tt)
-            if tt >= 15.0:
+            if tt >= 12.5:
                 put(a, pluck(ch[k] + 12, v * 0.35, 0.5, 2200), tt)
-        elif tt < 30.0:                                                   # they talk: one quiet pluck a step
+        elif tt < BUILD:                                                  # they talk: one quiet pluck a bar
             if on_step and j % 4 == 0:
                 put(a, pluck(ch[0], 0.13, 1.2), tt)
-        else:                                                             # on again, harder
-            v = 0.3 + 0.15 * (tt - 30.0) / (CUT - 30.0)
-            put(a, pluck(ch[k], v, 0.6, 1900), tt)
-            put(a, pluck(ch[k] + 12, v * 0.5, 0.45, 2600), tt)
-    for k in range(60):
+        else:                                                             # on again, building to the gate
+            p = (tt - BUILD) / (CUT - BUILD)
+            v = 0.2 + 0.2 * p
+            put(a, pluck(ch[k], v, 0.6, 1500 + 600 * p), tt)
+            if tt >= 31.0:
+                put(a, pluck(ch[k] + 12, v * (0.3 + 0.3 * p), 0.45, 2200 + 600 * p), tt)
+    for k in range(80):
         tt = T0 + k * STEP
         if tt >= CUT - 0.05:
             break
-        if 19.5 <= tt < 30.0:
+        if TALK <= tt < BUILD:
             continue
-        if tt < 19.5:
-            put(a, kick(0.55 + 0.25 * (tt - T0) / 15.2), tt)
+        if tt < TALK:
+            put(a, kick(0.55 + 0.25 * (tt - T0) / (TALK - T0)), tt)
         else:
-            put(a, kick(0.95 + 0.25 * (tt - 30.0) / 6.0), tt)
-            put(a, taiko(0.25 + 0.1 * (tt - 30.0) / 6.0, 0.8), tt)
-    # strings: low under the walk, then the swell
-    put(a, strings([50, 57, 62], 9.5, 0.22, 1100, 3.5, 2.0), 11.0)
-    put(a, strings([43, 50, 58], 6.0, 0.12, 900, 2.0, 2.0), 24.6)        # the plunger's handle comes up
-    sw = strings([46, 53, 58, 62, 65], 3.7, 0.5, 1800, 3.0, 0.4)
-    put(a, sw, 30.0)
-    xa = t(CUT - 33.5)
-    put(a, strings([45, 52, 57, 61, 64, 69], CUT - 33.5, 0.4, 2200, 0.4, 0.04) * (1 + 0.5 * xa / xa[-1]), 33.5)
-    for k in range(int((CUT - 33.5) / (STEP / 4))):                      # tremolo, climbing
-        tt = 33.5 + k * STEP / 4
-        put(a, staccato((69, 73, 76, 81)[min(3, k // 3)], 0.08 + 0.01 * k, 0.15), tt)
-    for k in range(int((CUT - 34.2) / 0.09)):                            # the timpani roll
-        put(a, timpani(33, 0.6, 0.1 + 0.015 * k), 34.2 + k * 0.09)
+            p = (tt - BUILD) / (CUT - BUILD)
+            put(a, kick(0.6 + 0.6 * p), tt)
+            if tt >= 36.0:
+                put(a, taiko(0.15 + 0.2 * (tt - 36.0) / (CUT - 36.0), 0.8), tt)
+    # strings: low under the walk, quiet under the talk, then the long swell
+    put(a, strings([50, 57, 62], 6.5, 0.2, 1100, 3.0, 2.0), 10.0)
+    put(a, strings([43, 50, 58], 5.5, 0.1, 900, 2.0, 2.0), 20.5)          # the plunger's handle comes up
+    for at, ch, dur, v, br in ((BUILD, [50, 57, 62], 7.2, 0.18, 1100),      # Dm
+                               (31.6, [46, 53, 58, 62], 7.2, 0.26, 1400),   # Bb
+                               (35.9, [43, 50, 58, 62, 67], 4.6, 0.32, 1700)):  # Gm
+        put(a, strings(ch, dur, v, br, 2.5, 1.5), at)
+    xa = t(CUT - 40.0)
+    rise = (xa / xa[-1]) ** 1.5
+    put(a, strings([45, 52, 57, 61, 64, 69], CUT - 40.0, 0.3, 2200, 1.0, 0.04) * (1 + 0.9 * rise), 40.0)   # A, swelling to the cut
+    put(a, strings([81], CUT - 38.0, 0.06, 4000, 4.0, 0.04) * np.interp(t(CUT - 38.0), [0, CUT - 38.0], [0.5, 1.6]), 38.0)
+    for k in range(int((CUT - 42.0) / (STEP / 4))):                      # tremolo, climbing
+        tt = 42.0 + k * STEP / 4
+        put(a, staccato((69, 73, 76, 81)[min(3, k // 6)], 0.06 + 0.006 * k, 0.15), tt)
+    for k in range(int((CUT - 42.7) / 0.09)):                            # the timpani roll, the last 4 s
+        put(a, timpani(33, 0.6, 0.05 + 0.012 * k), 42.7 + k * 0.09)
     a = reverb(a, 2.6, 0.3)
-    gate = np.clip((CUT + 0.12 - np.arange(len(a)) / SR) / 0.12, 0, 1)  # cut: gone in 0.12 s
+    gate = np.clip((CUT + 0.06 - np.arange(len(a)) / SR) / 0.06, 0, 1)  # cut: gone in 60 ms
     a *= gate
 
     # --- H: the hit
@@ -543,29 +555,27 @@ def walkout():
         pass
     h = reverb(h, 3.0, 0.35)
     hx = np.arange(len(h)) / SR
-    h *= np.clip((37.5 - HIT - hx) / (37.5 - HIT - 0.55), 0, 1) ** 2      # held, then gone by 37.5
+    h *= np.clip((HUSH - HIT - hx) / (HUSH - HIT - 0.5), 0, 1) ** 2      # held, then gone by 48.5
 
-    # --- B: the hush and the slow motion
+    # --- B: the slow motion
     b = np.zeros(int((L + 5) * SR))
-    put(b, strings([86, 93], 6.5, 0.03, 6000, 3.0, 1.6), 38.5)           # one faint high string
-    put(b, strings([50, 57, 62, 66], 7.2, 0.42, 1300, 2.0, 2.0), 44.5)    # D
-    put(b, strings([47, 54, 62, 66], 5.4, 0.16, 1100, 1.8, 1.8), 50.8)   # Bm, held low under the clicks
-    put(b, strings([43, 50, 59, 62], 6.2, 0.42, 1300, 1.5, 3.0), 55.6)    # G: the A on top never goes home
-    put(b, strings([38], 7.0, 0.18, 400, 2.5, 2.0), 44.5)
-    put(b, strings([31], 6.2, 0.16, 400, 1.5, 3.0), 55.6)
-    # Maya's music box (MOTIF, then ANSWER), slow; nothing starts in 51.5-56, for the clicks at 53 and 55
-    for at, n in ((46.0, 74), (47.3, 78), (48.6, 81), (49.9, 79), (51.2, 78)):
-        put(b, box(n + 12, 3.5, 0.6), at)
-    for at, n in ((56.0, 76), (57.2, 79), (58.4, 83)):
-        put(b, box(n + 12, 3.5, 0.6), at)
-    put(b, box(81 + 12, 2.0, 0.58), 60.0)                                  # her last note, unresolved
+    put(b, strings([50, 57, 62, 66], 8.3, 0.4, 1300, 2.5, 2.2), SLOW)    # D
+    put(b, strings([38], 8.3, 0.17, 400, 2.5, 2.2), SLOW)
+    put(b, strings([47, 54, 62, 66], 4.4, 0.13, 1000, 1.5, 1.5), 60.6)   # Bm, held low under the clicks
+    put(b, strings([43, 50, 59, 62, 69], L - 64.2, 0.4, 1300, 1.6, 3.6), 64.2)   # G with the A on top: never home
+    put(b, strings([31], L - 64.2, 0.15, 400, 1.6, 3.6), 64.2)
+    # Maya's music box: MOTIF before the clicks, ANSWER after them
+    for (bt, n) in MOTIF:
+        put(b, box(n + 12, 3.2 if bt < 4 else 2.4, 0.6), 54.5 + bt * 1.3)  # 54.5 .. 59.7, rung out by 62
+    for at, (bt, n) in zip((64.7, 65.8, 66.9, 68.0), ANSWER):
+        put(b, box(n + 12, 2.0 if at >= 68.0 else 3.2, 0.58), at)          # her last note, the A, at 68
     b = reverb(b, 3.2, 0.4)
 
     y = np.zeros(int(L * SR))
     put(y, a, 0.0)
-    put(y, h, HIT)
-    put(y, b[int(37.5 * SR):], 37.5)
-    save("walkout", hp(y, 18), 0.85, 0.5)                                  # no DC left in the silences
+    put(y, h, HIT, 1.5)                                                    # the hit stands well above the build
+    put(y, b[int(SLOW * SR):], SLOW)
+    save("walkout", hp(y, 18), 0.85, 0.4)                                  # no DC left in the silences
 
 
 CUES = {"storm": storm, "fight": fight, "boss": boss, "dark": dark, "duel": duel, "finale": finale, "recap": recap,

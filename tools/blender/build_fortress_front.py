@@ -47,6 +47,8 @@ MAN_DOOR = (158.0, -11.0)
 FOUNTAIN = (140.8, -15.0)
 BAYS = [(128.0, 133.0), (133.0, 138.5), (138.5, 143.2), (150.8, 155.5), (155.5, 161.0), (161.0, 166.0)]
 BUTTRESS_X = [133.0, 138.5, 155.5, 161.0]
+CHIMNEY_X = [131.0, 136.0, 158.0, 163.0]
+EXTRA = []                    # the small parts that fall in the blast (spirelets, chimneys)
 
 
 def mats():
@@ -457,22 +459,27 @@ def build_facade(S, coll, M):
         for k in range(10):
             a = k / 10 * math.tau
             g.box((tx + math.cos(a) * 1.85, ty + math.sin(a) * 1.85, UP + 16.45), (0.5, 0.3, 0.7), M["ash"], rot=(0, 0, math.degrees(a) + 90))
-        g.cyl((tx, ty, UP + 18.6), 1.25, 4.4, M["lead"], n=8, r2=0.06, rot=(0, 0, 22.5))   # the spirelet, leaded
+        sp = S.Group("FortSpire" + ("W" if tx < DOOR_X else "E"))        # its own part: it topples in the blast
+        sp.cyl((tx, ty, UP + 18.6), 1.25, 4.4, M["lead"], n=8, r2=0.06, rot=(0, 0, 22.5))   # the spirelet, leaded
+        sp.cyl((tx, ty, UP + 16.5), 1.3, 0.2, M["lead"], n=8, rot=(0, 0, 22.5))
         for k in range(4):
             a = k / 4 * math.tau + 0.4
-            g.box((tx + math.cos(a) * 0.85, ty + math.sin(a) * 0.85, UP + 17.6), (0.35, 0.35, 0.7), M["lead"], rot=(0, 0, math.degrees(a)))   # lucarnes
-        g.cyl((tx, ty, UP + 21.6), 0.025, 1.6, M["iron"], n=6)
-        g.box((tx + 0.25, ty, UP + 22.1), (0.5, 0.02, 0.22), M["iron"])               # the vane
-        g.cyl((tx, ty, UP + 21.0), 0.08, 0.1, M["iron"], n=8)
+            sp.box((tx + math.cos(a) * 0.85, ty + math.sin(a) * 0.85, UP + 17.6), (0.35, 0.35, 0.7), M["lead"], rot=(0, 0, math.degrees(a)))   # lucarnes
+        sp.cyl((tx, ty, UP + 21.6), 0.025, 1.6, M["iron"], n=6)
+        sp.box((tx + 0.25, ty, UP + 22.1), (0.5, 0.02, 0.22), M["iron"])               # the vane
+        sp.cyl((tx, ty, UP + 21.0), 0.08, 0.1, M["iron"], n=8)
+        EXTRA.append(sp.finish(coll))
     # clustered chimneys rising from behind the parapet
-    for cxx in (131.0, 136.0, 158.0, 163.0):
+    for ci, cxx in enumerate(CHIMNEY_X):
+        ch = S.Group("FortChimney%d" % ci)                                           # each its own part: they come down
         for k in range(3):
             px = cxx + (k - 1) * 0.55
-            g.box((px, -1.2, UP + 14.5), (0.5, 0.6, 5.0), M["brick_x"])
-            g.cyl((px, -1.2, UP + 16.6), 0.22, 0.6, M["dress_dk"], n=10, r2=0.18)     # its pot
+            ch.box((px, -1.2, UP + 14.5), (0.5, 0.6, 5.0), M["brick_x"])
+            ch.cyl((px, -1.2, UP + 16.6), 0.22, 0.6, M["dress_dk"], n=10, r2=0.18)     # its pot
             for zz in (UP + 13.6, UP + 15.8):
-                g.box((px, -1.2, zz), (0.56, 0.66, 0.08), M["dress"])
-        g.box((cxx, -1.2, UP + 16.1), (1.8, 0.75, 0.25), M["dress"])
+                ch.box((px, -1.2, zz), (0.56, 0.66, 0.08), M["dress"])
+        ch.box((cxx, -1.2, UP + 16.1), (1.8, 0.75, 0.25), M["dress"])
+        EXTRA.append(ch.finish(coll))
     # drainpipes and hoppers down the buttress sides
     for bx in BUTTRESS_X:
         px = bx - 0.85
@@ -1011,6 +1018,7 @@ def build_all(S, coll, M0):
     """The five front parts (all dawn-only)."""
     M = dict(M0)
     M.update(mats())
+    EXTRA.clear()
     parts = [build_facade(S, coll, M), build_porch(S, coll, M), build_forecourt(S, coll, M),
              build_bridge(S, coll, M), build_gorge(S, coll, M)]
-    return parts
+    return parts + list(EXTRA)

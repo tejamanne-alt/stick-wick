@@ -1361,3 +1361,12 @@ The game's highlight: one long take of the father and daughter walking out of Ke
   - Voss: "If I fall, Kessel falls with me.";
   - ch7, Harrow: "Kessel Hill's still burning."
 - **Checkpoint:** chapter 6, "The walk-out" (`FortressFrom = 10`).
+
+### The walk-out, the blast rebuilt (whole fortress in frame, realistic)
+- **Timing.** The blast now comes when they are near the far end of the bridge (t 47.2 of a 69 s take). The camera falls back, widens to 42° and tilts up down the bridge, so the whole of Kessel Hill is behind them when it goes.
+- **The chain.** It runs over ~5 s: the door, the balcony, every window low and high, the turrets, the roof, the stables, the courtyard, the towers, the keep, the dome.
+- **Pieces that fall:** the dome (`FortDome`, split off `FortRoof`; its night, lightning, dawn and burn bakes are redone), the two spirelets and four chimney stacks.
+- **Burning bake.** Every part seen in the walk-out gets a `_Burn` bake (`--bake=burn`): windows full of fire, the morning dimmed. `build_fortress_set.py --bake=night,lightning,dawn,burn --parts=...` bakes any mix.
+- **ProjectInk/FireLit** (Assets/Shaders/FireLit.shader) draws the dawn set. It fades into the burn bake (`_FortBurn`), takes up to eight flickering fire lights from the blasts, and lifts with the flash.
+- **BlastFx v2.** Flipbooks from `tools/fx/make_fx_textures.py`: fireball, smoke, flame, dust, a shockwave ring. Stone blocks trail smoke (a sub-emitter), burning fragments leave fiery trails, there's a dust wall along the ground, pillars and smoke caps for the biggest blasts, and haze drifting past the bridge.
+- **Sound.** Five explosion takes, ExplosionBig, Collapse, GlassRain, Shockwave, Rumble and new debris; each blast is heard late by its distance. The score is re-timed to the 69 s take.

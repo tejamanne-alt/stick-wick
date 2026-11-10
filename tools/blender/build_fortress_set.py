@@ -358,6 +358,16 @@ def build_roof(coll, M):
     for lx in (HALL_X0 + 6.0, HALL_X0 + 18.0, HALL_X0 + 30.0):
         g.cyl((lx, 5.2, z + 3.6), 0.04, 4.6, M["iron"], n=6)
         g.cyl((lx, 5.2, z + 6.0), 0.12, 0.3, M["iron"], n=8, r2=0.0)
+    # the door from the stair onto the terrace, at the tower's foot
+    g.box((TOWER_X, 4.75, z + 1.3), (1.4, 0.2, 2.6), M["road"])
+    g.box((TOWER_X, 4.7, z + 2.8), (1.9, 0.3, 0.4), M["stone_dark"])
+    return g.finish(coll)
+
+
+def build_dome(coll, M):
+    """The observatory's dome on the tower, its open slit and the great telescope: its own part, so
+    the walk-out can blow it off the tower (docs/story/walkout.md)."""
+    g = S.Group("FortDome")
     # the observatory: the tower's top above the terrace, the dome and its open slit, the telescope
     tz = UP + 24.4
     for k in range(10):                                                             # the dome, ring by ring
@@ -367,9 +377,6 @@ def build_roof(coll, M):
     g.box((TOWER_X, 9.0 - 2.4, tz + 3.0), (1.2, 2.0, 5.0), M["road"])               # the slit, open
     g.cyl((TOWER_X - 0.6, 6.0, tz + 5.4), 0.55, 6.5, M["iron"], rot=(-32, 18, 0), n=16, r2=0.4)   # the telescope
     g.cyl((TOWER_X - 2.0, 3.4, tz + 7.5), 0.6, 0.4, M["iron"], rot=(-32, 18, 0), n=16)
-    # the door from the stair onto the terrace, at the tower's foot
-    g.box((TOWER_X, 4.75, z + 1.3), (1.4, 0.2, 2.6), M["road"])
-    g.box((TOWER_X, 4.7, z + 2.8), (1.9, 0.3, 0.4), M["stone_dark"])
     return g.finish(coll)
 
 
@@ -558,12 +565,60 @@ def dawn_lights():
             bsdf.inputs["Emission Strength"].default_value = 1.5
 
 
+def burn_lights():
+    """After the blasts (the walk-out): every window and door full of fire, the roof and the tower
+    burning, the morning dimmed by the smoke. The fire is the only warm thing in the game's grey."""
+    for ob in bpy.context.scene.objects:
+        if ob.type != "LIGHT":
+            continue
+        if ob.name == "DawnSun":
+            ob.data.energy = 1.6
+        elif ob.name.startswith("Dawn"):
+            ob.data.energy *= 0.45
+    bpy.context.scene.world.node_tree.nodes["Background"].inputs[1].default_value = 0.55
+    fire = (1.0, 0.42, 0.1)
+    def L(x, y, z, e, size=1.5):
+        o = add_light("POINT", "Fire", (x, y, z), e, size=size)
+        o.data.color = fire
+    for bx in (131.1, 135.75, 140.85, 153.15, 158.25, 162.9):
+        L(bx, F.FY - 1.4, UP + 3.4, 1400)
+        L(bx, F.FY - 1.0, UP + 8.2, 700)
+    L(F.DOOR_X, F.FY - 0.6, UP + 1.6, 5000, 2.0)
+    L(F.DOOR_X, F.FY - 3.2, UP + 8.6, 1600)
+    for rx in (134.0, 147.0, 160.0):
+        L(rx, 0.5, ROOF + 2.5, 6000, 3.0)
+    L(TOWER_X, 9.0 - 5.0, UP + 26.0, 9000, 3.0)
+    L(115.0, 18.0, UP + 21.0, 12000, 4.0)
+    L(124.0, -1.0, UP + 7.0, 4000, 2.0)
+    L(165.0, -16.0, UP + 5.0, 6000, 3.0)
+    L(165.0, -16.0, UP + 10.0, 4000, 3.0)
+    L(102.0, 14.0, UP + 18.0, 6000, 3.0)
+    L(138.0, 14.0, UP + 22.0, 6000, 3.0)
+    for m in bpy.data.materials:
+        if m.name.startswith(("FrontGlass", "FortWindow", "FortGlass", "FrontHallLight")) and m.use_nodes:
+            b = m.node_tree.nodes.get("Principled BSDF")
+            if b is not None:
+                b.inputs["Emission Color"].default_value = (1.0, 0.5, 0.16, 1)
+                b.inputs["Emission Strength"].default_value = 5.0
+
+
 DAWN_PARTS = {          # part: (size, samples) of its dawn bake
     "FortFacade": (4096, 16), "FortPorch": (4096, 16), "FortForecourt": (4096, 16),
     "FortBridge": (4096, 16), "FortGorge": (4096, 12),
     "FortHall": (2048, 10), "FortRoof": (2048, 10), "FortBack": (2048, 8), "FortSky": (1024, 8),
     "FortCourt": (2048, 10), "FortGate": (1024, 8), "FortFore": (1024, 8),
+    "FortDome": (1024, 10), "FortSpireW": (512, 8), "FortSpireE": (512, 8),
+    "FortChimney0": (512, 8), "FortChimney1": (512, 8), "FortChimney2": (512, 8), "FortChimney3": (512, 8),
 }
+BURN_PARTS = {          # the fortress on fire (the walk-out, after the blasts)
+    "FortFacade": (4096, 12), "FortPorch": (2048, 10), "FortForecourt": (4096, 12), "FortHall": (2048, 10),
+    "FortRoof": (2048, 10), "FortCourt": (2048, 8), "FortBack": (2048, 8), "FortDome": (1024, 8),
+    "FortBridge": (2048, 8), "FortSky": (1024, 6),
+    "FortSpireW": (512, 6), "FortSpireE": (512, 6),
+    "FortChimney0": (512, 6), "FortChimney1": (512, 6), "FortChimney2": (512, 6), "FortChimney3": (512, 6),
+}
+NIGHT_PARTS = {"FortRoof": (4096, 16), "FortDome": (1024, 12)}           # (re)baked in the storm too
+LIGHTNING_PARTS = {"FortRoof": (2048, 10), "FortDome": (512, 8)}
 
 
 def walkout_board(name):
@@ -679,7 +734,8 @@ def main():
     road, gate, court, hall = build_road(coll, M), build_gate(coll, M), build_court(coll, M), build_hall(coll, M)
     front, sky, port = build_hall_front(coll, M), build_sky(coll, M), build_portcullis(coll, M)
     roof, back, fore = build_roof(coll, M), build_back(coll, M), build_fore(coll, M)
-    for o in (road, gate, court, hall, front, port, roof, fore):
+    dome = build_dome(coll, M)
+    for o in (road, gate, court, hall, front, port, roof, fore, dome):
         D.bevel(o, 0.03)
     fparts = F.build_all(S, coll, M)
     for o in fparts[:4]:
@@ -696,19 +752,38 @@ def main():
             S.PREVIEW_SAMPLES = 8
         walkout_preview("fortress_walkout.png")
         return
+    modes = [x.split("=", 1)[1].split(",") for x in sys.argv if x.startswith("--bake=")]
     if "--dawn" in sys.argv:
-        # the dawn bakes only (the night and lightning bakes are kept: unwraps are deterministic)
-        allp = [road, gate, court, hall, front, sky, port, roof, back, fore] + fparts
+        modes = [["dawn"]]
+    if modes:
+        # chosen bakes only (the others are kept: unwraps are deterministic)
+        allp = [road, gate, court, hall, front, sky, port, roof, back, fore, dome] + fparts
         for o in allp:
             S.unwrap(o)
-        sel = [a.split("=", 1)[1].split(",") for a in sys.argv if a.startswith("--parts=")]
-        want = sel[0] if sel else list(DAWN_PARTS)
+        sel = [x.split("=", 1)[1].split(",") for x in sys.argv if x.startswith("--parts=")]
+        tables = {"night": (NIGHT_PARTS, ""), "lightning": (LIGHTNING_PARTS, "_Lightning"), "dawn": (DAWN_PARTS, "_Dawn"), "burn": (BURN_PARTS, "_Burn")}
         front.hide_render = True
-        dawn_lights()
-        for o in allp:
-            if o.name in want and o.name in DAWN_PARTS:
-                size, smp = DAWN_PARTS[o.name]
-                S.bake(o, size, smp, "_Dawn")
+        for mode in modes[0]:
+            for ob in list(bpy.context.scene.objects):
+                if ob.type == "LIGHT":
+                    bpy.data.objects.remove(ob, do_unlink=True)
+            night = mode in ("night", "lightning")
+            for o in fparts:
+                o.hide_render = night                     # the way out the front isn't there in the storm
+            if night:
+                lights()
+                if mode == "lightning":
+                    lightning_lights()
+            else:
+                dawn_lights()
+                if mode == "burn":
+                    burn_lights()
+            table, suffix = tables[mode]
+            want = sel[0] if sel else list(table)
+            for o in allp:
+                if o.name in want and o.name in table:
+                    size, smp = table[o.name]
+                    S.bake(o, size, smp, suffix)
         if "--export" in sys.argv:
             marks = []
             for n, p in (("Mark_X", (10, 0, 0)), ("Mark_Y", (0, 10, 0)), ("Mark_Z", (0, 0, 10))):
@@ -736,7 +811,7 @@ def main():
         S.PREVIEW = os.path.join(ROOT, "docs", "previews")
         S.preview(cams, "fortress_set_lightning.png" if lit else "fortress_set.png")
         return
-    parts = [road, gate, court, hall, front, sky, port, roof, back, fore] + fparts
+    parts = [road, gate, court, hall, front, sky, port, roof, back, fore, dome] + fparts
     for o in parts:
         S.unwrap(o)
     front.hide_render = True
@@ -747,6 +822,7 @@ def main():
     S.bake(sky, 1024, 8)
     S.bake(port, 512, 8)
     S.bake(roof, 4096, 16)
+    S.bake(dome, 1024, 12)
     S.bake(back, 4096, 12)
     S.bake(fore, 2048, 10)
     front.hide_render = False
@@ -760,6 +836,7 @@ def main():
     S.bake(hall, 2048, 12, "_Lightning")
     S.bake(sky, 512, 6, "_Lightning")
     S.bake(roof, 2048, 10, "_Lightning")
+    S.bake(dome, 512, 8, "_Lightning")
     S.bake(back, 2048, 8, "_Lightning")
     S.bake(fore, 1024, 6, "_Lightning")
     front.hide_render = False

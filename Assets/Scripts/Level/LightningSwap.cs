@@ -28,7 +28,7 @@ namespace ProjectInk
         LineRenderer[] bolt;
         float boltUntil;
 
-        void Awake() { Instance = this; Dawn = false; Held = false; }
+        void Awake() { Instance = this; Dawn = false; Held = false; BlastFx.Clear(); }
         void OnDestroy() { if (Instance == this) Instance = null; }
 
         /// <summary>Hold the strike's bake on (the dawn after the storm: the set in its brightest light).</summary>

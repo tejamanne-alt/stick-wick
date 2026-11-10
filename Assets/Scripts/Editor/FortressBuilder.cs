@@ -38,7 +38,14 @@ namespace ProjectInk.EditorTools
                 string n = r.gameObject.name;
                 var tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/Fortress/Story_{n}.png");
                 var dawnTex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/Fortress/Story_{n}_Dawn.png");
-                var dawnMat = dawnTex != null ? EnvironmentBuilder.TexMat("Fort_" + n + "_Dawn", "Unlit/Texture", dawnTex, Vector2.one) : null;
+                Material dawnMat = null;
+                if (dawnTex != null)
+                {
+                    // dawn: lit by the blasts' fires, and fading into its burning bake (ProjectInk/FireLit)
+                    dawnMat = EnvironmentBuilder.TexMat("Fort_" + n + "_Dawn", "ProjectInk/FireLit", dawnTex, Vector2.one);
+                    var burnTex = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/Fortress/Story_{n}_Burn.png");
+                    dawnMat.SetTexture("_BurnTex", burnTex != null ? burnTex : dawnTex);
+                }
                 var m = tex != null || dawnMat == null ? EnvironmentBuilder.TexMat("Fort_" + n, "Unlit/Texture", tex, Vector2.one) : dawnMat;
                 var mats = new Material[r.sharedMaterials.Length];
                 for (int i = 0; i < mats.Length; i++) mats[i] = m;

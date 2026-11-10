@@ -889,96 +889,565 @@ def crackle(n, rate, lo=1200, hi=6000, decay=0.0015, amp_env=None, r=None):
     return bp(y, lo, hi, 2)
 
 
+# ---- the fortress blown up: a chain of charges over ~5 s, heard from 40-80 m across the
+# forecourt, then the slow motion. Every layer of a big blast at a distance, built separately:
+# the shock front (an N-wave), the body boom, the air's whump, the ground's sub, the debris, and
+# the rumble rolling round the hills (discrete, smeared, darkening reflections at 0.3-1.5 s).
+
+_recs = {}
+
+
+def rec(kind, path, start=0.0, dur=None):
+    """A recording from either library, loaded once (a copy, so callers may change it)."""
+    key = (kind, path, start, dur)
+    if key not in _recs:
+        _recs[key] = (oc if kind == "o" else kit)(path, start, dur)
+    return _recs[key].copy()
+
+
+def fit(x, n):
+    return np.concatenate([x, np.zeros(max(0, n - len(x)))])[:n]
+
+
+def norm(x):
+    return x / (np.max(np.abs(x)) + 1e-12)
+
+
+def lvl(x, db, win=0.4):
+    """Scale x so its loudest `win` seconds sit at `db` dB RMS (layers mixed by loudness, not
+    by peak: a crack and a rumble with the same peak are nowhere near as loud as each other)."""
+    h = int(win * SR)
+    c = np.concatenate([[0.0], np.cumsum(x ** 2)])
+    e = (c[h:] - c[:-h]) / h if len(x) > h else np.array([np.mean(x ** 2)])
+    return x / (np.sqrt(np.max(e)) + 1e-12) * 10 ** (db / 20)
+
+
+def tilt(x, f=60, cut=0.45):
+    """Take the very bottom down a few dB: the sub is felt, it must not swallow the mix."""
+    return x - cut * lp(x, f, 2)
+
+
+def air(dist):
+    """What the air and the ground leave of the top end at `dist` metres."""
+    return float(np.clip(13500 - dist * 85, 5000, 12000))
+
+
+def glue(x, thresh=0.3, ratio=3.0):
+    """A slow bus compressor: it lets the crack through (its attack is slow) and pulls the
+    body and the tail up under it, the way a film mix holds a big explosion together."""
+    from scipy.ndimage import maximum_filter1d
+    x = norm(x)
+    e = lp(maximum_filter1d(np.abs(x), int(0.004 * SR)), 2.5, 1)
+    e = np.maximum(e, 1e-6)
+    g = np.where(e > thresh, (e / thresh) ** (1.0 / ratio - 1.0), 1.0)
+    return x * g
+
+
+def nwave(r, T, cut):
+    """The shock front at a distance: a jump, a straight fall through zero, a jump back (an
+    N-wave of positive phase T), its ground reflection a few ms behind, and the torn air."""
+    n = int((2 * T + 0.06) * SR)
+    y = np.zeros(n)
+    m = max(4, int(T * SR))
+    y[:m] = np.linspace(1.0, -1.0, m)
+    g = np.zeros(n)
+    k = int(r.uniform(0.0025, 0.0045) * SR)
+    g[k:] = y[:n - k]
+    xx = np.arange(n) / SR
+    tear = r.standard_normal(n) * np.exp(-xx / r.uniform(0.004, 0.007))
+    y = y + 0.45 * lp(g, cut * 0.6, 2) + 0.55 * bp(tear, 400, cut, 2)
+    return hp(lp(y, cut, 2), 22, 2)
+
+
+def stone_hit(r, size=0.5, bright=1.0):
+    """One stone striking stone: a contact click through a few inharmonic modes (a big chunk
+    rings lower and longer) and, for the big ones, the thud of the mass."""
+    d = 0.05 + 0.16 * size
+    n = int(d * SR)
+    x = np.arange(n) / SR
+    base = r.uniform(0.8, 1.25) * (2400 - 1700 * size)
+    y = np.zeros(n)
+    for k, (rat, g) in enumerate(((1.0, 1.0), (r.uniform(1.45, 1.8), 0.8), (r.uniform(2.3, 2.9), 0.55),
+                                  (r.uniform(3.4, 4.3), 0.35), (r.uniform(4.9, 6.1), 0.2))):
+        f = base * rat
+        if f > 9500 * bright:
+            continue
+        tau = r.uniform(0.003, 0.009) * (1 + 1.8 * size) / (1 + 0.35 * k)
+        y += g * np.sin(2 * np.pi * f * x + r.uniform(0, 6)) * np.exp(-x / tau)
+    click = bp(r.standard_normal(n) * np.exp(-x / 0.0012), 500, 7500 * bright, 2)
+    y = 0.55 * y + 0.9 * click
+    if size > 0.25:
+        f0 = r.uniform(60, 120) / (0.4 + size)
+        ph = 2 * np.pi * np.cumsum(f0 * (1 + 0.5 * np.exp(-x / 0.008))) / SR
+        y += 1.4 * size * np.sin(ph) * np.exp(-x / (0.015 + 0.05 * size))
+        y += 0.6 * size * lp(r.standard_normal(n), 500, 2) * np.exp(-x / 0.012)
+    return y * np.minimum(1, x / 0.0003) * np.minimum(1, (d - x) / 0.01)
+
+
+def shard(r, size=0.3):
+    """A sliver of glass landing on stone: a hard tick and a few high, glassy rings."""
+    d = 0.04 + 0.14 * size
+    n = int(d * SR)
+    x = np.arange(n) / SR
+    base = r.uniform(2600, 4200) * (1.3 - 0.6 * size)
+    y = np.zeros(n)
+    for k, rat in enumerate((1.0, r.uniform(1.9, 2.3), r.uniform(2.9, 3.4), r.uniform(4.2, 4.9))):
+        f = base * rat
+        if f > 11000:
+            continue
+        y += (0.8 ** k) * np.sin(2 * np.pi * f * x + r.uniform(0, 6)) * np.exp(-x / (r.uniform(0.008, 0.03) * (0.6 + size)))
+    tick = hp(r.standard_normal(n) * np.exp(-x / 0.0006), 2500, 2)
+    return (0.5 * y + tick) * np.minimum(1, (d - x) / 0.006)
+
+
+def cracks(r, n, at, dur, count, lo=150, hi=2500, cut=8000):
+    """Masonry giving way: clusters of hard low cracks (bone-breaking recordings pitched far
+    down read as stone splitting) and synthetic snaps between them."""
+    bones = [rec("o", f"GOREBone_BonesBreaking_OS_0{i}") for i in (1, 2, 3)] + [rec("o", "GOREBone_SkullCracking_OS_01")]
+    parts = [(np.zeros(n), 0.0, 0.0)]
+    for i in range(count):
+        a = at + dur * (i / max(1, count - 1)) ** 1.3 + r.uniform(-0.05, 0.05)
+        b = trim(bones[int(r.integers(0, len(bones)))])
+        b = lp(hp(pitch(b, r.uniform(0.32, 0.5)), 60, 2), min(cut, 3500), 2)
+        parts.append((fades(b[:int(r.uniform(0.25, 0.6) * SR)], 0.001, 0.1), r.uniform(0.5, 1.0), max(0.0, a)))
+    snaps = crackle(n, count * 6.0 / max(dur, 0.3), lo, hi, 0.005, np.exp(-((t(n / SR) - at - dur / 2) / (dur * 0.7 + 0.2)) ** 2), r)
+    return fit(mix(*parts), n) + snaps * 0.9
+
+
+def grind(r, n, at, dur, gain=1.0):
+    """Stone dragging over stone as the structure leans: a heavy drag pitched into a groan, and
+    stick-slip stutters through low resonances."""
+    dr = rec("o", "WOODFric_LargeWoodMetalDrag_OS_01")
+    g = lp(hp(pitch(dr, r.uniform(0.38, 0.48)), 50, 2), 1400, 2)
+    m = int(dur * SR)
+    if len(g) < m:
+        g = np.concatenate([g, g[::-1]])                              # long enough: there and back
+    g = fit(g, m)
+    xx = np.arange(m) / SR
+    rate = r.uniform(18, 30) * (1 + 0.6 * np.sin(np.pi * xx / dur))
+    pulses = np.exp(-((np.cumsum(rate) / SR) % 1.0) / 0.12)
+    ss = bp(pulses * r.standard_normal(m), 90, 900, 2) + 0.5 * bp(pulses * r.standard_normal(m), 900, 2200, 2)
+    y = norm(g) * 0.8 + norm(ss) * 0.45
+    y *= np.sin(np.pi * np.clip(xx / dur, 0, 1)) ** 0.6
+    out = np.zeros(n)
+    k = int(at * SR)
+    out[k:k + m] += y[:max(0, n - k)] * gain
+    return out
+
+
+def cascade(r, n, start, peak, end, count, cut, size=0.6, rubble=1.0):
+    """An avalanche of masonry: impacts whose density swells to `peak` and thins out by `end`;
+    a few heavy blocks (a deep thud and a stony crack), many stones, gravel pouring, and the
+    blur of all of it (a moving low roar)."""
+    wood = rec("o", "WOODImpt_LargeWoodDrop_OS_01")
+    land = [rec("o", s) for s in ("FEETHmn_ShoeConcreteLand_OS_01", "FEETHmn_ShoeConcreteLand_OS_02", "FEETHmn_ShoeDirtLand_OS_01")]
+    span = end - start
+    p = np.clip((peak - start) / span, 0.05, 0.9)
+    times = start + span * r.beta(2.0, 1.0 / p, count)
+    parts = [(np.zeros(n), 0.0, 0.0)]
+    for at in np.sort(times):
+        s = float(np.clip(r.pareto(2.2) * 0.22 * size, 0.04, 1.0))
+        g = 0.25 + 0.9 * s
+        parts.append((stone_hit(r, s, 0.8), g, at))
+        if s > 0.45:
+            th = lp(pitch(trim(wood), r.uniform(0.32, 0.45)), 900, 2)
+            parts.append((th, 0.9 * s, at))
+            parts.append((lp(pitch(trim(land[int(r.integers(0, 3))]), r.uniform(0.45, 0.6)), 2500, 2), 0.6 * s, at))
+            if r.random() < 0.6:                                          # it breaks again, or bounces
+                parts.append((stone_hit(r, s * 0.6, 0.9), g * 0.4, at + r.uniform(0.08, 0.2)))
+    y = fit(mix(*parts), n)
+    x = t(n / SR)
+    dens = np.where(x < peak, np.clip((x - start) / max(1e-3, peak - start), 0, 1) ** 1.5,
+                    np.clip(1 - (x - peak) / max(1e-3, end - peak), 0, 1) ** 1.2)
+    pour = crackle(n, 700 * size, 700, 5000, 0.0012, dens, r)
+    brown = hp(np.cumsum(r.standard_normal(n)), 30, 2)
+    roar = lp(brown, 260, 3) * (0.5 + np.clip(lp(np.abs(r.standard_normal(n)), 6, 1) * 6, 0, 1.2))
+    roar = norm(roar) * dens
+    mid = norm(bp(r.standard_normal(n), 200, 1200, 2) * np.clip(lp(np.abs(r.standard_normal(n)), 14, 1) * 8, 0.1, 1.5)) * dens
+    y = norm(y) + pour * 2.0 + (roar * 0.55 + mid * 0.18) * rubble
+    return lp(y, cut, 2)
+
+
+def glass_burst(r, n, at, count, spread=0.35, cut=9000):
+    """Windows going: real panes and bottles breaking, stacked and scattered in time and pitch."""
+    srcs = [rec("o", "GLASBrk_WindowPaneSmallBreak_OS_01"), rec("o", "GLASBrk_GlassBottleBreak_OS_01")]
+    parts = [(np.zeros(n), 0.0, 0.0)]
+    for i in range(count):
+        g = trim(srcs[i % 2])
+        g = lp(shelf_dark(pitch(g, r.uniform(0.7, 1.2)), 6000, 0.35), cut, 2)
+        parts.append((g, r.uniform(0.4, 1.0), at + r.gamma(1.3, spread / 2.5)))
+    return fit(mix(*parts), n)
+
+
+def glass_fall(r, n, start, peak, end, count, cut=9500):
+    """Glass raining down on stone: hundreds of slivers, some bouncing, some real glass taps."""
+    touch = rec("k", "foley/foley-glass-touch")
+    drop = rec("o", "GLASImpt_GlassBottleDrop_OS_01")
+    span = end - start
+    p = np.clip((peak - start) / span, 0.05, 0.9)
+    parts = [(np.zeros(n), 0.0, 0.0)]
+    for at in start + span * r.beta(2.0, 1.0 / p, count):
+        s = float(np.clip(r.pareto(3.0) * 0.18, 0.05, 1.0))
+        parts.append((shard(r, s), r.uniform(0.2, 0.6) * (0.5 + s), at))
+        if r.random() < 0.35:
+            parts.append((shard(r, s * 0.6), r.uniform(0.1, 0.25), at + r.uniform(0.03, 0.09)))
+        if r.random() < 0.12:
+            tc = fades(pitch(trim(touch), r.uniform(1.0, 1.9)), 0.0003, 0.03)
+            parts.append((hp(tc, 1500, 2), r.uniform(0.3, 0.7), at))
+    for i in range(4):
+        dd = trim(drop)[int(0.1 * SR):]
+        dd = fades(pitch(dd, r.uniform(1.1, 1.6)), 0.003, 0.15)
+        parts.append((hp(dd, 1200, 2), r.uniform(0.15, 0.3), start + span * r.uniform(0.1, 0.6)))
+    return lp(fit(mix(*parts), n), cut, 2)
+
+
+def rolling_tail(r, n, size, cut, rr, at=0.05, decay=1.8):
+    """The rumble that follows a big blast round the valley: a moving brown-noise body that
+    surges as it rolls, real thunder and a bass rumble under it."""
+    x = t(n / SR)
+    brown = hp(np.cumsum(r.standard_normal(n)), 18, 2)
+    body = norm(lp(brown, 170, 3))
+    surge = np.clip(lp(np.abs(r.standard_normal(n)), 2.2, 1) * 10, 0.25, 1.8)
+    mid = norm(bp(r.standard_normal(n), 110, 650, 2) * surge ** 1.5)
+    e = np.clip((x - at) / 0.25, 0, 1) * np.exp(-np.maximum(0, x - at) / (decay * size))
+    th = lp(shelf_dark(pitch(trim(rec("k", "cinematic-hits/cinematic-thunder-massive")), rr), 1500, 0.7), min(2200, cut), 2)
+    ru = lp(pitch(trim(rec("k", "booms-and-bass/bass-rumble-long")), rr), 260, 2)
+    y = fit(mix((th, 0.55, at), (ru, 0.5, at + 0.1)), n)
+    return y + body * surge * e * 0.6 + mid * e * 0.24
+
+
+def blast(r, n, at, dist, size, rr, punch=1.0):
+    """One charge, at `at` s: the ground's sub thump (through the ground, a hair ahead of the
+    air), the crack, the body boom (a low sine sweep and a filtered noise burst, with real
+    cinematic hits pitched down for density) and the whump of the pressure wave."""
+    cut = air(dist)
+    m = n - int(at * SR)
+    x = np.arange(m) / SR
+    d = 0.025                                                             # the air comes 25 ms after the ground
+    # the ground: sub thump
+    fs = 22 + 18 * np.exp(-x / (0.18 * size))
+    sub = np.sin(2 * np.pi * np.cumsum(fs) / SR) * env(m, 0.01, 0.6 * size)
+    # the crack
+    crack = nwave(r, 0.006 + 0.007 * size, cut)
+    slam = lp(shelf_dark(pitch(trim(rec("k", "cinematic-hits/cinematic-slam-massive")), rr), 3000, 0.5), cut, 2)
+    # the body boom: a sine sweeping down into the floor, and a burst of filtered noise
+    fb = 30 + 75 * np.exp(-x / (0.06 * size))
+    ph = 2 * np.pi * np.cumsum(fb) / SR
+    sweep = (np.sin(ph) + 0.3 * np.sin(2 * ph) * np.exp(-x / 0.08)) * env(m, 0.003, 0.35 * size)
+    nb = r.standard_normal(m)
+    burst = lp(nb, 700, 3) * env(m, 0.002, 0.15 * size) + 0.9 * bp(nb, 250, min(3500, cut), 2) * env(m, 0.001, 0.07 * size)
+    burst = norm(burst)
+    drum = lp(pitch(trim(rec("k", "cinematic-hits/cinematic-drum-massive")), rr * 0.75), 1500, 2)
+    hit = lp(pitch(trim(rec("k", "booms-and-bass/boom-hit-strong")), rr * 0.85), 380, 2)
+    deep = lp(pitch(trim(rec("k", "impacts/impact-deep-hard")), rr * 0.7), 1200, 2)
+    # the whump: the pressure wave heaving the air, a soft low push just behind the crack
+    wl = 0.4
+    wx = t(wl)
+    wn = len(wx)
+    heave = np.sin(2 * np.pi * 38 * wx) * np.sin(np.pi * np.clip(wx / 0.05, 0, 1)) * (wx < 0.05)
+    push = lp(r.standard_normal(wn), 160, 3) * np.minimum(1, wx / 0.02) * np.exp(-wx / 0.1)
+    drop = lp(trim(rec("k", "booms-and-bass/boom-drop-strong")), 170, 2)
+    whump = mix((heave, 0.8, 0.0), (norm(push), 0.7, 0.0), (pitch(drop, rr), 0.55, 0.0))
+    y = mix((sub, 0.5 * size, 0.0), (crack, 1.0 * punch, d), (slam, 0.7, d), (sweep, 0.65 * size, d + 0.002),
+            (burst, 0.9 * punch, d + 0.001), (drum, 0.75, d + 0.004), (hit, 0.55, d), (deep, 0.5, d + 0.003),
+            (whump, 0.6, d + 0.01))
+    y = np.tanh(1.5 * y) / np.tanh(1.5)
+    out = np.zeros(n)
+    out[n - m:] = fit(y, m)
+    return out
+
+
+def hills(r, size=1.0, gain=1.0, last=1.5):
+    """The valley answering: an impulse response of the direct sound and six reflections off
+    the hills and the walls at 0.3-1.5 s, each smeared (a hillside is not a mirror) and darker
+    and quieter than the last."""
+    refl = [(0.32, 0.45, 2800, 0.05), (0.52, 0.38, 2100, 0.08), (0.74, 0.32, 1600, 0.12),
+            (0.98, 0.25, 1200, 0.16), (1.24, 0.19, 900, 0.21), (1.5, 0.14, 650, 0.28)]
+    ir = np.zeros(int((last + 0.6) * SR))
+    ir[0] = 1.0
+    for dl, g, fc, w in refl:
+        dl = dl * last / 1.5 * r.uniform(0.92, 1.08)
+        m = int(w * size * SR)
+        xx = np.arange(m) / SR
+        c = r.standard_normal(m) * np.minimum(1, xx / (w * 0.12)) * np.exp(-xx / (w * 0.3))
+        c = hp(lp(c, fc, 2), 30, 2)
+        c = c / np.sqrt(np.sum(c ** 2)) * g * gain * np.sqrt(fc / (SR / 2))  # g in the echo's band, not spread over it
+        k = int(dl * SR)
+        ir[k:k + m] += c[:len(ir) - k]
+    return ir
+
+
+def valley(y, r, n, size=1.0, gain=1.0, last=1.5, wet=0.2):
+    """Out in the open, in a valley: the hills' echoes and a long dark diffuse spread."""
+    y = fftconvolve(y, hills(r, size, gain, last))[:n]
+    return room(y, 2.6, wet, 0.03, 1700)[:n]
+
+
+def finish(y, L, fade=1.4):
+    x = t(len(y) / SR)
+    return y * np.minimum(1, np.maximum(0, L - x) / fade) ** 1.5
+
+
 def explosion():
-    """A great building going up, heard from 30-80 m away across the forecourt: the crack
-    (the shock wave, already dulled by distance), the deep boom with its sub that you feel in
-    the chest, then the long rumble of the masonry going with stone and glass crackling in it.
-    Three sizes: the door, a wing, the dome."""
-    thunder = trim(kit("cinematic-hits/cinematic-thunder-massive"))
-    slam = trim(kit("cinematic-hits/cinematic-slam-massive"))
-    drum = trim(kit("cinematic-hits/cinematic-drum-massive"))
-    hit = trim(kit("booms-and-bass/boom-hit-strong"))
-    rumble = trim(kit("booms-and-bass/bass-rumble-long"))
-    glass = trim(oc("GLASBrk_WindowPaneSmallBreak_OS_01"))
-    for take, (size, dist, rr) in ((1, (1.0, 40, 0.92)), (2, (1.15, 60, 0.85)), (3, (1.35, 75, 0.78))):
-        r = np.random.default_rng(600 + take)                            # its own seed: the same takes however it is built
-        L = 6.0
+    """One charge of the chain that takes the fortress down, heard from 40-80 m: the crack, the
+    punch of the body boom, the whump of the air, the sub through the ground, the debris
+    crackling, and the rumble rolling round the hills with its echoes. Five takes, five
+    characters: the great door, the hall's windows, the upper windows (a double charge), a
+    wing, the roof."""
+    wood = rec("o", "WOODImpt_LargeWoodDrop_OS_01")
+    iron = [rec("o", f"METLImpt_MetalObjDrop_OS_0{i}") for i in (1, 3)]
+    tiles = rec("o", "CERMImpt_CeramicSmallImpact_OS_01")
+    takes = {1: ("door", 5.2, 42, 0.95, 0.9),
+             2: ("windows", 5.6, 55, 1.0, 0.86),
+             3: ("windows2", 5.8, 64, 1.05, 0.82),
+             4: ("wing", 6.5, 60, 1.25, 0.78),
+             5: ("roof", 7.0, 76, 1.3, 0.74)}
+    for take, (kind, L, dist, size, rr) in takes.items():
+        r = np.random.default_rng(600 + take)
         n = int(L * SR)
         x = t(L)
-        air = 9000 - dist * 55                                            # air eats the top with distance
-        # the crack: an N-wave and a burst of torn air
-        cn = int(0.03 * SR)
-        nw = np.zeros(cn)
-        a = int(0.0009 * size * SR)
-        nw[:a] = np.linspace(1, -1, a)
-        burst = r.standard_normal(cn) * np.exp(-np.arange(cn) / (0.006 * SR))
-        crack = lp(hp(nw + burst * 0.8, 300, 2), air, 2)
-        s = lp(shelf_dark(pitch(slam, rr), 3000, 0.5), air, 2)
-        # the boom: real hits pitched down, and a synthesised sub sweeping from 60 Hz into the floor
-        b1 = lp(pitch(drum, rr * 0.8), 1800, 2)
-        b2 = lp(pitch(hit, rr * 0.9), 400, 2)
-        f = 26 + 34 * np.exp(-x / (0.35 * size))
-        sub = np.sin(2 * np.pi * np.cumsum(f) / SR) * env(n, 0.006, 0.9 * size)
-        # the rumble: thunder and a bass rumble, darkened, and a moving brown-noise body
-        th = lp(shelf_dark(pitch(thunder, rr), 1500, 0.7), 2200, 2)
-        ru = lp(pitch(rumble, rr), 300, 2)
-        brown = hp(np.cumsum(r.standard_normal(n)), 20, 2)
-        body = lp(brown, 180, 3)
-        body /= np.max(np.abs(body)) + 1e-9
-        surge = np.clip(lp(np.abs(r.standard_normal(n)), 3, 1) * 10, 0.3, 1.6)
-        body *= surge * np.minimum(1, x / 0.15) * np.exp(-x / (1.6 * size))
-        # the debris in the tail: crackle thinning out, a little glass
-        deb = crackle(n, 70 * size, 900, 5000, 0.002, np.minimum(1, x / 0.3) * np.exp(-x / 1.4), r)
-        deb = lp(deb, air * 0.7, 2)
-        gl = lp(shelf_dark(pitch(glass, 0.9 + 0.05 * take), 5000, 0.4), air, 2)
-        dry = mix((crack, 0.9, 0.0), (s, 0.7, 0.0), (b1, 0.8, 0.004), (b2, 0.8, 0.0), (sub, 0.85 * size, 0.0),
-                  (th, 0.65, 0.05), (ru, 0.55, 0.12), (body, 0.55, 0.08), (deb, 0.6, 0.0), (gl, 0.12, 0.5 + 0.2 * take))
-        dry = np.tanh(dry * 1.3) / np.tanh(1.3)                           # weight, without hard clipping
-        y = outdoors(dry, 0.2, 0.32 + 0.04 * take, 0.28, 2200)[:n]
-        y *= np.minimum(1, (L - x) / 1.2) ** 1.5                          # the tail sinks away by ~6 s
-        save("explosion", y, take, peak=0.93)
+        cut = air(dist)
+        dry = blast(r, n, 0.0, dist, size, rr)
+        tail = rolling_tail(r, n, size, cut, rr, 0.06, 1.5 + 0.2 * take)
+        deb = crackle(n, 80 * size, 800, cut * 0.65, 0.002, np.minimum(1, x / 0.25) * np.exp(-x / (1.0 + 0.2 * take)), r)
+        stones = cascade(r, n, 0.35, 0.9, 3.2 + 0.3 * take, 40 + 10 * take, cut * 0.55, 0.4, 0.3)
+        extra = np.zeros(n)
+        if kind == "door":                                                # the doors' planks and iron straps
+            for i in range(4):
+                extra += fit(mix((lp(pitch(trim(wood), r.uniform(0.6, 0.8)), cut * 0.6, 2), 1.0, r.uniform(0.6, 1.6))), n) * (0.7 - 0.12 * i)
+            for i in range(2):
+                extra += fit(mix((lp(pitch(trim(iron[i]), r.uniform(0.45, 0.55)), cut * 0.5, 2), 0.6, r.uniform(1.1, 2.0))), n)
+            extra += cracks(r, n, 0.05, 0.4, 3, cut=cut)
+        elif kind in ("windows", "windows2"):                             # the glass goes out with the blast
+            extra += glass_burst(r, n, 0.04, 10, 0.3, cut * 0.9) * 0.55
+            extra += glass_fall(r, n, 0.4, 1.0, 3.2, 220, cut * 0.85) * 0.5
+            if kind == "windows2":                                        # and a second charge a breath later
+                dry += blast(r, n, 0.19, dist + 6, size * 0.85, rr * 1.06, 0.8) * 0.75
+        elif kind == "wing":                                              # a wall of the wing coming down
+            extra += cracks(r, n, 0.08, 0.6, 4, cut=cut) * 0.8
+            extra += cascade(r, n, 0.7, 1.6, 5.2, 160, cut * 0.6, 0.8, 1.0) * 0.7
+        else:                                                             # the roof: timbers, slates, a second burst
+            dry += blast(r, n, 0.27, dist, size * 0.8, rr * 0.95, 0.7) * 0.7
+            for i in range(6):
+                extra += fit(mix((lp(pitch(trim(wood), r.uniform(0.45, 0.65)), cut * 0.5, 2), 0.6, r.uniform(0.7, 3.0))), n)
+            for i in range(30):
+                tl = lp(pitch(trim(tiles), r.uniform(0.5, 0.85)), cut * 0.6, 2)[:int(0.25 * SR)]
+                extra += fit(mix((fades(tl, 0.0005, 0.08), r.uniform(0.2, 0.5), 0.5 + r.gamma(2.0, 0.6))), n)
+            extra += crackle(n, 30, 300, 2500, 0.006, np.minimum(1, x / 0.5) * np.exp(-x / 2.5), r) * 1.2
+        y = (lvl(dry, -6) + lvl(tail, -15 + 2 * (size - 1)) + lvl(deb, -27) + lvl(stones, -24)
+             + (lvl(extra, -19) if np.any(extra) else 0))
+        y = tilt(valley(y, r, n, size, 1.0, 1.5, 0.2))
+        y = np.tanh(1.8 * glue(y, 0.4, 2.0)) / np.tanh(1.8)
+        save("explosion", finish(y, L, 1.6), take, peak=0.93)
+
+
+def explosion_big():
+    """The two great ones: the tower's dome and the keep. Deeper, longer, with the structure
+    crunching as it goes, a fireball roaring on, and a huge echo tail rolling round the
+    valley. Take 1 the dome, 2 the keep (three charges), 3 the keep's last, furthest and
+    darkest."""
+    roar_src = rec("o", "WATRFall_Waterfall_LOOP_01", 3.0, 14.0)
+    groan = rec("o", "METLFric_ScratchCreepy_OS_01")
+    takes = {1: (10.0, 70, 1.6, 0.68, (0.0,)),
+             2: (11.0, 60, 1.75, 0.62, (0.0, 0.34, 0.8)),
+             3: (9.6, 80, 1.7, 0.6, (0.0, 0.22))}
+    for take, (L, dist, size, rr, charges) in takes.items():
+        r = np.random.default_rng(700 + take)
+        n = int(L * SR)
+        x = t(L)
+        cut = air(dist) * 0.85
+        dry = np.zeros(n)
+        for i, at in enumerate(charges):
+            dry += blast(r, n, at, dist, size * (1 - 0.12 * i), rr * (1 + 0.04 * i), 1.0 - 0.15 * i) * (1 - 0.18 * i)
+        # a second, deeper sub: the whole hill shoved
+        fs = 16 + 14 * np.exp(-x / 0.4)
+        dry += np.sin(2 * np.pi * np.cumsum(fs) / SR) * env(n, 0.03, 1.4) * 0.6
+        # the structure crunching, grinding as it leans, and going down
+        crunch = cracks(r, n, 0.15, 1.6, 8, cut=cut) + grind(r, n, 0.4, 3.2, 0.5)
+        g = lp(pitch(trim(groan), 0.32), 900, 2)                          # the dome's frame groaning
+        if take == 1:
+            crunch += fit(mix((fades(g, 0.2, 0.6), 0.6, 0.7)), n)
+        fall = cascade(r, n, 1.0, 2.3, 7.5, 320, cut * 0.6, 0.9, 1.0)
+        # the fireball: a sustained roar, swelling then burning down (falling water, darkened, reads as flame)
+        ro = fit(roar_src, n)
+        ro = lp(hp(ro, 45, 2), 700, 3)
+        turb = np.clip(lp(np.abs(r.standard_normal(n)), 4, 1) * 8, 0.4, 1.6)
+        brown = norm(lp(hp(np.cumsum(r.standard_normal(n)), 20, 2), 220, 3))
+        fe = np.clip(x / 0.35, 0, 1) ** 1.5 * np.exp(-np.maximum(0, x - 1.5) / 2.8)
+        fireball = (norm(ro) * 0.8 + brown * 0.6 + norm(bp(r.standard_normal(n), 300, 1500, 2) * turb) * 0.15) * turb * fe
+        tail = rolling_tail(r, n, size, cut, rr, 0.08, 2.2)
+        th2 = lp(shelf_dark(pitch(trim(rec("k", "cinematic-hits/cinematic-thunder-big")), rr * 0.9), 1500, 0.7), 1600, 2)
+        tail += fit(mix((th2, 0.45, 1.6)), n)
+        deb = crackle(n, 120, 700, cut * 0.6, 0.0025, np.minimum(1, x / 0.3) * np.exp(-x / 2.4), r)
+        y = (lvl(dry, -6) + lvl(tail, -12) + lvl(crunch, -20) + lvl(fall, -17) + lvl(fireball, -15) + lvl(deb, -25))
+        y = tilt(valley(y, r, n, size, 1.15, 2.2, 0.24))
+        y = np.tanh(1.35 * glue(y, 0.35, 2.2)) / np.tanh(1.35)
+        save("explosion_big", finish(y, L, 2.5), take, peak=0.94)
+
+
+def collapse():
+    """A stone building coming down, 50-65 m away: the first cracks, the grinding as it leans,
+    the break, then a cascading avalanche of masonry with heavy blocks hitting the ground
+    (the sub through it), and the dust settling."""
+    takes = {1: (6.5, 52, 0.9), 2: (7.2, 58, 1.1), 3: (8.0, 65, 1.0)}
+    wood = rec("o", "WOODImpt_LargeWoodDrop_OS_01")
+    for take, (L, dist, brk) in takes.items():
+        r = np.random.default_rng(800 + take)
+        n = int(L * SR)
+        x = t(L)
+        cut = air(dist) * 0.75
+        cr = cracks(r, n, 0.0, brk + 0.4, 6 + take, cut=cut)
+        gr = grind(r, n, 0.15, brk + 1.4, 1.0)
+        av = cascade(r, n, brk, brk + 1.1 + 0.2 * take, L - 0.8, 260 + 60 * take, cut, 1.0, 1.0)
+        heavy = np.zeros(n)
+        for i, at in enumerate(np.sort(brk + r.uniform(0.1, 2.6, 4 + take))):
+            fs = 26 + 20 * np.exp(-t(1.2) / 0.08)
+            thump = np.sin(2 * np.pi * np.cumsum(fs) / SR) * env(int(1.2 * SR), 0.004, 0.25)
+            th = lp(pitch(trim(wood), r.uniform(0.28, 0.38)), 700, 2)
+            heavy += fit(mix((thump, 1.0, at), (th, 0.8, at), (stone_hit(r, 1.0, 0.7), 0.6, at)), n) * r.uniform(0.6, 1.0)
+        dust = bp(r.standard_normal(n), 700, 3200, 2)
+        dust = shelf_dark(dust, 2200, 0.5) * np.clip((x - brk - 0.8) / 1.5, 0, 1) * np.exp(-np.maximum(0, x - brk - 2.5) / 2.5)
+        y = lvl(cr, -14) + lvl(gr, -19) + lvl(av, -9) + lvl(heavy, -11) + lvl(dust, -34, 1.0)
+        y = tilt(valley(y, r, n, 0.9, 0.7, 1.4, 0.2))
+        y = np.tanh(1.2 * glue(y, 0.3, 2.5)) / np.tanh(1.2)
+        save("collapse", finish(y, L, 1.6), take, peak=0.9)
+
+
+def glass_rain():
+    """Rows of windows blowing out together, then the glass raining down over the stone of the
+    forecourt: hundreds of slivers, ringing and skittering, thinning out."""
+    for take, (L, dist, count) in ((1, (3.4, 40, 420)), (2, (3.9, 50, 520))):
+        r = np.random.default_rng(900 + take)
+        n = int(L * SR)
+        cut = air(dist)
+        burst = glass_burst(r, n, 0.0, 14, 0.4, cut)
+        fall = glass_fall(r, n, 0.25, 0.85 + 0.15 * take, L - 0.3, count, cut)
+        thud = fit(mix((lp(r.standard_normal(int(0.3 * SR)), 300, 2) * env(int(0.3 * SR), 0.003, 0.05), 1.0, 0.0)), n)
+        y = norm(burst) * 0.9 + norm(fall) * 0.75 + thud * 0.15
+        y = valley(y, r, n, 0.5, 0.4, 1.2, 0.16)
+        save("glass_rain", finish(y, L, 0.8), take, peak=0.85)
+
+
+def shockwave():
+    """The blast's pressure wave reaching them: a deep whoomp in the chest, a gust rushing past
+    (rising then falling as it goes by, clothes flapping in it, buffeting) and a spatter of grit."""
+    flag = rec("o", "CLOTHFlp_FlagFlapping_LOOP_01", 2.0, 3.0)
+    whoosh = rec("k", "whooshes/whoosh-slow-hard")
+    dirt = [rec("o", f"FEETHmn_ShoeDirtRun_OS_0{i}") for i in (1, 2, 3)]
+    for take in (1, 2):
+        r = np.random.default_rng(1000 + take)
+        L = 2.5 + 0.1 * take
+        n = int(L * SR)
+        x = t(L)
+        # the whoomp
+        fw = 30 + 25 * np.exp(-x / 0.05)
+        whoomp = np.sin(2 * np.pi * np.cumsum(fw) / SR) * env(n, 0.012, 0.22)
+        whoomp += norm(lp(r.standard_normal(n), 180, 3)) * np.minimum(1, x / 0.015) * np.exp(-x / 0.12) * 0.8
+        drop = lp(trim(rec("k", "booms-and-bass/boom-drop-strong")), 150, 2)
+        # the gust: bands of air peaking one after another (it rises as it comes, falls as it goes)
+        src = r.standard_normal(n)
+        gust = np.zeros(n)
+        pk = 0.32 + 0.05 * take
+        for lo, hi, dl, g in ((90, 300, 0.0, 1.0), (250, 700, 0.04, 0.8), (600, 1500, 0.08, 0.5), (1300, 3000, 0.11, 0.25)):
+            e = np.exp(-((x - pk - dl) / 0.16) ** 2) * (x < pk + dl) + np.exp(-np.maximum(0, x - pk - dl) / (0.55 - dl)) * (x >= pk + dl)
+            gust += bp(src, lo, hi, 2) * e * g
+        buffet = np.clip(lp(np.abs(r.standard_normal(n)), 18, 1) * 7, 0.2, 1.8)
+        gust = norm(gust * buffet)
+        rumble = norm(lp(r.standard_normal(n), 70, 3) * buffet) * np.exp(-np.maximum(0, x - pk) / 0.6) * np.clip(x / pk, 0, 1)
+        wh = lp(pitch(trim(whoosh), 0.6 + 0.05 * take), 3500, 2)
+        ge = np.clip(x / pk, 0, 1) * np.exp(-np.maximum(0, x - pk) / 0.6)
+        fl = lp(fit(flag, n), 4000, 2) * ge
+        # the grit: fine stuff spattering past and onto them
+        grit = crackle(n, 500, 2000, 7000, 0.0005, np.clip((x - pk + 0.05) / 0.1, 0, 1) * np.exp(-np.maximum(0, x - pk) / 0.45), r)
+        peb = [(stone_hit(r, r.uniform(0.03, 0.12), 1.0), r.uniform(0.1, 0.3), pk + r.gamma(1.5, 0.15)) for _ in range(14)]
+        dd = [(fades(lp(pitch(trim(dirt[i]), r.uniform(1.3, 1.6)), 6000, 2), 0.001, 0.05), 0.25, pk + 0.1 + 0.2 * i) for i in range(3)]
+        y = fit(mix((whoomp, 1.0, 0.0), (drop, 0.6, 0.0), (gust, 0.55, 0.0), (rumble, 0.35, 0.0), (wh, 0.4, pk - 0.25),
+                    (fl, 0.25, 0.0), (grit, 1.0, 0.0), *peb, *dd), n)
+        y = outdoors(y, 0.12)[:n]
+        save("shockwave", finish(y, L, 0.7), take, peak=0.88)
+
+
+def rumble():
+    """Under the slow motion: the fortress burning and settling a long way off. A low rolling
+    rumble, the roar of the fire, the odd far-off fall of masonry, faint crackle. A 14 s loop."""
+    r = np.random.default_rng(1100)
+    L, xf, run = 14.0, 2.0, 1.0
+    n = int((L + xf + run + 1.0) * SR)
+    x = np.arange(n) / SR
+    brown = hp(np.cumsum(r.standard_normal(n)), 16, 2)
+    body = norm(lp(brown, 110, 3))
+    swell = 0.7 + 0.3 * np.sin(2 * np.pi * x / 5.3 + 1.0) * np.sin(2 * np.pi * x / 8.9 + 0.3)
+    surge = np.clip(lp(np.abs(r.standard_normal(n)), 1.5, 1) * 8, 0.4, 1.4)
+    ro = fit(rec("o", "WATRFall_Waterfall_LOOP_01", 20.0, n / SR), n)
+    roar = norm(lp(hp(ro, 50, 2), 450, 3)) * (0.8 + 0.2 * np.sin(2 * np.pi * 0.21 * x))
+    flut = norm(bp(r.standard_normal(n), 150, 700, 2) * np.clip(lp(r.standard_normal(n), 7, 1) * 20 + 0.5, 0, 2))
+    cr = crackle(n, 14, 600, 2600, 0.003, None, r)
+    wood = rec("o", "WOODImpt_LargeWoodDrop_OS_01")
+    falls = [(np.zeros(n), 0.0, 0.0)]
+    for at in (2.3, 6.8, 10.9, 14.6):
+        th = lp(pitch(trim(wood), r.uniform(0.3, 0.38)), 260, 2)
+        fs = 24 + 12 * np.exp(-t(1.0) / 0.1)
+        falls += [(th, 0.6, at), (np.sin(2 * np.pi * np.cumsum(fs) / SR) * env(int(1.0 * SR), 0.01, 0.3), 0.4, at)]
+    fl = fit(mix(*falls), n)
+    y = body * swell * surge * 0.8 + roar * 0.45 + flut * 0.08 + cr * 0.5 + norm(fl) * 0.35
+    y = room(lp(y, 3000, 2), 2.6, 0.25, 0.03, 1500)[int(run * SR):]
+    y = loopable(y, L, xf)
+    save("rumble", y, 1, peak=0.6, loop=True)
 
 
 def debris():
-    """Stone coming down after a blast, on the gravel and the paving: a few heavy chunks
-    (thuds with a stony clack on top), a rain of smaller stones and grit, a little glass."""
-    wood = trim(oc("WOODImpt_LargeWoodDrop_OS_01"))
-    cer = trim(oc("CERMImpt_CeramicSmallImpact_OS_01"))
-    dirt = [trim(oc(s)) for s in ("FEETHmn_ShoeDirtLand_OS_01", "FEETHmn_ShoeDirtLand_OS_02", "FEETHmn_ShoeConcreteLand_OS_01")]
-    glass = [trim(oc("GLASBrk_WindowPaneSmallBreak_OS_01")), trim(oc("GLASBrk_GlassBottleBreak_OS_01"))]
+    """Stone landing near them after a blast: heavy chunks hitting the paving and the gravel and
+    bouncing (each bounce quicker, smaller and brighter), smaller stones clattering, gravel
+    spattering down, a last stone rolling to a stop."""
+    wood = rec("o", "WOODImpt_LargeWoodDrop_OS_01")
+    stone = [rec("o", s) for s in ("FEETHmn_ShoeConcreteLand_OS_01", "FEETHmn_ShoeConcreteLand_OS_02")]
+    gravel = [rec("o", s) for s in ("FEETHmn_ShoeDirtLand_OS_01", "FEETHmn_ShoeDirtLand_OS_02")]
+    scatter = [rec("o", f"FEETHmn_ShoeDirtRun_OS_0{i}") for i in (1, 2, 3, 4, 5)]
 
-    def clack(r):
-        """One stone striking another: a burst through two or three stony resonances."""
-        m = int(0.08 * SR)
-        nz = r.standard_normal(m) * np.exp(-np.arange(m) / (0.004 * SR))
-        y = sum(bp(nz, f * 0.85, f * 1.15, 2) * g for f, g in ((r.uniform(700, 1400), 1.0), (r.uniform(1800, 3200), 0.7), (r.uniform(3500, 5500), 0.3)))
-        return y * np.exp(-np.arange(m) / (0.012 * SR))
+    def land(r, at, size, on_stone, bounces):
+        parts = []
+        dt = r.uniform(0.2, 0.34) * (0.6 + 0.6 * size)
+        g = 1.0
+        for k in range(bounces + 1):
+            s = size * (0.75 ** k)
+            if on_stone or k > 0:                                         # stone: a ringing crack
+                parts.append((stone_hit(r, s, 1.0), g * (0.5 + 0.6 * s), at))
+                if k == 0 and s > 0.3:
+                    parts.append((lp(pitch(trim(stone[int(r.integers(0, 2))]), r.uniform(0.55, 0.7)), 6000, 2), g * s, at))
+            else:                                                         # gravel: a crunch and a scatter, no ring
+                parts.append((lp(pitch(trim(gravel[int(r.integers(0, 2))]), r.uniform(0.6, 0.8)), 6000, 2), g * (0.6 + 0.6 * s), at))
+                sc = fades(pitch(trim(scatter[int(r.integers(0, 5))]), r.uniform(1.1, 1.4)), 0.001, 0.08)
+                parts.append((lp(sc, 7000, 2), g * 0.4, at + 0.01))
+                parts.append((stone_hit(r, s * 0.5, 0.7), g * 0.3, at))
+            if k == 0 and s > 0.4:                                        # the weight of it
+                parts.append((lp(pitch(trim(wood), r.uniform(0.5, 0.65)), 2200, 2), g * s * 0.8, at))
+            at += dt
+            dt *= r.uniform(0.5, 0.65)
+            g *= r.uniform(0.4, 0.55)
+        if on_stone and size > 0.5:                                       # it rolls to a stop
+            for k in range(int(r.integers(5, 10))):
+                parts.append((stone_hit(r, 0.08, 1.0), 0.12 * (0.85 ** k), at + k * r.uniform(0.025, 0.05)))
+        return parts
 
     for take in (1, 2, 3):
         r = np.random.default_rng(100 + take)
-        L = 3.2
+        L = 3.0 + 0.2 * take
         n = int(L * SR)
-        parts = []
+        x = t(L)
+        parts = [(np.zeros(n), 0.0, 0.0)]
         for i in range(3 + take % 2):                                     # the big chunks
-            at = r.uniform(0.0, 1.8) if i else 0.0
-            ch = lp(pitch(wood, r.uniform(0.45, 0.6)), 2500, 2)
-            parts += [(ch, r.uniform(0.6, 1.0), at), (clack(r), r.uniform(0.35, 0.6), at + 0.002),
-                      (lp(pitch(dirt[i % 3], r.uniform(0.7, 0.9)), 4000, 2), 0.5, at)]
-        for i in range(int(40 + 10 * take)):                              # the rain of smaller stones
-            at = min(L - 0.4, r.gamma(1.8, 0.7))
-            g = 0.7 * np.exp(-at / 2.0) * r.uniform(0.3, 1.0)
-            if r.random() < 0.3:
-                c = lp(pitch(cer, r.uniform(0.55, 0.9)), 6000, 2)[:int(0.25 * SR)]
-                parts.append((fades(c, 0.0005, 0.08), g * 0.5, at))
-            else:
-                parts.append((clack(r), g * 0.55, at))
-        grit = crackle(n, 260, 1500, 6500, 0.0008, np.exp(-t(L) / 1.6), r)  # grit and gravel hiss-free pitter
-        gl = shelf_dark(pitch(glass[take % 2], r.uniform(1.0, 1.15)), 6000, 0.4)
-        parts += [(grit, 0.5, 0.05), (gl, 0.18, r.uniform(0.2, 0.6))]
-        y = mix(*parts)[:n]
-        y = lp(y, 7500, 2)
-        y *= np.minimum(1, (L - t(len(y) / SR)) / 0.8)
-        save("debris", outdoors(y, 0.18, 0.0, 0.0, 2600), take, peak=0.8)
+            at = 0.0 if i == 0 else r.uniform(0.1, 1.4)
+            parts += land(r, at, r.uniform(0.6, 1.0), r.random() < 0.55, int(r.integers(2, 5)))
+        for i in range(16 + 4 * take):                                    # stones
+            parts += land(r, min(L - 0.6, r.gamma(1.6, 0.45)), r.uniform(0.15, 0.45), r.random() < 0.5, int(r.integers(0, 3)))
+        for i in range(70):                                               # the gravel spatter
+            at = min(L - 0.4, r.gamma(1.5, 0.35))
+            parts.append((stone_hit(r, r.uniform(0.02, 0.1), 1.0), r.uniform(0.08, 0.25) * np.exp(-at / 1.5), at))
+        grit = crackle(n, 300, 1500, 7000, 0.0007, np.clip(x / 0.05, 0, 1) * np.exp(-x / 0.9), r)
+        y = fit(mix(*parts), n) + grit * 0.6
+        y = lp(y, 10000, 2)
+        y = outdoors(y, 0.14)[:n]
+        save("debris", finish(y, L, 0.6), take, peak=0.85)
 
 
 def fire_roar():
@@ -1140,7 +1609,8 @@ ALL = ("thunder", "drip", "splat", "splash", "breath", "tinnitus", "heartbeat", 
        "chain", "body_splash", "crawl", "glint", "knife_grab", "flash_cut", "phone_buzz", "phone_click", "gunshot_indoor", "gun_draw", "gun_cock", "shell_casing",
        "gun_drop_water", "struggle", "death_breath", "memory_elena", "train_pass", "car_rev", "car_door",
        "memory_maya", "music_note", "creak", "buzz", "fridge_hum", "swing_creak", "crickets",
-       "explosion", "debris", "fire_roar", "walkie_click", "plunger", "birds", "ember")
+       "explosion", "debris", "fire_roar", "walkie_click", "plunger", "birds", "ember",
+       "explosion_big", "collapse", "glass_rain", "shockwave", "rumble")
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

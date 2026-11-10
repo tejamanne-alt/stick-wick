@@ -25,6 +25,8 @@ namespace ProjectInk
         MemoryMaya, MusicNote, Creak, Buzz, FridgeHum, SwingCreak, Crickets,
         // the walk-out (chapter 6, docs/story/walkout.md)
         Explosion, Debris, FireRoar, WalkieClick, Plunger, Birds, Ember,
+        // the fortress's chain of charges (the walk-out's big blasts, the collapse, the slow motion)
+        ExplosionBig, Collapse, GlassRain, Shockwave, Rumble,
     }
 
     /// <summary>The mixer. Plays recorded takes with no immediate repeats, small pitch and
@@ -251,13 +253,18 @@ namespace ProjectInk
                 case Sfx.Glint: level = 0.4f; spread = 0.03f; gap = 0.5f; slows = false; break;
                 case Sfx.KnifeGrab: level = 0.75f; spread = 0.03f; gap = 0.3f; slows = false; break;
                 case Sfx.FlashCut: level = 0.7f; spread = 0.06f; gap = 0.05f; slows = false; break;
-                case Sfx.Explosion: level = 1f; spread = 0.06f; gap = 0.15f; slows = false; break;
+                case Sfx.Explosion: level = 1f; spread = 0.05f; gap = 0.12f; slows = false; break;
                 case Sfx.Debris: level = 0.6f; spread = 0.08f; gap = 0.2f; break;
                 case Sfx.FireRoar: level = 0.5f; spread = 0.02f; gap = 1f; slows = false; break;
                 case Sfx.WalkieClick: level = 0.7f; spread = 0.03f; gap = 0.08f; slows = false; break;
                 case Sfx.Plunger: level = 0.75f; spread = 0.02f; gap = 0.3f; break;
                 case Sfx.Birds: level = 0.3f; spread = 0.04f; gap = 2f; slows = false; break;
                 case Sfx.Ember: level = 0.3f; spread = 0.06f; gap = 0.8f; slows = false; break;
+                case Sfx.ExplosionBig: level = 1f; spread = 0.03f; gap = 0.4f; slows = false; break;
+                case Sfx.Collapse: level = 0.85f; spread = 0.05f; gap = 0.4f; slows = false; break;
+                case Sfx.GlassRain: level = 0.55f; spread = 0.06f; gap = 0.25f; slows = false; break;
+                case Sfx.Shockwave: level = 0.8f; spread = 0.04f; gap = 0.5f; slows = false; break;
+                case Sfx.Rumble: level = 0.45f; spread = 0f; gap = 2f; slows = false; break;
             }
         }
 

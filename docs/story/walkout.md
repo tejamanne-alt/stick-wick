@@ -14,10 +14,9 @@ In its place: two stick figures hand in hand, two toy walkie-talkies, and the re
   rig can make. Carrying her on his hip would merge them into one blob.
 - **Everything is a big gesture.** The walkie raised to the head. A hand on her head. Her head
   tilted right up to look at him. Their joined hands swung forward. No faces needed.
-- **One red.** The fire is white and the smoke black, as all fire in the game is. Her
-  ribbon is the only red. Its tails whip in the blast wind during the slow motion. The walkie's
-  battery pip is red too (set up in ch 5); it dies after the blast, so the slow motion has only
-  the ribbon.
+- **One red.** Her ribbon is the only red. The fire is realistic fire colour (orange and white-hot)
+  and the smoke black; the ribbon's tails whip in the blast wind during the slow motion. The
+  walkie's battery pip is red too (set up in ch 5), but it dies after the blast.
 
 ## Where it sits
 
@@ -88,39 +87,47 @@ The clock runs in real seconds. Positions are Unity metres: x along the hall, z 
 Kessel Hill at dawn. The bridge is empty and its lanterns still burn. The night's smoke drifts off
 the roof, crows circle the tower, and the wind blows. Very slow push in. Cut to the doorway.
 
-**The take, one shot, 61 s:**
+**The take, one shot, 69 s.** The blast waits until they are near the far end of the bridge, so the
+whole of Kessel Hill is in frame behind them when it goes, as the house is in the reference:
 
 | t | Picture | Sound |
 | --- | --- | --- |
-| 0.0 | The great door, black inside, framed by the porch columns. The camera is still, chest-high. | Wind, birds. A low drone starts the score. |
-| 2.0 | Two shapes take form in the dark: a tall one, a small one beside it, hand in hand. | Footsteps on stone, inside, echoing. |
-| 4.3 | They step into the light. The camera starts to back away in front of them. | The score's slow pulse: a kick on each of his steps. |
-| 5-11 | Out of the porch. The camera drifts right, then settles centred. The carved columns pass the lens. | |
-| 11-19 | The forecourt. The fountain slides past on the left; the facade fills the frame behind them. She skips; he shortens his stride. | |
-| 19.5 | She stops, pulling on his hand. He stops. | The pulse holds. |
-| 19.8 | She raises her walkie (its red pip blinking): **MAYA (walkie):** "Papa? ...I can see you. Over." | |
-| 21.2 | Far right: the east range door bangs open. A man runs in through the gravel. | The door, running feet. |
-| 22.8 | He tilts his head down to her, takes his walkie from his coat and raises it: **YOU (walkie):** "I see you too, sweetheart. Over." | |
-| 24.6 | The man drops to his knees at a box behind them on the right, lifts the plunger's handle and looks at them. | Clatter, the ratchet. |
-| 26.0 | **MAN:** "Boss said... if he falls, the hill burns." They both turn their heads to him. She presses against his leg. | |
-| 28.8 | He turns back to the road. **YOU:** "...Then burn it." | |
-| 30.0 | They walk on. | The pulse comes back, stronger: strings. |
-| 31.5 | **MAYA (walkie):** "Can we go home now? Over." | |
-| 34.4 | **YOU (walkie):** "Over and out." He clicks off on "out" (35.6) and puts the walkie in his coat. | *Click.* |
-| 36.0 | Behind them the man pushes the plunger down. | Silence for half a second. |
-| 36.3 | **The great door blows out:** a white fireball through the doorway they walked out of. | The blast: a crack, a deep boom. The score hits one huge chord and stops. |
-| 36.6-40 | The chain, left to right: the facade's windows one after another, the porch, the roof terrace, the east range, the tower's dome (the biggest), the keep, the gate towers. | Boom after boom; stone raining down, glass. |
-| 36.5 | She flinches and starts to turn. He lets go of her hand, puts it on the back of her head and draws her against his leg. They keep walking. | |
-| 38-44 | Between the gate piers onto the bridge. Black smoke climbs and fills the sky behind them. Embers drift down, stones land in the forecourt. Her walkie's pip stutters and goes out. | The fire roars; a high ringing comes in over everything. |
-| 44.5 | **Slow motion** sets in over 1.5 s. The camera backs away a little faster, rises and widens: the whole burning hill behind them. | The ringing; the fire far off; the music-box theme comes in softly. |
-| 47 | She looks up at him, her head tilted right back. He looks down at her. His shoulders drop: he can stand easy for the first time in the game. | |
-| 50 | She reaches up and takes his hand again, and swings their joined hands forward: a skip. The ribbon's tails whip red in the hot wind. Embers float past the lens. | |
-| 53 | She holds up her dead walkie and clicks it twice. | *click... click.* Loud in the hush. |
-| 55 | He presses the walkie in his coat twice. | *click... click.* |
-| 57-61 | Hold on them walking. Smoke fills the sky, white fire beneath it. A slow fade to black. | The theme's last note, left unresolved. |
+| 0.0 | The great door, framed by the porch. The camera is still. | Wind, birds; the drone. |
+| 2.0 | Two shapes against the light deep in the hall: a tall black one, a small white one, hand in hand. | Footsteps inside. |
+| 4.3 | They step out. The camera backs away in front of them. | The pulse: a kick on the steps. |
+| 4.3-16 | The forecourt at a walk. The fountain slides past on the left; she skips. | |
+| 16 | They slow to a stroll. She raises her walkie: "Papa? ...I can see you. Over." | The music thins. |
+| 19.4 | His walkie from his coat: "I see you too, sweetheart. Over." | |
+| 24 | The stables' door bangs. The last man runs in from the right, past the lens, and kneels at a box by the gate. | The door, running feet. |
+| 28.6 | He comes into frame low on the right, his hands on the plunger: "Boss said... if he falls, the hill burns." | The ratchet. |
+| 31.3 | **YOU:** "...Then burn it." Through the gate onto the bridge. | The build begins. |
+| 31-47 | **The reveal.** Down the bridge, the camera falls back, widens and tilts up until the whole fortress fills the frame behind them. | Strings and pulse, rising, timpani. |
+| 41.5 | "Can we go home now? Over." | |
+| 44.6 | "Over and out." The click. | *Click.* |
+| 46.8 | Far behind them, small, the man pushes the plunger down. | The music cuts dead. |
+| **47.2** | **The whole hill goes up, left to right, over five seconds:** the great door, the balcony, every window low then high, the corner turrets (their spirelets topple), the roof terrace, the chimneys falling, the stables, the courtyard, the towers behind, the keep (a pillar of fire), then the observatory dome blown off the tower and falling. | Each blast arrives late by its distance; the pressure wave hits them; glass rains; masonry collapses; a roar under it all. One huge chord. |
+| 47.4 | She flinches; his hand on her head; she holds his leg. They falter, then walk on. | |
+| 48-52 | Fire in every window: the fortress has burned through. Black smoke climbs and spreads across the sky; ash and embers drift past the lens. | Ringing. |
+| 52.6 | **Slow motion.** The camera pulls further back and up over the burning hill. | The lullaby. |
+| 54.4 | A last vast fireball rises slowly out of the roof. | Deep and slow. |
+| 55.6-60 | She looks up at him; he looks down; his shoulders drop. She takes his hand again and swings it; the ribbon whips red. | |
+| 62.0 | Two clicks on her dead walkie. | *click... click.* |
+| 63.6 | Two back from his coat. | *click... click.* |
+| 66.6-69 | Fade to black. **OVER AND OUT.** | |
 
-**After:** black. "OVER AND OUT" in small spaced letters. Then the chapter card **THE STORM**
-(its line depends on whether he reached for Voss).
+**The blasts** (BlastFx), each built in layers:
+- a white-hot flash and a shockwave ring;
+- a fireball from an animated flipbook (white core through yellow, orange and deep red to black smoke at its edges), with a glow;
+- stone blocks that tumble out trailing smoke, land and bounce; burning fragments streaking out; sparks and glass glinting;
+- a wall of dust along the ground;
+- a burst of black smoke and a column that keeps climbing and spreads over the sky;
+- a fire that stays: flipbook flames, a glow, embers.
+
+The biggest blasts add a pillar of fire and a smoke cap. Every fire also lights the fortress's
+stone through the ProjectInk/FireLit shader: up to eight flickering fire lights, the flash, and
+the fade into a burning bake (`_Burn`: windows full of fire, the morning dimmed by smoke).
+The flipbooks come from `tools/fx/make_fx_textures.py`. The fire is real fire-coloured here,
+because the user asked for realism; the ribbon stays the only red.
 
 ## The camera
 

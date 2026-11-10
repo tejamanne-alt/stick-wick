@@ -25,7 +25,7 @@ namespace ProjectInk
         // ---------------------------------------------------------------- the take's state
         float woT = -1f;                    // the take's clock (real seconds); -1 when not in the take
         float heroZ, mayaOff = -0.55f, mayaOffWant = -0.55f, mayaYaw = 90f, mayaYawWant = 90f, mayaHop;
-        float swing, holdBack, plungerUp, woShake, woFlash, woOverText = -1f, heroHeight = 1.45f;
+        float swing, holdBack, plungerUp, woShake, woFlash, woOverText = -1f, heroHeight = 1.45f, woBurn;
         bool woWalking, pipDead;
         float nextStep, nextMayaStep, nextFire;
         string woHeroClip = "", woMayaClip = "";
@@ -49,6 +49,12 @@ namespace ProjectInk
             Sound.MusicStop(1.0f);
             SetRipple(0f);
             if (voss != null) voss.gameObject.SetActive(false);
+            BlastFx.Clear();
+            woBurn = 0f;
+            // above the sky's backdrop (the camera tilts up at the end): the morning's own grey-blue
+            var skyCam = Camera.main;
+            Color prevBg = skyCam != null ? skyCam.backgroundColor : Color.black;
+            if (skyCam != null) { skyCam.clearFlags = CameraClearFlags.SolidColor; skyCam.backgroundColor = new Color(0.72f, 0.745f, 0.8f); }
             if (bookProp != null) bookProp.gameObject.SetActive(false);
             WoCast();
             blackout = 1f;
@@ -76,7 +82,7 @@ namespace ProjectInk
             WoFrame(0f);
             var events = WoEvents();
             int next = 0;
-            while (woT < 61.2f)
+            while (woT < 69.4f)
             {
                 woT += Time.unscaledDeltaTime;
                 while (next < events.Count && events[next].t <= woT) { events[next].act(); next++; }
@@ -91,6 +97,7 @@ namespace ProjectInk
             yield return RealWait(4.6f);
             woOverText = -1f;
             woT = -1f;
+            if (skyCam != null) skyCam.backgroundColor = prevBg;
             RibbonFlutter.Wind = 1f;
         }
 
@@ -157,7 +164,7 @@ namespace ProjectInk
             // the detonator: a wooden box, a T-handle on its plunger, the wire back to the house
             {
                 plungerBox = new GameObject("Detonator").transform;
-                plungerBox.position = WoAt(149.3f, 0f, -16.6f);
+                plungerBox.position = WoAt(149.15f, 0f, -26.75f);           // at the gate, by the right-hand pier
                 plungerBox.rotation = Quaternion.Euler(0f, -20f, 0f);
                 var wood = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.22f, 0.2f, 0.18f) };
                 var iron = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.08f, 0.08f, 0.09f) };
@@ -175,7 +182,7 @@ namespace ProjectInk
                 plungerWire.sharedMaterial = iron;
                 plungerWire.widthMultiplier = 0.018f;
                 plungerWire.useWorldSpace = true;
-                var pts = new[] { plungerBox.position + new Vector3(0.18f, 0.05f, 0.1f), WoAt(149.6f, 0.02f, -14.5f), WoAt(149.2f, 0.02f, -10.5f), WoAt(149.4f, 0.02f, -7.2f), WoAt(149.9f, 0.02f, -5.0f), WoAt(149.7f, 0.02f, -3.4f) };
+                var pts = new[] { plungerBox.position + new Vector3(0.18f, 0.05f, 0.1f), WoAt(149.45f, 0.02f, -24.0f), WoAt(149.3f, 0.02f, -18.0f), WoAt(149.45f, 0.02f, -12.0f), WoAt(149.3f, 0.02f, -7.2f), WoAt(149.9f, 0.02f, -5.0f), WoAt(149.7f, 0.02f, -3.4f) };
                 plungerWire.positionCount = pts.Length;
                 plungerWire.SetPositions(pts);
             }
@@ -261,14 +268,17 @@ namespace ProjectInk
 
         // ================================================================ every frame
 
+        /// <summary>Their walking speed through the take (m/s): out of the dark, across the forecourt,
+        /// strolling while the walkies talk, on through the gate and over the bridge; a falter at the
+        /// blast; then the slow motion slows everything else.</summary>
         float WoSpeed(float t)
         {
             if (t < 4.3f) return 0.85f;
-            if (t < 19.5f) return t > 12.4f && t < 14.2f ? 0.92f : 1f;
-            if (t < 30f) return 1f - WoEase(19.5f, 20.2f, t);
-            if (t < 36.4f) return WoEase(30f, 30.9f, t);
-            if (t < 39f) return Mathf.Lerp(1f, 0.82f, WoEase(36.4f, 36.8f, t)) + 0.18f * WoEase(37.4f, 39f, t);
-            return 1f;
+            if (t < 15.5f) return t > 10.4f && t < 12.2f ? 1.08f : 1.2f;
+            if (t < 25f) return Mathf.Lerp(1.2f, 0.45f, WoEase(15.5f, 16.3f, t));
+            if (t < 47.3f) return Mathf.Lerp(0.45f, 1.2f, WoEase(25f, 25.8f, t));
+            if (t < 50f) return Mathf.Lerp(1.2f, 0.95f, WoEase(47.3f, 47.7f, t)) + 0.25f * WoEase(48.6f, 50f, t);
+            return 1.2f;
         }
 
         void WoPlace()
@@ -326,45 +336,50 @@ namespace ProjectInk
             // her walkie's battery pip: blinking, then stuttering, then dead
             if (mPip != null)
             {
-                bool on = pipDead ? false : t > 40.4f ? Mathf.Repeat(Time.unscaledTime * 9f, 1f) < 0.4f && Random.value > 0.3f : Mathf.Repeat(Time.unscaledTime * 0.85f, 1f) < 0.16f;
-                if (t > 41.3f) pipDead = true;
+                bool on = pipDead ? false : t > WoB + 2.4f ? Mathf.Repeat(Time.unscaledTime * 9f, 1f) < 0.4f && Random.value > 0.3f : Mathf.Repeat(Time.unscaledTime * 0.85f, 1f) < 0.16f;
+                if (t > WoB + 3.4f) pipDead = true;
                 mPip.GetComponent<Renderer>().enabled = on;
             }
             // the plunger's handle
             if (plungerHandle != null) plungerHandle.localPosition = new Vector3(0f, Mathf.Lerp(-0.18f, 0.12f, plungerUp), 0f);
             // the fires: keep roaring under it all
-            if (t > 37.6f && Time.unscaledTime >= nextFire)
+            if (t > WoB + 1.4f && Time.unscaledTime >= nextFire)
             {
                 nextFire = Time.unscaledTime + 5.4f;
-                Sound.Play(Sfx.FireRoar, t > 44f ? 0.32f : 0.5f, WoAt(147f, 6f, 0f));
+                Sound.Play(Sfx.FireRoar, t > 52.6f ? 0.35f : 0.55f, WoAt(147f, 6f, 0f));
             }
             // the drift of ash and embers round the lens
             if (woDrift != null && Camera.main != null) woDrift.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 3f;
             woShake = Mathf.MoveTowards(woShake * Mathf.Exp(-2.4f * Time.unscaledDeltaTime), 0f, Time.unscaledDeltaTime * 0.002f);
             woFlash *= Mathf.Exp(-5.5f * Time.unscaledDeltaTime);
-            RibbonFlutter.Wind = Mathf.Lerp(RibbonFlutter.Wind, t > 36.3f ? (t > 44.5f ? 2.6f : 3.4f) : 1f, 1f - Mathf.Exp(-2f * Time.unscaledDeltaTime));
+            RibbonFlutter.Wind = Mathf.Lerp(RibbonFlutter.Wind, t > WoB + 0.2f ? (t > 52.6f ? 2.6f : 3.4f) : 1f, 1f - Mathf.Exp(-2f * Time.unscaledDeltaTime));
+            BlastFx.Tick(woBurn);
             WoCamera(t);
         }
 
         void WoCamera(float t)
         {
             var hp = hero.transform.position;
-            float slow = WoEase(44.5f, 58.5f, t);
+            // the reveal on the bridge: further back, wider, tilting up until the whole of Kessel Hill
+            // is behind them when it goes; then the slow motion pulls out and up over the burning hill
+            float reveal = WoEase(30.5f, 46.5f, t);
+            float slow = WoEase(52.6f, 67f, t);
             float dist = 3.4f;
-            dist = Mathf.Lerp(dist, 2.75f, WoEase(19.6f, 28.6f, t));
-            dist = Mathf.Lerp(dist, 3.3f, WoEase(29.2f, 32.5f, t));
-            dist = Mathf.Lerp(dist, 4.7f, slow);
-            float camY = hp.y + heroHeight * 0.8f + 0.4f * slow;
-            float lookY = hp.y + heroHeight * 0.7f + 1.7f * slow;            // tilting up: the burning hill over them
-            float fov = Mathf.Lerp(36f, 44f, slow);
+            dist = Mathf.Lerp(dist, 2.9f, WoEase(16.2f, 24.5f, t));
+            dist = Mathf.Lerp(dist, 3.4f, WoEase(25.2f, 29.5f, t));
+            dist = Mathf.Lerp(dist, 4.6f, reveal);
+            dist = Mathf.Lerp(dist, 6.0f, slow);
+            float camY = hp.y + heroHeight * 0.8f + 0.25f * reveal + 0.45f * slow;
+            float lookY = hp.y + heroHeight * 0.7f + 1.4f * reveal + 0.9f * slow;
+            float fov = 36f + 6f * reveal + 4f * slow;
             // waiting at the porch until they come to it, then backing away in front of them
             float zStatic = -8.6f, zFollow = hp.z - dist;
             float h = Mathf.Max(0.9f - Mathf.Abs(zStatic - zFollow), 0f) / 0.9f;
             float camZ = Mathf.Min(zStatic, zFollow) - h * h * 0.9f * 0.25f;
             float arc = 0.55f * Mathf.Sin(Mathf.PI * Mathf.Clamp01((t - 5.5f) / 7.5f));
-            float camX = FortressPlan.DoorX + 0.05f + arc - 0.15f * slow;
+            float camX = FortressPlan.DoorX + 0.05f + arc - 0.25f * reveal;
             var pos = new Vector3(camX, camY, camZ);
-            var subject = new Vector3(hp.x - 0.27f, lookY, hp.z + 0.6f);
+            var subject = new Vector3(hp.x - 0.27f - 0.3f * reveal, lookY, hp.z + 0.6f);
             var door = WoAt(FortressPlan.DoorX, 1.55f, FortressPlan.DoorZ);
             var look = Vector3.Lerp(door, subject, WoEase(2.8f, 6.0f, t));
             pos += Sway(0.012f, 0.5f, 21f);
@@ -381,6 +396,8 @@ namespace ProjectInk
 
         // ================================================================ the timeline
 
+        const float WoB = 47.2f;          // the first blast: the whole of Kessel Hill behind them
+
         List<WoEvent> WoEvents()
         {
             var e = new List<WoEvent>();
@@ -388,47 +405,90 @@ namespace ProjectInk
 
             At(0.3f, () => Sound.PlayTake(Sfx.Birds, 1, 0.35f));
             At(6.5f, () => Sound.PlayTake(Sfx.Birds, 0, 0.3f));
-            At(14.0f, () => Sound.PlayTake(Sfx.Birds, 2, 0.25f));
-            // ---- 19.5 she stops him; she raises her walkie
-            At(19.6f, () => { rigH.nod = 14f; rigH.LookTowards(maya.transform.position, 25f); });
-            At(19.8f, () => { mFree.To(() => WoMouth(rigM, maya.transform.localScale.y), () => Vector3.down + WoSide() * 0.4f, 3.5f); rigM.nod = -12f; rigM.LookTowards(hero.transform.position, 35f); });
-            At(20.0f, () => { Sound.PlayTake(Sfx.WalkieClick, 1, 0.35f, maya.transform.position); Walkie("Papa? ...I can see you. Over.", 2.6f); });
-            // ---- 21.2 the east range's door: the last man runs out
-            At(21.2f, () =>
+            At(13.0f, () => Sound.PlayTake(Sfx.Birds, 2, 0.25f));
+            // ---- 16 they slow; she raises her walkie
+            At(15.9f, () => { rigH.nod = 14f; rigH.LookTowards(maya.transform.position, 25f); });
+            At(16.0f, () => { mFree.To(() => WoMouth(rigM, maya.transform.localScale.y), () => Vector3.down + WoSide() * 0.4f, 3.5f); rigM.nod = -12f; rigM.LookTowards(hero.transform.position, 35f); });
+            At(16.3f, () => { Sound.PlayTake(Sfx.WalkieClick, 1, 0.35f, maya.transform.position); Walkie("Papa? ...I can see you. Over.", 2.6f); });
+            At(18.9f, () => { mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 3f); rigM.turn = 0f; });
+            // ---- his walkie from his coat
+            At(19.0f, () => { if (hWalkie != null) hWalkie.gameObject.SetActive(true); hFree.To(() => WoMouth(rigH, 1f), () => Vector3.down - WoSide() * 0.5f, 3.2f); });
+            At(19.3f, () => Sound.PlayTake(Sfx.WalkieClick, 2, 0.35f, hero.transform.position));
+            At(19.4f, () => Say("YOU", "I see you too, sweetheart. Over.", 2.6f));
+            At(22.2f, () => { hFree.Off(2.5f); rigH.nod = 4f; rigH.turn = 0f; rigM.nod = 0f; });
+            // ---- 24 the stables' door bangs: the last man runs in from the right
+            At(24.0f, () =>
             {
-                Sound.Play(Sfx.Door, 0.75f, WoAt(FortressPlan.RangeX0, 1f, FortressPlan.ManDoorZ));
-                if (lastMan != null) { lastMan.gameObject.SetActive(true); lastMan.PuppetPlay("run", 0.05f, 1.15f); }
+                Sound.Play(Sfx.Door, 0.8f, WoAt(FortressPlan.RangeX0, 1f, FortressPlan.ManDoorZ));
+                if (lastMan != null) { lastMan.gameObject.SetActive(true); lastMan.PuppetPlay("run", 0.05f, 1.2f); }
                 StartCoroutine(WoManRun());
             });
-            At(22.7f, () => mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 3f));
-            // ---- 22.9 his walkie from his coat
-            At(22.9f, () => { if (hWalkie != null) hWalkie.gameObject.SetActive(true); hFree.To(() => WoMouth(rigH, 1f), () => Vector3.down - WoSide() * 0.5f, 3.2f); });
-            At(23.3f, () => Sound.PlayTake(Sfx.WalkieClick, 2, 0.35f, hero.transform.position));
-            At(23.4f, () => Say("YOU", "I see you too, sweetheart. Over.", 2.6f));
-            At(24.6f, () => { Sound.PlayTake(Sfx.Plunger, 0, 0.7f, plungerBox.position); StartCoroutine(WoLerp(0.45f, u => plungerUp = u)); });
-            // ---- 26.0 the man: Voss's last order. They both turn to look at him
-            At(26.0f, () =>
+            At(27.9f, () => { Sound.PlayTake(Sfx.Plunger, 0, 0.75f, plungerBox.position); StartCoroutine(WoLerp(0.45f, u => plungerUp = u)); });
+            At(28.6f, () =>
             {
-                hFree.Off(2.5f);
                 Say("MAN", "Boss said... if he falls, the hill burns.", 2.7f, lastMan != null ? HeadOf(lastMan) : null);
                 if (lastMan != null) { rigH.nod = 4f; rigH.LookTowards(lastMan.transform.position, 70f); rigM.nod = 0f; rigM.LookTowards(lastMan.transform.position, 75f); }
-                mayaOffWant = -0.36f;
+                mayaOffWant = -0.38f;
             });
-            At(28.8f, () => { rigH.turn = 0f; rigH.nod = 3f; Say("YOU", "...Then burn it.", 1.9f); });
-            At(29.6f, () => { rigM.turn = 0f; rigM.nod = 0f; mayaOffWant = -0.55f; });
-            // ---- 31.4 "Can we go home now?"
-            At(31.4f, () => { mFree.To(() => WoMouth(rigM, maya.transform.localScale.y), () => Vector3.down + WoSide() * 0.4f, 3.5f); rigM.nod = -8f; });
-            At(31.5f, () => { Sound.PlayTake(Sfx.WalkieClick, 0, 0.35f, maya.transform.position); Walkie("Can we go home now? Over.", 2.6f); });
-            At(34.1f, () => { mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 3f); rigM.nod = 0f; });
-            At(34.2f, () => hFree.To(() => WoMouth(rigH, 1f), () => Vector3.down - WoSide() * 0.5f, 3.4f));
-            At(34.4f, () => Say("YOU", "Over and out.", 1.5f));
-            At(35.6f, () => Sound.PlayTake(Sfx.WalkieClick, 0, 0.8f, hero.transform.position));
-            At(35.9f, () => hFree.To(WoCoat, () => Vector3.down - WoSide() * 0.6f, 4f));
-            At(36.0f, () => { Sound.PlayTake(Sfx.Plunger, 1, 0.55f, plungerBox.position); StartCoroutine(WoLerp(0.18f, u => plungerUp = 1f - u)); });
-            At(36.25f, () => { if (hWalkie != null) hWalkie.gameObject.SetActive(false); hFree.Off(2.5f); });
-            // ---- 36.3 the first blast: the great door they walked out of
-            WoBlast(e, 36.3f, WoAt(FortressPlan.DoorX, 2.3f, -3.6f), 1.35f, Vector3.back, 0, 1f);
-            At(36.45f, () =>
+            At(31.3f, () => { rigH.turn = 0f; rigH.nod = 3f; Say("YOU", "...Then burn it.", 1.9f); });
+            At(32.2f, () => { rigM.turn = 0f; rigM.nod = 0f; mayaOffWant = -0.55f; });
+            // ---- on the bridge: "Can we go home now?"
+            At(41.4f, () => { mFree.To(() => WoMouth(rigM, maya.transform.localScale.y), () => Vector3.down + WoSide() * 0.4f, 3.5f); rigM.nod = -8f; });
+            At(41.5f, () => { Sound.PlayTake(Sfx.WalkieClick, 0, 0.35f, maya.transform.position); Walkie("Can we go home now? Over.", 2.6f); });
+            At(44.1f, () => { mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 3f); rigM.nod = 0f; });
+            At(44.3f, () => hFree.To(() => WoMouth(rigH, 1f), () => Vector3.down - WoSide() * 0.5f, 3.4f));
+            At(44.6f, () => Say("YOU", "Over and out.", 1.5f));
+            At(45.8f, () => Sound.PlayTake(Sfx.WalkieClick, 0, 0.85f, hero.transform.position));
+            At(46.1f, () => hFree.To(WoCoat, () => Vector3.down - WoSide() * 0.6f, 4f));
+            At(46.8f, () => { Sound.PlayTake(Sfx.Plunger, 1, 0.5f, plungerBox.position); StartCoroutine(WoLerp(0.18f, u => plungerUp = 1f - u)); });
+            At(46.95f, () => { if (hWalkie != null) hWalkie.gameObject.SetActive(false); hFree.Off(2.5f); });
+
+            // ================================================================ the whole hill goes up
+            float B = WoB;
+            var back = Vector3.back;
+            WoBlast(e, B, WoAt(FortressPlan.DoorX, 2.3f, -3.6f), 1.9f, back, 0, 1f);                                   // the great door
+            WoBlast(e, B + 0.12f, WoAt(FortressPlan.DoorX, 8.4f, -5.9f), 1.4f, back + Vector3.up, 1, 0.5f);           // the porch's balcony
+            float[] bays = { 140.85f, 153.15f, 135.75f, 158.25f, 131.1f, 162.9f };
+            for (int i = 0; i < bays.Length; i++)
+            {
+                WoBlast(e, B + 0.25f + i * 0.13f, WoAt(bays[i], 3.6f, -3.9f), 1.25f, back + Vector3.up * 0.3f, 2 + i % 3, 0.45f);
+                WoBlast(e, B + 0.55f + i * 0.1f, WoAt(bays[i], 8.2f, -3.8f), 1.0f, back + Vector3.up * 0.6f, 1 + i % 3, 0.3f, quiet: true);
+            }
+            WoBlast(e, B + 0.7f, WoAt(127.8f, 15f, -4f), 1.4f, Vector3.up + Vector3.left * 0.4f, 3, 0.4f);              // the corner turrets
+            WoBlast(e, B + 1.0f, WoAt(166.2f, 15f, -4f), 1.4f, Vector3.up + Vector3.right * 0.4f, 4, 0.4f);
+            for (int i = 0; i < 3; i++)                                                                                 // the roof terrace
+                WoBlast(e, B + 1.0f + i * 0.15f, WoAt(134f + i * 13f, FortressPlan.RoofY - FortressPlan.Up + 1.5f, 0.2f), 2.0f, Vector3.up, i, 0.55f);
+            WoBlast(e, B + 1.4f, WoAt(165f, 4.5f, -15f), 2.0f, Vector3.left + Vector3.up * 0.5f, 1, 0.6f);              // the stables
+            WoBlast(e, B + 1.6f, WoAt(165f, 8f, -8f), 1.6f, Vector3.up, 2, 0.4f);
+            WoBlast(e, B + 1.8f, WoAt(118f, 8f, 3f), 1.8f, Vector3.up + Vector3.back * 0.4f, 3, 0.45f);               // the courtyard's keep face
+            WoBlast(e, B + 2.05f, WoAt(106f, 8f, 3f), 1.6f, Vector3.up + Vector3.back * 0.4f, 4, 0.4f);
+            WoBlast(e, B + 2.2f, WoAt(138f, 22f, 18f), 1.8f, Vector3.up, 0, 0.45f);                                    // the towers behind
+            WoBlast(e, B + 2.35f, WoAt(102f, 20f, 18f), 1.6f, Vector3.up, 1, 0.4f);
+            WoBlast(e, B + 2.6f, WoAt(115f, 22f, 20f), 3.0f, Vector3.up, 0, 0.9f, big: true);                          // the keep
+            WoBlast(e, B + 2.9f, WoAt(FortressPlan.TowerX, FortressPlan.GalleryY - FortressPlan.Up + 3f, FortressPlan.TowerZ - 1.5f), 3.4f, Vector3.up, 1, 1.2f, big: true);   // the dome
+            WoBlast(e, B + 3.4f, WoAt(172f, 26f, 18f), 1.8f, Vector3.up, 2, 0.4f);
+            WoBlast(e, B + 3.55f, WoAt(130f, 14f, 19f), 1.5f, Vector3.up, 3, 0.35f);
+            WoBlast(e, B + 3.9f, WoAt(163f, 10f, -20f), 1.4f, Vector3.up, 4, 0.3f);
+            WoBlast(e, B + 5.0f, WoAt(140f, 6f, -3.5f), 1.0f, back, 2, 0.25f);
+            // what comes down: the turrets' spirelets, the chimneys, the dome off the tower
+            At(B + 0.75f, () => WoFall("FortSpireW", WoAt(127.8f, 16.4f, -4.05f), new Vector3(-0.6f, 0f, -1f), 0f));
+            At(B + 1.05f, () => WoFall("FortSpireE", WoAt(166.2f, 16.4f, -4.05f), new Vector3(0.5f, 0f, -1f), 0f));
+            for (int i = 0; i < FortChimneyX.Length; i++)
+            {
+                int ci = i;
+                At(B + 0.9f + i * 0.22f, () => WoFall("FortChimney" + ci, WoAt(FortChimneyX[ci], 12f, -1.2f), new Vector3(ci % 2 == 0 ? -0.3f : 0.3f, 0f, 1f), 0f));
+            }
+            At(B + 2.95f, () => WoFall("FortDome", WoAt(FortressPlan.TowerX, FortressPlan.GalleryY - FortressPlan.Up + 0.3f, FortressPlan.TowerZ), new Vector3(0.4f, 0f, 1f), 11f));
+            // the sound of it: the pressure wave reaching them, glass, the masonry coming down, the roar under it all
+            At(B + 0.15f, () => { Sound.Play(Sfx.Shockwave, 0.9f); woShake = Mathf.Min(0.22f, woShake + 0.12f); });
+            At(B + 0.6f, () => Sound.Play(Sfx.GlassRain, 0.6f, WoAt(147f, 4f, -3.5f)));
+            At(B + 3.3f, () => Sound.Play(Sfx.Collapse, 0.85f, WoAt(130f, 10f, 10f)));
+            At(B + 5.2f, () => Sound.Play(Sfx.Collapse, 0.7f, WoAt(150f, 15f, 5f)));
+            At(B + 4.0f, () => Sound.Play(Sfx.Rumble, 0.55f));
+            At(B + 17.0f, () => Sound.Play(Sfx.Rumble, 0.4f));
+            // the morning goes dark with smoke; the fortress fills with fire
+            At(B + 0.6f, () => StartCoroutine(WoLerp(3.0f, u => woBurn = u)));
+            At(B + 0.2f, () =>
             {
                 // she flinches and starts to turn; he lets go, his hand on the back of her head, draws her in
                 rigM.nod = 18f; mayaYawWant = 25f;
@@ -436,70 +496,115 @@ namespace ProjectInk
                 mNear.Off(6f);
                 mayaOffWant = -0.3f;
             });
-            At(36.75f, () => mNear.To(WoHisLeg, () => Vector3.down - rigM.Forward * 0.5f, 4f));
-            At(37.9f, () => { mayaYawWant = 90f; rigM.nod = 8f; rigH.nod = 6f; });
-            // ---- the chain, left to right along the facade, then up the hill
-            float[] order = { 140.85f, 153.15f, 135.75f, 158.25f, 131.1f, 162.9f };
-            for (int i = 0; i < order.Length; i++)
-                WoBlast(e, 36.62f + i * 0.17f, WoAt(order[i], 3.6f, -3.9f), 0.85f, Vector3.back + Vector3.up * 0.3f, 1 + i % 2, 0.65f);
-            WoBlast(e, 37.05f, WoAt(FortressPlan.DoorX, 8.4f, -5.9f), 0.95f, Vector3.back + Vector3.up, 2, 0.7f);
-            At(37.4f, () => { Sound.Play(Sfx.Tinnitus, 0.28f); if (Camera.main != null) woDrift = BlastFx.Drift(Camera.main.transform); });
-            WoBlast(e, 37.8f, WoAt(139.0f, FortressPlan.RoofY - FortressPlan.Up + 1.2f, 0.5f), 1.35f, Vector3.up, 1, 0.8f);
-            WoBlast(e, 37.95f, WoAt(155.5f, FortressPlan.RoofY - FortressPlan.Up + 1.2f, 0.5f), 1.3f, Vector3.up, 2, 0.8f);
-            WoBlast(e, 38.25f, WoAt(165.0f, 4.5f, -15.0f), 1.3f, Vector3.left + Vector3.up * 0.5f, 1, 0.85f);
-            WoBlast(e, 38.85f, WoAt(FortressPlan.TowerX, FortressPlan.GalleryY - FortressPlan.Up + 2.5f, FortressPlan.TowerZ - 2f), 2.4f, Vector3.up + Vector3.back * 0.3f, 2, 1.2f);
-            WoBlast(e, 39.6f, WoAt(115f, 20f, 19f), 2.0f, Vector3.up, 0, 0.9f);
-            WoBlast(e, 40.25f, WoAt(124f, 7f, 2.5f), 1.4f, Vector3.up + Vector3.back * 0.4f, 1, 0.7f);
-            WoBlast(e, 42.6f, WoAt(136.5f, 6.0f, -3.6f), 0.8f, Vector3.back, 2, 0.4f);
-            // ---- 44.5 the slow motion: the sound stays clear; time sinks
-            At(44.5f, () => { Sound.KeepClear = true; StartCoroutine(WoLerp(1.6f, u => { if (TimeController.Instance != null) TimeController.Instance.CineScale = Mathf.Lerp(1f, 0.32f, u); })); Sound.PlayTake(Sfx.Ember, 0, 0.5f); });
-            WoBlast(e, 45.7f, WoAt(147.5f, FortressPlan.RoofY - FortressPlan.Up + 2.2f, -1.0f), 2.0f, Vector3.up + Vector3.back * 0.2f, 2, 0.5f, 0.55f);
-            // ---- 47 she looks up at him; he looks down at her; he can stand easy
-            At(47.0f, () => { rigM.nod = -38f; rigM.LookTowards(hero.transform.position, 30f); });
-            At(47.5f, () => { rigH.nod = 24f; rigH.LookTowards(maya.transform.position, 20f); });
-            At(48.4f, () => { rigH.chestNod = 8f; rigH.headRate = 1.6f; Sound.Play(Sfx.Breath, 0.22f, hero.transform.position, 0.9f); });
-            At(49.2f, () => rigH.chestNod = 4f);
-            At(49.6f, () =>
+            At(B + 0.5f, () => mNear.To(WoHisLeg, () => Vector3.down - rigM.Forward * 0.5f, 4f));
+            At(B + 1.6f, () => { mayaYawWant = 90f; rigM.nod = 8f; rigH.nod = 6f; });
+            At(B + 1.2f, () => { Sound.Play(Sfx.Tinnitus, 0.22f); if (Camera.main != null) woDrift = BlastFx.Drift(Camera.main.transform); });
+
+            // ================================================================ the slow motion
+            At(52.6f, () => { Sound.KeepClear = true; StartCoroutine(WoLerp(1.6f, u => { if (TimeController.Instance != null) TimeController.Instance.CineScale = Mathf.Lerp(1f, 0.3f, u); })); Sound.PlayTake(Sfx.Ember, 0, 0.5f); });
+            WoBlast(e, 54.4f, WoAt(147.5f, FortressPlan.RoofY - FortressPlan.Up + 2.5f, -1.0f), 2.6f, Vector3.up + Vector3.back * 0.2f, 0, 0.5f, pitch: 0.78f, big: true);
+            At(55.6f, () => { rigM.nod = -38f; rigM.LookTowards(hero.transform.position, 30f); });
+            At(56.1f, () => { rigH.nod = 24f; rigH.LookTowards(maya.transform.position, 20f); });
+            At(57.0f, () => { rigH.chestNod = 8f; rigH.headRate = 1.6f; Sound.Play(Sfx.Breath, 0.22f, hero.transform.position, 0.9f); });
+            At(57.8f, () => rigH.chestNod = 4f);
+            At(58.2f, () =>
             {
-                // she reaches up and takes his hand again
                 mNear.To(WoHoldPoint, () => Vector3.down + WoSide() * 0.4f, 2.6f);
                 hNear.To(WoHoldPoint, () => -rigH.Forward + Vector3.down * 0.3f, 2.2f);
                 mayaOffWant = -0.52f;
                 rigM.nod = -16f; rigH.nod = 10f;
             });
-            At(50.4f, () => Sound.PlayTake(Sfx.Ember, 1, 0.45f));
-            // ---- 52.6 two clicks on a dead walkie
-            At(52.6f, () => { mFree.To(() => WoChestFront(maya, 0.2f, 0.06f), () => Vector3.down + WoSide() * 0.5f, 3f); rigM.nod = 10f; rigM.turn = 0f; });
-            At(53.2f, () => Sound.PlayTake(Sfx.WalkieClick, 0, 0.9f, maya.transform.position));
-            At(53.75f, () => Sound.PlayTake(Sfx.WalkieClick, 1, 0.9f, maya.transform.position));
-            At(54.2f, () => { rigM.nod = -30f; rigM.LookTowards(hero.transform.position, 30f); });
-            // ---- 55 and two back, from the walkie in his coat
-            At(55.0f, () => hFree.To(WoCoat, () => Vector3.down - WoSide() * 0.6f, 3f));
-            At(55.4f, () => Sound.PlayTake(Sfx.WalkieClick, 2, 0.75f, hero.transform.position, 0.96f));
-            At(55.95f, () => Sound.PlayTake(Sfx.WalkieClick, 0, 0.75f, hero.transform.position, 0.96f));
-            At(56.4f, () => { hFree.Off(2f); mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 2f); });
-            At(57.0f, () => { rigM.nod = -6f; rigM.turn = 0f; rigH.nod = 4f; rigH.turn = 0f; });
-            At(58.6f, () => StartCoroutine(WoLerp(2.4f, u => blackout = u * u)));
+            At(59.0f, () => Sound.PlayTake(Sfx.Ember, 1, 0.45f));
+            // two clicks on a dead walkie, and two back
+            At(61.4f, () => { mFree.To(() => WoChestFront(maya, 0.2f, 0.06f), () => Vector3.down + WoSide() * 0.5f, 3f); rigM.nod = 10f; rigM.turn = 0f; });
+            At(62.0f, () => Sound.PlayTake(Sfx.WalkieClick, 0, 0.9f, maya.transform.position));
+            At(62.55f, () => Sound.PlayTake(Sfx.WalkieClick, 1, 0.9f, maya.transform.position));
+            At(63.0f, () => { rigM.nod = -30f; rigM.LookTowards(hero.transform.position, 30f); });
+            At(63.2f, () => hFree.To(WoCoat, () => Vector3.down - WoSide() * 0.6f, 3f));
+            At(63.6f, () => Sound.PlayTake(Sfx.WalkieClick, 2, 0.75f, hero.transform.position, 0.96f));
+            At(64.15f, () => Sound.PlayTake(Sfx.WalkieClick, 0, 0.75f, hero.transform.position, 0.96f));
+            At(64.6f, () => { hFree.Off(2f); mFree.To(() => WoChestFront(maya, 0.13f, -0.08f), () => Vector3.down + WoSide() * 0.5f, 2f); });
+            At(65.4f, () => { rigM.nod = -6f; rigM.turn = 0f; rigH.nod = 4f; rigH.turn = 0f; });
+            At(66.6f, () => StartCoroutine(WoLerp(2.6f, u => blackout = u * u)));
             e.Sort((a, b) => a.t.CompareTo(b.t));
             return e;
         }
 
+        static readonly float[] FortChimneyX = { 131f, 136f, 158f, 163f };
+
         /// <summary>A blast on the timeline: the fire, its sound (late by its distance, like a real one),
         /// the stones raining after, the flash and the shake.</summary>
-        void WoBlast(List<WoEvent> e, float t, Vector3 at, float k, Vector3 outward, int take, float flash, float pitch = 1f)
+        void WoBlast(List<WoEvent> e, float t, Vector3 at, float k, Vector3 outward, int take, float flash, float pitch = 1f, bool big = false, bool quiet = false)
         {
             e.Add(new WoEvent(t, () =>
             {
                 BlastFx.Blast(at, k, outward, FortressPlan.Up);
                 var c = Camera.main != null ? Camera.main.transform.position : at;
                 float d = Vector3.Distance(c, at);
-                float vol = Mathf.Clamp01(k * 0.75f / (1f + d / 45f) + 0.25f);
-                if (pitch < 1f) Sound.PlayTake(Sfx.Explosion, take, vol * 0.8f, at, pitch);      // in the slow motion: deep, slow
-                else Sound.PlayLater(Sfx.Explosion, d / 343f, vol, at);
-                Sound.PlayLater(Sfx.Debris, d / 343f + 0.7f, vol * 0.7f, at);
-                woFlash = Mathf.Max(woFlash, flash * Mathf.Clamp01(1.2f - d / 120f));
-                woShake = Mathf.Min(0.16f, woShake + 0.07f * k / (1f + d / 25f));
+                float vol = Mathf.Clamp01(k * 0.45f / (1f + d / 70f) + 0.3f) * (quiet ? 0.55f : 1f);
+                var sfx = big ? Sfx.ExplosionBig : Sfx.Explosion;
+                if (pitch < 1f) Sound.PlayTake(sfx, take, vol, at, pitch);       // in the slow motion: deep, slow
+                else if (big) Sound.PlayLater(sfx, d / 343f, vol, at);
+                else StartCoroutine(WoSoundLater(sfx, take, d / 343f, vol, at));
+                if (!quiet) Sound.PlayLater(Sfx.Debris, d / 343f + 0.9f, vol * 0.6f, at);
+                woFlash = Mathf.Max(woFlash, flash * Mathf.Clamp01(1.25f - d / 140f));
+                StartCoroutine(WoShakeLater(d / 343f, 0.05f * k / (1f + d / 40f)));
             }));
+        }
+
+        IEnumerator WoSoundLater(Sfx s, int take, float secs, float vol, Vector3 at)
+        {
+            yield return new WaitForSecondsRealtime(secs);
+            Sound.PlayTake(s, take, vol, at);
+        }
+
+        IEnumerator WoShakeLater(float secs, float amp)
+        {
+            yield return new WaitForSecondsRealtime(secs);
+            woShake = Mathf.Min(0.22f, woShake + amp);
+        }
+
+        /// <summary>A piece of the fortress coming down: wrapped on a pivot at its foot, it topples
+        /// over towards `lean` (a tower's spirelet, a chimney stack), or is thrown up off the tower
+        /// and falls (the dome, `launch` m/s up); it is gone into the smoke when it drops low.</summary>
+        void WoFall(string part, Vector3 pivotAt, Vector3 lean, float launch)
+        {
+            var t = Find(part);
+            if (t == null) return;
+            var pivot = new GameObject(part + "_Pivot").transform;
+            pivot.position = pivotAt;
+            t.SetParent(pivot, true);
+            StartCoroutine(WoFallRun(pivot, lean.normalized, launch));
+        }
+
+        IEnumerator WoFallRun(Transform pivot, Vector3 lean, float launch)
+        {
+            var axis = Vector3.Cross(Vector3.up, lean).normalized;          // tipping the top towards `lean`
+            float ang = 0f, w = launch > 0f ? 40f : 4f;
+            var vel = launch > 0f ? new Vector3(lean.x * 2.5f, launch, lean.z * 2.5f) : Vector3.zero;
+            bool free = launch > 0f;
+            float life = 0f;
+            while (pivot != null && life < 9f)
+            {
+                float dt = Time.deltaTime;
+                life += dt;
+                if (!free)
+                {
+                    // a toppling tower: it falls faster the further it leans, then breaks off and drops
+                    w += (60f + 260f * Mathf.Sin(ang * Mathf.Deg2Rad)) * dt;
+                    ang += w * dt;
+                    pivot.rotation = Quaternion.AngleAxis(w * dt, axis) * pivot.rotation;
+                    if (ang > 62f) { free = true; vel = lean * 3f + Vector3.down * 1f; }
+                }
+                else
+                {
+                    vel += Vector3.down * 9.8f * dt;
+                    pivot.position += vel * dt;
+                    pivot.rotation = Quaternion.AngleAxis(w * dt, axis) * pivot.rotation;
+                    if (pivot.position.y < FortressPlan.Up + 2f) { pivot.gameObject.SetActive(false); yield break; }
+                }
+                yield return null;
+            }
         }
 
         IEnumerator WoLerp(float secs, System.Action<float> set)
@@ -517,9 +622,9 @@ namespace ProjectInk
             var b = plungerBox.position + new Vector3(0.05f, 0f, 0.42f);
             var dir = (b - a); dir.y = 0f;
             float yaw = -Mathf.Atan2(dir.z, dir.x) * Mathf.Rad2Deg;
-            for (float t0 = 0f; t0 < 3.2f; t0 += Time.unscaledDeltaTime)
+            for (float t0 = 0f; t0 < 3.6f; t0 += Time.unscaledDeltaTime)
             {
-                float u = t0 / 3.2f;
+                float u = t0 / 3.6f;
                 lastMan.PuppetPose(Vector3.Lerp(a, b, u * (2f - u) * 0.5f + u * 0.5f));
                 lastMan.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
                 yield return null;
