@@ -724,7 +724,7 @@ namespace ProjectInk
             // the Driver's health and his phase, along the top
             if (driver != null && driverStage >= 1 && driverStage < 5 && driver.Alive)
             {
-                float bw = Mathf.Min(520f, w - 80f), x = (w - bw) * 0.5f, y = 54f;
+                float bw = Mathf.Min(520f, w - 80f), x = (w - bw) * 0.5f, y = 96f;           // below the pause and ? buttons (top centre)
                 Fill(new Rect(x - 2, y - 2, bw + 4, 14), new Color(0f, 0f, 0f, 0.6f));
                 Fill(new Rect(x, y, bw * driver.HealthFraction, 10), new Color(0.85f, 0.85f, 0.85f));
                 foreach (float mk in new[] { 0.6f, 0.3f }) Fill(new Rect(x + bw * mk - 1, y - 3, 2, 16), new Color(0.8f, 0.06f, 0.07f));

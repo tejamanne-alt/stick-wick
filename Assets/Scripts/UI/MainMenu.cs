@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace ProjectInk
 {
@@ -35,6 +38,39 @@ namespace ProjectInk
                 Sound.PlayLater(Sfx.Thunder, Random.Range(0.2f, 0.7f), 0.5f);
             }
             flash = Mathf.MoveTowards(flash, 0f, Time.unscaledDeltaTime * 2.5f);
+#if ENABLE_INPUT_SYSTEM
+            // a tap: pressed and released close together (a finger or a mouse), read straight from the
+            // Input System, so the menu never depends on IMGUI's touch emulation
+            var p = Pointer.current;
+            if (p != null)
+            {
+                bool down = p.press.isPressed;
+                var pos = p.position.ReadValue();
+                if (down && !pressing) { pressing = true; pressAt = pos; }
+                else if (!down && pressing)
+                {
+                    pressing = false;
+                    if ((pos - pressAt).magnitude < Mathf.Max(24f, Screen.height * 0.04f)) tapScreen = pos;
+                }
+            }
+#endif
+        }
+
+        bool pressing;
+        Vector2 pressAt;
+        Vector2? tapScreen, tapGui;
+
+        /// <summary>Was this rect tapped this frame? Only a live button takes it (a button under an
+        /// open panel never does), and a tap is taken by one button at most.</summary>
+        bool Clicked(Rect r, bool live)
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (!live || !tapGui.HasValue || !r.Contains(tapGui.Value)) return false;
+            tapGui = null;
+            return true;
+#else
+            return GUI.Button(r, GUIContent.none, GUIStyle.none) && live;
+#endif
         }
 
         void Styles()
@@ -75,6 +111,7 @@ namespace ProjectInk
             float scale = Screen.height / 720f * boost;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             float w = Screen.width / scale, h = Screen.height / scale;
+            if (tapScreen.HasValue) { tapGui = new Vector2(tapScreen.Value.x / scale, (Screen.height - tapScreen.Value.y) / scale); tapScreen = null; }
 
             // night, with the storm in it
             Fill(new Rect(0, 0, w, h), new Color(0.012f, 0.014f, 0.024f));
@@ -102,13 +139,13 @@ namespace ProjectInk
             // (IMGUI gives a click to the first button drawn under the pointer, and these come first)
             bool open = DevShortcuts && testOpen;
             GUI.enabled = !open;
-            if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true) && !open) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
-            if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false) && !open) SceneManager.LoadScene("Prototype");
+            if (Button(story, "STORY MODE", "CHAPTER 1  ·  THE WAREHOUSE", true, !open)) { StoryIntro.NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
+            if (Button(fight, "FIGHT MODE", "THE TOWER  ·  ENDLESS FLOORS", false, !open)) SceneManager.LoadScene("Prototype");
             var whole = new Rect(w * 0.5f - 150, y - 56, 300, 38);
             Fill(whole, new Color(1f, 1f, 1f, whole.Contains(Event.current.mousePosition) ? 0.14f : 0.07f));
             btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
             GUI.Label(whole, "THE WHOLE STORY  ·  TIMELINE", btnSub);
-            if (GUI.Button(whole, GUIContent.none, GUIStyle.none) && !open) Epilogue(5);
+            if (Clicked(whole, !open)) Epilogue(5);
             // TEMPORARY, for testing: jump straight to any checkpoint (set DevShortcuts false to remove)
             if (DevShortcuts)
             {
@@ -116,11 +153,13 @@ namespace ProjectInk
                 Fill(dev, new Color(1f, 0.75f, 0.1f, dev.Contains(Event.current.mousePosition) || testOpen ? 0.24f : 0.12f));
                 btnSub.normal.textColor = new Color(1f, 0.8f, 0.3f, 0.9f);
                 GUI.Label(dev, "TEST  ·  CHECKPOINTS", btnSub);
-                if (GUI.Button(dev, GUIContent.none, GUIStyle.none) && !open) testOpen = true;
                 GUI.enabled = true;
+                // the panel first: while it is open it takes every tap
                 if (testOpen) TestPanel(w, h);
+                else if (Clicked(dev, true)) testOpen = true;
             }
             GUI.enabled = true;
+            if (Event.current.type == EventType.Repaint) tapGui = null;          // a tap lasts one frame
             GUI.matrix = Matrix4x4.identity;
         }
 
@@ -277,7 +316,7 @@ namespace ProjectInk
                 if (sel) Fill(new Rect(tr.x, tr.y, 4, tr.height), new Color(0.8f, 0.06f, 0.07f));
                 btnSub.normal.textColor = new Color(1f, 1f, 1f, sel ? 1f : 0.65f);
                 GUI.Label(tr, chapters[i], btnSub);
-                if (GUI.Button(tr, GUIContent.none, GUIStyle.none)) testChapter = i;
+                if (Clicked(tr, true)) testChapter = i;
             }
             var rows = new System.Collections.Generic.List<(string chapter, string label, System.Action go)>();
             foreach (var c in Checkpoints) if (c.chapter == chapters[testChapter]) rows.Add(c);
@@ -289,19 +328,19 @@ namespace ProjectInk
                 Fill(row, new Color(1f, 1f, 1f, row.Contains(Event.current.mousePosition) ? 0.14f : 0.05f));
                 btnSub.normal.textColor = Color.white;
                 GUI.Label(row, rows[i].label, btnSub);
-                if (GUI.Button(row, GUIContent.none, GUIStyle.none)) { testOpen = false; rows[i].go(); }
+                if (Clicked(row, true)) { testOpen = false; rows[i].go(); }
             }
             var close = new Rect(r.xMax - 50, r.y + 6, 44, 34);
             Fill(close, new Color(1f, 1f, 1f, 0.08f));
             btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
             GUI.Label(close, "X", btnSub);
-            if (GUI.Button(close, GUIContent.none, GUIStyle.none)) testOpen = false;
+            if (Clicked(close, true)) testOpen = false;
         }
 
         /// <summary>Testing shortcuts on the menu (TEST · CHECKPOINTS). Off for release.</summary>
         public const bool DevShortcuts = true;
 
-        bool Button(Rect r, string label, string sub, bool accent)
+        bool Button(Rect r, string label, string sub, bool accent, bool live)
         {
             bool hover = r.Contains(Event.current.mousePosition);
             Fill(r, new Color(1f, 1f, 1f, hover ? 0.16f : 0.08f));
@@ -310,7 +349,7 @@ namespace ProjectInk
             GUI.Label(new Rect(r.x, r.y + 10, r.width, 50), Spaced(label), btn);
             btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.7f);
             GUI.Label(new Rect(r.x, r.y + 58, r.width, 26), sub, btnSub);
-            return GUI.Button(r, GUIContent.none, GUIStyle.none);
+            return Clicked(r, live);
         }
     }
 }

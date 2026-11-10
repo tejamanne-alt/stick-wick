@@ -884,6 +884,9 @@ namespace ProjectInk
         void OnGUI()
         {
             if (hero == null) return;
+            // paused: the pause card (HudGUI) owns the screen; nothing of the story is drawn over it or
+            // under it to catch a tap (SKIP, choices, prompts)
+            if (TimeController.Paused) return;
             Styles();
             float boost = Application.isMobilePlatform ? 1.35f : 1.2f;
             scale = Screen.height / 720f * boost;

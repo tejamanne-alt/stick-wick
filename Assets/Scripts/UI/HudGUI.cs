@@ -91,7 +91,13 @@ namespace ProjectInk
             }
             if (cutscene) { OpeningCards(cine, w, h); GUI.matrix = Matrix4x4.identity; return; }
             var storyScene = StoryIntro.Instance;
-            if (storyScene != null && storyScene.HideHud) { GUI.matrix = Matrix4x4.identity; return; }   // the story draws its own
+            if (storyScene != null && storyScene.HideHud)
+            {
+                // the story draws its own; but a pause (the button, or the phone leaving the app) still gets its card
+                StoryPauseOnly(w, h);
+                GUI.matrix = Matrix4x4.identity;
+                return;
+            }
             var bd = BossDirector.Instance;
             if (bd != null && bd.Cinematic)
             {
@@ -878,6 +884,35 @@ namespace ProjectInk
             return true;
         }
 
+        /// <summary>In the story's cutscenes: only a small pause button in the top-left corner (in the
+        /// letterbox, clear of SKIP at the top right and the words at the bottom), and the pause card.</summary>
+        void StoryPauseOnly(float w, float h)
+        {
+            GuideStyles();
+            bool repaint = Event.current.type == EventType.Repaint;
+            if (repaint) GestureInput.Blocked.Clear();
+            pauseBtn = new Rect(16, 10, 56, 42);
+            if (!pauseOpen && !helpOpen)
+            {
+                var old = GUI.color;
+                GUI.color = new Color(1f, 1f, 1f, 0.55f);
+                DrawButton(pauseBtn, "", 24);
+                GUI.color = old;
+                Fill(new Rect(pauseBtn.center.x - 9, pauseBtn.y + 11, 6, 20), new Color(1f, 1f, 1f, 0.8f));
+                Fill(new Rect(pauseBtn.center.x + 3, pauseBtn.y + 11, 6, 20), new Color(1f, 1f, 1f, 0.8f));
+                if (repaint) GestureInput.Blocked.Add(ToScreen(pauseBtn));
+            }
+            bool pKey = false;
+#if ENABLE_INPUT_SYSTEM
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (repaint && kb != null) pKey = kb.pKey.wasPressedThisFrame || (!helpOpen && kb.escapeKey.wasPressedThisFrame);
+#endif
+            if (repaint && !pauseOpen && !helpOpen && (Pressed(pauseBtn) || pKey)) SetPause(true);
+            else if (repaint && pauseOpen && pKey) SetPause(false);
+            if (helpOpen) HelpCard(w, h, repaint);
+            else if (pauseOpen) PauseCard(w, h, repaint);
+        }
+
         void GuideLayer(float w, float h)
         {
             GuideStyles();
@@ -1238,7 +1273,9 @@ namespace ProjectInk
             Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.7f));
             Label(new Rect(0, h * 0.12f, w, 100), Spaced("PAUSED"), new GUIStyle(gTitle) { fontSize = 84 });
             Fill(new Rect(w * 0.5f - 150, h * 0.12f + 104, 300, 1), new Color(1f, 1f, 1f, 0.5f));
-            if (director != null)
+            if (StoryIntro.Instance != null)
+                Label(new Rect(0, h * 0.12f + 112, w, 30), Spaced("STORY MODE"), new GUIStyle(gLine) { fontSize = 18 });
+            else if (director != null)
                 Label(new Rect(0, h * 0.12f + 112, w, 30), $"FLOOR {director.Floor}   ·   WAVE {Mathf.Min(director.WaveIndex + 1, director.WaveCount)} / {director.WaveCount}   ·   {director.Score:N0}", new GUIStyle(gLine) { fontSize = 18 });
             // four rows of big buttons, sized to fit whatever height is left
             float bw = 300, gap = 14;
@@ -1298,14 +1335,21 @@ namespace ProjectInk
                 { "WALK OVER", "Pick up a dropped weapon (sword, pipe, gun, knives): your taps use it" },
                 { "TAP AN ENEMY", "Target him: your strikes go to him, the rest hang back (click him, or T, on a keyboard)" },
             };
-            var k1 = new GUIStyle(gTitle) { fontSize = 28, alignment = TextAnchor.MiddleRight };
-            var k2 = new GUIStyle(gLine) { fontSize = 21, alignment = TextAnchor.MiddleLeft };
             float rowH = Mathf.Min(42f, (panel.height - 190f) / rows.GetLength(0));
+            // the type follows the row: on a short (phone) screen the rows shrink, and so do the words
+            int f1 = Mathf.Clamp(Mathf.RoundToInt(rowH * 0.66f), 16, 28), f2 = Mathf.Clamp(Mathf.RoundToInt(rowH * 0.52f), 13, 21);
+            var k1 = new GUIStyle(gTitle) { fontSize = f1, alignment = TextAnchor.MiddleRight, clipping = TextClipping.Clip };
+            var k2 = new GUIStyle(gLine) { fontSize = f2, alignment = TextAnchor.MiddleLeft, clipping = TextClipping.Clip, wordWrap = false };
+            float keyW = Mathf.Min(250f, panel.width * 0.28f);
             float y = panel.y + 66;
             for (int i = 0; i < rows.GetLength(0); i++)
             {
-                Label(new Rect(panel.x + 20, y, 250, 34), rows[i, 0], k1);
-                Label(new Rect(panel.x + 300, y, panel.width - 320, 34), rows[i, 1], k2);
+                Label(new Rect(panel.x + 20, y, keyW, rowH), rows[i, 0], k1);
+                var line = new Rect(panel.x + keyW + 46, y, panel.width - keyW - 66, rowH);
+                // a line too long for the width steps its type down until it fits
+                var k2i = new GUIStyle(k2);
+                while (k2i.fontSize > 12 && k2i.CalcSize(new GUIContent(rows[i, 1])).x > line.width) k2i.fontSize--;
+                Label(line, rows[i, 1], k2i);
                 y += rowH;
             }
             var hint = new GUIStyle(gChalk) { fontSize = 19, wordWrap = true };

@@ -165,7 +165,7 @@ namespace ProjectInk
             cap.alignment = TextAnchor.MiddleLeft;
             cap.fontSize = 18;
             cap.normal.textColor = new Color(1f, 1f, 1f, 0.45f);
-            GUI.Label(new Rect(40, 18, 600, 30), Spaced("THE WHOLE STORY"), cap);
+            GUI.Label(new Rect(92, 18, 600, 30), Spaced("THE WHOLE STORY"), cap);          // clear of the pause button (top left)
             if (recapIdx >= 0 && recapIdx < Recap.Length) RecapCardGUI(w, h, Recap[recapIdx], recapTex[recapIdx], Time.unscaledTime - recapCardAt);
             else if (recapChainAt > 0f) ChainGUI(w, h, Time.unscaledTime - recapChainAt);
             else if (recapEndAt > 0f)
