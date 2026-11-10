@@ -138,7 +138,24 @@ namespace ProjectInk
             yield return Hold(3.0f, () => EndShot(HeadC() + new Vector3(0.5f, 0.0f, -1.2f), HeadC(), 32f));
 
             // ------------------------------------------------------------ B4 play: walk to the doors; the guard's good morning
-            yield return PlayerWalk(-2.0f, StreetLo(), 2.5f, Application.isMobilePlatform ? "HOLD THE RIGHT SIDE TO WALK" : "HOLD  D  OR  RIGHT ARROW  TO WALK");
+            // the walk to the doors: one smooth dolly, wide down the street at first, easing in as he
+            // nears the doors to a medium shot that is exactly the next shot's frame (no cut, no jerk)
+            {
+                float walkFrom = hero.transform.position.x;
+                Vector3 camNow = Vector3.zero, camVel = Vector3.zero, lookNow = Vector3.zero, lookVel = Vector3.zero;
+                bool primed = false;
+                yield return PlayerWalk(-2.0f, StreetLo(), 2.5f, Application.isMobilePlatform ? "HOLD THE RIGHT SIDE TO WALK" : "HOLD  D  OR  RIGHT ARROW  TO WALK", 1, () =>
+                {
+                    var hp = hero.transform.position;
+                    float u = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(walkFrom, -2.0f, hp.x));
+                    var wantPos = new Vector3(hp.x, 0f, 0f) + Vector3.Lerp(new Vector3(-1.4f, 2.6f, -8.0f), new Vector3(-0.6f, 1.6f, -2.0f), u);
+                    var wantLook = new Vector3(hp.x, 0f, 0f) + Vector3.Lerp(new Vector3(0.6f, 1.2f, 0.4f), new Vector3(0.5f, 1.3f, 0.8f), u);
+                    if (!primed) { primed = true; camNow = wantPos; lookNow = wantLook; }
+                    camNow = Vector3.SmoothDamp(camNow, wantPos, ref camVel, 0.35f, Mathf.Infinity, Time.unscaledDeltaTime);
+                    lookNow = Vector3.SmoothDamp(lookNow, wantLook, ref lookVel, 0.35f, Mathf.Infinity, Time.unscaledDeltaTime);
+                    EndShot(camNow, lookNow, Mathf.Lerp(42f, 36f, u));
+                });
+            }
             hero.CinePuppet();
             Say("GUARD", "Morning, sir.", 1.6f, HeadT(guard));
             yield return Hold(1.7f, () => EndShot(new Vector3(-2.6f, 1.6f, -2.0f), new Vector3(-1.5f, 1.3f, 0.8f), 36f));
@@ -814,7 +831,7 @@ namespace ProjectInk
 
         /// <summary>Hand him over: hold to walk towards `toX` (or away, dir -1), at a walking pace,
         /// the camera following; back to the story when he gets there.</summary>
-        IEnumerator PlayerWalk(float toX, float minX, float pace, string prompt, int dir = 1)
+        IEnumerator PlayerWalk(float toX, float minX, float pace, string prompt, int dir = 1, System.Action frame = null)
         {
             float lo = dir > 0 ? Mathf.Min(minX, hero.transform.position.x - 0.5f) : toX - 0.4f;
             float hi = dir > 0 ? toX + 0.4f : hero.transform.position.x + 0.5f;
@@ -831,6 +848,7 @@ namespace ProjectInk
                 float moved = Mathf.Abs(hero.transform.position.x - from);
                 walkAlpha = Mathf.MoveTowards(walkAlpha, moved < 1.2f ? 1f : 0f, Time.unscaledDeltaTime * 2f);
                 if (Time.unscaledTime > footAt && hero.Velocity.sqrMagnitude > 0.2f) { footAt = Time.unscaledTime + 0.5f; Sound.Play(Sfx.Footstep, 0.4f, hero.transform.position, 1.0f); }
+                frame?.Invoke();
                 yield return null;
             }
             walkAlpha = 0f;
