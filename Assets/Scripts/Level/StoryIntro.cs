@@ -144,7 +144,7 @@ namespace ProjectInk
                     hero.CinePose(home);
                     // he comes to tied to a chair, his head fallen back to the roof
                     BuildChair();
-                    hero.body.Play(hero.body.Has("sit_bound") ? "sit_bound" : "lie", 0f);
+                    hero.body.Play(hero.body.Has("sit_bound") ? "sit_bound" : "lie", 0f, true, 0.0001f);      // held still: no nod
                     // the crack sits right over his face
                     var hc = HeadC();
                     foreach (var c in new[] { crack, crackTop })
@@ -1462,13 +1462,17 @@ namespace ProjectInk
     
         // ================================================================ the chair (story v2, 1.2)
 
-        /// <summary>A wooden kitchen chair at his spot, and the ropes round him: three turns round his
-        /// chest and arms to the chair back, one round his shins to the legs, a tail on the floor.</summary>
+        /// <summary>The chair he wakes in: an old wooden kitchen chair, every part modelled (turned legs
+        /// with their rings and feet, stretchers, a planked seat with a rounded front edge, back posts with
+        /// finials, a curved top rail and five spindles), and the rope: a twisted three-strand line wound
+        /// three times round his chest, upper arms and the chair back, a figure-eight round his wrists
+        /// behind it, each ankle lashed to a front leg, knots, frayed tails, a coil on the floor.</summary>
         void BuildChair()
         {
             if (chairRig != null) return;
-            var wood = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.16f, 0.15f, 0.14f) };
-            var rope = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.62f, 0.6f, 0.55f) };
+            Material Mat(float g) => new Material(Shader.Find("Unlit/Color")) { color = new Color(g, g * 0.96f, g * 0.9f) };
+            var woodA = Mat(0.17f); var woodB = Mat(0.13f); var woodC = Mat(0.21f); var woodEdge = Mat(0.3f);
+            var ropeA = Mat(0.66f); var ropeB = Mat(0.52f); var ropeC = Mat(0.42f);
             chairRig = new GameObject("WakeChair").transform;
             chairRig.position = home + new Vector3(-0.04f, 0f, 0f);
             Transform P(Transform parent, PrimitiveType t0, Vector3 at, Vector3 sc, Material m, Vector3 e = default)
@@ -1479,23 +1483,107 @@ namespace ProjectInk
                 g.transform.localPosition = at;
                 g.transform.localRotation = Quaternion.Euler(e);
                 g.transform.localScale = sc;
-                g.GetComponent<Renderer>().sharedMaterial = m;
+                var r = g.GetComponent<Renderer>();
+                r.sharedMaterial = m;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 return g.transform;
             }
-            P(chairRig, PrimitiveType.Cube, new Vector3(0f, 0.45f, 0f), new Vector3(0.46f, 0.045f, 0.44f), wood);           // the seat
+            // --- the seat: five planks with gaps, a rounded front edge, the apron underneath
+            for (int i = 0; i < 5; i++)
+                P(chairRig, PrimitiveType.Cube, new Vector3(-0.18f + i * 0.09f, 0.455f, 0f), new Vector3(0.084f, 0.035f, 0.44f), i % 2 == 0 ? woodA : woodC);
+            P(chairRig, PrimitiveType.Cylinder, new Vector3(0.225f, 0.455f, 0f), new Vector3(0.04f, 0.22f, 0.04f), woodEdge, new Vector3(90f, 0f, 0f));
+            foreach (var z in new[] { -0.205f, 0.205f }) P(chairRig, PrimitiveType.Cube, new Vector3(0f, 0.405f, z), new Vector3(0.42f, 0.06f, 0.025f), woodB);
+            foreach (var x in new[] { -0.205f, 0.205f }) P(chairRig, PrimitiveType.Cube, new Vector3(x, 0.405f, 0f), new Vector3(0.025f, 0.06f, 0.4f), woodB);
+            // --- four turned legs: shaft, two rings, a bead, a foot
             for (int i = 0; i < 4; i++)
-                P(chairRig, PrimitiveType.Cube, new Vector3(i < 2 ? -0.2f : 0.2f, 0.22f, i % 2 == 0 ? -0.19f : 0.19f), new Vector3(0.04f, 0.45f, 0.04f), wood);
-            P(chairRig, PrimitiveType.Cube, new Vector3(-0.21f, 0.82f, -0.19f), new Vector3(0.045f, 0.75f, 0.045f), wood);   // the back posts
-            P(chairRig, PrimitiveType.Cube, new Vector3(-0.21f, 0.82f, 0.19f), new Vector3(0.045f, 0.75f, 0.045f), wood);
-            P(chairRig, PrimitiveType.Cube, new Vector3(-0.21f, 1.12f, 0f), new Vector3(0.05f, 0.1f, 0.44f), wood);         // the top rail
-            P(chairRig, PrimitiveType.Cube, new Vector3(-0.21f, 0.8f, 0f), new Vector3(0.03f, 0.05f, 0.4f), wood);
+            {
+                float lx = i < 2 ? -0.2f : 0.2f, lz = i % 2 == 0 ? -0.19f : 0.19f;
+                var leg = new GameObject("Leg").transform; leg.SetParent(chairRig, false); leg.localPosition = new Vector3(lx, 0f, lz);
+                P(leg, PrimitiveType.Cylinder, new Vector3(0f, 0.2f, 0f), new Vector3(0.036f, 0.2f, 0.036f), woodA);
+                P(leg, PrimitiveType.Cylinder, new Vector3(0f, 0.33f, 0f), new Vector3(0.048f, 0.012f, 0.048f), woodEdge);
+                P(leg, PrimitiveType.Cylinder, new Vector3(0f, 0.12f, 0f), new Vector3(0.046f, 0.01f, 0.046f), woodEdge);
+                P(leg, PrimitiveType.Sphere, new Vector3(0f, 0.25f, 0f), new Vector3(0.05f, 0.04f, 0.05f), woodC);
+                P(leg, PrimitiveType.Cylinder, new Vector3(0f, 0.012f, 0f), new Vector3(0.042f, 0.012f, 0.042f), woodB);
+            }
+            // --- stretchers between the legs (an H and a back rail)
+            foreach (var z in new[] { -0.19f, 0.19f }) P(chairRig, PrimitiveType.Cylinder, new Vector3(0f, 0.14f, z), new Vector3(0.018f, 0.2f, 0.018f), woodB, new Vector3(0f, 0f, 90f));
+            P(chairRig, PrimitiveType.Cylinder, new Vector3(0f, 0.16f, 0f), new Vector3(0.016f, 0.19f, 0.016f), woodB, new Vector3(90f, 0f, 0f));
+            P(chairRig, PrimitiveType.Cylinder, new Vector3(-0.2f, 0.27f, 0f), new Vector3(0.016f, 0.19f, 0.016f), woodB, new Vector3(90f, 0f, 0f));
+            // --- the back: two posts with finials, a curved top rail, a mid rail, five spindles
+            foreach (var z in new[] { -0.19f, 0.19f })
+            {
+                P(chairRig, PrimitiveType.Cylinder, new Vector3(-0.21f, 0.8f, z), new Vector3(0.04f, 0.36f, 0.04f), woodA, new Vector3(0f, 0f, 6f));
+                P(chairRig, PrimitiveType.Sphere, new Vector3(-0.25f, 1.19f, z), new Vector3(0.055f, 0.07f, 0.055f), woodEdge);
+                P(chairRig, PrimitiveType.Cylinder, new Vector3(-0.245f, 1.14f, z), new Vector3(0.05f, 0.01f, 0.05f), woodC);
+            }
+            for (int i = 0; i < 7; i++)
+            {
+                float zz = Mathf.Lerp(-0.18f, 0.18f, i / 6f), bow = 0.025f * (1f - Mathf.Pow((i - 3) / 3f, 2f));
+                P(chairRig, PrimitiveType.Cube, new Vector3(-0.245f - bow, 1.09f, zz), new Vector3(0.05f, 0.09f, 0.062f), i % 2 == 0 ? woodC : woodA, new Vector3(0f, 0f, 6f));
+            }
+            P(chairRig, PrimitiveType.Cube, new Vector3(-0.225f, 0.78f, 0f), new Vector3(0.03f, 0.05f, 0.36f), woodA, new Vector3(0f, 0f, 6f));
+            for (int i = 0; i < 5; i++)
+                P(chairRig, PrimitiveType.Cylinder, new Vector3(-0.23f, 0.92f, Mathf.Lerp(-0.13f, 0.13f, i / 4f)), new Vector3(0.016f, 0.15f, 0.016f), woodB, new Vector3(0f, 0f, 6f));
+            P(chairRig, PrimitiveType.Cube, new Vector3(0.05f, 0.474f, 0.12f), new Vector3(0.07f, 0.004f, 0.012f), Mat(0.08f), new Vector3(0f, 30f, 0f));    // a scratch, old paint
+
+            // --- the rope: a twisted three-strand line, segment by segment
             ropes = new GameObject("Ropes").transform;
             ropes.SetParent(chairRig, false);
-            for (int i = 0; i < 3; i++)                                                                                   // round his chest and arms
-                P(ropes, PrimitiveType.Cylinder, new Vector3(-0.02f, 0.66f + i * 0.09f, 0f), new Vector3(0.44f, 0.012f, 0.4f), rope);
-            P(ropes, PrimitiveType.Cylinder, new Vector3(0.14f, 0.2f, 0f), new Vector3(0.3f, 0.012f, 0.38f), rope);       // his shins to the legs
-            P(ropes, PrimitiveType.Cube, new Vector3(-0.3f, 0.36f, -0.12f), new Vector3(0.02f, 0.6f, 0.02f), rope, new Vector3(0f, 0f, 18f));   // the knot's tail
-            P(ropes, PrimitiveType.Cube, new Vector3(-0.42f, 0.01f, -0.1f), new Vector3(0.5f, 0.02f, 0.03f), rope, new Vector3(0f, 25f, 0f));
+            int seg = 0;
+            void Line(Vector3 a, Vector3 b, float r = 0.011f)
+            {
+                var d = b - a; float len = d.magnitude;
+                if (len < 1e-4f) return;
+                int n = Mathf.Max(1, Mathf.RoundToInt(len / 0.035f));
+                for (int k = 0; k < n; k++)
+                {
+                    var p0 = Vector3.Lerp(a, b, (k + 0.5f) / n);
+                    var m = (seg++ % 3) == 0 ? ropeA : (seg % 3 == 1 ? ropeB : ropeC);
+                    var c = P(ropes, PrimitiveType.Cylinder, p0, new Vector3(r * 2f, len / n * 0.5f, r * 2f), m);
+                    c.localRotation = Quaternion.FromToRotation(Vector3.up, d.normalized) * Quaternion.Euler(0f, k * 60f, 0f);
+                }
+            }
+            void Wrap(Vector3 c, float rx, float rz, float y0, float y1, float turns, float r = 0.011f)
+            {
+                int n = Mathf.RoundToInt(36 * turns);
+                Vector3 prev = default;
+                for (int i = 0; i <= n; i++)
+                {
+                    float u = i / (float)n, a = u * turns * Mathf.PI * 2f;
+                    var p0 = c + new Vector3(Mathf.Cos(a) * rx, Mathf.Lerp(y0, y1, u), Mathf.Sin(a) * rz);
+                    if (i > 0) Line(prev, p0, r);
+                    prev = p0;
+                }
+            }
+            void Knot(Vector3 at)
+            {
+                for (int i = 0; i < 5; i++)
+                    P(ropes, PrimitiveType.Sphere, at + new Vector3(Mathf.Cos(i * 1.3f) * 0.014f, (i - 2) * 0.008f, Mathf.Sin(i * 1.3f) * 0.014f), Vector3.one * 0.03f, i % 2 == 0 ? ropeA : ropeB);
+            }
+            void Fray(Vector3 end, Vector3 dir)
+            {
+                for (int i = 0; i < 4; i++) Line(end, end + Quaternion.Euler(0f, i * 90f, 25f) * dir * 0.05f, 0.003f);
+            }
+            // round his chest and upper arms and the chair back: three turns, crossing the back posts
+            Wrap(new Vector3(-0.07f, 0f, 0f), 0.27f, 0.25f, 0.66f, 0.84f, 3f);
+            Knot(new Vector3(-0.25f, 0.83f, 0.03f));
+            Line(new Vector3(-0.26f, 0.83f, 0.04f), new Vector3(-0.3f, 0.62f, 0.09f)); Fray(new Vector3(-0.3f, 0.62f, 0.09f), Vector3.down);
+            // his wrists behind the chair back: a figure-eight and a tie to the mid rail
+            Wrap(new Vector3(-0.29f, 0f, -0.035f), 0.04f, 0.045f, 0.52f, 0.56f, 2f, 0.008f);
+            Wrap(new Vector3(-0.29f, 0f, 0.035f), 0.04f, 0.045f, 0.52f, 0.56f, 2f, 0.008f);
+            Knot(new Vector3(-0.3f, 0.54f, 0f));
+            Line(new Vector3(-0.3f, 0.56f, 0f), new Vector3(-0.23f, 0.77f, 0f), 0.008f);
+            // each ankle lashed to a front leg
+            foreach (var z in new[] { -0.12f, 0.12f })
+            {
+                Wrap(new Vector3(0.18f, 0f, z), 0.06f, 0.05f, 0.1f, 0.16f, 3f, 0.009f);
+                Knot(new Vector3(0.24f, 0.13f, z));
+                Line(new Vector3(0.24f, 0.13f, z), new Vector3(0.28f, 0.03f, z + 0.04f), 0.008f);
+                Fray(new Vector3(0.28f, 0.03f, z + 0.04f), Vector3.right);
+            }
+            // the rest of the line in a loose coil on the wet floor
+            Wrap(new Vector3(-0.55f, 0f, -0.25f), 0.12f, 0.1f, 0.012f, 0.03f, 2.5f, 0.011f);
+            Line(new Vector3(-0.43f, 0.02f, -0.25f), new Vector3(-0.3f, 0.6f, -0.05f));
         }
 
         float chairTip = -1f;
@@ -1509,10 +1597,24 @@ namespace ProjectInk
             chairRig.position = home + new Vector3(-0.04f - 0.5f * u, 0.0f, 0f);
             if (ropes != null && u > 0.05f)
             {
-                ropes.SetParent(null, true);
-                foreach (Transform r in ropes) r.position = new Vector3(r.position.x, Mathf.Max(0.012f, r.position.y - 3f * Time.unscaledDeltaTime), r.position.z);
+                if (ropes.parent != null)
+                {
+                    ropes.SetParent(null, true);
+                    ropeVel = new Vector3[ropes.childCount];
+                    for (int i = 0; i < ropeVel.Length; i++) ropeVel[i] = new Vector3(Random.Range(-0.6f, 0.6f), Random.Range(0.2f, 1.2f), Random.Range(-0.5f, 0.5f));
+                }
+                for (int i = 0; i < ropes.childCount && ropeVel != null && i < ropeVel.Length; i++)
+                {
+                    var r = ropes.GetChild(i);
+                    if (r.position.y <= 0.012f) continue;
+                    ropeVel[i] += Vector3.down * 9.8f * Time.unscaledDeltaTime;
+                    r.position += ropeVel[i] * Time.unscaledDeltaTime;
+                    if (r.position.y < 0.012f) { r.position = new Vector3(r.position.x, 0.012f, r.position.z); r.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 90f); }
+                }
             }
         }
+
+        Vector3[] ropeVel;
 
         /// <summary>1.2: overhead, slowly turning: him tied to the chair in the dark hall, the voices
         /// beyond the shutter. Then BREAK FREE: the chair rocks with every pull, the ropes give, it goes
@@ -1526,7 +1628,7 @@ namespace ProjectInk
             BuildChair();
             hero.CinePose(home);
             hero.SetFacing(1);
-            if (hero.body.Has("sit_bound")) hero.body.Play("sit_bound", 0.3f);
+            if (hero.body.Has("sit_bound")) hero.body.Play("sit_bound", 0.3f, true, 0.0001f);
             var c = home + Vector3.up * 0.7f;
             float a0 = Time.unscaledTime;
             System.Action overhead = () =>
@@ -1561,7 +1663,7 @@ namespace ProjectInk
             Haptics.Vibrate();
             if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.04f);
             if (hero.body.Has("allfours")) hero.body.Play("allfours", 0.12f);
-            for (float t0 = 0f; t0 < 0.7f; t0 += Time.unscaledDeltaTime)
+            for (float t0 = 0f; t0 < 1.2f; t0 += Time.unscaledDeltaTime)
             {
                 TipChair(Mathf.Clamp01(t0 / 0.45f));
                 hero.CinePose(home + Vector3.right * 0.25f * Mathf.Clamp01(t0 / 0.5f));

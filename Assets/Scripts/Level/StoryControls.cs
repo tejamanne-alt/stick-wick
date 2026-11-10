@@ -167,11 +167,13 @@ namespace ProjectInk
                 pointerWasDown = down;
                 if (tap)
                 {
-                    scProgress = Mathf.Clamp01(scProgress + 1f / taps);
+                    scProgress = Mathf.Clamp01(scProgress + 1f / taps + 0.001f);
                     Haptics.Vibrate();
                     Sound.Play(Sfx.Struggle, 0.35f, null, Random.Range(0.9f, 1.15f));
+                    frame?.Invoke(scProgress);
+                    if (scProgress >= 0.999f) { scProgress = 1f; break; }       // full: done, before any drain
                 }
-                scProgress = Mathf.Max(0f, scProgress - 0.12f * Time.unscaledDeltaTime);
+                else scProgress = Mathf.Max(0f, scProgress - 0.08f * Time.unscaledDeltaTime);
                 frame?.Invoke(scProgress);
                 yield return null;
             }
