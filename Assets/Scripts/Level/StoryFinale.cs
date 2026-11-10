@@ -40,13 +40,14 @@ namespace ProjectInk
             }
             if (from <= 8 || from == -1)
             {
-                if (from == 8) { RoofCast(); yield return FadeIn(0.4f); }
+                if (from == 8) { RoofCast(); rainAmount = 1f; yield return FadeIn(0.4f); }
                 yield return TheDuel();
                 while (vossStage < 5) yield return null;
             }
             if (from == 9)
             {
                 RoofCast();
+                rainAmount = 1f;
                 if (voss != null) voss.PuppetPose(Roof(FortressPlan.EdgeX - 2.6f, 0f));
                 hero.CinePose(Roof(FortressPlan.EdgeX - 4.2f));
                 yield return FadeIn(0.4f);
@@ -164,8 +165,9 @@ namespace ProjectInk
             Say("YOU", "And I killed him.", 2.0f);
             yield return Cut(2.2f, u => Static(HeroHead() + new Vector3(-0.8f, -0.3f, -0.8f), HeroHead(), 30f), 0.01f);
             Say("VOSS", "Yes. So here we are.", 2.2f, vh);
-            Strike(1f, 0f);
             yield return Cut(2.4f, u => Static(Roof(156f, -7.5f) + Vector3.up * 2.2f, Roof(156.5f, 0f) + Vector3.up * 1.1f, 44f), 0.03f);
+            // THE RAIN: it has held off all night. Now, here, with the two of them face to face, it comes.
+            yield return TheRain(vHead);
             // THE TRADE: everything he sent has failed; this is his last card, and it's force
             if (maya != null) { maya.PuppetPose(Roof(FortressPlan.EdgeX - 0.6f, -2.4f)); maya.PuppetPlay(Pick(maya.body, "struggle", "idle"), 0.1f); }
             if (voss != null) voss.PuppetPose(Roof(FortressPlan.EdgeX - 1.2f, -2.0f));
@@ -205,6 +207,52 @@ namespace ProjectInk
         }
 
         Transform bookProp;
+
+        /// <summary>The first rain of the night, at the peak of the face-off: silence; one fat drop on the
+        /// stone between them; a second on the ribbon at his wrist; a look up as the sky splits with the
+        /// biggest strike yet; then the downpour sweeps across the terrace onto them, wide.</summary>
+        IEnumerator TheRain(System.Func<Vector3> vHead)
+        {
+            var mid = Roof((hero.transform.position.x + (voss != null ? voss.transform.position.x : 159f)) * 0.5f, -0.2f);
+            Sound.Ambience(0.1f, 0.25f, 22000f);                                // the wind drops: a held breath
+            Sound.MusicStop(1.2f);
+            yield return Cut(1.4f, u => Static(HeroHead() + new Vector3(0.9f, -0.05f, -1.0f), HeroHead(), 28f), 0.006f);
+            // (1) one fat drop on the stone between them: a low close insert, a ring spreading
+            var drop = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            Destroy(drop.GetComponent<Collider>());
+            drop.transform.localScale = new Vector3(0.035f, 0.05f, 0.035f);
+            drop.GetComponent<Renderer>().sharedMaterial = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.85f, 0.88f, 0.92f) };
+            var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            Destroy(ring.GetComponent<Collider>());
+            ring.GetComponent<Renderer>().sharedMaterial = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.7f, 0.72f, 0.76f) };
+            ring.SetActive(false);
+            yield return Cut(1.2f, u => Static(mid + new Vector3(-0.5f, 0.12f, -0.6f), mid + Vector3.up * 0.15f, 30f), 0.002f,
+                u => drop.transform.position = mid + Vector3.up * Mathf.Lerp(1.6f, 0.02f, u * u));
+            Sound.Play(Sfx.Drip, 1f, mid, 0.8f);
+            drop.SetActive(false);
+            ring.SetActive(true);
+            ring.transform.position = mid + Vector3.up * 0.005f;
+            yield return Cut(1.0f, u => Static(mid + new Vector3(-0.5f, 0.12f, -0.6f), mid + Vector3.up * 0.15f, 30f), 0.002f,
+                u => ring.transform.localScale = new Vector3(0.05f + u * 0.5f, 0.001f, 0.05f + u * 0.5f));
+            ring.SetActive(false);
+            // (2) the second, on the ribbon at his wrist
+            var wrist = wristBand != null ? wristBand.position : hero.Chest;
+            Sound.Play(Sfx.Drip, 0.8f, wrist, 1.1f);
+            yield return Cut(1.0f, u => Static(wrist + new Vector3(0.12f, 0.2f, -0.45f), wrist, 24f), 0.002f);
+            // (3) he looks up; Voss looks up; the sky splits
+            yield return Cut(1.2f, u => Static(vHead() + new Vector3(-0.9f, -0.4f, -0.8f), vHead() + Vector3.up * 0.4f, 30f), 0.005f);
+            Strike(1f, 0f);
+            Sound.Play(Sfx.Thunder, 1f);
+            if (cam != null) cam.Shake(0.3f, 0.6f);
+            Sound.Music("duel", 0.55f, true, 2f);
+            // (4) the downpour sweeps across the terrace onto them: wide, as it arrives
+            yield return Cut(3.2f, u => Static(Roof(156f, -8.5f) + Vector3.up * 3.2f, Roof(156.5f, 0f) + Vector3.up * 1.0f, Mathf.Lerp(40f, 46f, u)), 0.03f,
+                u => rainAmount = Mathf.SmoothStep(0f, 1f, u));
+            rainAmount = 1f;
+            Destroy(drop); Destroy(ring);
+            // the rain running off him
+            yield return Cut(1.8f, u => Static(HeroHead() + new Vector3(0.7f, 0.0f, -0.9f), HeroHead(), 28f), 0.008f);
+        }
 
         /// <summary>The black book: a small dark block with a pale page edge.</summary>
         static Transform MakeBook()

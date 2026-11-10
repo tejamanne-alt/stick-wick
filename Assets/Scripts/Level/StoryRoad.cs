@@ -37,7 +37,7 @@ namespace ProjectInk
             FortProps();
             storm = true;
             nextStrike = Time.unscaledTime + 4f;
-            Sound.Ambience(1.2f, 0.4f, 1800f);                     // inside a car: the rain on the roof, muffled
+            Sound.Ambience(0.25f, 0.4f, 1800f);                    // inside a car: the wind, muffled; no rain yet
             Sound.Music("storm", 0.35f, true, 3f);
             // the walkie on the passenger seat
             seatWalkie = MakeWalkie("SeatWalkie");
@@ -76,8 +76,7 @@ namespace ProjectInk
                 roadCar.rotation = Quaternion.Slerp(roadCar.rotation, RoadPlan.CarRotation(dir), Time.unscaledDeltaTime * 4f);
             }
             // the wipers, slow, then faster as the rain gets heavier
-            float sp = Mathf.Lerp(1.6f, 3.4f, roadRain);
-            float wa = (0.5f - 0.5f * Mathf.Cos(Time.unscaledTime * sp)) * RoadPlan.WiperSweep;
+            float wa = 0f;                                         // the wipers rest: no rain yet
             if (wiperL != null) wiperL.localRotation = Quaternion.AngleAxis(wa, RoadPlan.WiperAxis);
             if (wiperR != null) wiperR.localRotation = Quaternion.AngleAxis(wa, RoadPlan.WiperAxis);
             if (batteryPip != null && batteryPip.gameObject.activeSelf) batteryPip.GetComponent<Renderer>().enabled = Mathf.Repeat(Time.unscaledTime * 1.6f, 1f) < 0.5f;
@@ -259,7 +258,7 @@ namespace ProjectInk
             Say("YOU", "Then I'll go through all of them.", 2.4f);
             yield return Cut(2.6f, u => Nobody(), 0.006f);
             Sound.Play(Sfx.CarDoor, 0.9f, RoadPlan.DriverHead);
-            Sound.Ambience(2.2f, 0.25f, 22000f);
+            Sound.Ambience(0.4f, 0.25f, 22000f);                   // out into the wind (no rain yet)
             if (seatWalkie != null) seatWalkie.gameObject.SetActive(false);
             Say("YOU", "...Over and out.", 1.8f);
             if (carInterior != null) carInterior.gameObject.SetActive(false);
@@ -278,7 +277,7 @@ namespace ProjectInk
 
         void RoadGUI(float w, float h)
         {
-            if (cardAt < 0f && roadRain > 0.01f) Rain(w, h, 0.18f + 0.22f * roadRain);
+            // no rain on the windscreen: the storm is dry until the roof
             if (roadTitleAt > 0f)
             {
                 float t0 = Time.unscaledTime - roadTitleAt;

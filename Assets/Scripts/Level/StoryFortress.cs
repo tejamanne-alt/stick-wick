@@ -35,6 +35,26 @@ namespace ProjectInk
         readonly List<Enemy> fortMen = new List<Enemy>();
         Enemy warden;
         Transform portcullis;
+        /// <summary>0 dry, 1 the full downpour: it only starts on the roof, with Voss.</summary>
+        float rainAmount;
+        Material[] rippleMats;
+
+        /// <summary>The wet stones: still puddles while it's dry, rippling once the rain comes.</summary>
+        void SetRipple(float k)
+        {
+            if (rippleMats == null)
+            {
+                var list = new List<Material>();
+                foreach (var n in new[] { "WetRoad", "WetCourt", "WetRoof" })
+                {
+                    var g = GameObject.Find(n);
+                    var r = g != null ? g.GetComponent<Renderer>() : null;
+                    if (r != null && r.material != null && r.material.HasProperty("_Ripple")) list.Add(r.material);
+                }
+                rippleMats = list.ToArray();
+            }
+            foreach (var m in rippleMats) if (m != null) m.SetFloat("_Ripple", Mathf.Lerp(0.0005f, 0.004f, k));
+        }
         Vector3 portUp;
         ParticleSystem rainPs;
         readonly List<Renderer> floodR = new List<Renderer>();
@@ -49,7 +69,7 @@ namespace ProjectInk
             phase = Phase.Fortress;
             HeadWound.Chapter = 3;
             storm = true;
-            Sound.Ambience(2.2f, 0.25f, 22000f);                     // the storm, loud
+            Sound.Ambience(0.35f, 0.25f, 22000f);                    // a dry storm: wind, thunder, no rain yet
             LightningSwap.Held = false;
             Sound.Music("storm", 0.5f, true, 2.5f);
             nextStrike = Time.unscaledTime + 2.5f;
@@ -81,7 +101,7 @@ namespace ProjectInk
             main.startColor = new Color(0.86f, 0.88f, 0.92f, 0.42f);
             main.maxParticles = 4000;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            var em = rainPs.emission; em.rateOverTime = 2600f;
+            var em = rainPs.emission; em.rateOverTime = 0f;                // no rain until the roof (StoryFinale: TheRain)
             var sh = rainPs.shape; sh.shapeType = ParticleSystemShapeType.Box; sh.scale = new Vector3(40f, 16f, 0.5f);
             go.transform.rotation = Quaternion.Euler(100f, 0f, 0f);          // slanted: the wind
             var r = go.GetComponent<ParticleSystemRenderer>();
@@ -102,10 +122,13 @@ namespace ProjectInk
             {
                 rainPs.transform.position = new Vector3(c.transform.position.x, c.transform.position.y + 9f, 1.5f);
                 var em = rainPs.emission;
-                em.enabled = !(indoors && cardAt < 0f && fZone >= 4);
+                em.enabled = rainAmount > 0.001f && !(indoors && cardAt < 0f && fZone >= 4);
+                em.rateOverTime = 2600f * rainAmount;
             }
-            Sound.Ambience(indoors && fZone >= 4 ? 1.0f : 2.2f, indoors ? 0.55f : 0.25f, indoors && fZone >= 4 ? 1400f : 22000f);
-            lensRain = Mathf.MoveTowards(lensRain, indoors && fZone >= 4 ? 0f : 0.32f, Time.unscaledDeltaTime * 0.5f);
+            float wet = Mathf.Lerp(0.35f, 2.2f, rainAmount);              // before the rain only the wind; then the downpour
+            Sound.Ambience(indoors && fZone >= 4 ? wet * 0.45f : wet, indoors ? 0.55f : 0.25f, indoors && fZone >= 4 ? 1400f : 22000f);
+            lensRain = Mathf.MoveTowards(lensRain, indoors && fZone >= 4 ? 0f : 0.32f * rainAmount, Time.unscaledDeltaTime * 0.5f);
+            SetRipple(rainAmount);
             if (Time.unscaledTime >= nextStrike)
             {
                 float s = Random.Range(0.75f, 1f);

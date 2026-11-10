@@ -1,6 +1,6 @@
 # Chapter 5: THE FORTRESS
 
-Kessel Hill, the same night. **The storm breaks:** heavy rain, wind, lightning that really lights the place (a second bake of the whole set, lit by the strike, flickered in), forked bolts, thunder, rain running on the lens. The final chapters keep the storm.
+Kessel Hill, the same night. **The storm (dry until the roof):** wind, thunder and lightning all the way up, but no rain. The rain holds off until the face-off with Voss: after "Yes. So here we are." one drop hits the stone between them, a second the ribbon at his wrist, they look up as the sky splits, and the downpour sweeps across the terrace onto them (StoryFinale.TheRain). It pours through the trade, the duel and the fall, and stops at dawn. Before that: lightning that really lights the place (a second bake of the whole set, lit by the strike, flickered in), forked bolts, thunder, rain running on the lens. The final chapters keep the storm.
 
 **What happens:** he climbs to the fortress and fights through it, and at the end he sees them on the tower: Maya, and the man holding her. That man knows him.
 
