@@ -720,8 +720,8 @@ CONTACT_CLIPS = {
         (10, GUARD)]),
     "block_high": dict(frames=8, loop=False, hit=None, keys=[     # forearms up, chin down
         (0, GUARD), (2, BLOCK_HI), (8, BLOCK_HI)]),
-    "block_hold": dict(frames=24, loop=True, hit=None, keys=[
-        (0, BLOCK_HI), (12, pose(BLOCK_HI, chest=164, head=162, dz=-0.06)), (24, BLOCK_HI)]),
+    "block_hold": dict(frames=90, loop=True, hit=None, keys=[
+        (0, BLOCK_HI), (45, pose(BLOCK_HI, dz=-0.006)), (90, BLOCK_HI)]),
     "block_hit": dict(frames=10, loop=False, hit=None, keys=[     # a blow lands on the guard: pushed back a step
         (0, BLOCK_HI),
         (2, pose(BLOCK_HI, spine=186, chest=188, head=176, thigh_L=16, thigh_R=-30)),

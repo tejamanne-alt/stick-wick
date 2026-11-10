@@ -14,7 +14,8 @@ B. Hahne. "Free for use in research and commercial projects worldwide."
 
 MOCAP_CLIPS = {
     # fighting stance (boxing guard), looped
-    "idle":       dict(file="13_17", start=1069, end=1104, hit=None, loop=True),
+    # (the standing "idle" is hand-keyed in build_stickman.py: a still guard with a slow breath. The
+    #  boxer's bouncing stance that was here read as dancing whenever anyone stood still.)
     # boxing: lead-hand jab, rear-hand cross (arm straightened at impact)
     "jab":        dict(file="14_01", start=64, end=84, hit=73, speed=1.1, aim="joint_forward", joint="LeftHand", extend="LeftHand"),
     "cross":      dict(file="14_01", start=33, end=55, hit=43, speed=1.1, aim="joint_forward", joint="RightHand", extend="RightHand"),
