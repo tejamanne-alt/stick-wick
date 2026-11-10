@@ -24,7 +24,7 @@ namespace ProjectInk
     /// grabbed = tap to break free with a reversal throw. Full Flow = Rampage.</summary>
     public partial class HeroController : Fighter
     {
-        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors, Dive, Clinch }
+        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors, Dive, Clinch, Guard, Coil }
 
         public float targetRange = 9f;
         public float gunRange = 14f;
@@ -74,7 +74,7 @@ namespace ProjectInk
         public int ComboCount { get; private set; }
         public float ComboTimer { get; private set; }
         public bool IsDead => state == State.Dead;
-        public bool Ducking => state == State.Duck || (state == State.Attack && currentAttack.clip == "slide_kick");
+        public bool Ducking => state == State.Duck || (state == State.Dodge && v3Def == V3Def.Duck) || (state == State.Attack && currentAttack.clip == "slide_kick");
         public bool IsGrabbed => state == State.Grabbed;
         public int GrabTaps => grabTaps;
         public bool Invulnerable => Time.time < invulnerableUntil || state == State.Dead || InRampage || OnLedge || state == State.Swing ||
@@ -100,6 +100,7 @@ namespace ProjectInk
         {
             if (Contact && GetComponent<ContactHints>() == null) gameObject.AddComponent<ContactHints>();
             body.Play(IdleClip, 0f);
+            V3Init();
             Invoke(nameof(CheckBody), 0.3f);
         }
 
@@ -861,6 +862,7 @@ namespace ProjectInk
         {
             float dt = Time.deltaTime;
             stateTime += dt;
+            V3Always(dt);
             if (Grounded && !OnLedge && !CinematicLock)
             {
                 Floor = Level;
@@ -890,7 +892,9 @@ namespace ProjectInk
                 case State.Idle: UpdateIdle(); break;
                 case State.Dash: UpdateDash(dt); break;
                 case State.Attack: UpdateAttack(); break;
-                case State.Dodge: UpdateDodge(); break;
+                case State.Dodge: if (V3 && v3Def != V3Def.None) UpdateDodgeV3(); else UpdateDodge(); break;
+                case State.Guard: if (V3) UpdateGuardV3(); else EnterIdle(); break;
+                case State.Coil: if (V3) UpdateCoilV3(); else EnterIdle(); break;
                 case State.Hurt: if (stateTime > 0.35f) EnterIdle(); break;
                 case State.Swing: UpdateSwing(dt); break;
                 case State.Grabbed: UpdateGrabbed(dt); break;
@@ -1034,6 +1038,7 @@ namespace ProjectInk
         void EnterIdle()
         {
             edgeThrow = false;
+            v3Def = V3Def.None;
             if (clinchFoe != null) { var f = clinchFoe; clinchFoe = null; clinchMove = null; if (f.Held) f.ReleaseHeld(); }
             state = State.Idle;
             stateTime = 0f;
@@ -1047,6 +1052,7 @@ namespace ProjectInk
 
         void UpdateIdle()
         {
+            if (V3) { UpdateIdleV3(); return; }
             HandleCommand(GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None);
             if (state != State.Idle) { running = false; return; }
             float a = Axis;
@@ -1638,7 +1644,7 @@ namespace ProjectInk
                 }
             }
             // strike in the air: a flying kick at whoever is near
-            var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
+            var cmd = NextCmd();
             if (cmd == Command.StrikeLeft || cmd == Command.StrikeRight || cmd == Command.StrikeForward)
             {
                 int side = cmd == Command.StrikeLeft ? -1 : cmd == Command.StrikeRight ? 1 : (AxisDir != 0 ? AxisDir : Facing);
@@ -1699,7 +1705,7 @@ namespace ProjectInk
             PlaceHanging(sw.Grip, swingAng, swingVel);
             SweepWithFeet(Mathf.Abs(swingVel) * L, sw.trapeze ? "TRAPEZE KICK!" : "ROPE KICK!");
 
-            var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
+            var cmd = NextCmd();
             bool letGo = cmd == Command.JumpKick || cmd == Command.StrikeLeft || cmd == Command.StrikeRight ||
                          cmd == Command.StrikeForward || cmd == Command.DodgeLeft || cmd == Command.DodgeRight || stateTime > 6f;
             if (letGo)
@@ -1742,7 +1748,7 @@ namespace ProjectInk
             PlaceHanging(sw.Grip, swingAng, swingVel);
             SweepWithFeet(Mathf.Abs(swingVel) * HandReach, "BAR SPIN!");
 
-            var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
+            var cmd = NextCmd();
             bool asked = cmd != Command.None && cmd != Command.Restart;
             // dismount just past the bottom of a turn, so the flight goes forwards and up
             float phase = Mathf.Repeat(swingAng * dir, Mathf.PI * 2f);
@@ -2084,7 +2090,8 @@ namespace ProjectInk
                 else ResolveHit();
             }
 
-            if (CanCancel())
+            if (V3) { if (V3Cancel()) return; }
+            else if (CanCancel())
             {
                 var next = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
                 if (next != Command.None) { HandleCommand(next); return; }
@@ -2092,6 +2099,7 @@ namespace ProjectInk
             if (body.Finished && Grounded)
             {
                 if (pendingExecution != null) { StartExecution(); return; }
+                if (V3) ApplyEndShift();
                 if (WeaponSpent && !InRampage) { ThrowWeapon(); return; }   // worn out: throw it
                 lastAttackEnd = Time.time;
                 EnterIdle();
@@ -2200,6 +2208,7 @@ namespace ProjectInk
                     if (Style == FightStyle.Pipe) PipeUses--;
                 }
                 Impact();
+                V3Landed(lastKilled);
                 // a few slow-motion beats, never on every hit: cutting two at once, or a heavy killing blow
                 if (bladeCut && SwordSlowReady && (cut >= 2 || (lastKilled && currentAttack.heavy)))
                 {
@@ -2447,7 +2456,7 @@ namespace ProjectInk
 
         void UpdateGrabbed(float dt)
         {
-            HandleCommand(GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None);
+            HandleCommand(NextCmd());
             if (state != State.Grabbed) return;
             if (grabber == null || !grabber.Alive || !grabber.HoldingHero) { grabber = null; EnterIdle(); return; }
             grabTick += dt;
@@ -2481,6 +2490,10 @@ namespace ProjectInk
         public override void TakeHit(HitInfo hit)
         {
             if (Invulnerable) return;
+            // the new controls: a boss's charge or slam (not judged by V3Defend) is beaten by stepping out
+            // of it, or hopping a shockwave
+            if (V3 && state == State.Dodge && (v3Def == V3Def.StepOut || (v3Def == V3Def.Hop && hit.knockdown))) return;
+            if (V3) { Haptics.Hurt(hit.heavy); v3Def = V3Def.None; counterFoe = null; v3Next = false; }
             if (state == State.Clinch) EndClinch();          // hit from behind: he lets go
             Health = Mathf.Max(0f, Health - hit.damage);
             ComboCount = 0;

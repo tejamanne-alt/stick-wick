@@ -32,7 +32,14 @@ namespace ProjectInk
         /// <summary>Chibi proportions: about 1.45 m tall, hips at 0.70 m. Melee reaches scale with it.</summary>
         public const float BodyScale = 0.76f;
         public Vector3 Chest => transform.position + Vector3.up * 0.92f * transform.localScale.y;
-        public float Reach(AttackData a) => a.ranged ? a.reach : a.reach * BodyScale * transform.localScale.x;
+        public float Reach(AttackData a)
+        {
+            if (a.ranged) return a.reach;
+            // a hand-keyed clip (the V3 body) knows the distance at which it lands where it was keyed
+            var e = body != null && body.moves != null && a.clip != null ? body.moves.Get(a.clip) : null;
+            if (e != null && e.reach > 0f) return e.reach * transform.localScale.x;
+            return a.reach * BodyScale * transform.localScale.x;
+        }
 
         [Tooltip("The eyes (built by FighterFactory): two small white ovals that blink.")]
         public Transform[] eyes;
@@ -51,6 +58,9 @@ namespace ProjectInk
         Color baseColor = Color.black, tintColor;
         float tintUntil;
         static readonly int ColorId = Shader.PropertyToID("_Color");
+        static readonly int InkCenterId = Shader.PropertyToID("_InkCenter");
+        Transform hipsBone;
+        bool hipsLooked;
 
         protected virtual void Awake()
         {
@@ -97,6 +107,10 @@ namespace ProjectInk
             UpdateEyes();
             Color c = Time.time < tintUntil ? tintColor : baseColor;
             block.SetColor(ColorId, c);
+            // the V3 body's ink shader shades the far limbs by their depth behind this point
+            if (!hipsLooked) { hipsLooked = true; hipsBone = body != null ? body.Bone("hips") : null; }
+            var centre = hipsBone != null ? hipsBone.position : transform.position + Vector3.up * 0.7f;
+            block.SetVector(InkCenterId, new Vector4(centre.x, centre.y, centre.z, 1f));
             foreach (var r in renderers) if (r != null) r.SetPropertyBlock(block);
         }
 

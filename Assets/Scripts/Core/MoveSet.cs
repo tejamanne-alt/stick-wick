@@ -20,6 +20,11 @@ namespace ProjectInk
             [Tooltip("Metres forward the body's hips end up at the clip's end (paired throws and slams): " +
                      "move the transform by this when the clip hands over, so he lies where he landed.")]
             public float endShift;
+            [Tooltip("Combat 3.0 clips: seconds into the clip where the wind-up is fully loaded (-1 = none). An enemy's " +
+                     "telegraph plays the clip slowly up to here, so the warning is the blow itself.")]
+            public float loadTime = -1f;
+            [Tooltip("Combat 3.0 clips: the distance (between the two men) at which the blow lands where it was keyed.")]
+            public float reach;
             public float Length => clip != null ? clip.length : 0f;
         }
 

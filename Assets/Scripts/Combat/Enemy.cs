@@ -246,7 +246,8 @@ namespace ProjectInk
                     break;
                 case State.Windup:
                     velocity.x = 0f;
-                    Tint(TelegraphColor, 0.05f);
+                    if (!v3Wound) { v3Wound = true; V3Windup(); }
+                    Tint(CombatV3.On ? V3FlashColor() : TelegraphColor, 0.05f);
                     if (Gunner) AimLaser();
                     if (FeintNow()) break;
                     if (stateTime >= (Gunner ? 0.75f : Type == EnemyType.Thrower ? 0.55f : WindupTime)) BeginAttack();
@@ -713,6 +714,7 @@ namespace ProjectInk
 
         void BeginWindup()
         {
+            v3Wound = false;
             state = State.Windup;
             stateTime = 0f;
             velocity.x = 0f;
@@ -794,7 +796,7 @@ namespace ProjectInk
             state = State.Attack;
             stateTime = 0f;
             hitDone = false;
-            body.Play(attack.clip, 0.04f);
+            if (!V3ContinueAttack()) body.Play(attack.clip, 0.04f);
             if (Type == EnemyType.Swordsman) Sound.Play(Sfx.SwordSwing, 0.8f, transform.position);
             else if (!Gunner && Type != EnemyType.Thrower) Sound.Play(Sfx.Whoosh, 0.8f, transform.position, 0.92f);
             if (Type == EnemyType.Brute) Sound.Play(Sfx.BruteHurt, 0.6f, transform.position, 0.8f);   // a roar into the swing
@@ -815,6 +817,7 @@ namespace ProjectInk
             }
             if (attack.clip == "grab_attack")
             {
+                if (dx > -0.1f && dx < Reach(attack) + 0.3f && dy < 0.8f && CombatV3.On && hero.V3Defend(this, attack, true, 1, false)) return;
                 if (dx > -0.1f && dx < Reach(attack) + 0.3f && dy < 0.8f && hero.GetGrabbed(this))
                 {
                     state = State.Holding;
@@ -836,6 +839,7 @@ namespace ProjectInk
             float reach = Reach(attack) + 0.3f;
             if (dx > -0.1f && dx < reach && dy < 0.9f)
             {
+                if (CombatV3.On && hero.V3Defend(this, attack, V3Red, V3Height, V3Long)) return;
                 hero.TakeHit(new HitInfo
                 {
                     damage = attack.damage * DamageScale,

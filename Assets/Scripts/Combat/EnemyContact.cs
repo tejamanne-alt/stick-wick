@@ -125,6 +125,8 @@ namespace ProjectInk
             if (string.IsNullOrEmpty(react) || !body.Has(react)) return false;
             body.Play(react, 0.03f);
             hurtFor = react == "hit_body" ? 0.6f : react == "stumble_back" ? 0.75f : react == "hit_legs" ? 0.45f : 0.42f;
+            // the V3 body's reactions are keyed to the end: he is hurt until he is back in his guard
+            if (CombatV3.V3Body && body.Current != null) hurtFor = Mathf.Max(hurtFor, body.Current.Length * 0.8f);
             return true;
         }
 

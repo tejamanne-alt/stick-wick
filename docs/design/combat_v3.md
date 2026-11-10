@@ -416,6 +416,13 @@ pick it up. Each chapter has its own furniture, and each one teaches one new ide
 
 ---
 
+## 10a. Step 1 as built (the chapter 1 experiment)
+
+- Chapter 1 only, on the new body; the pause card's **COMBAT NEW / CLASSIC** switches the controls (both on the new body). The old system is on `backup/combat-v2`.
+- Built: the three zones and four touches for bare hands; the guard; the four evasions; perfect defence and the five counters; the white and red telegraphs (the wind-up is the blow's own clip, slowed to its loaded pose); the pull-and-release power shot with a live coil; the boxer's step; impact stretch; haptics; option C shading.
+- Not yet (steps 2 and 3): the stroke reader and the named combos, ender cameras, breath, knife and rod, the setting finishers, the chapter's new enemy types.
+- Keys for testing at a desk: A/D walk (Shift runs) · J/K/L tap head/body/legs · I swipe across · U up · N down · hold P to wind up · hold H to guard · S duck · W hop · Q step out · E step in · G grab.
+
 ## 11. Open questions for you
 
 1. **Retire the old tap-left/right scheme in story mode** and use only "touch the man / yourself / the

@@ -1370,3 +1370,26 @@ The game's highlight: one long take of the father and daughter walking out of Ke
 - **ProjectInk/FireLit** (Assets/Shaders/FireLit.shader) draws the dawn set. It fades into the burn bake (`_FortBurn`), takes up to eight flickering fire lights from the blasts, and lifts with the flash.
 - **BlastFx v2.** Flipbooks from `tools/fx/make_fx_textures.py`: fireball, smoke, flame, dust, a shockwave ring. Stone blocks trail smoke (a sub-emitter), burning fragments leave fiery trails, there's a dust wall along the ground, pillars and smoke caps for the biggest blasts, and haze drifting past the bridge.
 - **Sound.** Five explosion takes, ExplosionBig, Collapse, GlassRain, Shockwave, Rumble and new debris; each blast is heard late by its distance. The score is re-timed to the 69 s take.
+
+## Combat 3.0, step 1: the experiment in chapter 1 (docs/design/combat_v3.md)
+
+The old controls are kept on the branch `backup/combat-v2`. Chapter 1 now runs on a new body, and its pause card has **COMBAT NEW / CLASSIC** (saved; NEW by default). Both modes use the new body; every other chapter is unchanged.
+
+- **The V3 body and moves** (`tools/blender/build_stickman_v3.py`, `v3_rig.py`, `v3_clips.py` → `Assets/Art/StickmanV3/`).
+  - The strike lab's body: arms 25% longer, fists, shoulders and hips wider. Every old clip (story, mocap, throws) is carried over onto it.
+  - A new pose engine: absolute side-plane angles, plus **torso twist** (the hips and shoulders turn through a cross or a hook) and **limb yaw** (a hook's forearm comes across the face, a roundhouse's shin swings round from the side).
+  - Legs posed by **foot targets** with IK solved on every frame (planted feet never slide; a step lifts a foot through an arc). Fists posed by **fist targets** at the impact key, so each blow lands on the target man's chin, body or thigh at its own reach (`--report` prints the error: within a few centimetres for all of them).
+  - Baked on every frame with per-key easing: accelerating into the impact, a hard stop, one frame of penetration, a return faster than the way out, a small settle.
+  - 38 hand-keyed clips: the live guard (breathing, weight rocking, hands alive), jab, cross, lead hook, rear hook, uppercut, liver hook, low kick, roundhouse, push kick, knee, elbow, hammer fist, the coil and the power right, guard up/hold/hit, parry, duck, step out, step in, hop, the counters (trap and elbow, liver shot, counter right), the reactions (jabbed, rocked, uppercut, folded, leg buckled, shoved, launched, elbowed down, parried, overreaching) and the boxer's step forward and back.
+  - Contact sheets: `docs/previews/v3/<clip>.png`, all on one sheet in `docs/previews/v3_moves.png` (`--preview`).
+- **The touch grammar** (`GestureInputV3.cs`): where the finger starts (on a man, on the hero, on the ground) and how it moves (tap, hold, swipe, pull and release). Every touch is also read the classic way, so the prologue's directed duel still works.
+- **The hero** (`HeroV3.cs`):
+  - strikes by the height touched, taps in rhythm making strings;
+  - swipes for the big shots; the pull and release scrubs the coil live with the finger;
+  - hold on yourself to guard; swipe from yourself to duck, hop, step out or step in.
+  - **Perfect defence** (the last 0.2 s) slows time and opens a 0.6 s **counter** window.
+  - The clinch, rope, bar and air states read the new touches as their old gestures.
+- **The enemies** (`EnemyV3.cs`): the wind-up is the blow's own clip played slowly to its loaded pose, flashing **white** (block it) or **red** (evade it); `V3Defend` judges every blow as it lands. Hand-keyed clips carry their reach, so fighters stand at the distance the blow was keyed for.
+- **Feel:** `LimbStretch` (the striking limb stretches through the impact, in real time, so it shows in the freeze); `Haptics` patterns (block thud, parry tick, counter double knock, heavy jolt, hurt buzz; Android amplitude control).
+- **Shading option C:** `ProjectInk/InkDepth` draws the far limbs a charcoal by depth behind the hips, in fights only; it fades to pure ink in cutscenes (`CombatV3.Shade`).
+- **Teaching:** a card at the first fight, GUARD and RED · EVADE calls at the first telegraphs, and a MOVES page for the new grammar.

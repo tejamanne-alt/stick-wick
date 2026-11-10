@@ -269,7 +269,7 @@ namespace ProjectInk
         {
             PinFoe();
             if (body.CurrentName == "clinch_enter" && body.Finished) body.Play("clinch", 0.1f);
-            var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
+            var cmd = V3 ? V3ClinchCmd() : GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
             int toward = Facing;
             switch (cmd)
             {

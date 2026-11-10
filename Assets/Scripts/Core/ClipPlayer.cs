@@ -150,6 +150,12 @@ namespace ProjectInk
             return entry;
         }
 
+        /// <summary>Hold the current clip at a time (seconds): a pose scrubbed by the player's finger.</summary>
+        public void SetTime(float seconds)
+        {
+            if (current >= 0 && slot[current].IsValid()) slot[current].SetTime(Mathf.Clamp(seconds, 0f, slotEntry[current].Length));
+        }
+
         public void SetSpeed(float speed)
         {
             if (current >= 0 && slot[current].IsValid()) slot[current].SetSpeed(speed);

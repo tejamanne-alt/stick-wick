@@ -843,7 +843,7 @@ namespace ProjectInk
         GUIStyle gTitle, gLine, gNice, gChalk, gBtn;
         Texture2D finger, gRing;
         bool helpOpen, pauseOpen;
-        Rect helpBtn, skipBtn, skipMoveBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, vibrateBtn, restartBtn, hintsBtn, menuBtn;
+        Rect helpBtn, skipBtn, skipMoveBtn, replayBtn, closeBtn, pauseBtn, resumeBtn, movesBtn, soundBtn, vibrateBtn, restartBtn, hintsBtn, menuBtn, combatBtn;
 
         /// <summary>Open or close the pause screen (and stop the world, and its sound).</summary>
         void SetPause(bool on)
@@ -1293,10 +1293,14 @@ namespace ProjectInk
             // chalk-mark hints: AUTO retires each one once learned; ALWAYS keeps them all on
             restartBtn = new Rect(lx, y + (bh + gap) * 2f, bw, bh);
             hintsBtn = new Rect(rx, y + (bh + gap) * 2f, bw, bh);
-            menuBtn = new Rect(w * 0.5f - bw * 0.5f, y + (bh + gap) * 3f, bw, bh);
+            // chapter 1, the Combat 3.0 experiment: the new controls or the classic ones
+            bool combatChoice = CombatV3.Available;
+            menuBtn = combatChoice ? new Rect(lx, y + (bh + gap) * 3f, bw, bh) : new Rect(w * 0.5f - bw * 0.5f, y + (bh + gap) * 3f, bw, bh);
+            combatBtn = combatChoice ? new Rect(rx, y + (bh + gap) * 3f, bw, bh) : new Rect(-9999, -9999, 1, 1);
             DrawButton(restartBtn, "RESTART", 24);
             DrawButton(hintsBtn, HintDirector.AlwaysShow ? "HINTS  ALWAYS" : "HINTS  AUTO", 24);
             DrawButton(menuBtn, "MAIN MENU", 24);
+            if (combatChoice) DrawButton(combatBtn, CombatV3.Chosen ? "COMBAT  NEW" : "COMBAT  CLASSIC", 24);
             if (!repaint) return;
             GestureInput.Blocked.Add(ToScreen(new Rect(0, 0, w, h)));         // the screen belongs to the pause card
             if (Pressed(resumeBtn)) SetPause(false);
@@ -1305,6 +1309,7 @@ namespace ProjectInk
             else if (Pressed(vibrateBtn)) Haptics.Enabled = !Haptics.Enabled;
             else if (Pressed(restartBtn)) { SetPause(false); if (director != null) director.Restart(); }
             else if (Pressed(hintsBtn)) HintDirector.AlwaysShow = !HintDirector.AlwaysShow;
+            else if (CombatV3.Available && Pressed(combatBtn)) { CombatV3.Chosen = !CombatV3.Chosen; if (GestureInput.Instance != null) GestureInput.Instance.Flush(); }
             else if (Pressed(menuBtn))
             {
                 SetPause(false);
@@ -1315,6 +1320,20 @@ namespace ProjectInk
             else GestureInput.LastButtonTap = null;
         }
 
+        /// <summary>Combat 3.0's grammar: where your finger starts, how it moves (chapter 1, COMBAT: NEW).</summary>
+        static readonly string[,] V3Rows =
+        {
+            { "TAP HIM", "Strike where you touch: head = jab, cross, hooks (in rhythm) · body = liver hook · legs = low kick" },
+            { "SWIPE THROUGH HIM", "Across = big hook / roundhouse / low kick (by height) · up = uppercut · down = hammer fist" },
+            { "DRAG BACK, LET GO", "From him towards you: wind up the power right. The further you pull, the harder" },
+            { "HOLD ON HIM", "Take hold of him (the clinch: knees, throws)" },
+            { "HOLD ON YOU", "Guard: blocks WHITE attacks. RED ones (blades, bars, grabs) go through: evade them" },
+            { "SWIPE FROM YOU", "Down = duck (head shots) · up = hop (leg kicks) · away = step out · towards him = step inside" },
+            { "HOLD THE GROUND", "Walk to your finger: further away = faster. Tap = one step. Swipe = a long step" },
+            { "PERFECT TIMING", "Guard or evade just as it lands: time slows. Touch him then: COUNTER" },
+            { "PAUSE", "COMBAT  NEW / CLASSIC switches between these controls and the old ones" },
+        };
+
         /// <summary>The help card (game paused): every move with its gesture, and REPLAY TRAINING.</summary>
         void HelpCard(float w, float h, bool repaint)
         {
@@ -1323,7 +1342,7 @@ namespace ProjectInk
             Fill(new Rect(panel.x, panel.y, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
             Fill(new Rect(panel.x, panel.yMax - 1, panel.width, 1), new Color(1f, 1f, 1f, 0.5f));
             Label(new Rect(panel.x, panel.y + 4, panel.width, 56), Spaced("MOVES"), new GUIStyle(gTitle) { fontSize = 50 });
-            string[,] rows =
+            string[,] rows = CombatV3.On ? V3Rows : new string[,]
             {
                 { "TAP HIGH", "Punch combo  (left / right side = that way)" },
                 { "TAP LOW", "Kick combo" },
@@ -1353,7 +1372,9 @@ namespace ProjectInk
                 y += rowH;
             }
             var hint = new GUIStyle(gChalk) { fontSize = 19, wordWrap = true };
-            Label(new Rect(panel.x + 20, y + 4, panel.width - 40, 50), "Some moves happen by themselves: dive from above, over the edge, head scissors, hand stomp, springboard", hint);
+            Label(new Rect(panel.x + 20, y + 4, panel.width - 40, 50), CombatV3.On
+                ? "Defend in the last instant before his blow lands: time slows, and your next touch on him is a COUNTER"
+                : "Some moves happen by themselves: dive from above, over the edge, head scissors, hand stomp, springboard", hint);
             replayBtn = new Rect(w * 0.5f - 290, panel.yMax - 62, 270, 52);
             closeBtn = new Rect(w * 0.5f + 20, panel.yMax - 62, 270, 52);
             DrawButton(replayBtn, "REPLAY TRAINING", 21);

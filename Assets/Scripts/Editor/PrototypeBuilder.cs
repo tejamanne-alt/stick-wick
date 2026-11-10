@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         public const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 46;
+        public const int SceneVersion = 47;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
@@ -106,16 +106,23 @@ namespace ProjectInk.EditorTools
             Directory.CreateDirectory(GenDir + "/Textures");
             Directory.CreateDirectory("Assets/Scenes");
             AssetDatabase.Refresh();                     // so the asset database knows the folders (they may have been deleted)
-            AssetDatabase.ImportAsset(StickmanImport.ModelPath, ImportAssetOptions.ForceUpdate);
+            // chapter 1 is Combat 3.0's test bed: it runs on the V3 body (both the NEW controls and the
+            // CLASSIC ones, chosen in its pause card); every other scene keeps the classic body
+            bool v3 = kind == LayoutKind.Warehouse && storySet == StorySet.None &&
+                      File.Exists(StickmanImport.ModelPathV3) && File.Exists(StickmanImport.ClipJsonPathV3);
+            string modelPath = v3 ? StickmanImport.ModelPathV3 : StickmanImport.ModelPath;
+            AssetDatabase.ImportAsset(modelPath, ImportAssetOptions.ForceUpdate);
 
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(StickmanImport.ModelPath);
-            if (model == null) throw new BuildFailedException("Stickman.fbx not found - run tools/blender/build_stickman.py");
-            var moves = BuildMoveSet();
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
+            if (model == null) throw new BuildFailedException(modelPath + " not found - run tools/blender/build_stickman.py (and build_stickman_v3.py)");
+            var moves = v3 ? BuildMoveSet(modelPath, StickmanImport.ClipJsonPathV3, GenDir + "/StickmanMovesV3.asset")
+                           : BuildMoveSet(modelPath, StickmanImport.ClipJsonPath, GenDir + "/StickmanMoves.asset");
 
             // Look of the reference: flat black silhouettes on a soft grey backdrop. Everything is
             // unlit, so no lights are needed and phones render it cheaply.
-            var ink = Mat("Ink", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
-            var enemyInk = Mat("EnemyInk", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
+            // the V3 body's ink shades its far limbs by depth in fights (Combat 3.0, option C)
+            var ink = v3 ? Mat("InkV3", "ProjectInk/InkDepth", new Color(0.02f, 0.02f, 0.02f)) : Mat("Ink", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
+            var enemyInk = v3 ? Mat("EnemyInkV3", "ProjectInk/InkDepth", new Color(0.02f, 0.02f, 0.02f)) : Mat("EnemyInk", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
             var ground = Mat("Ground", "Unlit/Color", new Color(0.02f, 0.02f, 0.02f));
             // architecture is dark grey, not black: black fighters must read against it
             var arch = Mat("Architecture", "Unlit/Color", new Color(0.30f, 0.30f, 0.30f));
@@ -291,17 +298,16 @@ namespace ProjectInk.EditorTools
             Debug.Log("[Stick Wick] scene built: " + scenePath);
         }
 
-        static MoveSet BuildMoveSet()
+        static MoveSet BuildMoveSet(string modelPath, string jsonPath, string path)
         {
-            string path = GenDir + "/StickmanMoves.asset";
             var set = AssetDatabase.LoadAssetAtPath<MoveSet>(path);
             if (set == null)
             {
                 set = ScriptableObject.CreateInstance<MoveSet>();
                 AssetDatabase.CreateAsset(set, path);
             }
-            var info = StickmanImport.LoadClipInfo();
-            var clips = AssetDatabase.LoadAllAssetsAtPath(StickmanImport.ModelPath)
+            var info = StickmanImport.LoadClipInfo(jsonPath);
+            var clips = AssetDatabase.LoadAllAssetsAtPath(modelPath)
                 .OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview__")).ToList();
             set.entries = new List<MoveSet.Entry>();
             foreach (var c in clips)
@@ -314,7 +320,9 @@ namespace ProjectInk.EditorTools
                     clip = c,
                     loop = meta != null && meta.loop,
                     hitTime = meta != null && meta.hitFrame >= 0 ? meta.hitFrame / (float)Mathf.Max(1, meta.fps) : -1f,
-                    endShift = meta != null ? meta.endShift : 0f
+                    endShift = meta != null ? meta.endShift : 0f,
+                    loadTime = meta != null && meta.loadFrame >= 0 ? meta.loadFrame / (float)Mathf.Max(1, meta.fps) : -1f,
+                    reach = meta != null ? meta.reach : 0f
                 });
             }
             EditorUtility.SetDirty(set);

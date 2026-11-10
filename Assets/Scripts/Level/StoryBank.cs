@@ -14,6 +14,8 @@ namespace ProjectInk
     public partial class StoryIntro
     {
         int chapter = 1;
+        /// <summary>1 warehouse, 2 bank, 3 street, 4 home, 5 backyard, 6 fortress, 9 road, 10 epilogue.</summary>
+        public int Chapter => chapter;
 
         // the bank's plan (BankBuilder / build_bank_set.py)
         const float BankDoorX = -0.4f, TellerX = 16.1f, ClerkZ = 3.25f, GateX = 28.5f, VaultX = 33f, TableX = 39.5f, TableY = 0.93f, TableZ = 0.75f;
