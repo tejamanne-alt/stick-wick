@@ -1408,3 +1408,24 @@ Removed:
 - the new haptic patterns.
 
 The classic controls are the base for the next improvements.
+
+## The V4 body: 29 bones, chapter 1's moves re-keyed, the clinch rebuilt
+
+- **Skeleton** (`v4_rig.py`, `docs/previews/skeleton_lab.png`):
+  - New bones: spine in three, neck, collarbones, wrists and fingers (mitten hands with a thumb), feet and toes. Every old bone keeps its name.
+  - Every old clip is carried over by `build_stickman_v4.py`, which fills in the new bones on every frame: a curved spine, shoulders that shrug and reach with the arms, feet that roll heel to ball, fists in fights and relaxed hands in the story.
+- **Pose engine** (`v4_pose.py`):
+  - What a pose can set: torso twist per segment, collarbone protraction and shrug, the fist turning over, finger curl, planted feet given by the ball of the foot with the heel pitch, feet in the air, and arm and leg IK.
+  - Detail layers baked on every frame:
+    - real steps: heel peel, swing, heel strike, roll flat;
+    - head, neck and off-arm overlap on damped springs;
+    - an impact recoil, with the fist squeezing and the shoulder popping;
+    - breathing on loops;
+    - a floor guard for kicks.
+- **Chapter 1's moves** (`v4_clips.py`): 33 clips keyed through the whole chain of events. They are the guard, every punch and kick, the knee, elbow and hammer fist, parry, slip, block, the enemies' wind-up, and every reaction. `v4_lab.py --report` checks each blow lands at its reach and every foot stays on the floor.
+- **The clinch** (`v4_clinch.py` + `HeroClinchV4.cs`): 24 moves, each keyed as a pair, the hero and the held man together.
+  - New: knee to the thigh, the plum, the headbutt, a sweep, o-soto-gari, the guillotine (hold high), the body lock (hold low, then swipe where he lands), and a belly-to-belly suplex. The hip and shoulder throws now correctly land him behind you.
+  - Combos: plum, dead leg, knee + headbutt, bent-over DDT, knees to suplex, knee into guillotine, off balance, shove + push kick. Inputs made in the second half of a knee are buffered.
+  - `GestureInput` now reports a swipe's height and a held press's height.
+  - The old clinch stays for chapters 2–6, which keep the old body.
+- Contact sheets: `docs/previews/v4_moves.png` (every move), `docs/previews/v4_clinch.png`.

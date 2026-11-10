@@ -75,6 +75,30 @@ namespace ProjectInk
             if (!Alive) { state = State.Down; body.Play("lie", 0.1f); }
         }
 
+        /// <summary>Let go where his own clip carried him (a headbutt rocks him back, a choke let go
+        /// staggers him): his root moved by the clip's travel, his pose kept, dazed for a while.</summary>
+        public void ReleaseHeldAt(float shift, float dazed, float pushX = 0f)
+        {
+            heldBy = null;
+            var p = transform.position;
+            p.x += Facing * shift;
+            transform.position = p;
+            state = State.Hurt;
+            stateTime = 0f;
+            hurtFor = Mathf.Max(0.5f, dazed);
+            if (dazed > 0.6f) dazedUntil = Time.time + dazed;
+            velocity.x = pushX;
+            if (!Alive) { state = State.Down; body.Play("lie", 0.1f); }
+        }
+
+        /// <summary>Shoved off: sent reeling back, the shove's clip played.</summary>
+        public void ReleaseShoved(string clip, float pushX)
+        {
+            ReleaseHeld(clip);
+            hurtFor = 0.6f;
+            velocity.x = pushX;
+        }
+
         /// <summary>The throw is over: put the body where it landed, on the floor.</summary>
         public void LandThrown(float shift, bool faceDown)
         {
@@ -89,7 +113,7 @@ namespace ProjectInk
             getupClip = faceDown ? "getup_face" : "getup";
             getupSpeed = faceDown ? 1.7f : 1f;
             string lieClip = faceDown ? "prone" : "lie";
-            if (body.Has(lieClip)) body.Play(lieClip, 0f);
+            if (body.Has(lieClip)) body.Play(lieClip, body.Has("plum_knee_v") ? 0.12f : 0f);     // the V4 landings blend into it
         }
 
         /// <summary>His punch knocked aside: head back, then out on his feet.</summary>

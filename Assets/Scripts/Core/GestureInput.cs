@@ -66,6 +66,12 @@ namespace ProjectInk
         float keyAxis;
 
         public bool AnyPressThisFrame { get; private set; }
+        /// <summary>The last swipe started in the upper part of the screen (the clinch: high throws).</summary>
+        public bool LastSwipeHigh { get; private set; }
+        /// <summary>A press being held still: 0 none, 1 high (upper part of the screen, or A/D held),
+        /// 2 low (lower part, or Z/X held). The clinch reads it: hold high = the choke, low = the lift.</summary>
+        public int HoldHeight { get; private set; }
+        float lowKeyAt = -1f;
         /// <summary>Run input, -1 (left) .. +1 (right).</summary>
         public float MoveAxis { get; private set; }
         public bool StickActive => stickId != int.MinValue;
@@ -161,6 +167,7 @@ namespace ProjectInk
                 if (kick) return side < 0 ? Command.KickLeft : Command.KickRight;
                 return side < 0 ? Command.StrikeLeft : Command.StrikeRight;
             }
+            LastSwipeHigh = start.y >= Screen.height * kickLine;
             if (Mathf.Abs(d.y) > Mathf.Abs(d.x)) return d.y > 0 ? Command.JumpKick : Command.ThrowWeapon;
             return d.x < 0 ? Command.DodgeLeft : Command.DodgeRight;
         }
@@ -299,6 +306,9 @@ namespace ProjectInk
                     ClassicKeys(left, right, leftDown, rightDown);
                     if (kb.zKey.wasPressedThisFrame) Push(Command.KickLeft);
                     if (kb.xKey.wasPressedThisFrame) Push(Command.KickRight);
+                    bool lowHeld = kb.zKey.isPressed || kb.xKey.isPressed;
+                    if (kb.zKey.wasPressedThisFrame || kb.xKey.wasPressedThisFrame) lowKeyAt = UnityEngine.Time.unscaledTime;
+                    else if (!lowHeld) lowKeyAt = -1f;
                     if (kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame) Push(Command.JumpKick);
                     if (kb.qKey.wasPressedThisFrame) Push(Command.DodgeLeft);
                     if (kb.eKey.wasPressedThisFrame) Push(Command.DodgeRight);
@@ -386,6 +396,13 @@ namespace ProjectInk
                 axis = Mathf.Abs(dx) < 0.15f ? 0f : Mathf.Clamp(dx, -1f, 1f);
             }
             MoveAxis = axis;
+            // which height a held press is at
+            int hh = 0;
+            foreach (var kv in holding)
+                if (touchStart.TryGetValue(kv.Key, out var hs)) hh = hs.y >= Screen.height * kickLine ? 1 : 2;
+            if (keyDownAt >= 0f && UnityEngine.Time.unscaledTime - keyDownAt > holdToRun) hh = 1;
+            if (lowKeyAt >= 0f && UnityEngine.Time.unscaledTime - lowKeyAt > holdToRun) hh = 2;
+            HoldHeight = hh;
         }
     }
 }

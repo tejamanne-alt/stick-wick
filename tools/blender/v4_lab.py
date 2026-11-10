@@ -85,15 +85,21 @@ def preview(only, every):
         n = spec["frames"]
         show = sorted(set(range(0, n + 1, every)) | {n} | ({spec["hit"]} if spec.get("hit") is not None else set()))
         D = spec.get("reach")
+        vic = c4.CLIPS.get(spec.get("victim") or "")
+        vfr = vp.frames(vic) if vic else None
         for o in (tgt, bpy.data.objects["TargetBody"]):
-            o.hide_render = D is None
-        tgt.location.x = D or 1.0
+            o.hide_render = D is None and vfr is None
+        tgt.location.x = 0.62 if vfr else (D or 1.0)
         react = c4.CLIPS.get(spec.get("react") or "")
         rfr = vp.frames(react) if react else None
+        if name.endswith("_v") and name[:-2] in c4.CLIPS:
+            continue                                   # drawn with its pair
         tiles = []
         for f in show:
             vp.apply(hero, fr[f])
-            if rfr and spec.get("hit") is not None and f >= spec["hit"]:
+            if vfr:
+                vp.apply(tgt, vfr[min(len(vfr) - 1, f)])
+            elif rfr and spec.get("hit") is not None and f >= spec["hit"]:
                 vp.apply(tgt, rfr[min(len(rfr) - 1, f - spec["hit"])])
             else:
                 vp.apply(tgt, guard)

@@ -330,20 +330,6 @@
       "hitFrame": -1
     },
     {
-      "name": "headbutt",
-      "frames": 12,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 4
-    },
-    {
-      "name": "clinch_knee",
-      "frames": 14,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 6
-    },
-    {
       "name": "clothesline",
       "frames": 16,
       "fps": 30,
@@ -365,117 +351,6 @@
       "hitFrame": 3
     },
     {
-      "name": "clinch",
-      "frames": 24,
-      "fps": 30,
-      "loop": true,
-      "hitFrame": -1
-    },
-    {
-      "name": "clinch_v",
-      "frames": 24,
-      "fps": 30,
-      "loop": true,
-      "hitFrame": -1
-    },
-    {
-      "name": "clinch_enter",
-      "frames": 8,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 3
-    },
-    {
-      "name": "shove",
-      "frames": 12,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 4
-    },
-    {
-      "name": "shoved_v",
-      "frames": 14,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": -1,
-      "endShift": -0.5526
-    },
-    {
-      "name": "hip_throw",
-      "frames": 26,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 13
-    },
-    {
-      "name": "hip_throw_v",
-      "frames": 26,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 13,
-      "endShift": 0.1179
-    },
-    {
-      "name": "shoulder_throw",
-      "frames": 28,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 15
-    },
-    {
-      "name": "shoulder_throw_v",
-      "frames": 28,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 15,
-      "endShift": 1.1421
-    },
-    {
-      "name": "suplex",
-      "frames": 40,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 20
-    },
-    {
-      "name": "suplex_v",
-      "frames": 40,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 20,
-      "endShift": 0.9579
-    },
-    {
-      "name": "body_slam",
-      "frames": 30,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 16
-    },
-    {
-      "name": "body_slam_v",
-      "frames": 30,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 16,
-      "endShift": -0.0737
-    },
-    {
-      "name": "ddt",
-      "frames": 30,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 12
-    },
-    {
-      "name": "ddt_v",
-      "frames": 30,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 12,
-      "endShift": 0.4053
-    },
-    {
       "name": "spear",
       "frames": 26,
       "fps": 30,
@@ -489,21 +364,6 @@
       "loop": false,
       "hitFrame": 8,
       "endShift": -0.4421
-    },
-    {
-      "name": "sweep",
-      "frames": 22,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 8
-    },
-    {
-      "name": "sweep_v",
-      "frames": 22,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 8,
-      "endShift": -0.2579
     },
     {
       "name": "clothesline_v",
@@ -1256,6 +1116,534 @@
       "frames": 48,
       "fps": 30,
       "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "clinch_enter",
+      "frames": 9,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "clinch_enter_v",
+      "frames": 9,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "clinch",
+      "frames": 32,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "clinch_v",
+      "frames": 32,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "clinch_strain",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "clinch_strain_v",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "clinch_knee",
+      "frames": 15,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "clinch_knee_v",
+      "frames": 15,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "thigh_knee",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "thigh_knee_v",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "plum_knee",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "plum_knee_v",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.42,
+      "v4": true
+    },
+    {
+      "name": "headbutt",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "headbutt_v",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.2,
+      "v4": true
+    },
+    {
+      "name": "sweep",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "sweep_v",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.45,
+      "v4": true
+    },
+    {
+      "name": "reap",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 7,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.3,
+      "v4": true
+    },
+    {
+      "name": "reap_v",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.62,
+      "v4": true
+    },
+    {
+      "name": "hip_throw",
+      "frames": 28,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 13,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.08,
+      "v4": true
+    },
+    {
+      "name": "hip_throw_v",
+      "frames": 28,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 1.5,
+      "v4": true
+    },
+    {
+      "name": "shoulder_throw",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 13,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.08,
+      "v4": true
+    },
+    {
+      "name": "shoulder_throw_v",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 1.5,
+      "v4": true
+    },
+    {
+      "name": "suplex",
+      "frames": 44,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 20,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.08,
+      "v4": true
+    },
+    {
+      "name": "suplex_v",
+      "frames": 44,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 1.77,
+      "v4": true
+    },
+    {
+      "name": "body_slam",
+      "frames": 34,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 16,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.1,
+      "v4": true
+    },
+    {
+      "name": "body_slam_v",
+      "frames": 34,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.4,
+      "v4": true
+    },
+    {
+      "name": "ddt",
+      "frames": 32,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 10,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.42,
+      "v4": true
+    },
+    {
+      "name": "ddt_v",
+      "frames": 32,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.05,
+      "v4": true
+    },
+    {
+      "name": "guillotine_in",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 7,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "guillotine_in_v",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "guillotine",
+      "frames": 30,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "guillotine_v",
+      "frames": 30,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "guillotine_drop",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 8,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.34,
+      "v4": true
+    },
+    {
+      "name": "guillotine_drop_v",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "guillotine_let",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "guillotine_let_v",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.18,
+      "v4": true
+    },
+    {
+      "name": "lock_lift",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 10,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "lock_lift_v",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "lock_hold",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "lock_hold_v",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "lock_slam",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 7,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.2,
+      "v4": true
+    },
+    {
+      "name": "lock_slam_v",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.44,
+      "v4": true
+    },
+    {
+      "name": "lock_suplex",
+      "frames": 40,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 9,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.06,
+      "v4": true
+    },
+    {
+      "name": "lock_suplex_v",
+      "frames": 40,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 1.72,
+      "v4": true
+    },
+    {
+      "name": "lock_drop",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "lock_drop_v",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.06,
+      "v4": true
+    },
+    {
+      "name": "shove",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "shoved_v",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,

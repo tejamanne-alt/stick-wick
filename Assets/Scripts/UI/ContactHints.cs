@@ -72,6 +72,22 @@ namespace ProjectInk
             keys.fontSize = Mathf.RoundToInt(14 * k);
 
             // the clinch: what each gesture does
+            if (hero.InClinch && throws < 3 && hero.body != null && hero.body.Has("plum_knee"))
+            {
+                string[] rows =
+                {
+                    "TAP HIGH  ·  knee   (x3: THE PLUM)",
+                    "TAP LOW  ·  knee to the thigh   (x2: sweep · then high: headbutt)",
+                    "HOLD HIGH  ·  guillotine (keep holding)",
+                    "HOLD LOW  ·  lift him · then swipe where he lands",
+                    "SWIPE AT HIM  ·  reap him down in front",
+                    "SWIPE AWAY  ·  over you: high = shoulder, low = hip",
+                    "SWIPE UP  ·  suplex      SWIPE DOWN  ·  DDT",
+                    "TAP BEHIND YOU  ·  shove (then tap low: push kick)",
+                };
+                Card("THE CLINCH", rows, "keys:  A / D punch (hold: high)   Z / X kick (hold: low)   Q / E swipe   W up   S down", k);
+                return;
+            }
             if (hero.InClinch && throws < 3)
             {
                 string[] rows =

@@ -58,6 +58,7 @@ namespace ProjectInk
             public bool fromRange;                     // a spear: closes the gap on the way in
             public bool keepHold;                      // a knee: back to the clinch afterwards
             public string react;                       // a held blow: the clip he plays at the hit
+            public float daze;                         // let go standing (V4): dazed this long
         }
 
         static readonly GrappleMove Knee = new GrappleMove { clip = "clinch_knee", damage = 12, keepHold = true, react = "hit_body", label = "KNEE" };
@@ -241,6 +242,7 @@ namespace ProjectInk
             e.BeginHeld(this);
             PinFoe();
             body.Play("clinch_enter", 0.05f, true, 1.2f);
+            if (NewClinch) { e.HeldPlay("clinch_enter_v", 0.05f); clinchSeq = ""; strainShown = false; clinchQueued = Command.None; clinchQueuedHold = 0; holdArmed = false; }
             Sound.Play(Sfx.Cloth, 1.2f, transform.position);
             Sound.Play(Sfx.HeroEffort, 0.6f, transform.position);
             if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(10, "CLINCH");
@@ -268,7 +270,12 @@ namespace ProjectInk
         void UpdateHold(float dt)
         {
             PinFoe();
-            if (body.CurrentName == "clinch_enter" && body.Finished) body.Play("clinch", 0.1f);
+            if (body.CurrentName == "clinch_enter" && body.Finished)
+            {
+                body.Play("clinch", 0.1f);
+                if (NewClinch) clinchFoe.HeldPlay("clinch_v", 0.1f);
+            }
+            if (NewClinch) { UpdateHoldV4(dt); return; }
             var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
             int toward = Facing;
             switch (cmd)
@@ -341,6 +348,7 @@ namespace ProjectInk
         {
             var e = body.Current;
             if (e == null || clinchFoe == null) { EndClinch(); return; }
+            if (NewClinch && UpdateGrappleV4()) return;
             if (grapple.fromRange)
             {
                 // close the gap in the first beat (the tackle's drive, the arm's sweep)
@@ -364,6 +372,7 @@ namespace ProjectInk
                     clinchIdle = 0f;
                     body.Play("clinch", 0.12f);
                     clinchFoe.HeldPlay("clinch_v", 0.12f);
+                    if (NewClinch) RunQueuedV4();
                     return;
                 }
                 FinishGrapple();
@@ -403,6 +412,7 @@ namespace ProjectInk
             {
                 var entry = foe.body != null ? foe.body.Current : null;
                 if (grapple.throwDown) foe.LandThrown(entry != null ? entry.endShift : 0f, grapple.faceDown);
+                else if (NewClinch && !string.IsNullOrEmpty(grapple.victim)) foe.ReleaseHeldAt(entry != null ? entry.endShift : 0f, grapple.daze);
                 else foe.ReleaseHeld(foe.Alive ? "stumble_back" : null);
             }
             // where the hero's own clip carried him
@@ -436,7 +446,8 @@ namespace ProjectInk
             body.Play("shove", 0.05f);
             if (foe != null)
             {
-                foe.ReleaseHeld("shoved_v");
+                if (NewClinch) { foe.ReleaseShoved("shoved_v", Facing * 3.4f); shovedFoe = foe; shovedAt = Time.time; }
+                else foe.ReleaseHeld("shoved_v");
                 Sound.Play(Sfx.Cloth, 1f, foe.Chest);
             }
         }

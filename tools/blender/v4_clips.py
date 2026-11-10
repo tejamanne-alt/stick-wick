@@ -495,6 +495,12 @@ CLIPS["dazed"] = clip(48, [
 ], loop=True, breath=True, breaths=3, note="out on his feet: hands low and open, the head lolling, swaying")
 
 
+# ---------------------------------------------------------------- the clinch (paired clips)
+import v4_clinch  # noqa: E402
+
+CLIPS.update(v4_clinch.CLIPS)
+
+
 def key_clip(arm, name, spec):
     return vp.key_clip(arm, name, spec)
 

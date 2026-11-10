@@ -1087,6 +1087,7 @@ namespace ProjectInk
                 return;
             }
             running = false;
+            if (TryShovePushKick(cmd)) return;
             switch (cmd)
             {
                 case Command.StrikeLeft: Strike(-1); break;
