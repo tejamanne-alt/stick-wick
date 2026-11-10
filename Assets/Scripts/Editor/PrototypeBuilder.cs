@@ -553,7 +553,7 @@ namespace ProjectInk.EditorTools
             Directory.CreateDirectory(Path.GetDirectoryName(ApkPath));
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
-                scenes = new[] { MenuScenePath, StoryScenePath, ScenePath },
+                scenes = BuildScenes.All,                      // every chapter (it used to be the menu, chapter 1 and the tower only)
                 locationPathName = ApkPath,
                 target = BuildTarget.Android,
                 options = BuildOptions.None
