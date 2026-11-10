@@ -142,7 +142,9 @@ namespace ProjectInk
                     hero.CinePuppet();
                     hero.SetFacing(1);
                     hero.CinePose(home);
-                    if (hero.body.Has("lie")) hero.body.Play("lie", 0f);
+                    // he comes to tied to a chair, his head fallen back to the roof
+                    BuildChair();
+                    hero.body.Play(hero.body.Has("sit_bound") ? "sit_bound" : "lie", 0f);
                     // the crack sits right over his face
                     var hc = HeadC();
                     foreach (var c in new[] { crack, crackTop })
@@ -155,7 +157,7 @@ namespace ProjectInk
                 case Phase.Cinematic:
                     prevT = t;
                     if (!OpeningGate()) t += dt / Pace;
-                    Cinematic();
+                    if (!chairScene) Cinematic();
                     UpdateTies();
                     break;
                 case Phase.Walk: UpdateWalk(); break;
@@ -689,6 +691,8 @@ namespace ProjectInk
         /// <summary>SKIP, or a retry after a defeat: straight to the walk.</summary>
         void SkipToWalk()
         {
+            chairScene = false;
+            TipChair(1f);
             hero.transform.rotation = Quaternion.identity;
             hero.SetFacing(1);
             hero.CinePose(new Vector3(home.x + 4.2f, home.y, 0f));
@@ -887,7 +891,7 @@ namespace ProjectInk
             float w = Screen.width / scale, h = Screen.height / scale, barK = h / 720f;
             bool repaint = Event.current.type == EventType.Repaint;
 
-            if (phase == Phase.Cinematic)
+            if (phase == Phase.Cinematic && !chairScene)
             {
                 if (t >= S3 && t < S4) Puddle(w, h, t - S3);
                 if (t < S1) Rain(w, h, 0.42f);
@@ -1375,7 +1379,8 @@ namespace ProjectInk
         Texture2D blowStill;
         int openingGate;                 // 0 none passed, 1 his eyes, 2 the ties
         Coroutine gateRun;
-        bool gateBusy, tied = true;
+        bool gateBusy, tied, chairScene;
+        Transform chairRig, ropes;
         Transform ties;
 
         /// <summary>The opening holds at two moments until the player does them: OPEN YOUR EYES (hold:
@@ -1390,12 +1395,7 @@ namespace ProjectInk
                 gateRun = StartCoroutine(GateEyes());
                 return true;
             }
-            if (openingGate == 1 && t >= S4 + 2.35f)
-            {
-                gateBusy = true;
-                gateRun = StartCoroutine(GateTies());
-                return true;
-            }
+
             return false;
         }
 
@@ -1404,6 +1404,9 @@ namespace ProjectInk
             StartCoroutine(VoicesBeyond());
             yield return HoldTo("OPEN YOUR EYES", 2.2f, p => StoryCameraFX.Set(Mathf.Lerp(0.85f, 0.3f, p), 0f));
             openingGate = 1;
+            yield return ChairScene();
+            openingGate = 2;
+            t = prevT = S3 - 0.02f;           // on into the puddle shot: he is on his hands and knees now
             gateBusy = false;
         }
 
@@ -1455,6 +1458,120 @@ namespace ProjectInk
             var d = b2 - a;
             ties.rotation = d.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(d.normalized) : Quaternion.identity;
             ties.localScale = new Vector3(0.025f, 0.025f, Mathf.Max(0.04f, d.magnitude));
+        }
+    
+        // ================================================================ the chair (story v2, 1.2)
+
+        /// <summary>A wooden kitchen chair at his spot, and the ropes round him: three turns round his
+        /// chest and arms to the chair back, one round his shins to the legs, a tail on the floor.</summary>
+        void BuildChair()
+        {
+            if (chairRig != null) return;
+            var wood = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.16f, 0.15f, 0.14f) };
+            var rope = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.62f, 0.6f, 0.55f) };
+            chairRig = new GameObject("WakeChair").transform;
+            chairRig.position = home + new Vector3(-0.04f, 0f, 0f);
+            Transform P(Transform parent, PrimitiveType t0, Vector3 at, Vector3 sc, Material m, Vector3 e = default)
+            {
+                var g = GameObject.CreatePrimitive(t0);
+                Destroy(g.GetComponent<Collider>());
+                g.transform.SetParent(parent, false);
+                g.transform.localPosition = at;
+                g.transform.localRotation = Quaternion.Euler(e);
+                g.transform.localScale = sc;
+                g.GetComponent<Renderer>().sharedMaterial = m;
+                return g.transform;
+            }
+            P(chairRig, PrimitiveType.Cube, new Vector3(0f, 0.45f, 0f), new Vector3(0.46f, 0.045f, 0.44f), wood);           // the seat
+            for (int i = 0; i < 4; i++)
+                P(chairRig, PrimitiveType.Cube, new Vector3(i < 2 ? -0.2f : 0.2f, 0.22f, i % 2 == 0 ? -0.19f : 0.19f), new Vector3(0.04f, 0.45f, 0.04f), wood);
+            P(chairRig, PrimitiveType.Cube, new Vector3(-0.21f, 0.82f, -0.19f), new Vector3(0.045f, 0.75f, 0.045f), wood);   // the back posts
+            P(chairRig, PrimitiveType.Cube, new Vector3(-0.21f, 0.82f, 0.19f), new Vector3(0.045f, 0.75f, 0.045f), wood);
+            P(chairRig, PrimitiveType.Cube, new Vector3(-0.21f, 1.12f, 0f), new Vector3(0.05f, 0.1f, 0.44f), wood);         // the top rail
+            P(chairRig, PrimitiveType.Cube, new Vector3(-0.21f, 0.8f, 0f), new Vector3(0.03f, 0.05f, 0.4f), wood);
+            ropes = new GameObject("Ropes").transform;
+            ropes.SetParent(chairRig, false);
+            for (int i = 0; i < 3; i++)                                                                                   // round his chest and arms
+                P(ropes, PrimitiveType.Cylinder, new Vector3(-0.02f, 0.66f + i * 0.09f, 0f), new Vector3(0.44f, 0.012f, 0.4f), rope);
+            P(ropes, PrimitiveType.Cylinder, new Vector3(0.14f, 0.2f, 0f), new Vector3(0.3f, 0.012f, 0.38f), rope);       // his shins to the legs
+            P(ropes, PrimitiveType.Cube, new Vector3(-0.3f, 0.36f, -0.12f), new Vector3(0.02f, 0.6f, 0.02f), rope, new Vector3(0f, 0f, 18f));   // the knot's tail
+            P(ropes, PrimitiveType.Cube, new Vector3(-0.42f, 0.01f, -0.1f), new Vector3(0.5f, 0.02f, 0.03f), rope, new Vector3(0f, 25f, 0f));
+        }
+
+        float chairTip = -1f;
+
+        /// <summary>The chair goes over backwards (u 0..1); the ropes fall slack to the floor.</summary>
+        void TipChair(float u)
+        {
+            if (chairRig == null) return;
+            chairTip = u;
+            chairRig.rotation = Quaternion.Euler(0f, 0f, 82f * Mathf.SmoothStep(0f, 1f, u));
+            chairRig.position = home + new Vector3(-0.04f - 0.5f * u, 0.0f, 0f);
+            if (ropes != null && u > 0.05f)
+            {
+                ropes.SetParent(null, true);
+                foreach (Transform r in ropes) r.position = new Vector3(r.position.x, Mathf.Max(0.012f, r.position.y - 3f * Time.unscaledDeltaTime), r.position.z);
+            }
+        }
+
+        /// <summary>1.2: overhead, slowly turning: him tied to the chair in the dark hall, the voices
+        /// beyond the shutter. Then BREAK FREE: the chair rocks with every pull, the ropes give, it goes
+        /// over and he lands on his hands and knees in the puddle (and the opening goes on from there).</summary>
+        IEnumerator ChairScene()
+        {
+            chairScene = true;
+            StoryCameraFX.Set(0f, 0f);
+            if (drop0R != null) drop0R.enabled = false;
+            if (drop1R != null) drop1R.enabled = false;
+            BuildChair();
+            hero.CinePose(home);
+            hero.SetFacing(1);
+            if (hero.body.Has("sit_bound")) hero.body.Play("sit_bound", 0.3f);
+            var c = home + Vector3.up * 0.7f;
+            float a0 = Time.unscaledTime;
+            System.Action overhead = () =>
+            {
+                float a = (Time.unscaledTime - a0) * 0.22f;
+                if (cam != null) cam.Scripted(c + new Vector3(Mathf.Cos(a) * 1.0f, 3.6f, Mathf.Sin(a) * 1.0f - 0.4f), c, 1f, 52f);
+            };
+            Sound.Play(Sfx.Breath, 0.8f);
+            for (float t0 = 0f; t0 < 3.0f; t0 += Time.unscaledDeltaTime) { overhead(); yield return null; }
+            Say("YOU", "...Where...?", 1.8f);
+            Sound.Play(Sfx.Struggle, 0.5f);
+            for (float t0 = 0f; t0 < 2.0f; t0 += Time.unscaledDeltaTime) { overhead(); yield return null; }
+            // low, close: his wrists behind the chair, the rope biting
+            System.Action low = () => { if (cam != null) cam.Scripted(home + new Vector3(-1.1f, 0.55f, -0.9f), home + new Vector3(-0.2f, 0.62f, 0f), 1f, 40f); };
+            Say("YOU", "Rope...", 1.4f);
+            for (float t0 = 0f; t0 < 1.6f; t0 += Time.unscaledDeltaTime) { low(); yield return null; }
+            // BREAK FREE: the chair rocks with every pull
+            float rock = 0f;
+            StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () =>
+            {
+                rock = Mathf.MoveTowards(rock, 0f, Time.unscaledDeltaTime * 30f);
+                if (chairRig != null) chairRig.rotation = Quaternion.Euler(0f, 0f, rock);
+                hero.transform.rotation = Quaternion.Euler(0f, 0f, rock * 0.6f);
+                if (cam != null) cam.Scripted(home + new Vector3(0.2f, 1.1f, -2.4f) + Sway(0.02f, 1.5f, 9f) * Mathf.Abs(rock), home + Vector3.up * 0.7f, 1f, 44f);
+            }));
+            yield return MashTo("BREAK FREE", 8, p => { });
+            // the ropes give; the chair goes over; he lands on his hands and knees
+            hero.transform.rotation = Quaternion.identity;
+            Sound.Play(Sfx.Bone, 0.8f, null, 1.5f);
+            Sound.Play(Sfx.Crate, 0.8f, home);
+            Sound.Play(Sfx.HeroEffort, 0.9f, null, 0.85f);
+            Haptics.Vibrate();
+            if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.04f);
+            if (hero.body.Has("allfours")) hero.body.Play("allfours", 0.12f);
+            for (float t0 = 0f; t0 < 0.7f; t0 += Time.unscaledDeltaTime)
+            {
+                TipChair(Mathf.Clamp01(t0 / 0.45f));
+                hero.CinePose(home + Vector3.right * 0.25f * Mathf.Clamp01(t0 / 0.5f));
+                if (cam != null) cam.Scripted(home + new Vector3(0.6f, 0.5f, -2.0f), home + Vector3.up * 0.4f, 1f, 44f);
+                yield return null;
+            }
+            TipChair(1f);
+            Sound.Play(Sfx.Splash, 0.9f, home);
+            hero.CinePose(home);
+            chairScene = false;
         }
     }
 }

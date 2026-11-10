@@ -247,40 +247,52 @@ namespace ProjectInk
             SceneManager.LoadScene("Story_Street");
         }
 
+        int testChapter;
+
+        /// <summary>The checkpoints as tabs: the chapters down the left, the selected chapter's
+        /// checkpoints on the right (never more than a dozen rows, so nothing overlaps on a phone).</summary>
         void TestPanel(float w, float h)
         {
-            int heads = 0;
-            string seen = null;
-            foreach (var c in Checkpoints) if (c.chapter != seen) { seen = c.chapter; heads++; }
-            int rows = Checkpoints.Length + heads;
-            float pw = Mathf.Min(760f, w - 40f), rowH = Mathf.Min(34f, (h - 90f) / rows);
-            float ph = rows * rowH + 60f;
-            var r = new Rect((w - pw) * 0.5f, Mathf.Max(10f, (h - ph) * 0.5f), pw, ph);
-            Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.75f));
+            var chapters = new System.Collections.Generic.List<string>();
+            foreach (var c in Checkpoints) if (!chapters.Contains(c.chapter)) chapters.Add(c.chapter);
+            testChapter = Mathf.Clamp(testChapter, 0, chapters.Count - 1);
+            int most = 0;
+            foreach (var ch in chapters) { int n = 0; foreach (var c in Checkpoints) if (c.chapter == ch) n++; most = Mathf.Max(most, n); }
+            float pw = Mathf.Min(1100f, w - 30f), ph = Mathf.Min(h - 30f, 70f + Mathf.Max(chapters.Count, most) * 46f);
+            var r = new Rect((w - pw) * 0.5f, (h - ph) * 0.5f, pw, ph);
+            Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.8f));
             Fill(r, new Color(0.08f, 0.08f, 0.09f, 0.98f));
             Fill(new Rect(r.x, r.y, r.width, 3), new Color(1f, 0.75f, 0.1f, 0.9f));
             btnSub.normal.textColor = new Color(1f, 0.8f, 0.3f, 0.95f);
             GUI.Label(new Rect(r.x, r.y + 8, pw, 30), "TEST  ·  CHECKPOINTS   (testing only)", btnSub);
-            float yy = r.y + 46f;
-            string last = null;
-            foreach (var c in Checkpoints)
+            float top = r.y + 50f, avail = r.yMax - top - 10f;
+            float leftW = Mathf.Min(340f, pw * 0.36f);
+            float tabH = Mathf.Min(44f, avail / chapters.Count);
+            for (int i = 0; i < chapters.Count; i++)
             {
-                if (c.chapter != last)
-                {
-                    last = c.chapter;
-                    btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.55f);
-                    GUI.Label(new Rect(r.x + 20, yy, pw - 40, rowH), Spaced(c.chapter), btnSub);
-                    yy += rowH;
-                }
-                var row = new Rect(r.x + 40, yy + 2, pw - 80, rowH - 4);
+                var tr = new Rect(r.x + 12, top + i * tabH, leftW - 12, tabH - 4);
+                bool sel = i == testChapter;
+                Fill(tr, new Color(1f, 1f, 1f, sel ? 0.18f : tr.Contains(Event.current.mousePosition) ? 0.1f : 0.04f));
+                if (sel) Fill(new Rect(tr.x, tr.y, 4, tr.height), new Color(0.8f, 0.06f, 0.07f));
+                btnSub.normal.textColor = new Color(1f, 1f, 1f, sel ? 1f : 0.65f);
+                GUI.Label(tr, chapters[i], btnSub);
+                if (GUI.Button(tr, GUIContent.none, GUIStyle.none)) testChapter = i;
+            }
+            var rows = new System.Collections.Generic.List<(string chapter, string label, System.Action go)>();
+            foreach (var c in Checkpoints) if (c.chapter == chapters[testChapter]) rows.Add(c);
+            float rowH = Mathf.Min(44f, avail / Mathf.Max(1, rows.Count));
+            float rx = r.x + leftW + 12f, rw = r.xMax - rx - 12f;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = new Rect(rx, top + i * rowH, rw, rowH - 4);
                 Fill(row, new Color(1f, 1f, 1f, row.Contains(Event.current.mousePosition) ? 0.14f : 0.05f));
                 btnSub.normal.textColor = Color.white;
-                GUI.Label(row, c.label, btnSub);
-                if (GUI.Button(row, GUIContent.none, GUIStyle.none)) { testOpen = false; c.go(); }
-                yy += rowH;
+                GUI.Label(row, rows[i].label, btnSub);
+                if (GUI.Button(row, GUIContent.none, GUIStyle.none)) { testOpen = false; rows[i].go(); }
             }
-            var close = new Rect(r.xMax - 44, r.y + 6, 36, 30);
-            btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.7f);
+            var close = new Rect(r.xMax - 50, r.y + 6, 44, 34);
+            Fill(close, new Color(1f, 1f, 1f, 0.08f));
+            btnSub.normal.textColor = new Color(1f, 1f, 1f, 0.8f);
             GUI.Label(close, "X", btnSub);
             if (GUI.Button(close, GUIContent.none, GUIStyle.none)) testOpen = false;
         }

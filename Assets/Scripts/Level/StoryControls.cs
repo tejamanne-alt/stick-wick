@@ -75,6 +75,15 @@ namespace ProjectInk
             foreach (var k in keys) if (kb[k].wasPressedThisFrame) return true;
             return false;
         }
+        static bool AnyKeyTapped()
+        {
+            var kb = Keyboard.current;
+            if (kb != null && kb.anyKey.wasPressedThisFrame) return true;
+            var ts = Touchscreen.current;
+            if (ts != null) foreach (var tc in ts.touches) if (tc.press.wasPressedThisFrame) return true;
+            var ms = Mouse.current;
+            return ms != null && ms.leftButton.wasPressedThisFrame;
+        }
 #else
         // no Input System in this build: the story's prompts wait (never the legacy Input API)
         enum SKey { E, Space, Enter, D, A, LeftArrow, RightArrow, W, UpArrow, S, DownArrow, Digit1, Digit2, Digit3, Numpad1, Numpad2, Numpad3 }
@@ -82,6 +91,7 @@ namespace ProjectInk
         static Vector2 PointerPos() => new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         static bool KeyHeld(params SKey[] keys) => false;
         static bool KeyTapped(params SKey[] keys) => false;
+        static bool AnyKeyTapped() => false;
 #endif
 
         /// <summary>Screen pixels (origin bottom left) to the story GUI's space (scaled, origin top left).</summary>
@@ -151,7 +161,9 @@ namespace ProjectInk
             while (scProgress < 1f)
             {
                 bool down = PointerDown();
-                bool tap = (down && !pointerWasDown) || KeyTapped(SKey.E, SKey.Space, SKey.Enter, SKey.D, SKey.A);
+                var gi = GestureInput.Instance;
+                bool tap = (down && !pointerWasDown) || AnyKeyTapped() || (gi != null && gi.AnyPressThisFrame);
+                if (gi != null) gi.Flush();
                 pointerWasDown = down;
                 if (tap)
                 {
