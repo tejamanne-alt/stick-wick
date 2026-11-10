@@ -1,6 +1,13 @@
 {
   "clips": [
     {
+      "name": "idle",
+      "frames": 90,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1
+    },
+    {
       "name": "hit_front",
       "frames": 12,
       "fps": 30,
@@ -443,7 +450,7 @@
     },
     {
       "name": "block_hold",
-      "frames": 24,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
@@ -736,14 +743,6 @@
       "fps": 30,
       "loop": true,
       "hitFrame": -1
-    },
-    {
-      "name": "idle",
-      "frames": 35,
-      "fps": 30,
-      "loop": true,
-      "hitFrame": -1,
-      "source": "CMU 13_17"
     },
     {
       "name": "jab",
