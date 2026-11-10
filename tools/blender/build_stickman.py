@@ -113,10 +113,10 @@ STRAIGHT = pose(spine=180, chest=180, head=180, upperarm_L=10, forearm_L=10,
 
 # Each clip: frames, loop flag, hit frame (or None), and (frame, pose) keys.
 CLIPS = {
-    "idle": dict(frames=24, loop=True, hit=None, keys=[
+    "idle": dict(frames=90, loop=True, hit=None, keys=[             # guard up, breathing: still, not a bounce
         (0, STANCE),
-        (12, pose(chest=169, spine=175, forearm_L=146, forearm_R=156, dz=-0.075)),
-        (24, STANCE)]),
+        (45, pose(chest=171, spine=176, dz=-0.008)),
+        (90, STANCE)]),
     "run": dict(frames=16, loop=True, hit=None, keys=[
         (0, RUN_A), (4, RUN_PASS_A), (8, RUN_B), (12, RUN_PASS_B), (16, RUN_A)]),
     "jab": dict(frames=12, loop=False, hit=4, keys=[
@@ -232,10 +232,10 @@ HANG = pose(STRAIGHT, spine=180, chest=180, head=182, upperarm_L=176, forearm_L=
 
 WEAPON_CLIPS = {
     # ---- sword (all hand-keyed for big, readable arcs, like the reference)
-    "sword_idle": dict(frames=30, loop=True, hit=None, keys=[
+    "sword_idle": dict(frames=90, loop=True, hit=None, keys=[
         (0, SW_IDLE),
-        (15, pose(SW_IDLE, chest=165, forearm_R=76, hand_R=122, dz=-0.10)),
-        (30, SW_IDLE)]),
+        (45, pose(SW_IDLE, dz=-0.008)),
+        (90, SW_IDLE)]),
     # Fast and snappy: a 1-2 frame anticipation, the cut on frame 3-5, a held follow-through.
     "sword_a": dict(frames=11, loop=False, hit=3, keys=[       # rising diagonal cut
         (0, SW_IDLE),
@@ -305,10 +305,10 @@ WEAPON_CLIPS = {
         (26, SW_IDLE)]),
 
     # ---- gun-fu (pistol in the right hand)
-    "gun_idle": dict(frames=30, loop=True, hit=None, keys=[
+    "gun_idle": dict(frames=90, loop=True, hit=None, keys=[
         (0, GUN_IDLE),
-        (15, pose(GUN_IDLE, chest=169, dz=-0.07)),
-        (30, GUN_IDLE)]),
+        (45, pose(GUN_IDLE, dz=-0.008)),
+        (90, GUN_IDLE)]),
     "gun_shoot": dict(frames=10, loop=False, hit=2, keys=[     # extend and fire forward
         (0, GUN_IDLE),
         (2, pose(GUN_IDLE, upperarm_R=88, forearm_R=90, hand_R=90, upperarm_L=80, forearm_L=92, hand_L=90)),
@@ -535,8 +535,8 @@ STORY_CLIPS = {
         (0, ALLFOURS), (18, pose(ALLFOURS, spine=82, chest=77, head=54)), (36, ALLFOURS)]),
     "rise": dict(frames=54, loop=False, hit=None, keys=[            # all fours -> one knee -> standing
         (0, ALLFOURS), (14, KNEEL_PUSH), (26, KNEEL), (40, KNEEL), (54, LOOSE)]),
-    "idle_loose": dict(frames=48, loop=True, hit=None, keys=[       # standing, not in a guard: he does not know he fights
-        (0, LOOSE), (24, pose(LOOSE, chest=174, head=174, dz=-0.01)), (48, LOOSE)]),
+    "idle_loose": dict(frames=90, loop=True, hit=None, keys=[       # standing, not in a guard: he does not know he fights
+        (0, LOOSE), (45, pose(LOOSE, chest=175, dz=-0.005)), (90, LOOSE)]),
     "look_hands": dict(frames=48, loop=False, hit=None, keys=[      # hands up, palms turned, then fists
         (0, LOOSE), (12, HANDS_UP), (22, HANDS_TURN), (31, FISTS),
         (34, pose(FISTS, forearm_L=154, forearm_R=149)), (37, FISTS), (48, FISTS)]),
@@ -593,8 +593,8 @@ LIE_UP = rotated(pose(STRAIGHT, spine=176, chest=150, head=140, upperarm_L=-40, 
 LIE_GUN = rotated(pose(STRAIGHT, spine=176, chest=154, head=146, upperarm_L=-40, forearm_L=-90, upperarm_R=108, forearm_R=96, hand_R=96,
                        thigh_L=8, shin_L=-4, thigh_R=-4, shin_R=-12), 90, dz=-0.78)
 ENDING_CLIPS = {
-    "kneel_hold": dict(frames=48, loop=True, hit=None, keys=[        # on one knee, his fist in the man's collar
-        (0, KNEEL_HOLD), (24, pose(KNEEL_HOLD, chest=158, head=153)), (48, KNEEL_HOLD)]),
+    "kneel_hold": dict(frames=90, loop=True, hit=None, keys=[        # on one knee, his fist in the man's collar
+        (0, KNEEL_HOLD), (45, pose(KNEEL_HOLD, chest=KNEEL_HOLD.get("chest", 160) - 1)), (90, KNEEL_HOLD)]),
     "kneel_grip": dict(frames=8, loop=True, hit=None, keys=[         # both hands on the gun hand, shaking
         (0, KNEEL_GRIP), (4, pose(KNEEL_GRIP, upperarm_L=60, forearm_L=92, upperarm_R=66, forearm_R=74)), (8, KNEEL_GRIP)]),
     "lie_up": dict(frames=48, loop=True, hit=None, keys=[            # down, propped on his elbows, breathing hard
@@ -942,8 +942,8 @@ CONTACT_CLIPS = {
         (24, GUARD)]),
     "dazed": dict(frames=40, loop=True, hit=None, keys=[          # out on his feet: hands low, swaying
         (0, DAZED_A), (20, DAZED_B), (40, DAZED_A)]),
-    "kneel_hurt": dict(frames=40, loop=True, hit=None, keys=[     # down on one knee, a hand on the ground
-        (0, pose(KNEEL_PUSH, head=140)), (20, pose(KNEEL_PUSH, head=146, chest=146)), (40, pose(KNEEL_PUSH, head=140))]),
+    "kneel_hurt": dict(frames=90, loop=True, hit=None, keys=[     # down on one knee, a hand on the ground
+        (0, pose(KNEEL_PUSH, head=140)), (45, pose(KNEEL_PUSH, head=141)), (90, pose(KNEEL_PUSH, head=140))]),
 }
 CLIPS.update(CONTACT_CLIPS)
 
@@ -952,8 +952,8 @@ SIT_BOUND = pose(STRAIGHT, spine=176, chest=170, head=150, upperarm_L=-28, forea
                  thigh_L=88, shin_L=2, thigh_R=92, shin_R=-2, dz=-0.34)          # on a kitchen chair, hands tied behind
 SIT_JOLT = pose(SIT_BOUND, spine=194, chest=206, head=222, upperarm_L=-52, upperarm_R=-56, thigh_L=96, shin_L=30, thigh_R=100, shin_R=24)
 HOME_CLIPS = {
-    "sit_bound": dict(frames=48, loop=True, hit=None, keys=[
-        (0, SIT_BOUND), (24, pose(SIT_BOUND, head=146, chest=168)), (48, SIT_BOUND)]),
+    "sit_bound": dict(frames=90, loop=True, hit=None, keys=[
+        (0, SIT_BOUND), (45, pose(SIT_BOUND, chest=169)), (90, SIT_BOUND)]),
     "sit_shock": dict(frames=12, loop=True, hit=None, keys=[                   # the current through him
         (0, SIT_JOLT), (3, pose(SIT_JOLT, spine=190, head=214, chest=200)), (6, SIT_JOLT),
         (9, pose(SIT_JOLT, spine=192, head=218, upperarm_L=-46)), (12, SIT_JOLT)]),
@@ -963,10 +963,8 @@ HOME_CLIPS = {
         (0, pose(LOOSE, upperarm_R=62, forearm_R=84, hand_R=84, upperarm_L=10, forearm_L=30, head=172)),
         (20, pose(LOOSE, upperarm_R=64, forearm_R=86, hand_R=86, upperarm_L=10, forearm_L=30, head=170, chest=174)),
         (40, pose(LOOSE, upperarm_R=62, forearm_R=84, hand_R=84, upperarm_L=10, forearm_L=30, head=172))]),
-    "kneel_hand": dict(frames=48, loop=True, hit=None, keys=[                   # on one knee by her, holding her hand
-        (0, pose(KNEEL, chest=150, head=128, upperarm_R=36, forearm_R=18, upperarm_L=60, forearm_L=40)),
-        (24, pose(KNEEL, chest=148, head=124, upperarm_R=36, forearm_R=18, upperarm_L=62, forearm_L=42)),
-        (48, pose(KNEEL, chest=150, head=128, upperarm_R=36, forearm_R=18, upperarm_L=60, forearm_L=40))]),
+    "kneel_hand": dict(frames=90, loop=True, hit=None, keys=[             # at rest: still, a slow breath
+        (0, pose(KNEEL, chest=150, head=128, upperarm_R=36, forearm_R=18, upperarm_L=60, forearm_L=40)), (45, pose(KNEEL, chest=150, head=128, upperarm_R=36, forearm_R=18, upperarm_L=60, forearm_L=40)), (90, pose(KNEEL, chest=150, head=128, upperarm_R=36, forearm_R=18, upperarm_L=60, forearm_L=40))]),
 }
 CLIPS.update(HOME_CLIPS)
 
@@ -974,26 +972,21 @@ CLIPS.update(HOME_CLIPS)
 SIT_DRIVE = pose(STRAIGHT, spine=172, chest=168, head=174, upperarm_L=58, forearm_L=96, upperarm_R=58, forearm_R=96,
                  thigh_L=88, shin_L=4, thigh_R=88, shin_R=4, dz=-0.34)              # in a car seat, both hands on the wheel
 V2_CLIPS = {
-    "sit_drive": dict(frames=60, loop=True, hit=None, keys=[
-        (0, SIT_DRIVE), (30, pose(SIT_DRIVE, upperarm_L=62, forearm_L=92, head=172)), (60, SIT_DRIVE)]),
-    "sit_drive_talk": dict(frames=40, loop=True, hit=None, keys=[             # one hand on the wheel, the walkie at his mouth
-        (0, pose(SIT_DRIVE, upperarm_R=36, forearm_R=168, head=178)), (20, pose(SIT_DRIVE, upperarm_R=38, forearm_R=166, head=176)),
-        (40, pose(SIT_DRIVE, upperarm_R=36, forearm_R=168, head=178))]),
-    "talk_walkie": dict(frames=40, loop=True, hit=None, keys=[                # standing, the walkie at his mouth
-        (0, pose(LOOSE, upperarm_R=34, forearm_R=168, head=170)), (20, pose(LOOSE, upperarm_R=36, forearm_R=166, head=168, chest=174)),
-        (40, pose(LOOSE, upperarm_R=34, forearm_R=168, head=170))]),
-    "kneel_grave": dict(frames=60, loop=True, hit=None, keys=[                # on one knee at the stone, a hand on it
-        (0, pose(KNEEL, chest=160, head=146, upperarm_R=72, forearm_R=84, upperarm_L=20, forearm_L=30)),
-        (30, pose(KNEEL, chest=158, head=142, upperarm_R=72, forearm_R=84, upperarm_L=20, forearm_L=30)),
-        (60, pose(KNEEL, chest=160, head=146, upperarm_R=72, forearm_R=84, upperarm_L=20, forearm_L=30))]),
+    "sit_drive": dict(frames=90, loop=True, hit=None, keys=[             # at rest: still, a slow breath
+        (0, SIT_DRIVE), (45, SIT_DRIVE), (90, SIT_DRIVE)]),
+    "sit_drive_talk": dict(frames=90, loop=True, hit=None, keys=[             # at rest: still, a slow breath
+        (0, pose(SIT_DRIVE, upperarm_R=36, forearm_R=168, head=178)), (45, pose(SIT_DRIVE, upperarm_R=36, forearm_R=168, head=178)), (90, pose(SIT_DRIVE, upperarm_R=36, forearm_R=168, head=178))]),
+    "talk_walkie": dict(frames=90, loop=True, hit=None, keys=[             # at rest: still, a slow breath
+        (0, pose(LOOSE, upperarm_R=34, forearm_R=168, head=170)), (45, pose(LOOSE, upperarm_R=34, forearm_R=168, head=170)), (90, pose(LOOSE, upperarm_R=34, forearm_R=168, head=170))]),
+    "kneel_grave": dict(frames=90, loop=True, hit=None, keys=[             # at rest: still, a slow breath
+        (0, pose(KNEEL, chest=160, head=146, upperarm_R=72, forearm_R=84, upperarm_L=20, forearm_L=30)), (45, pose(KNEEL, chest=160, head=146, upperarm_R=72, forearm_R=84, upperarm_L=20, forearm_L=30)), (90, pose(KNEEL, chest=160, head=146, upperarm_R=72, forearm_R=84, upperarm_L=20, forearm_L=30))]),
     "push_swing": dict(frames=48, loop=True, hit=None, keys=[                 # pushing a swing: reach, push, let go
         (0, pose(LOOSE, upperarm_L=50, forearm_L=70, upperarm_R=50, forearm_R=70, chest=176)),
         (14, pose(LOOSE, upperarm_L=84, forearm_L=88, upperarm_R=84, forearm_R=88, chest=166, spine=172, thigh_L=20, shin_L=0, thigh_R=-14)),
         (28, pose(LOOSE, upperarm_L=60, forearm_L=76, upperarm_R=60, forearm_R=76, chest=172)),
         (48, pose(LOOSE, upperarm_L=50, forearm_L=70, upperarm_R=50, forearm_R=70, chest=176))]),
-    "hold_hand": dict(frames=40, loop=True, hit=None, keys=[                  # standing, his hand down and out, holding a small one
-        (0, pose(LOOSE, upperarm_L=-4, forearm_L=24, head=164)), (20, pose(LOOSE, upperarm_L=-2, forearm_L=26, head=162)),
-        (40, pose(LOOSE, upperarm_L=-4, forearm_L=24, head=164))]),
+    "hold_hand": dict(frames=90, loop=True, hit=None, keys=[             # at rest: still, a slow breath
+        (0, pose(LOOSE, upperarm_L=-4, forearm_L=24, head=164)), (45, pose(LOOSE, upperarm_L=-4, forearm_L=24, head=164)), (90, pose(LOOSE, upperarm_L=-4, forearm_L=24, head=164))]),
 }
 CLIPS.update(V2_CLIPS)
 

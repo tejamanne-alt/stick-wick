@@ -23,7 +23,7 @@
     },
     {
       "name": "sword_idle",
-      "frames": 30,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
@@ -79,7 +79,7 @@
     },
     {
       "name": "gun_idle",
-      "frames": 30,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
@@ -275,7 +275,7 @@
     },
     {
       "name": "idle_loose",
-      "frames": 48,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
@@ -345,7 +345,7 @@
     },
     {
       "name": "kneel_hold",
-      "frames": 48,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
@@ -655,14 +655,14 @@
     },
     {
       "name": "kneel_hurt",
-      "frames": 40,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
     },
     {
       "name": "sit_bound",
-      "frames": 48,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
@@ -690,35 +690,35 @@
     },
     {
       "name": "kneel_hand",
-      "frames": 48,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
     },
     {
       "name": "sit_drive",
-      "frames": 60,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
     },
     {
       "name": "sit_drive_talk",
-      "frames": 40,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
     },
     {
       "name": "talk_walkie",
-      "frames": 40,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
     },
     {
       "name": "kneel_grave",
-      "frames": 60,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
@@ -732,7 +732,7 @@
     },
     {
       "name": "hold_hand",
-      "frames": 40,
+      "frames": 90,
       "fps": 30,
       "loop": true,
       "hitFrame": -1
