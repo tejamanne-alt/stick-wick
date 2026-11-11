@@ -11,7 +11,8 @@ Most later features need it, so it comes first.
   - the props attached to bones
   - its bosses
   - Maya, Voss and the other characters
-- Order: chapter 6 (the fortress) first, because the katana goes there. Then 2, 3, 4 and the walk-out / epilogue.
+- Order: chapters 2, 3, 4, then the walk-out and the epilogue.
+- **Not the fortress:** it is rebuilt on V4 from scratch (step 7), so the old one is not converted.
 
 ## 2. Weapon control grammar (shared by the katana, later the knife and the rod)
 - **Per-weapon gesture map:** a weapon in hand swaps what swipes mean. Fists keep today's controls.
@@ -56,7 +57,9 @@ Most later features need it, so it comes first.
   - the parry: "Don't meet his sword. Meet his line."
   - the draw: "Draw only once. Make it enough."
 
-## 7. Chapter 6, the fortress, rebuilt around the katana
+## 7. Chapter 6, the fortress, rebuilt from the road to Voss's fall
+**The full design is in docs/story/chapter6_fortress_v3.md**: twelve levels in four acts, real collision with a
+self-test, the traversal set pieces, per-room sound and the score stems. It takes in all of this step and step 8.
 - **Enemies:** mostly swordsmen. The hero starts bare-handed and earns the katana from the first one he beats.
 - **Voss's collection:** the katana wall in the great hall, Voss's collection (dressing and story).
 - **The Warden:**
