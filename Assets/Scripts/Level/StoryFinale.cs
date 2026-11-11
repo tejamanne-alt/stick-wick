@@ -357,6 +357,10 @@ namespace ProjectInk
         {
             voss.Puppet();
             voss.KataParries = 0;
+            // face to face at a blade's distance, so every line can be met
+            hero.CinePose(new Vector3(voss.transform.position.x - voss.Facing * -2.0f, voss.transform.position.y, 0f));
+            hero.FaceTowards(voss.transform.position.x);
+            voss.FaceTowards(hero.transform.position.x);
             Sound.Music("duel", 0.8f, true, 0.4f);
             Say("VOSS", "Do you remember this?", 2.0f, HeadOf(voss));
             if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.5f, 1.0f);
@@ -369,7 +373,7 @@ namespace ProjectInk
                 while (t < 1.1f && voss.KataLine && voss.KataParries < 4)
                 {
                     t += Time.unscaledDeltaTime;
-                    if (voss.KataParries > 0 && t > 0.2f && !voss.KataLine) break;
+                    if (!voss.KataLineOpen) break;                       // met: on to the next line
                     yield return null;
                 }
                 bool met = voss.EndKataLine();
@@ -378,6 +382,7 @@ namespace ProjectInk
                     hero.TakeHit(new HitInfo { damage = 10f, direction = -1, knockback = 2f, heavy = true, react = "hit_chin", attacker = voss });
                     Sound.Play(Sfx.SwordHit, 1f, hero.Chest);
                 }
+                if (hero.IsDead) { voss.PuppetRelease(); kataStarted = false; yield break; }   // the retry handles it
                 yield return RealWait(0.5f);
             }
             if (voss.KataParries >= 3)

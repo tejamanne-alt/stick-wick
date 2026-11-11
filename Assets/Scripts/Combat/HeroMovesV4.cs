@@ -90,7 +90,11 @@ namespace ProjectInk
                 if (Contact && WalkIntoClinch(dir)) return;
                 float want = !float.IsNaN(stepGoal) ? WalkSpeed
                            : holdTime < 0.4f ? WalkSpeed : holdTime < 1.25f || !alone ? JogSpeed : RunSpeedV4;
-                if (KatanaMode) want = sheathed ? 0f : Mathf.Min(want, 1.4f);   // the katana: suri-ashi, never a run
+                if (KatanaMode)
+                {
+                    if (sheathed && !GestureInput.IaiHolding) { sheathed = false; body.Play("katana_guard", 0.15f); }   // walking off: the blade comes out
+                    want = sheathed ? 0f : Mathf.Min(want, 1.4f);         // the katana: suri-ashi, never a run
+                }
                 float accel = Mathf.Abs(velocity.x) < want ? 9f : 12f;
                 velocity.x = Mathf.MoveTowards(velocity.x, dir * want, accel * dt);
                 float sp = Mathf.Abs(velocity.x);

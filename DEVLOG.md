@@ -1719,3 +1719,17 @@ Then the roof, as built.
   - the body settling low and still (zanshin), then back into the guard
 - **The flow:** once a cut has landed, a new line cancels the follow-through, so kata still flow at speed.
 - **After a killing cut:** zanshin, then the chiburi flick (with a glint), and a small push-in of the camera on the kill.
+
+## Review fixes (an independent read of the katana, duel and fortress code)
+1. **Pickups:** knife, pipe and gun pickups were never used up (my katana hook had captured the `else return`). They are consumed again.
+2. **Men placed on stairs:** `FloorAt` now reads the stairs' heights too. Men placed on a flight (the wall tower, the tower stair) had dropped through the world, and the level could never be cleared. The hero's start at the tower stair is on the hall's floor.
+3. **The red line:** it can't outlive a wind-up (1.6 s), and it is hidden when the man is taken hold of (a killing cut, the pass, the clinch, a takedown).
+4. **The Kata of Three:**
+   - Voss and the hero are put a blade's length apart before the lines, so each line can be met.
+   - It stops if the hero falls.
+   - A met line moves straight on to the next.
+5. **The sheath:** walking off unsheathes the katana. Before, after the pass he couldn't walk until he swiped.
+6. **The photograph:** it can only be looked at once the gallery is clear (no cutscene mid-fight).
+7. **The pass:** an interrupted pass lets go of its men.
+8. **Headroom:** the fortress's headroom is raised over the observatory (jumps there were clamped).
+- **The Warden:** if he fails to spawn, the hero is released.

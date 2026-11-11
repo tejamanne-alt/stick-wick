@@ -84,6 +84,14 @@ namespace ProjectInk
             float best = near, bd = 99f;
             foreach (var p in KesselPlan.Platforms)
                 if (p.Contains(x, 0.3f) && Mathf.Abs(p.y - near) < bd) { bd = Mathf.Abs(p.y - near); best = p.y; }
+            // on a flight of stairs: the step's height there
+            foreach (var s in KesselPlan.Stairs)
+            {
+                float lo = Mathf.Min(s.x0, s.x1), hi = Mathf.Max(s.x0, s.x1);
+                if (x < lo || x > hi) continue;
+                float y = Mathf.Lerp(s.y0, s.y1, (x - s.x0) / (s.x1 - s.x0));
+                if (Mathf.Abs(y - near) < bd) { bd = Mathf.Abs(y - near); best = y; }
+            }
             return best;
         }
 
@@ -557,9 +565,9 @@ namespace ProjectInk
                 shoji.Add((q.transform, false));
                 KMan(EnemyType.Swordsman, m.x + 0.2f, 15.4f);
             }
-            SetPiece.Make("THE PHOTOGRAPH", new Vector3(KesselPlan.Photo.x, 15.4f, 0f), h => StartCoroutine(PhotoMemory()));
             if (director != null) director.ShowBanner("VOSS'S COLLECTION  ·  SHADOWS BEHIND THE PAPER", 2.6f);
             yield return KFight();
+            SetPiece.Make("THE PHOTOGRAPH", new Vector3(KesselPlan.Photo.x, 15.4f, 0f), h => StartCoroutine(PhotoMemory()));   // once the room is clear
             if (SetPiece.All.Exists(p => p != null && p.label == "THE PHOTOGRAPH" && p.usable) && director != null)
                 director.ShowBanner("A PHOTOGRAPH ON THE EASEL  ·  TAP IT", 2.4f);
             float wait = 0f;
@@ -651,7 +659,7 @@ namespace ProjectInk
             WaveDirector.StoryBoss = true;
             warden = director != null ? director.SpawnScripted(EnemyType.Brute, SpawnKind.RightDoor) : null;
             WaveDirector.BossWeapon = FightStyle.Fists;
-            if (warden == null) yield break;
+            if (warden == null) { hero.CineRelease(); yield break; }
             warden.MakeDriver(warden.maxHealth * 1.15f);
             warden.transform.localScale = Vector3.one * 1.22f;
             warden.ShowIron(true);
@@ -737,7 +745,7 @@ namespace ProjectInk
         {
             // first, from below: the man and the child on the gallery, lit by a strike (the old tower's shots)
             if (!cut) { yield return TheTower(); }
-            yield return BeginLevel(9, true, 661f);
+            yield return BeginLevel(9, true, 659.4f);
             KMan(EnemyType.Swordsman, 673.5f, 21.4f); KMan(EnemyType.Swordsman, 668f, 18.4f);
             yield return KFight(() => hero.transform.position.x > 679f);
             // the broken stair: only the lightning shows the gap

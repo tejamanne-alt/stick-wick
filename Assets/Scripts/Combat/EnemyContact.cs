@@ -31,6 +31,7 @@ namespace ProjectInk
 
         public void BeginHeld(HeroController by)
         {
+            if (redLine != null) redLine.Hide();
             ReleaseToken();
             state = State.Scripted;
             stateTime = 0f;

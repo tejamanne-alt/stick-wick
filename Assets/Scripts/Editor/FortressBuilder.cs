@@ -14,7 +14,7 @@ namespace ProjectInk.EditorTools
     public static class FortressBuilder
     {
         public const string SetPath = "Assets/Art/Fortress/FortressSet.fbx";
-        public const float RoofY = 32f;
+        public const float RoofY = 40f;                // above Kessel Hill's observatory floor (30.4), so a jump there isn't clamped
 
         public static void Build(Transform room, Transform spawnRoot, Transform[] points, out Vector3 heroStart)
         {

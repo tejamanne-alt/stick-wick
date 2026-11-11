@@ -17,6 +17,8 @@ namespace ProjectInk
         public bool KatanaBoss;
         /// <summary>The Kata of Three (the duel's climax): a line shown by the story, met or not.</summary>
         public bool KataLine;
+        /// <summary>The kata's current line is still there to be met.</summary>
+        public bool KataLineOpen => KataLine && !kParried;
         public int KataParries;
         Transform caneBlade;
 

@@ -606,6 +606,8 @@ namespace ProjectInk
             if (crossA != null && crossA.Held) crossA.ReleaseHeld();
             if (crossB != null && crossB.Held) crossB.ReleaseHeld();
             crossA = crossB = null;
+            foreach (var m in passMen) if (m != null && m.Held) m.ReleaseHeld();
+            passMen.Clear();
             farFoe = null;
             farMove = null;
             advanceFoe = null;

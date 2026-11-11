@@ -150,6 +150,7 @@ namespace ProjectInk
         {
             if (!line.enabled) return;
             float age = Time.time - shownAt;
+            if (age > 1.6f) { line.enabled = false; return; }                // never outlives a wind-up
             float a = Mathf.Clamp01(0.25f + age * 1.6f) * (0.75f + 0.25f * Mathf.Sin(age * 22f));
             var c = new Color(0.95f, 0.07f, 0.04f, a);
             line.startColor = c; line.endColor = c;

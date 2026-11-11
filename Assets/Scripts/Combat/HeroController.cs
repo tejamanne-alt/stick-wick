@@ -976,8 +976,8 @@ namespace ProjectInk
             if (carried != null && Style == FightStyle.Fists) DropCarried();      // the bottle down, the weapon up
             if (Style == FightStyle.Knife && p.kind == FightStyle.Knife) Knives = Mathf.Min(6, Knives + p.uses);
             else if (Style == FightStyle.Fists) Equip(p.kind, p.uses);
-            if (p.kind == FightStyle.Sword) OnKatanaTaken();          // the katana: Voss's first lesson (HeroKatanaV4)
             else return;
+            if (p.kind == FightStyle.Sword) OnKatanaTaken();          // the katana: Voss's first lesson (HeroKatanaV4)
             if (InkFx.Instance != null) InkFx.Instance.Burst(p.transform.position, 1.6f);
             Tell("pickup");
             Sound.Play(p.kind == FightStyle.Sword ? Sfx.SwordClash : Sfx.Pickup, p.kind == FightStyle.Sword ? 0.5f : 1f, p.transform.position);
