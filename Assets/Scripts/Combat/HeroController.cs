@@ -24,7 +24,7 @@ namespace ProjectInk
     /// grabbed = tap to break free with a reversal throw. Full Flow = Rampage.</summary>
     public partial class HeroController : Fighter
     {
-        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors, Dive, Clinch, Traverse }
+        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors, Dive, Clinch, Traverse, Hang }
 
         public float targetRange = 9f;
         public float gunRange = 14f;
@@ -906,6 +906,7 @@ namespace ProjectInk
                 case State.Dive: UpdateDive(dt); break;
                 case State.Clinch: UpdateClinch(dt); break;
                 case State.Traverse: UpdateTraverse(dt); break;
+                case State.Hang: UpdateHangV4(dt); break;
                 case State.Dead: break;
             }
             if (state != State.Dead) TryPickup();
@@ -913,7 +914,7 @@ namespace ProjectInk
             if (state != State.Dash && state != State.Dodge && state != State.ToLedge && state != State.Air && state != State.Traverse && !running &&
                 !(state == State.Attack && currentAttack.clip == "slide_kick") && Grounded)
                 velocity.x = Mathf.MoveTowards(velocity.x, 0f, 30f * dt);
-            bool scripted = state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar || state == State.Scissors || state == State.Clinch ||
+            bool scripted = state == State.Hang || state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar || state == State.Scissors || state == State.Clinch ||
                             (state == State.WallRun && stateTime < 0.25f);
             if (!scripted) Integrate(dt);
             // ran off an edge with someone below: dive on them
@@ -1626,6 +1627,7 @@ namespace ProjectInk
 
         void UpdateAir(float dt)
         {
+            if (MovesV4) UpdateDropOn();
             if (springTarget != null && stateTime > 0.22f)
             {
                 // off the crate and into a flying kick
@@ -1926,6 +1928,7 @@ namespace ProjectInk
             // a long fall onto the catwalk's glass goes straight through it (a dive keeps diving)
             if (LevelNav.Active && GlassPanel.Land(transform.position, fallHeight - 0.9f, state == State.Dive)) { Grounded = false; return; }
             if (state == State.Dive && !diveLanded) { DiveImpact(fallHeight); return; }
+            if (LandV4(fallHeight)) return;                         // the new body: soak it, or a knee and a hand
             if ((state == State.Air || state == State.Idle) && fallHeight >= 3.2f && !CinematicLock) HeroLanding(fallHeight);
         }
 
@@ -2514,6 +2517,15 @@ namespace ProjectInk
         public override void TakeHit(HitInfo hit)
         {
             if (Invulnerable) return;
+            if (state == State.Hang)
+            {
+                // hit while hanging: torn off the edge
+                Health = Mathf.Max(1f, Health - hit.damage);
+                Sound.Play(Sfx.HeroHurt, 1f, Chest);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.OnHeroDamaged(hit.damage);
+                HangHit();
+                return;
+            }
             if (state == State.Clinch) EndClinch();          // hit from behind: he lets go
             Health = Mathf.Max(0f, Health - hit.damage);
             ComboCount = 0;

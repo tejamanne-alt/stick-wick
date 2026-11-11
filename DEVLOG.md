@@ -1451,3 +1451,14 @@ The classic controls are the base for the next improvements.
   - One swipe down throws the weapon in hand (bare hands: duck); two drop through the floor (keyboard: S twice).
   - A tap with nobody within 6 m takes a step instead of punching the air. A tap on a weapon or a drum walks to it and uses it, and walking over a weapon bends down to pick it up.
   - Relaxed when alone, the guard when a man comes within 6 m.
+
+### Hanging from an edge (chapter 1, V4 body)
+Walking (not sprinting) off the forklift, a rack or the mezzanine, he lowers himself down by the hands and hangs (`v4_hang.py`, `HeroHangV4.cs`). While hanging:
+- **Swipe down** (or do nothing for about 1.6 s): let go. The knees soak a short drop; from high, he lands on a knee and a hand.
+- **Swipe up:** pull back up (a dip, the pull, chest to the edge, a knee on top, stand).
+- **Hold left or right:** swing the legs, and let go on the outward swing to land further out. This replaced the planned shimmy: in the side view the edge is a single point, so there's nowhere to shimmy along.
+- **Tap a man below:** drop onto him feet first; he goes down.
+- **Tap a man at the edge above:** grab his ankle and pull him off past you.
+- **Hit while hanging:** torn off the edge.
+
+Every fall of a metre or more on the new body now lands with the soft or the heavy landing.

@@ -505,6 +505,11 @@ import v4_moves  # noqa: E402
 
 CLIPS.update(v4_moves.CLIPS)
 
+# ---------------------------------------------------------------- hanging from an edge
+import v4_hang  # noqa: E402
+
+CLIPS.update(v4_hang.CLIPS)
+
 
 def key_clip(arm, name, spec):
     return vp.key_clip(arm, name, spec)

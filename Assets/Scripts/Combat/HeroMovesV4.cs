@@ -84,6 +84,7 @@ namespace ProjectInk
                 holdTime += dt;
                 // running hard the other way: a real turn
                 if (velocity.x * dir < -2.2f) { BeginTraverse("run_turn", 0f); SetFacing(dir); return; }
+                if (TryLowerDown(dir)) return;                          // a raised floor's edge: lower himself down
                 SetFacing(dir);
                 if (Contact && WalkIntoClinch(dir)) return;
                 float want = !float.IsNaN(stepGoal) ? WalkSpeed
