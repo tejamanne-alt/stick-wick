@@ -31,6 +31,9 @@ namespace ProjectInk
         readonly List<(string cut, float t)> kataLog = new List<(string, float)>();
         static readonly HashSet<string> lessonsSaid = new HashSet<string>();
 
+        /// <summary>A katana cut in progress (the gallery's paper screens tear under it).</summary>
+        public bool IsCutting => farMove == "katana" || farMove == "pass";
+
         string KatanaIdle => sheathed ? "iai_hold" : "katana_guard";
 
         /// <summary>Every idle frame (FarTick): the grammar follows the weapon.</summary>

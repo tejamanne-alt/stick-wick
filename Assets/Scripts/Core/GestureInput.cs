@@ -284,6 +284,14 @@ namespace ProjectInk
                 float dd = Vector2.Distance(screen, c);
                 if (dd < pad * 1.4f && dd < bestD) { bestD = dd; best = w; }
             }
+            foreach (var sp in SetPiece.All)
+            {
+                if (sp == null || !sp.usable) continue;
+                var c = cam.WorldToScreenPoint(sp.transform.position + Vector3.up * 0.8f);
+                if (c.z <= 0f) continue;
+                float dd = Vector2.Distance(screen, c);
+                if (dd < pad * 2.0f && dd < bestD) { bestD = dd; best = sp; }
+            }
             foreach (var tp in Throwable.All)
             {
                 if (tp == null || !tp.Lying) continue;

@@ -81,7 +81,7 @@ namespace ProjectInk.EditorTools
             if (!System.IO.File.Exists(want)) return;                                 // no new body in this checkout
             // every story chapter on the new body (backlog step 1); the fortress waits for its rebuild
             foreach (var scene in new[] { PrototypeBuilder.StoryScenePath, PrototypeBuilder.BankScenePath, PrototypeBuilder.StreetScenePath,
-                                          PrototypeBuilder.HomeScenePath, PrototypeBuilder.ParkScenePath, PrototypeBuilder.RoadScenePath,
+                                          PrototypeBuilder.HomeScenePath, PrototypeBuilder.ParkScenePath, PrototypeBuilder.RoadScenePath, PrototypeBuilder.FortressScenePath,
                                           PrototypeBuilder.EpilogueScenePath })
             {
                 if (!System.IO.File.Exists(scene)) continue;

@@ -91,6 +91,9 @@ namespace ProjectInk
             transform.rotation = Quaternion.Euler(0f, Facing > 0 ? 0f : 180f, 0f);
         }
 
+        /// <summary>A shove from the world (a gust of wind on the wall walk, a rolling barrel).</summary>
+        public void Push(float vx) { velocity.x += vx; }
+
         public void FaceTowards(float x)
         {
             if (Mathf.Abs(x - transform.position.x) > 0.05f) SetFacing(x > transform.position.x ? 1 : -1);

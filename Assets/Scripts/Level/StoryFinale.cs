@@ -318,10 +318,20 @@ namespace ProjectInk
             hero.CinePose(Roof(152.5f));
             hero.SetFacing(1);
             Enemy.StoryFinale = (e, hit) => { if (vossStage < 5) vossStage = 5; };
-            // he squares up: the stance he taught him
-            voss.PuppetPlay(Pick(voss.body, "block_high", "idle"), 0.2f);
+            // the cane's blade comes out: the stance he taught him
+            voss.KatanaBoss = true;
+            voss.ShowCaneBlade(true);
+            kataStarted = false;
+            voss.PuppetPlay(Pick(voss.body, "katana_guard", "idle"), 0.2f);
+            Sound.Play(Sfx.SwordSwing, 0.8f, voss.Chest, 1.3f);
             Sound.Music("duel", 0.7f, true, 1.2f);
             Strike(1f, 0.1f);
+            if (hero.Style != FightStyle.Sword)
+            {
+                Say("VOSS", "Pick it up. I won't cut down an unarmed student.", 2.6f, HeadOf(voss));
+                hero.GiveWeapon(FightStyle.Sword, 999);
+                yield return RealWait(1.2f);
+            }
             Say("VOSS", "Show me what's left of my best student.", 2.6f, HeadOf(voss));
             yield return Cut(2.6f, u => CineCam.LowAngleArc(new Vector3(155f, FortressPlan.RoofY + 1.2f, 0f), u, 5.0f, -70f, -110f, 40f), 0.02f);
             SetArena(138f, FortressPlan.RoofX1);
@@ -339,6 +349,75 @@ namespace ProjectInk
             Sound.Tension(true);
         }
 
+        bool kataStarted, kataDone;
+
+        /// <summary>The climax of the teacher: the Kata of Three, the lines the hero learned in his gallery. Mirror all
+        /// three. Then he throws the katana aside ("Not yours.") and takes the cane's blade from Voss bare-handed.</summary>
+        IEnumerator VossKata()
+        {
+            voss.Puppet();
+            voss.KataParries = 0;
+            Sound.Music("duel", 0.8f, true, 0.4f);
+            Say("VOSS", "Do you remember this?", 2.0f, HeadOf(voss));
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.5f, 1.0f);
+            yield return RealWait(1.4f);
+            foreach (var cut in new[] { "kesa", "gyaku", "yoko" })
+            {
+                voss.ShowKataLine(cut);
+                Sound.Play(Sfx.SwordSwing, 0.5f, voss.Chest, 1.5f);
+                float t = 0f;
+                while (t < 1.1f && voss.KataLine && voss.KataParries < 4)
+                {
+                    t += Time.unscaledDeltaTime;
+                    if (voss.KataParries > 0 && t > 0.2f && !voss.KataLine) break;
+                    yield return null;
+                }
+                bool met = voss.EndKataLine();
+                if (!met)
+                {
+                    hero.TakeHit(new HitInfo { damage = 10f, direction = -1, knockback = 2f, heavy = true, react = "hit_chin", attacker = voss });
+                    Sound.Play(Sfx.SwordHit, 1f, hero.Chest);
+                }
+                yield return RealWait(0.5f);
+            }
+            if (voss.KataParries >= 3)
+            {
+                if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.25f, 1.2f);
+                if (director != null) director.ShowBanner("THE KATA OF THREE  ·  MIRRORED", 2.2f);
+                Say("VOSS", "...Well taught.", 2.0f, HeadOf(voss));
+                yield return RealWait(2.0f);
+            }
+            // he throws it aside
+            hero.CinePuppet();
+            barsPx = 92f;
+            hero.body.Play(hero.body.Has("katana_discard") ? "katana_discard" : "idle", 0.08f);
+            yield return Cut(0.9f, u => Static(HeroHead() + new Vector3(1.2f, -0.2f, -2.2f), HeroHead() + Vector3.down * 0.4f, 34f), 0.01f);
+            hero.DiscardKatana();
+            Say("VOSS", "...What are you doing?", 2.0f, HeadOf(voss));
+            yield return Cut(2.0f, u => Static(HeadOf(voss).position + new Vector3(-0.9f, 0.05f, -1.2f), HeadOf(voss).position, 28f), 0.01f);
+            Say("YOU", "Not yours.", 1.8f);
+            yield return Cut(1.8f, u => CineCam.DollyIn(HeroHead(), new Vector3(0.4f, 0.1f, 1f), u, 1.6f, 1.0f, 28f), 0.01f);
+            // bare hands: inside his blade, the wrist, the twist; the cane's blade rings off the stones
+            var vp = voss.transform.position;
+            hero.CinePose(vp + Vector3.left * 0.62f);
+            hero.body.Play(hero.body.Has("clinch_enter") ? "clinch_enter" : "idle", 0.05f);
+            voss.PuppetPlay(voss.body.Has("clinch_enter_v") ? "clinch_enter_v" : "hit_front", 0.05f);
+            yield return Cut(0.8f, u => Static(vp + new Vector3(-0.3f, 1.2f, -2.4f), vp + Vector3.up * 1.0f, 34f), 0.02f);
+            voss.ShowCaneBlade(false);
+            voss.KatanaBoss = false;
+            Sound.Play(Sfx.SwordClash, 1f, vp, 0.7f);
+            Sound.Play(Sfx.Bone, 0.8f, vp);
+            if (cam != null) cam.Shake(0.12f, 0.2f);
+            voss.HeldDamage(voss.maxHealth * 0.12f);
+            yield return Cut(1.2f, u => Static(vp + new Vector3(0.8f, 0.4f, -2.0f), vp + Vector3.up * 0.4f, 36f), 0.02f);
+            CineOff();
+            barsPx = 0f;
+            voss.PuppetRelease();
+            voss.Passive = false;
+            hero.CineRelease();
+            kataDone = true;
+        }
+
         void UpdateVoss()
         {
             if (!mayaHere) return;
@@ -346,8 +425,10 @@ namespace ProjectInk
             if (vossStage == 0 || voss == null) return;
             if (!voss.Alive) { vossStage = 5; return; }
             float hp = voss.HealthFraction;
-            if (vossStage == 1 && hp <= 0.62f)
+            if (vossStage == 1 && hp <= 0.75f && !kataStarted) { kataStarted = true; StartCoroutine(VossKata()); }
+            if (vossStage == 1 && kataDone)
             {
+                kataDone = false;
                 vossStage = 2;
                 nextAim = Time.time + 0.8f;
                 ShowStreetBanner("II  ·  THE GUN");

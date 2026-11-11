@@ -61,6 +61,8 @@ namespace ProjectInk
         readonly List<Transform> chandeliers = new List<Transform>();
         float nextChandelier;
         Enemy towerMan, towerGirl;
+        /// <summary>The hall's floor (the chandeliers fall to it): the old hall, or Kessel Hill v3's great hall.</summary>
+        float hallFloorY = FortressPlan.Up;
 
         // ================================================================ setting up
 
@@ -79,7 +81,7 @@ namespace ProjectInk
             HeroController.Did += OnFortHit;
             int from = FortressFrom;
             FortressFrom = 0;
-            if (from == 0 && FortressCheckpoint >= 0) from = FortressCheckpoint >= 7 ? 8 : FortressCheckpoint >= 5 ? 5 : FortressCheckpoint == 4 ? 4 : FortressCheckpoint == 0 ? -1 : FortressCheckpoint + 1;
+            if (from == 0 && FortressCheckpoint >= 0) from = FortressCheckpoint >= 20 ? FortressCheckpoint : FortressCheckpoint >= 7 ? 8 : 20;
             StartCoroutine(Fortress(from));
         }
 
@@ -120,6 +122,10 @@ namespace ProjectInk
             if (!storm) return;
             var c = Camera.main;
             indoors = hero != null && hero.transform.position.y < FortressPlan.RoofY - 1f && hero.transform.position.x > FortressPlan.HallX0 + 0.5f && (c == null || c.transform.position.z > -3.5f || hero.transform.position.x < FortressPlan.HallX1);
+            // Kessel Hill v3: inside are the passage, the gallery, the hall and the dome
+            if (kLevel >= 0) indoors = kLevel == 3 || kLevel == 7 || kLevel == 8 || kLevel == 10;
+            // the storm has height: the wind rises as he climbs, and the thunder comes sooner after the flash
+            float height = hero != null && hero.transform.position.x > 280f ? Mathf.Clamp01(hero.transform.position.y / 31f) : 0f;
             if (rainPs != null && c != null)
             {
                 rainPs.transform.position = new Vector3(c.transform.position.x, c.transform.position.y + 9f, 1.5f);
@@ -127,20 +133,20 @@ namespace ProjectInk
                 em.enabled = rainAmount > 0.001f && !(indoors && cardAt < 0f && fZone >= 4);
                 em.rateOverTime = 2600f * rainAmount;
             }
-            float wet = Mathf.Lerp(0.35f, 2.2f, rainAmount);              // before the rain only the wind; then the downpour
+            float wet = Mathf.Lerp(0.35f + 0.5f * height, 2.2f, rainAmount);   // before the rain only the wind (louder up high); then the downpour
             Sound.Ambience(indoors && fZone >= 4 ? wet * 0.45f : wet, indoors ? 0.55f : 0.25f, indoors && fZone >= 4 ? 1400f : 22000f);
             lensRain = Mathf.MoveTowards(lensRain, indoors && fZone >= 4 ? 0f : 0.32f * rainAmount, Time.unscaledDeltaTime * 0.5f);
             SetRipple(rainAmount);
             if (Time.unscaledTime >= nextStrike)
             {
                 float s = Random.Range(0.75f, 1f);
-                Lightning(s, Random.Range(0.6f, 1f), fBlackout ? Random.Range(0.1f, 0.5f) : Random.Range(0.4f, 2.2f));
+                Lightning(s, Random.Range(0.6f, 1f), fBlackout ? Random.Range(0.1f, 0.5f) : Random.Range(0.4f, 2.2f) * (1f - 0.7f * height));
                 if (LightningSwap.Instance != null && c != null && Random.value < 0.7f)
                 {
                     float bx = c.transform.position.x + Random.Range(-18f, 18f);
                     LightningSwap.Instance.Bolt(new Vector3(bx, 46f, 90f), new Vector3(bx + Random.Range(-8f, 8f), 8f, 80f), 0.5f);
                 }
-                nextStrike = Time.unscaledTime + (fBlackout ? Random.Range(1.5f, 3f) : Random.Range(6f, 12f));
+                nextStrike = Time.unscaledTime + (fBlackout ? Random.Range(1.5f, 3f) : Random.Range(6f, 12f) * (1f - 0.45f * height));
             }
             if (fBlackout) foreach (var r in floodR) if (r != null) r.enabled = false;
         }
@@ -250,66 +256,14 @@ namespace ProjectInk
                     u => hero.CinePose(new Vector3(wx3 + u * 1.2f, 0f, 0f)));
                 foreach (var g in new[] { g1, g2 }) if (g != null) g.PuppetDie();
             }
-            if (from == 0 || from == -1)
+            // ---------------------------------------------------- KESSEL HILL v3: the ascent (StoryKessel), the road to the observatory
+            if (from <= 6 || from >= 20)
             {
-                // ------------------------------------------------ T5 play: the cliff road
-                if (from == -1) yield return FadeIn(0.4f);
-                StartFortZone(0, from == -1);
-                while (!(fZone == 0 && fClear)) yield return null;
+                int lvl = from >= 20 ? from - 20 : 0;
+                if (from == 0) { yield return FadeIn(0.4f); }
+                yield return KesselAscent(lvl);
+                from = 0;
             }
-            if (from <= 1 || from == -1)
-            {
-                // ------------------------------------------------ T6 the rock stair: a truck, a silhouette on a strike, a crane up
-                if (from == 1) { hero.CinePose(new Vector3(42.5f, 0f, 0f)); yield return FadeIn(0.4f); }
-                yield return PlayerWalk(43.6f, hero.transform.position.x - 0.5f, 2.4f, Application.isMobilePlatform ? "HOLD TO CLIMB" : "HOLD  D  TO CLIMB");
-                hero.CinePuppet();
-                hero.body.Play("walk", 0.2f, true, 1.0f);
-                var s0 = new Vector3(FortressPlan.StairX0, 0f, 0.4f);
-                var s1 = new Vector3(FortressPlan.StairX1 + 0.6f, FortressPlan.Up, 0f);
-                var sMid = Vector3.Lerp(s0, s1, 0.5f);
-                yield return Cut(2.0f, u => CineCam.Truck(new Vector3(s0.x - 0.5f, 1.5f, -4.5f), new Vector3(sMid.x, sMid.y + 1.5f, -4.5f), new Vector3(0.3f, -0.3f, 4.5f), u, 40f), 0.03f,
-                    u => hero.CinePose(Vector3.Lerp(s0, sMid, u)));
-                Strike(1f, 0.1f);
-                yield return Cut(1.2f, u => Static(sMid + new Vector3(3.5f, -1.0f, -3.5f), hero.transform.position + Vector3.up * 1.2f, 40f), 0.02f,
-                    u => hero.CinePose(Vector3.Lerp(sMid, Vector3.Lerp(s0, s1, 0.7f), u)));
-                var s2 = Vector3.Lerp(s0, s1, 0.7f);
-                yield return Cut(2.2f, u => CineCam.PedestalUp(hero.transform.position + Vector3.up * 0.9f, u, 3.4f, -1.2f, 1.6f, 38f), 0.02f,
-                    u => hero.CinePose(Vector3.Lerp(s2, s1, u)));
-            }
-            if (from <= 2 || from == -1)
-            {
-                // ------------------------------------------------ T7 play: the gate
-                if (from == 2) { hero.CinePose(new Vector3(53.4f, FortressPlan.Up, 0f)); yield return FadeIn(0.4f); }
-                StartFortZone(1, from == 2);
-                while (!(fZone == 1 && fClear)) yield return null;
-                // ------------------------------------------------ T8 the trap
-                yield return ThePortcullis();
-            }
-            if (from <= 3 || from == -1)
-            {
-                if (from == 3) { if (portcullis != null) portcullis.position = portUp - Vector3.up * 4.2f; yield return FadeIn(0.4f); }
-                StartFortZone(2, from == 3);
-                while (!(fZone == 2 && fClear)) yield return null;
-            }
-            if (from <= 4 || from == -1)
-            {
-                // ------------------------------------------------ T10 the blackout, T11 the dark fight
-                if (from == 4) { if (portcullis != null) portcullis.position = portUp - Vector3.up * 4.2f; hero.CinePose(new Vector3(101f, FortressPlan.Up, 0f)); yield return FadeIn(0.4f); }
-                yield return TheBlackout();
-                StartFortZone(3, false);
-                while (!(fZone == 3 && fClear)) yield return null;
-            }
-            if (from <= 5 || from == -1)
-            {
-                // ------------------------------------------------ T12 the hall, T13 THE WARDEN
-                if (from == 5) { fBlackout = true; hero.CinePose(new Vector3(126.5f, FortressPlan.Up, 0f)); yield return FadeIn(0.4f); }
-                yield return TheHall();
-                while (wardenStage < 5) yield return null;
-                yield return AfterWarden();
-            }
-            if (from == 6) { hero.CinePose(new Vector3(146f, FortressPlan.Up, 0f)); yield return FadeIn(0.3f); }
-            // ---------------------------------------------------- T15 the tower
-            if (from <= 6 || from == -1) yield return TheTower();
             // ---------------------------------------------------- the last roof (StoryFinale)
             yield return LastRoof(from);
         }
@@ -369,6 +323,7 @@ namespace ProjectInk
                 Say("THUG", BookBarks[Random.Range(0, BookBarks.Length)], 2.0f);
             }
             UpdateStorm();
+            UpdateKessel();
             UpdateChandeliers();
             UpdateVoss();
             if (fZone >= 6) return;
@@ -552,7 +507,7 @@ namespace ProjectInk
         void DropChandelier(float x)
         {
             var root = new GameObject("FallingChandelier").transform;
-            root.position = new Vector3(x, FortressPlan.Up + 7.4f, 0f);
+            root.position = new Vector3(x, hallFloorY + 7.4f, 0f);
             var ink = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.05f, 0.05f, 0.06f) };
             var white = new Material(Shader.Find("Unlit/Color")) { color = Color.white };
             for (int k = 0; k < 12; k++)
@@ -575,7 +530,7 @@ namespace ProjectInk
             var shadow = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Destroy(shadow.GetComponent<Collider>());
             shadow.name = "ChandelierShadow";
-            shadow.transform.position = new Vector3(x, FortressPlan.Up + 0.02f, 0f);
+            shadow.transform.position = new Vector3(x, hallFloorY + 0.02f, 0f);
             shadow.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             shadow.transform.localScale = new Vector3(2.2f, 1.2f, 1f);
             shadow.GetComponent<Renderer>().material = new Material(Shader.Find("Unlit/Color")) { color = new Color(0f, 0f, 0f) };
@@ -589,7 +544,7 @@ namespace ProjectInk
         {
             yield return new WaitForSeconds(0.9f);
             float v = 0f;
-            while (c != null && c.position.y > FortressPlan.Up + 0.15f)
+            while (c != null && c.position.y > hallFloorY + 0.15f)
             {
                 v += 22f * Time.deltaTime;
                 c.position += Vector3.down * v * Time.deltaTime;
@@ -713,7 +668,7 @@ namespace ProjectInk
         void FortressGUI(float w, float h)
         {
             // the blackout: dark, except when the lightning is up
-            if (fBlackout && fZone <= 3 && cardAt < 0f)
+            if (fBlackout && (fZone <= 3 || kesselDark) && cardAt < 0f)
             {
                 bool lit = LightningSwap.Instance != null && LightningSwap.Instance.Lit;
                 Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0.01f, lit ? 0.05f : 0.82f));

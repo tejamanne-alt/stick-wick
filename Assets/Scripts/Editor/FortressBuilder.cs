@@ -69,6 +69,7 @@ namespace ProjectInk.EditorTools
             var swap = room.gameObject.AddComponent<LightningSwap>();
             swap.renderers = swapR.ToArray(); swap.normal = swapN.ToArray(); swap.flash = swapF.ToArray();
             swap.dawn = swapD.ToArray(); swap.dawnOnly = dawnOnly.ToArray();
+            KesselBuilder.Build(room, swap);                                      // chapter 6 v3: the ascent
 
             // the ground (the road) and the hill's level (the gate, the courtyard, the hall)
             var hidden = PrototypeBuilder.Mat("FortGroundHidden", "Unlit/Color", Color.black);

@@ -24,6 +24,22 @@ namespace ProjectInk
         public static Vector3 NoisePos;
 
         public static void Noise(Vector3 at) { NoiseAt = Time.time; NoisePos = at; }
+        /// <summary>A man above (the upper road, the gatehouse) who throws down at the hero below.</summary>
+        public bool ThrowsDown;
+        /// <summary>One of Voss's best (the observatory): faster lines, more feints.</summary>
+        public bool Master;
+
+        /// <summary>Put him there, ready to fight (the fortress's levels place their men).</summary>
+        public void PlaceAt(Vector3 at, int facing)
+        {
+            ReleaseToken();
+            transform.position = at;
+            velocity = Vector3.zero;
+            SetFacing(facing);
+            state = State.Approach;
+            stateTime = 0f;
+            body.Play(IdleClip, 0.1f);
+        }
 
         /// <summary>Post him here, facing `facing`, not knowing the hero is coming.</summary>
         public void PostUnaware(Vector3 at, int facing)
@@ -105,7 +121,7 @@ namespace ProjectInk
                 Sound.Play(Sfx.Pickup, 0.8f, Chest);
                 return false;
             }
-            if (!sameLevel || dist < 2.2f || dist > 9f || Time.time - lastEnemyThrowAt < 3.5f) return false;
+            if ((!sameLevel && !ThrowsDown) || dist < 2.2f || dist > 11f || Time.time - lastEnemyThrowAt < (ThrowsDown ? 2.2f : 3.5f)) return false;
             lastEnemyThrowAt = Time.time;
             ReleaseToken();
             state = State.Throwing;

@@ -1624,3 +1624,55 @@ It runs as a three-body paired clip with slow motion, camera focus, shakes and t
 - **He drops his katana** when he falls.
 
 **Test checkpoint:** chapter 1, TEST · the katana (the crane bay: a katana on the floor, every wave swordsmen).
+
+## Chapter 6 rebuilt: Kessel Hill v3 (backlog steps 7–11)
+
+**One layout, one source of truth** (`tools/blender/kessel_plan.py`):
+- It holds the floors, stairs, ledges, levels and set-piece marks.
+- It checks itself (stairs meet their floors, no overlapping floors, every mark stands on a floor).
+- It generates `Assets/Scripts/Level/KesselPlan.cs`, which `LevelNav` uses for the fortress.
+
+**The set** (`tools/blender/build_kessel_v3.py` → `Assets/Art/FortressV3/KesselSet.fbx`):
+- **Built on the plan:** eleven spaces up to 33 m, baked twice (night and lightning) like every story set.
+- **The rule:** only floors and steps are in the lane. Walls, pillars, statues and furniture stand behind it, or low in front. Interiors have no front wall.
+- **The moving parts:** the truck, the two portcullises, the chandeliers and the telescope are separate parts the game moves.
+
+**In Unity** (`Editor/KesselBuilder.cs`):
+- The set goes on the LightningSwap.
+- The floors and stairs become solid colliders from the plan.
+- **A self-test:** every floor, probed every 0.5 m, must be solid where the plan says, or the build fails.
+- **Each level's acoustic** is an AudioReverbZone: open air, the passage's stone corridor, the tower's cave, the gallery's room, the hall's auditorium, the dome's hangar.
+- **The fortress is on the V4 body now.**
+
+**The ascent** (`Level/StoryKessel.cs`): the old opening is kept; then the levels.
+
+| # | Level | What happens |
+|---|---|---|
+| 1 | The switchback road | Two on watch by the truck: the stealth start, or tap the cab and the handbrake rolls the truck through them. Men on the upper road throw stones down. |
+| 2 | The great stair | The crane-back reveal. Barrels down the flights: jump them, or shelter by a lion. |
+| 3 | The barbican | Stones through the murder holes, pale circles first. Then hold to climb the drawbridge chain. |
+| 4 | The gate passage | Down through the murder hole. Both portcullises slam: the killing ground. Mash the windlass to get out. |
+| 5 | The wall walk | Gusts of wind push everyone. The first swordsman: take his katana; the drums come in. |
+| 6 | The wall tower | The passage down: "Take the high step. Always." One ambush. |
+| 7 | The courtyard | Two on watch. Cut the bell rope, or they wake the bailey. The hay hoist. The blackout, then swordsmen in the dark (the pass). |
+| 8 | Voss's gallery | Paper screens men are shadows behind; they tear under a cut. The photograph: the Kata of Three remembered, its three lines drawn in ink before him. |
+| 9 | The great hall | THE WARDEN, his three phases kept. His chain takes your katana: fists, TIMBER. He drops his chain. |
+| 10 | The tower stair | (After the tower cutscene.) Two swordsmen. The broken stair: tap in a lightning flash to jump it, or catch the edge and pull up. The walkie. |
+| 11 | The observatory | Two of Voss's best (masters: faster lines, more feints). The telescope sweeps them. Hold the crank. |
+
+Then the roof, as built.
+
+**Checkpoints:** `FortressFrom = 20 + level`.
+
+**The duel** (`StoryFinale`, `EnemyKatana`), step 10:
+- **Phase I:** Voss fences with the cane's hidden blade: red lines, feints, two taps of the cane before a thrust.
+- **At 75%, the Kata of Three:** three red lines on a slow clock. Mirror them all (PERFECT, "...Well taught.").
+- **Then the hero throws the katana aside:** "...What are you doing?" / "Not yours."
+- **The bare-handed close:** a wrist, a twist, and the cane's blade rings off the stones.
+- **Then the gun and the edge,** as built.
+
+**Sound** (step 11):
+- The wind rises with height.
+- The thunder comes sooner after each flash as he climbs.
+- Each room has its own reverb.
+- The drums (the duel cue) arrive with the first katana.

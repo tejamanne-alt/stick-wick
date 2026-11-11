@@ -243,10 +243,10 @@ namespace ProjectInk
                 case "Story_Fortress":
                     kit = new[]
                     {
-                        (PropKind.Stone, 57f, FortressPlan.Up), (PropKind.Stone, 64.5f, FortressPlan.Up),         // rubble at the gate
-                        (PropKind.Stone, 79f, FortressPlan.Up), (PropKind.Torch, 92f, FortressPlan.Up),
-                        (PropKind.Torch, FortressPlan.GeneratorX - 2.5f, FortressPlan.Up),                         // where the lights go out
-                        (PropKind.Torch, 108f, FortressPlan.Up), (PropKind.Stone, 124f, FortressPlan.Up),
+                        (PropKind.Stone, 426f, 15.4f), (PropKind.Stone, 433f, 15.4f),            // the barbican's rubble
+                        (PropKind.Stone, 491f, 22.4f), (PropKind.Stone, 507f, 22.4f),            // loose stones on the wall walk
+                        (PropKind.Torch, 533f, 15.4f), (PropKind.Torch, 558f, 15.4f),            // the guards' torches (the blackout)
+                        (PropKind.Torch, 575f, 15.4f),
                     };
                     break;
                 default: return;

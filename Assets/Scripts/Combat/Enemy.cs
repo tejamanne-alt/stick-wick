@@ -721,6 +721,7 @@ namespace ProjectInk
             state = State.Windup;
             stateTime = 0f;
             velocity.x = 0f;
+            if (KatanaBoss && KatanaWindup()) return;              // Voss's cane blade (EnemyKatana)
             if (ContactWindup()) return;
             switch (Type)
             {

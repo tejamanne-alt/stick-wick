@@ -142,7 +142,7 @@ namespace ProjectInk
             int side = tx >= transform.position.x ? 1 : -1;
             interactWith = thing;
             SetFacing(side);
-            float stand = thing is OilDrum ? 0.55f : 0.32f;
+            float stand = thing is OilDrum ? 0.55f : thing is SetPiece sp0 ? sp0.stand : 0.32f;
             stepGoal = Mathf.Clamp(tx - side * stand, arenaMinX, arenaMaxX);
             if (Mathf.Abs(stepGoal - transform.position.x) < 0.06f) { stepGoal = float.NaN; ArriveAtThing(); }
         }
@@ -155,6 +155,7 @@ namespace ProjectInk
             FaceTowards(thing.transform.position.x);
             if (thing is WeaponPickup wp) { pickingUp = wp; BeginTraverse("pick_up", 0f); }
             else if (thing is Throwable tp) { if (carried == null) PickProp(tp); }
+            else if (thing is SetPiece sp) sp.Use(this);
             else if (thing is OilDrum) BeginTraverse("push", 0f);
         }
 

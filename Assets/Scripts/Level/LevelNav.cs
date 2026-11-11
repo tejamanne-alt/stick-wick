@@ -157,6 +157,11 @@ namespace ProjectInk
                 platforms = WarehousePlan.Platforms; ledges = WarehousePlan.Ledges;
                 stairs = WarehousePlan.Stairs; extraWalks = WarehousePlan.ExtraWalks;
             }
+            else if (kind == LayoutKind.Fortress)
+            {
+                platforms = KesselPlan.Platforms; ledges = KesselPlan.Ledges;
+                stairs = KesselPlan.Stairs; extraWalks = KesselPlan.ExtraWalks;
+            }
             else { platforms = null; ledges = null; stairs = null; extraWalks = null; }
         }
 
