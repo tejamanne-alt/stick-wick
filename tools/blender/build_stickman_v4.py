@@ -71,6 +71,7 @@ def transfer(src, dst, name, frames, fist):
     d_rest = {pb.name: pb.bone.matrix_local.to_quaternion() for pb in dst.pose.bones}
     hips_rest = Vector(r4.BONES["hips"][1])
     prev = {}
+    lagged = {}
     scn = bpy.context.scene
     for f in range(frames + 1):
         scn.frame_set(f)
@@ -78,6 +79,15 @@ def transfer(src, dst, name, frames, fist):
         hips = src.pose.bones["hips"].head.copy()
         ankle = {s: src.pose.bones["shin." + s].tail.copy() for s in ("L", "R")}
         qw = r4.transfer_frame(qv3, hips, ankle, fist)
+        # overlap on the carried-over clips too: the neck and head a beat behind the chest, the
+        # wrists and fingers a beat behind the forearms (the parent's motion carries them, late)
+        for n, k in (("neck", 0.3), ("head", 0.42), ("hand.L", 0.38), ("hand.R", 0.38), ("fingers.L", 0.45), ("fingers.R", 0.45)):
+            par = r4.BONES[n][0]
+            rel = qw[par].inverted() @ qw[n]
+            if n in lagged:
+                rel = rel.slerp(lagged[n], k) if f > 0 else rel
+            lagged[n] = rel
+            qw[n] = qw[par] @ rel
         loc = r4.to_local(qw, d_rest)
         for n in r4.ORDER:
             pb = dst.pose.bones[n]

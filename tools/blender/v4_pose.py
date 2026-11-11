@@ -327,6 +327,29 @@ def frames(spec, fps=30):
                             sp = springs.setdefault(k, Spring(8.0, 0.6))
                             p[k] = sp.step(p[k], dt)
                     p["ha" + off] = p.get("fa" + off, p.get("ha" + off, 0.0))
+                # the torso turns in a wave: the hips lead, the spine follows, the chest last
+                for ch, hz, dmp in (("tw_spine_mid", 11.0, 0.62), ("tw_chest", 9.0, 0.58)):
+                    if ch in p:
+                        sp = springs.setdefault(ch, Spring(hz, dmp))
+                        p[ch] = sp.step(p[ch], dt)
+                # the wrists follow through (a fast arm leaves the hand a beat behind, then it overshoots)
+                for s_ in ("L", "R"):
+                    if s_ == striker:
+                        continue
+                    k = "ha" + s_
+                    if k in p:
+                        sp = springs.setdefault(k, Spring(12.0, 0.45))
+                        p[k] = sp.step(p[k], dt)
+                    k = "fi" + s_
+                    if k in p:
+                        sp = springs.setdefault(k, Spring(6.0, 0.7))
+                        p[k] = sp.step(p[k], dt)
+            # a raised arm lifts its shoulder with it (the collarbone follows past horizontal)
+            for s_ in ("L", "R"):
+                ua = p.get("ua" + s_, 0.0)
+                if ua > 100.0:
+                    pro, ele = p.get("cl" + s_, (0.0, 0.0))
+                    p["cl" + s_] = (pro, ele + min(22.0, (ua - 100.0) * 0.28))
             if hit is not None and f >= hit:
                 t = f - hit
                 if t <= 6:
@@ -334,10 +357,19 @@ def frames(spec, fps=30):
                     p["chest"] = p.get("chest", 180) + 3.0 * k * math.cos(t * 1.7)
                     p["neck"] = p.get("neck", 180) + 4.0 * k * math.cos(t * 1.7 - 0.6)
                     p["head"] = p.get("head", 180) + 5.0 * k * math.cos(t * 1.7 - 1.0)
+                    p["hz"] = p["hz"] - 0.008 * k * math.sin(t * 1.4 + 0.4)       # the knees give a little under it
                     if striker in ("L", "R"):
                         p["fi" + striker] = min(178.0, p.get("fi" + striker, 165.0) + 10.0 * k)
                         pro, ele = p.get("cl" + striker, (0.0, 0.0))
                         p["cl" + striker] = (pro + 8.0 * k, ele + 3.0 * k)
+            if spec.get("loop"):
+                # still, but never frozen: a slow, tiny drift of the head and the hands
+                tt = f / 30.0
+                p["head"] = p.get("head", 180) + 0.7 * math.sin(tt * 1.3) + 0.4 * math.sin(tt * 3.1 + 1.0)
+                p["tw_head"] = p.get("tw_head", 0.0) + 0.9 * math.sin(tt * 0.9 + 2.0)
+                for s_, ph in (("L", 0.0), ("R", 1.7)):
+                    if "fa" + s_ in p:
+                        p["fa" + s_] += 0.8 * math.sin(tt * 1.7 + ph)
             if spec.get("breath"):
                 b = math.sin(2 * math.pi * f / n * spec.get("breaths", 2))
                 p["chest"] = p.get("chest", 180) + 1.6 * b
