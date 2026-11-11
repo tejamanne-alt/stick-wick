@@ -42,6 +42,17 @@ namespace ProjectInk
         {
             if (Contact && cue == null) { cue = gameObject.AddComponent<OpeningCue>(); cue.hero = this; }
             KatanaTick();
+            if (!chapterComboShown && Contact && !Alone)
+            {
+                chapterComboShown = true;
+                string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                ChapterCombo = scene == "Story_Warehouse" ? "BOXER'S FOUR" : scene == "Story_Street" ? "DUTCH TWO-AND-LOW"
+                             : scene == "Story_Home" ? "CLOSE QUARTERS" : scene == "Story_Backyard" ? "COUNTER" : scene == "Story_Fortress" ? "TIMBER!" : null;
+                string how = scene == "Story_Warehouse" ? "TAP HIGH ×4" : scene == "Story_Street" ? "HIGH, HIGH, LOW (KICKING RANGE): THE DRIVER IS A BOXER, CHOP HIS LEGS"
+                           : scene == "Story_Home" ? "UP CLOSE: HIGH ×3, THE ELBOWS: THE ROOMS ARE NARROW" : scene == "Story_Backyard" ? "SWIPE AWAY AS HE SWINGS, THEN TAP HIGH: MAKE THE HANDLER MISS"
+                           : scene == "Story_Fortress" ? "LOW, LOW (HIS LEG GOES), THEN HIGH: THE WARDEN FALLS LIKE A TREE" : null;
+                if (ChapterCombo != null && WaveDirector.Instance != null) WaveDirector.Instance.ShowBanner("THIS CHAPTER  ·  " + ChapterCombo + "  ·  " + how, 4.0f);
+            }
             if (GestureInput.Instance != null) GestureInput.HoldOnArmed = carried != null && carried.kind == PropKind.Chain && MovesV4;
             // walking over a prop with empty hands: pick it up
             if (carried == null && Style == FightStyle.Fists && Grounded && state == State.Idle && traverse == null)

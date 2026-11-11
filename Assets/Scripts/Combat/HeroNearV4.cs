@@ -22,6 +22,11 @@ namespace ProjectInk
     /// READ THE MAN (EnemyRead.Opening), before the string: his body's opening picks the counter.</summary>
     public partial class HeroController
     {
+        /// <summary>How often each read has been answered: its words over the man fade after three.</summary>
+        public static readonly int[] ReadsUsed = new int[16];
+        /// <summary>This chapter's named combo (docs/design/backlog.md step 12): it lands harder on this chapter's boss.</summary>
+        public static string ChapterCombo;
+        bool chapterComboShown;
         Enemy calfFoe;
         int calfKicks;
         float calfAt, crossfireReadyAt;
@@ -54,7 +59,7 @@ namespace ProjectInk
             if (t != null)
             {
                 var r = ReadCounter(kick, inside, t);
-                if (r.clip != null) { strSeq = ""; Tell("read"); return Pin(r, t); }
+                if (r.clip != null) { strSeq = ""; Tell("read"); ReadsUsed[(int)t.Read]++; return Pin(r, t); }
             }
 
             char tok = kick ? (inside ? 'B' : 'K') : (inside ? 'I' : 'P');
@@ -99,6 +104,7 @@ namespace ProjectInk
                     break;
             }
             if (t != null && t.Health <= m.damage && string.IsNullOrEmpty(m.name)) m = m.Finisher(null);
+            if (t != null && t.Boss && ChapterCombo != null && m.name == ChapterCombo) { m.damage *= 1.5f; m.name += "  ★"; }
             return Pin(m, t);
         }
 
@@ -131,7 +137,7 @@ namespace ProjectInk
                     if (!kick) return Named(Use(AttackData.Overhand, AttackData.SCross), "OVER THE TOP", 1.3f);
                     break;
                 case Opening.Overreach:
-                    if (!kick) return Use(AttackData.Overhand, AttackData.SCross).Finisher("COUNTER");
+                    if (!kick) { var c = Use(AttackData.Overhand, AttackData.SCross).Finisher("COUNTER"); if (t.Boss && ChapterCombo == "COUNTER") { c.damage *= 1.5f; c.name += "  ★"; } return c; }
                     break;
                 case Opening.Stumbling:
                     if (kick) return AttackData.MaeGeri.Finisher("SENT OVER");
@@ -306,6 +312,13 @@ namespace ProjectInk
                 if (Mathf.Abs(e.transform.position.y - hero.transform.position.y) > 1f) continue;
                 float d = Mathf.Abs(e.transform.position.x - hero.transform.position.x);
                 if (d < bd) { bd = d; best = e; }
+            }
+            if (best != null && HeroController.ReadsUsed[(int)best.Read] >= 3)
+            {
+                // learnt: only a small mark where the opening is
+                var sp0 = cam.WorldToScreenPoint(best.transform.position + Vector3.up * (best.Read == Opening.GuardHigh || best.Read == Opening.HeadBack || best.Read == Opening.Stumbling ? 0.75f : 1.4f));
+                if (sp0.z > 0f) { style.normal.textColor = new Color(1f, 1f, 1f, 0.6f + 0.3f * Mathf.Sin(pulse * 9f)); GUI.Label(new Rect(sp0.x - 20f, Screen.height - sp0.y - 20f, 40f, 40f), "•", style); }
+                best = null;
             }
             if (best != null)
             {

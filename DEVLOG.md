@@ -1676,3 +1676,22 @@ Then the roof, as built.
 - The thunder comes sooner after each flash as he climbs.
 - Each room has its own reverb.
 - The drums (the duel cue) arrive with the first katana.
+
+## Backlog steps 12 and 15
+- **Step 12, each chapter's named combo** (`HeroController.ChapterCombo`):
+  - It is taught once, by a banner at the chapter's first fight.
+  - It lands 50% harder on that chapter's boss, marked ★.
+
+  | Chapter | Combo |
+  |---|---|
+  | Warehouse | BOXER'S FOUR |
+  | Street | DUTCH TWO-AND-LOW (the Driver is a boxer: chop his legs) |
+  | Home | CLOSE QUARTERS (the narrow rooms) |
+  | Backyard | COUNTER (make the Handler miss, then the overhand) |
+  | Fortress | TIMBER (the Warden) |
+
+- **Step 15, tuning that needs no phone:**
+  - The read words fade to a mark after three uses of that read.
+  - PINNED counts an oil drum behind him.
+  - A prop in hand is put down when he walks onto a weapon.
+- **Parked:** step 13 (knife and rod controls) and step 14 (the book / evidence story, which needs your brief).

@@ -5,6 +5,12 @@
   release. It is rebuilt once, then, so story fixes don't keep forcing it to be redone.
 - **Questions you haven't answered:** proceed with the recommendation and note it here.
 
+## Done in step 15 without phone testing
+- The read words fade to a small mark once each read has been answered three times.
+- PINNED counts an oil drum standing behind him, as well as the zone's end.
+- Walking onto a weapon with a prop in hand puts the prop down.
+- Still to tune on the phone: the advance speed, the distances at which guards notice you, how long the readable poses are held.
+
 ## Decided by recommendation
 - **The read words over the men:** they fade once each read has been used three times (step 15).
 - **The fortress:** eleven levels and the wall tower passage. Voss's gallery is kept.
@@ -29,7 +35,7 @@ Each step is built on the ones before it, so nothing is redone. Every step ends 
 | 9 ✅ | **The Warden, rebuilt** | The chain wraps the katana; the chandeliers; TIMBER (calf, calf, head kick); he drops his chain. | 7 |
 | 10 ✅ | **The Voss duel, rebuilt** | His shikomizue: faster red lines, feints, two taps of the cane before a thrust. The Kata of Three, mirrored. The katana thrown aside, bare hands, the cane blade taken. Then the gun and the edge (as built). | 6, 7 |
 | 11 ✅ | **The fortress sound** | The storm with height (the thunder getting closer). Each room's acoustic. Surfaces underfoot. The katana's sounds. The score stems by act: storm, then drums, then the choir, then silence for Voss. | 7–10 |
-| 12 | **Each chapter's named combo** | 2 the street: Dutch Two-and-Low against the Driver · 3 home: Close Quarters · 4 the backyard: slip and overhand against the Handler's knuckles. | 1 |
+| 12 ✅ | **Each chapter's named combo** | 2 the street: Dutch Two-and-Low against the Driver · 3 home: Close Quarters · 4 the backyard: slip and overhand against the Handler's knuckles. | 1 |
 | 13 | **Knife and rod controls, new enemy types** (parked) | Their gesture maps on the step 2 grammar. | 2 |
 | 14 | **The book / evidence story logic** (parked) | Needs a brief from you. | – |
-| 15 | **Tuning after phone testing** | Fade the read words once learned. Crates and racks count for PINNED. A prop in hand vs a weapon pickup. The advance speed. The distances at which guards on watch notice you. How long the readable poses are held. Previews that draw the second man in three-body clips. | testing |
+| 15 (partly ✅) | **Tuning after phone testing** | Fade the read words once learned. Crates and racks count for PINNED. A prop in hand vs a weapon pickup. The advance speed. The distances at which guards on watch notice you. How long the readable poses are held. Previews that draw the second man in three-body clips. | testing |

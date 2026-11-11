@@ -973,6 +973,7 @@ namespace ProjectInk
         void DoPickup(WeaponPickup p)
         {
             if (p == null) return;
+            if (carried != null && Style == FightStyle.Fists) DropCarried();      // the bottle down, the weapon up
             if (Style == FightStyle.Knife && p.kind == FightStyle.Knife) Knives = Mathf.Min(6, Knives + p.uses);
             else if (Style == FightStyle.Fists) Equip(p.kind, p.uses);
             if (p.kind == FightStyle.Sword) OnKatanaTaken();          // the katana: Voss's first lesson (HeroKatanaV4)

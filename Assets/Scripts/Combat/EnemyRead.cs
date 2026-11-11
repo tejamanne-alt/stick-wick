@@ -48,7 +48,15 @@ namespace ProjectInk
             get
             {
                 float wall = Facing > 0 ? arenaMinX : arenaMaxX;
-                return Mathf.Abs(transform.position.x - wall) < 0.8f;
+                if (Mathf.Abs(transform.position.x - wall) < 0.8f) return true;
+                // or his back to something solid: an oil drum standing behind him
+                foreach (var d in OilDrum.All)
+                {
+                    if (d == null || d.Rolling) continue;
+                    float behind = (transform.position.x - d.transform.position.x) * Facing;
+                    if (behind > 0.1f && behind < 0.85f && Mathf.Abs(d.FloorY - transform.position.y) < 0.4f) return true;
+                }
+                return false;
             }
         }
 
