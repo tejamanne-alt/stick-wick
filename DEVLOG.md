@@ -1551,3 +1551,19 @@ Men waiting their turn now hold a visible high or low guard, changed every few s
 4. A back kick sends the other.
 
 It runs as a three-body paired clip with slow motion, camera focus, shakes and the banner. It recharges in 16 s.
+
+## Backlog step 1: the new body in every story chapter but the fortress
+- **What now builds on the 29-bone body:** the bank and the street, home, the backyard, the road and the
+  epilogue, as chapter 1 already did. Enemies, Maya and Voss get it too, since every chapter builds its
+  figures from one model.
+- **Not the fortress:** it is rebuilt on the new body from scratch (step 7).
+- **Not the tower and the classic hall:** they are fight mode.
+- **Every old clip carries over:** all 130 of the classic clips are in the V4 set (checked by name).
+- **Props still attach:** props on the bones (hand.R, hand.L, head, forearm) keep their bone names.
+- **Build check:** `BuildScenes.CheckCombatV3` now fails the build if any of those scenes isn't on the new body.
+- **What comes with it in each chapter:**
+  - the walk, jog and run speeds, the relaxed idle
+  - the near and far moves, the clinch, the hanging moves (where the level has raised floors)
+  - the chapter's props
+- **To check in Unity (Build All Scenes):** every cutscene's poses, props in the hands and on the heads
+  (Maya's ribbon, the Cleaner's apron, Voss's cane), the Driver's car, the Home chair scene, the backyard swing.

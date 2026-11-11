@@ -1,5 +1,15 @@
 # Backlog: in build order
 
+## Standing rules
+- **Don't touch the timeline recap** (the stills, timeline and dialogues after THE END) until we prepare the app
+  release. It is rebuilt once, then, so story fixes don't keep forcing it to be redone.
+- **Questions you haven't answered:** proceed with the recommendation and note it here.
+
+## Decided by recommendation
+- **The read words over the men:** they fade once each read has been used three times (step 15).
+- **The fortress:** eleven levels and the wall tower passage. Voss's gallery is kept.
+
+## The steps
 Each step is built on the ones before it, so nothing is redone. Every step ends with:
 - its test checkpoint
 - the contact sheets for its clips
@@ -8,7 +18,7 @@ Each step is built on the ones before it, so nothing is redone. Every step ends 
 
 | # | Step | What it delivers | Depends on |
 |---|---|---|---|
-| 1 | **The V4 body in chapters 2, 3, 4, the walk-out and the epilogue** | One switch, then each chapter checked: cutscene clips, props on the bones, bosses, Maya and Voss. (The fortress is not converted: it is rebuilt in step 7.) | – |
+| 1 ✅ (built; to check in Unity) | **The V4 body in chapters 2, 3, 4, the road and the epilogue** (the walk-out lives in the fortress scene and moves with step 7) | One switch, then each chapter checked: cutscene clips, props on the bones, bosses, Maya and Voss. (The fortress is not converted: it is rebuilt in step 7.) | – |
 | 2 | **Weapon control grammar** | A weapon in hand swaps what swipes mean (fists keep today's controls). Swipe angle in 8 directions relative to the man faced. A press on the hero, then drag and release. The swipes the katana replaces are dropped while it's in hand. | – |
 | 3 | **Ink stroke and red line** | The swipe drawn as a sumi-e brushstroke that the blade follows: a killing stroke stays a beat, a kata's strokes show together. The enemy's red ghost line for his coming cut, a red point for a thrust. | 2 |
 | 4 | **Katana animations (about 22)** | Hero: the guard and footwork, the five cuts, the turning cut, the thrust, the retreat, the mirror parries, the return cut, the iai draw, the pass, cleaning and sheathing, tsubame-gaeshi, jūji, the Kata of Three, picking it up, throwing it aside. Swordsman: his cuts and thrust with tells, parried open, cut, the fall after the pass, disarmed. | 1 |

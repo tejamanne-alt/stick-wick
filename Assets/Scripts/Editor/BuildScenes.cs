@@ -79,16 +79,21 @@ namespace ProjectInk.EditorTools
         {
             string want = System.IO.File.Exists(StickmanImport.ModelPathV4) ? StickmanImport.ModelPathV4 : StickmanImport.ModelPathV3;
             if (!System.IO.File.Exists(want)) return;                                 // no new body in this checkout
-            var deps = AssetDatabase.GetDependencies(PrototypeBuilder.StoryScenePath, true);
-            bool model = deps.Contains(want);
-            bool shader = deps.Any(d => d.EndsWith("InkDepth.shader"));
-            if (model && shader)
+            // every story chapter on the new body (backlog step 1); the fortress waits for its rebuild
+            foreach (var scene in new[] { PrototypeBuilder.StoryScenePath, PrototypeBuilder.BankScenePath, PrototypeBuilder.StreetScenePath,
+                                          PrototypeBuilder.HomeScenePath, PrototypeBuilder.ParkScenePath, PrototypeBuilder.RoadScenePath,
+                                          PrototypeBuilder.EpilogueScenePath })
             {
-                Debug.Log("[Stick Wick] chapter 1 builds on the new body (" + System.IO.Path.GetFileNameWithoutExtension(want) + " + InkDepth)");
-                return;
+                if (!System.IO.File.Exists(scene)) continue;
+                var deps = AssetDatabase.GetDependencies(scene, true);
+                bool model = deps.Contains(want);
+                bool shader = deps.Any(d => d.EndsWith("InkDepth.shader"));
+                if (model && shader) continue;
+                throw new BuildFailedException("[Stick Wick] " + System.IO.Path.GetFileNameWithoutExtension(scene) + " is not on the new body (" +
+                                               (model ? "" : System.IO.Path.GetFileNameWithoutExtension(want) + " missing ") + (shader ? "" : "InkDepth missing") +
+                                               "). Run Stick Wick → Build All Scenes (or Build Android APK), then build again.");
             }
-            throw new BuildFailedException("[Stick Wick] chapter 1's scene is not on the Combat 3.0 body (" + (model ? "" : System.IO.Path.GetFileNameWithoutExtension(want) + " missing ") +
-                                           (shader ? "" : "InkDepth missing") + "). Run Stick Wick → Build All Scenes (or Build Android APK), then build again.");
+            Debug.Log("[Stick Wick] the story chapters build on the new body (" + System.IO.Path.GetFileNameWithoutExtension(want) + " + InkDepth)");
         }
     }
 }

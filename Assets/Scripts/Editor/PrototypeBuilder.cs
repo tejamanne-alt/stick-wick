@@ -20,7 +20,7 @@ namespace ProjectInk.EditorTools
         public const string ScenePath = "Assets/Scenes/Prototype.unity";
         const string ApkPath = "build/Android/StickWick.apk";
         /// <summary>Bump whenever the generated scene changes; open editors rebuild it on pull.</summary>
-        public const int SceneVersion = 50;
+        public const int SceneVersion = 51;
         public const string VersionFile = "Assets/Generated/scene_version.txt";
 
         const string HallScenePath = "Assets/Scenes/ClassicHall.unity";
@@ -109,9 +109,14 @@ namespace ProjectInk.EditorTools
             // chapter 1 is Combat 3.0's test bed: it runs on the V3 body (both the NEW controls and the
             // CLASSIC ones, chosen in its pause card); every other scene keeps the classic body
             // (the 29-bone V4 body when it is there, else the V3 one)
-            bool ch1 = kind == LayoutKind.Warehouse && storySet == StorySet.None;
-            bool v4 = ch1 && File.Exists(StickmanImport.ModelPathV4) && File.Exists(StickmanImport.ClipJsonPathV4);
-            bool v3 = ch1 && (v4 || (File.Exists(StickmanImport.ModelPathV3) && File.Exists(StickmanImport.ClipJsonPathV3)));
+            // the story chapters run on the 29-bone V4 body (docs/design/backlog.md, step 1): chapter 1, the
+            // bank and the street, home, the backyard, the road and the epilogue. The fortress is being
+            // rebuilt on it from scratch (step 7) and keeps the classic body until then; the tower and the
+            // classic hall are fight mode and keep it for good.
+            bool newBody = kind == LayoutKind.Warehouse || kind == LayoutKind.Bank || kind == LayoutKind.Street ||
+                           kind == LayoutKind.Home || kind == LayoutKind.Park;
+            bool v4 = newBody && File.Exists(StickmanImport.ModelPathV4) && File.Exists(StickmanImport.ClipJsonPathV4);
+            bool v3 = newBody && (v4 || (File.Exists(StickmanImport.ModelPathV3) && File.Exists(StickmanImport.ClipJsonPathV3)));
             string modelPath = v4 ? StickmanImport.ModelPathV4 : v3 ? StickmanImport.ModelPathV3 : StickmanImport.ModelPath;
             AssetDatabase.ImportAsset(modelPath, ImportAssetOptions.ForceUpdate);
 
