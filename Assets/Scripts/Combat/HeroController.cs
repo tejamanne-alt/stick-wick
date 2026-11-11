@@ -81,7 +81,7 @@ namespace ProjectInk
                                     state == State.Rope || state == State.Bar || state == State.WallRun || state == State.Scissors;
         public bool IsGrabbedBy(Enemy e) => state == State.Grabbed && grabber == e;
 
-        string IdleClip => Style == FightStyle.Sword || Style == FightStyle.Pipe ? "sword_idle" : Style == FightStyle.Gun ? "gun_idle" : IdleClipV4;
+        string IdleClip => KatanaMode ? KatanaIdle : Style == FightStyle.Sword || Style == FightStyle.Pipe ? "sword_idle" : Style == FightStyle.Gun ? "gun_idle" : IdleClipV4;
 
         protected override void Awake()
         {
@@ -975,6 +975,7 @@ namespace ProjectInk
             if (p == null) return;
             if (Style == FightStyle.Knife && p.kind == FightStyle.Knife) Knives = Mathf.Min(6, Knives + p.uses);
             else if (Style == FightStyle.Fists) Equip(p.kind, p.uses);
+            if (p.kind == FightStyle.Sword) OnKatanaTaken();          // the katana: Voss's first lesson (HeroKatanaV4)
             else return;
             if (InkFx.Instance != null) InkFx.Instance.Burst(p.transform.position, 1.6f);
             Tell("pickup");
@@ -1107,6 +1108,7 @@ namespace ProjectInk
                 return;
             }
             running = false;
+            if (KatanaCommand(cmd)) return;                          // the katana's own grammar (HeroKatanaV4)
             if (TryShovePushKick(cmd)) return;
             switch (cmd)
             {
@@ -1415,6 +1417,7 @@ namespace ProjectInk
         void Strike(int side, bool kick = false)
         {
             if (InRampage) { RampageStrike(side); return; }
+            if (KatanaMode) { KatanaThrust(side, kick); return; }    // a tap with the katana: the thrust
             if (state == State.Idle && Time.time - lastAttackEnd > comboWindow) { comboStep = 0; closeStep = 0; punchStep = 0; kickStep = 0; ResetString(); }
             comboLabel = null;
 

@@ -1329,6 +1329,7 @@ namespace ProjectInk
                 { "TAP LOW", "Up close: to the body · further: kicks · running: high = flying knee, low = slide" },
                 { "READ HIM", "Follow the words over him: guard up = go low, folded = knee, head back = body..." },
                 { "TWO ON YOU", "One in front, one behind: tap = CROSSFIRE" },
+                { "KATANA", "Swipe = a cut along that line · tap = thrust · swipe his red line = parry · hold on yourself, drag = the draw" },
                 { "HOLD", "Walk that way · keep holding: jog, then run · swipe down and hold: crouch (slide to creep)" },
                 { "SWIPE UP", "Jump (up-left / up-right: that way) · vault a drum · climb a ledge · grab a rope or bar" },
                 { "SWIPE DOWN", "Throw your weapon (bare hands: duck) · swipe down twice: drop through the floor" },

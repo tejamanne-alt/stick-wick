@@ -36,6 +36,9 @@ namespace ProjectInk
 
         void Say(string who, string line, float seconds) => Say(who, line, seconds, null);
 
+        /// <summary>A line from outside the directed scenes (the katana's lessons, HeroKatanaV4).</summary>
+        public void SayLine(string who, string line, float seconds) => Say(who, line, seconds, null);
+
         /// <summary>A line of dialogue. `source` pins it to a body; left out, the speaker is found:
         /// YOU is the hero, THE FOREMAN the boss, any other on-screen name the nearest of his men.</summary>
         void Say(string who, string line, float seconds, Transform source)
@@ -50,6 +53,11 @@ namespace ProjectInk
             {
                 subKind = VoiceKind.OffScreen;                 // her voice, out of a memory
                 subSpeaker = "MAYA  ·  A MEMORY";
+            }
+            else if (w == "VOSS MEMORY")
+            {
+                subKind = VoiceKind.OffScreen;                 // the teacher's voice, remembered (the katana's lessons)
+                subSpeaker = "VOSS  ·  A MEMORY";
             }
             else if (w == "HER")
             {

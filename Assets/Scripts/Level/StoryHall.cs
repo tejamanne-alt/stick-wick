@@ -17,9 +17,11 @@ namespace ProjectInk
     {
         /// <summary>The zone to resume at after a defeat (-1: not in the hall yet).</summary>
         public static int HallCheckpoint = -1;
+        /// <summary>Test checkpoint: the crane bay with a katana on the floor and swordsmen in the waves (backlog step 5).</summary>
+        public static bool KatanaTest;
 
         /// <summary>From the menu: the chapter from the top (no checkpoint, no retry state).</summary>
-        public static void NewRun() { HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
+        public static void NewRun() { KatanaTest = false; HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
 
         struct Spawn { public EnemyType type; public SpawnKind kind; public Spawn(EnemyType t, SpawnKind k) { type = t; kind = k; } }
 
@@ -186,7 +188,8 @@ namespace ProjectInk
                 hero.SetFacing(1);
                 hero.CineRelease();
                 hero.runSpeed = runSpeed;
-                if (hero.Style == FightStyle.Fists) hero.GiveWeapon(FightStyle.Knife, 3);
+                if (KatanaTest && director != null) WeaponPickup.Spawn(FightStyle.Sword, 999, new Vector3(ZoneX0(z) + 3.0f, 0f, 0f), director.weaponMaterial);
+                else if (hero.Style == FightStyle.Fists) hero.GiveWeapon(FightStyle.Knife, 3);
                 var sh = Find("InnerShutter");
                 if (sh != null) foreach (var r in sh.GetComponentsInChildren<Renderer>()) r.enabled = false;
                 Sound.Tension(true);
@@ -239,7 +242,7 @@ namespace ProjectInk
                 if (queued < list.Length && hallMen.Count < cap + watching.Count && Time.time >= nextSpawnAt && director != null)
                 {
                     var sp = list[queued];
-                    var e = director.SpawnScripted(sp.type, sp.kind);
+                    var e = director.SpawnScripted(KatanaTest ? EnemyType.Swordsman : sp.type, sp.kind);
                     if (e != null) { hallMen.Add(e); if (phase == Phase.ToHall) e.Passive = true; }
                     queued++;
                     nextSpawnAt = Time.time + Random.Range(0.6f, 1.3f);

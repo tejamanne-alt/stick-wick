@@ -41,6 +41,7 @@ namespace ProjectInk
         void FarTick()
         {
             if (Contact && cue == null) { cue = gameObject.AddComponent<OpeningCue>(); cue.hero = this; }
+            KatanaTick();
             if (GestureInput.Instance != null) GestureInput.HoldOnArmed = carried != null && carried.kind == PropKind.Chain && MovesV4;
             // walking over a prop with empty hands: pick it up
             if (carried == null && Style == FightStyle.Fists && Grounded && state == State.Idle && traverse == null)
@@ -298,6 +299,9 @@ namespace ProjectInk
             switch (farMove)
             {
                 case "throw": LaunchCarried(); break;
+                case "katana": KatanaImpact(); break;
+                case "pass": PassClick(); break;
+                case "parry": break;
                 case "smash":
                     if (carried != null && e != null && Connects(e, 0.9f, 0.6f))
                     {

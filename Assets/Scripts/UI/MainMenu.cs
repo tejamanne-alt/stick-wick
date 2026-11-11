@@ -200,6 +200,7 @@ namespace ProjectInk
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 2  ·  Racking aisle", () => Ch1(() => Hall(1))),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 3  ·  Mezzanine", () => Ch1(() => Hall(2))),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 4  ·  Crane bay", () => Ch1(() => Hall(3))),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "TEST  ·  the katana (crane bay, swordsmen)", () => Ch1(() => { Hall(3); StoryIntro.KatanaTest = true; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "The Foreman (the fight)", () => Ch1(() => { Hall(3); StoryIntro.BossReached = true; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Ending  ·  \"the old man wants his book\"", () => Ch1(() => { StoryIntro.EscapeSeen = true; StoryIntro.TestEnding = 1; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Ending  ·  the search, the note signed V", () => Ch1(() => { StoryIntro.EscapeSeen = true; StoryIntro.TestEnding = 2; })),

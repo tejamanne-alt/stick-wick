@@ -520,6 +520,11 @@ import v4_near  # noqa: E402
 
 CLIPS.update(v4_near.CLIPS)
 
+# ---------------------------------------------------------------- the katana
+import v4_katana  # noqa: E402
+
+CLIPS.update(v4_katana.CLIPS)
+
 
 def key_clip(arm, name, spec):
     return vp.key_clip(arm, name, spec)

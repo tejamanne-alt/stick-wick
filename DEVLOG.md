@@ -1567,3 +1567,60 @@ It runs as a three-body paired clip with slow motion, camera focus, shakes and t
   - the chapter's props
 - **To check in Unity (Build All Scenes):** every cutscene's poses, props in the hands and on the heads
   (Maya's ribbon, the Cleaner's apron, Voss's cane), the Driver's car, the Home chair scene, the backyard swing.
+
+## The katana (backlog steps 2–6)
+
+**Step 2, the controls change with the weapon** (`GestureInput`):
+- `Grammar` is Fists or Katana, set by the hero every frame.
+- With the katana, every swipe is `Command.Cut` along its own line (`CutStart`, `CutEnd`, `CutVector`, `CutSpeed`).
+- A press on the hero himself held for 0.22 s is `IaiHold`. Dragging out and letting go is `IaiDraw`; letting go without a drag is `IaiCancel`.
+- The crouch swipe is off while the katana is out.
+- Keys for testing: U ↘, I ↓, O ↗, J →, K ↑, L retreat, hold SPACE for the draw.
+
+**Step 3, the ink stroke and the red line** (`Core/InkStroke.cs`):
+- The swipe is drawn into the fighting plane as one tapered, bowed brushstroke, pale so it reads on the dark sets.
+- A killing cut's stroke lingers; a kata holds all its strokes together.
+- `RedLine` is a swordsman's coming cut, through the hero, firming up as the wind-up ends. A thrust shows as a red ring.
+
+**Step 4, the clips** (`tools/blender/v4_katana.py`, 24 clips):
+- **The hold:** both hands on the hilt; the blade lies along the right hand, so a pose sets the blade by its angle.
+- **The hero's clips:**
+  - katana_guard (chūdan), katana_walk (suri-ashi), katana_retreat
+  - the cuts: kesa, gyaku, oroshi, kiriage, yoko, ushiro; the thrusts: tsuki, tsuki_low
+  - three parries
+  - chiburi, iai_sheathe (nōtō), iai_hold, iai_draw (nukitsuke), katana_pass
+  - katana_discard
+- **The swordsman's clips:** the two wind-up tells, k_parried, cut_down.
+- **The lab:** `v4_lab` now draws the blade on the hero.
+
+**Step 5, katana play** (`HeroKatanaV4.cs`):
+
+| Gesture | What it does |
+|---|---|
+| A swipe's angle, relative to the man faced | the cut: ↘ kesa, ↗ gyaku, ↓ oroshi, ↑ kiriage, → yoko |
+| ← away | the retreat; with a man behind, the turning cut |
+| A tap | the thrust |
+| A man out of reach | the cut becomes a stepping cut that slides in |
+| The same line as a swordsman's red line | the mirror parry: within 20° PERFECT (slow motion, zoom), within 45° a parry; then a free KAESHI. A thrust is answered by a rising swipe. |
+| Line sequences | the kata: TSUBAME-GAESHI, JŪJI, KATA OF THREE |
+| The iai draw | NUKITSUKE |
+| Two or three men in a line along the drag | THE PASS: frozen, he goes through them, flick, sheathe; on the click they fall in order |
+
+- **A killing cut:** he stands a beat, then falls on his face (`cut_down`).
+- **A katana doesn't wear out.**
+
+**Voss's lessons:** remembered lines (`VOSS · A MEMORY`), each the first time it's needed.
+- *"The line comes before the blade."*
+- *"Point first. The edge is for after."*
+- *"Don't meet his sword. Meet his line."*
+- *"Draw only once. Make it enough."*
+
+**Step 6, swordsmen who fence** (`EnemyKatana.cs`):
+- **His tell:** up to jōdan or down to waki-gamae, with the red line, for about 0.6 s.
+- **His attacks:** cuts, and the thrust from further off.
+- **Feints:** 18% of the time.
+- **Reading you:** the same line three times running and he parries it.
+- **Parried,** he's knocked wide and open.
+- **He drops his katana** when he falls.
+
+**Test checkpoint:** chapter 1, TEST · the katana (the crane bay: a katana on the floor, every wave swordsmen).

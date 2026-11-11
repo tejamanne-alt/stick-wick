@@ -52,9 +52,20 @@ def report(only):
         print(line)
 
 
-def man(name, near, far, x=0.0, facing=1):
+def man(name, near, far, x=0.0, facing=1, blade=False):
     arm = r4.build_armature(name)
     r4.build_mesh(arm, near, far, name=name + "Body")
+    if blade:
+        # the katana, as the game mounts it: along the right hand bone (FighterFactory.Mount)
+        bpy.ops.mesh.primitive_cube_add(size=1)
+        b = bpy.context.active_object
+        b.name = name + "Blade"
+        b.scale = (0.012, 0.75, 0.03)
+        b.parent = arm
+        b.parent_type = "BONE"
+        b.parent_bone = "hand.R"
+        b.location = (0, 0.3, 0)
+        b.data.materials.append(bpy.data.objects[name + "Body"].data.materials[0])
     arm.location = (x, 0, 0)
     arm.rotation_euler = (0, 0, 0 if facing > 0 else math.pi)
     return arm
@@ -70,7 +81,7 @@ def preview(only, every):
     sc.render.resolution_x, sc.render.resolution_y = W, H
     cam.data.ortho_scale = 2.3
     cam.location = (0.5, -8, 0.8)
-    hero = man("Hero", 0.02, 0.10)
+    hero = man("Hero", 0.02, 0.10, blade=True)
     tgt = man("Target", 0.55, 0.72, x=1.0, facing=-1)
     f1 = ImageFont.truetype(FONT, 15)
     f2 = ImageFont.truetype(FONT, 20)

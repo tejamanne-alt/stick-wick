@@ -103,7 +103,7 @@ namespace ProjectInk
         public bool Ranged => Type == EnemyType.Gunner || Type == EnemyType.Thrower;
         public bool Carried => state == State.Carried;
         public bool HoldingHero => state == State.Holding;
-        string IdleClip => Armed || Type == EnemyType.Piper ? "sword_idle" : Gunner ? "gun_idle" : "idle";
+        string IdleClip => KatanaBrain ? "katana_guard" : Armed || Type == EnemyType.Piper ? "sword_idle" : Gunner ? "gun_idle" : "idle";
 
         void OnEnable() { All.Add(this); }
         void OnDisable() { All.Remove(this); AttackTokens.Release(this); if (laser != null) laser.enabled = false; }
@@ -251,6 +251,7 @@ namespace ProjectInk
                     velocity.x = 0f;
                     Tint(TelegraphColor, 0.05f);
                     if (Gunner) AimLaser();
+                    if (KatanaFeintNow()) break;
                     if (FeintNow()) break;
                     if (stateTime >= (Gunner ? 0.75f : Type == EnemyType.Thrower ? 0.55f : WindupTime)) BeginAttack();
                     break;
@@ -724,6 +725,7 @@ namespace ProjectInk
             switch (Type)
             {
                 case EnemyType.Swordsman:
+                    if (KatanaWindup()) break;                       // a swordsman who fences (EnemyKatana)
                     attack = AttackData.EnemySword;
                     body.Play("sword_idle", 0.08f);
                     break;
@@ -808,6 +810,7 @@ namespace ProjectInk
         void ResolveAttack()
         {
             hitDone = true;
+            if (KatanaBrain) { KatanaAfterHit(); if (kParried) return; }
             float dx = (hero.transform.position.x - transform.position.x) * Facing;
             float dy = Mathf.Abs(hero.transform.position.y - transform.position.y);
             if (Type == EnemyType.Thrower)
@@ -1481,6 +1484,7 @@ namespace ProjectInk
             if (Untouchable || state == State.Dead) return;
             if (!Targetable && !hit.hitsDowned && !OnLedge) return;
             if (state == State.Unaware) { state = State.Hurt; Noise(transform.position); }
+            if (redLine != null) redLine.Hide();
             DropProp();
             if (OnLedge) { DropFromLedge(); }
             if (ShieldBlocks(hit)) return;

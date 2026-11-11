@@ -16,6 +16,10 @@ namespace ProjectInk
         DropDown,             // two swipes down: drop through the floor (a one-way platform)
         Interact,             // a tap on a thing (a weapon on the floor, a drum): go and use it
         HoldOn,               // a press held on a man (with the chain in hand): drag him in
+        Cut,                  // katana: a swipe is a cut along its line (CutVector)
+        IaiHold,              // katana: a press held on the hero himself: sheathe, settle
+        IaiDraw,              // katana: the held press dragged out and let go: the draw cut along the drag
+        IaiCancel,            // katana: the held press let go without a drag
         JumpLeft, JumpRight   // a swipe up and to the side: a jump that way
     }
 
@@ -81,6 +85,16 @@ namespace ProjectInk
         public static Component InteractTarget;
         /// <summary>The man a press is being held on (Command.HoldOn), when HoldOnArmed (the chain in hand).</summary>
         public static Enemy HeldEnemy;
+        /// <summary>What swipes mean (docs/design/backlog.md step 2): the hero's weapon sets it every frame.
+        /// Fists: dodge / jump / throw / drop. Katana: every swipe is a cut along its own line.</summary>
+        public enum WeaponGrammar { Fists, Katana }
+        public static WeaponGrammar Grammar;
+        /// <summary>The last cut's line on screen (pixels), its unit direction and its speed (px / s).</summary>
+        public static Vector2 CutStart, CutEnd, CutVector;
+        public static float CutSpeed;
+        public static bool IaiHolding;
+        int iaiId = int.MinValue;
+        Vector2 iaiFrom;
         public static bool HoldOnArmed;
         // the run's momentum: a tap just after letting go of a run still goes the way he was running
         int runDir;
@@ -198,6 +212,15 @@ namespace ProjectInk
                 return side < 0 ? Command.StrikeLeft : Command.StrikeRight;
             }
             LastSwipeHigh = start.y >= Screen.height * kickLine;
+            if (Grammar == WeaponGrammar.Katana)
+            {
+                // the katana: every swipe is a cut along its own line (its angle, wherever it is drawn)
+                CutStart = start; CutEnd = end; CutVector = d.normalized;
+                float dur = 0.15f;
+                foreach (var kv in touchTime) if (touchStart.TryGetValue(kv.Key, out var s0) && s0 == start) dur = Mathf.Max(0.04f, UnityEngine.Time.unscaledTime - kv.Value);
+                CutSpeed = d.magnitude / dur;
+                return Command.Cut;
+            }
             // up and to the side (between about 28 and 62 degrees): a jump that way
             float ang = Mathf.Atan2(d.y, Mathf.Abs(d.x)) * Mathf.Rad2Deg;
             if (d.y > 0f && ang > 28f && ang < 62f) return d.x < 0f ? Command.JumpLeft : Command.JumpRight;
@@ -314,11 +337,56 @@ namespace ProjectInk
             }
             touchStart[id] = pos;
             touchTime[id] = now;
+            if (Grammar == WeaponGrammar.Katana && iaiId == int.MinValue && OnHero(pos)) { iaiId = id; iaiFrom = pos; }
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        /// <summary>The katana on a keyboard (for testing): U kesa ↘, I down ↓, O rising diagonal ↗, J level towards →,
+        /// K rising ↑, L retreat ←, hold SPACE for the iai and let go for the draw (towards).</summary>
+        void KatanaKeys(Keyboard kb)
+        {
+            int f = hero != null && hero.localScale.x < 0f ? -1 : 1;
+            var hc = hero != null ? hero.GetComponent<HeroController>() : null;
+            if (hc != null) f = hc.Facing;
+            void K(Vector2 v) { CutVector = new Vector2(v.x * f, v.y).normalized; CutStart = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f); CutEnd = CutStart + CutVector * Screen.height * 0.25f; CutSpeed = 3000f; Push(Command.Cut); }
+            if (kb.uKey.wasPressedThisFrame) K(new Vector2(1f, -1f));
+            if (kb.iKey.wasPressedThisFrame) K(new Vector2(0.05f, -1f));
+            if (kb.oKey.wasPressedThisFrame) K(new Vector2(1f, 1f));
+            if (kb.jKey.wasPressedThisFrame) K(new Vector2(1f, 0f));
+            if (kb.kKey.wasPressedThisFrame) K(new Vector2(0.05f, 1f));
+            if (kb.lKey.wasPressedThisFrame) K(new Vector2(-1f, 0f));
+            if (kb.spaceKey.wasPressedThisFrame) { IaiHolding = true; Push(Command.IaiHold); }
+            if (kb.spaceKey.wasReleasedThisFrame && IaiHolding)
+            {
+                IaiHolding = false;
+                CutVector = new Vector2(f, 0f); CutStart = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f); CutEnd = CutStart + CutVector * Screen.height * 0.5f; CutSpeed = 4000f;
+                Push(Command.IaiDraw);
+            }
+        }
+#endif
+
+        /// <summary>A screen point on the hero himself (his body, a generous circle round the chest).</summary>
+        bool OnHero(Vector2 screen)
+        {
+            var cam = Camera.main;
+            if (hero == null || cam == null) return false;
+            var c = cam.WorldToScreenPoint(hero.position + Vector3.up * 0.8f);
+            return c.z > 0f && Vector2.Distance(screen, c) < Screen.height * 0.09f;
         }
 
         void TouchMoved(int id, Vector2 pos)
         {
             if (id == crouchId) { crouchNow = pos; return; }
+            if (id == iaiId)
+            {
+                // a still press on the hero becomes the iai hold; one that moves off fast is just a cut
+                if (!IaiHolding && touchTime.TryGetValue(id, out var t0))
+                {
+                    if ((pos - iaiFrom).magnitude > Screen.height * swipeFraction) { iaiId = int.MinValue; return; }
+                    if (UnityEngine.Time.unscaledTime - t0 > 0.22f) { IaiHolding = true; Push(Command.IaiHold); }
+                }
+                return;
+            }
             if (Classic)
             {
                 // a still press held a moment becomes a run towards that half of the screen
@@ -326,7 +394,7 @@ namespace ProjectInk
                 if (!touchStart.TryGetValue(id, out var s0) || !touchTime.TryGetValue(id, out var t0)) return;
                 // a swipe down that stays held: the crouch (no swipe fires when it is let go)
                 var dd0 = pos - s0;
-                if (crouchId == int.MinValue && -dd0.y > Screen.height * swipeFraction && -dd0.y > Mathf.Abs(dd0.x) * 1.2f &&
+                if (Grammar == WeaponGrammar.Fists && crouchId == int.MinValue && -dd0.y > Screen.height * swipeFraction && -dd0.y > Mathf.Abs(dd0.x) * 1.2f &&
                     UnityEngine.Time.unscaledTime - t0 > 0.16f)
                 {
                     crouchId = id;
@@ -355,6 +423,23 @@ namespace ProjectInk
         {
             if (id == crouchId) { crouchId = int.MinValue; consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
             if (id == stickId) { stickId = int.MinValue; return; }
+            if (id == iaiId)
+            {
+                iaiId = int.MinValue;
+                if (IaiHolding)
+                {
+                    IaiHolding = false;
+                    var dd = pos - iaiFrom;
+                    if (dd.magnitude > Screen.height * swipeFraction)
+                    {
+                        CutStart = iaiFrom; CutEnd = pos; CutVector = dd.normalized; CutSpeed = 4000f;
+                        Push(Command.IaiDraw);
+                    }
+                    else Push(Command.IaiCancel);
+                    consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id);
+                    return;
+                }
+            }
             if (holding.Remove(id)) { consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
             if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s)) Push(Classify(s, pos));
             touchStart.Remove(id);
@@ -405,6 +490,7 @@ namespace ProjectInk
                 bool rightDown = kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame;
                 keyCrouch = kb.cKey.isPressed;
                 keyCrouchAxis = keyCrouch ? (right ? 1f : 0f) - (left ? 1f : 0f) : 0f;
+                if (Grammar == WeaponGrammar.Katana) KatanaKeys(kb);
                 if (Classic)
                 {
                     if (keyCrouch) { left = right = leftDown = rightDown = false; }
@@ -420,7 +506,7 @@ namespace ProjectInk
                     if (kb.eKey.wasPressedThisFrame) Push(Command.DodgeRight);
                     if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame) Push(DownSwipe());
                     if (kb.fKey.wasPressedThisFrame) Push(Command.ThrowWeapon);
-                    if (kb.spaceKey.wasPressedThisFrame) Push(Command.Rampage);
+                    if (Grammar != WeaponGrammar.Katana && kb.spaceKey.wasPressedThisFrame) Push(Command.Rampage);
                 }
                 else
                 {

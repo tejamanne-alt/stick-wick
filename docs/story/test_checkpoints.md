@@ -6,6 +6,7 @@
 |---|---|---|
 | 1 · The Warehouse | Opening | A new run: HOLD to open his eyes while the voices beyond the shutter talk ("Boss wants him breathing. Dead, that box goes straight to the cops."), MASH to break the zip ties, flash 1 (the pipe, the coat walking away). The men: "Easy... boss wants him breathing." |
 | | At the shutter, Hall 1–4 | The walk and the hall zones, as before. |
+| | TEST · the katana | The crane bay: a katana on the floor ahead (walk over it), and the waves are all swordsmen. Try: swipe in any direction (each angle is its own cut, drawn as a brushstroke); tap = thrust; swipe the same line as a swordsman's red line to parry (then cut back: KAESHI); ↓ then ↑ quickly = TSUBAME-GAESHI; ↘ then ↗ = JŪJI; three swipes without a pause = KATA OF THREE; press and hold ON the hero, drag out and let go = the draw (two or three men in a line: THE PASS). Keys: U ↘, I ↓, O ↗, J →, K ↑, L retreat, hold SPACE and let go for the draw. |
 | | The Foreman | His hard hat; "Boss wants you breathing. For now."; phase III "You don't even know who you are. Do you?" |
 | | Ending | "The old man wants his book back. Nine o'clock, you open a box for him." Then TAP his coat, TAP the inside pocket, DRAG to unfold the note: "Only his hand opens 417. Keep him alive till nine. Get the book. Then finish him. — V." |
 | 2 · The Bank | The vault | Mr. Pell: six years, the standing instruction (the box goes to the lawyer); HOLD the palm on the glass. |
