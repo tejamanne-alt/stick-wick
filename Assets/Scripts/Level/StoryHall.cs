@@ -42,6 +42,26 @@ namespace ProjectInk
         static readonly int[][] Caps = { new[] { 2, 3 }, new[] { 3, 3 }, new[] { 3, 4 }, new[] { 4 } };
 
         enum ZoneState { Fighting, Clear }
+        // the mezzanine's two men on watch, backs to the stair: crouch up behind them (HeroFarV4)
+        readonly System.Collections.Generic.List<Enemy> watching = new System.Collections.Generic.List<Enemy>();
+        float postWatchAt = -1f;
+
+        void PostWatch()
+        {
+            postWatchAt = -1f;
+            if (director == null) return;
+            foreach (var x in new[] { WarehousePlan.MezzX0 + 3.4f, WarehousePlan.MezzX0 + 7.0f })
+            {
+                var e = director.SpawnScripted(Br, Up);
+                if (e == null) continue;
+                e.PostUnaware(new Vector3(x, WarehousePlan.MezzY, 0f), 1);
+                watching.Add(e);
+                hallMen.Add(e);
+            }
+            director.ShowBanner("TWO ON WATCH UP THERE  ·  SWIPE DOWN AND HOLD TO CROUCH  ·  TAP HIS BACK", 3.2f);
+        }
+
+        bool Watched => watching.Exists(e => e != null && e.Alive && e.Unaware);
         int zone, wave, queued;
         ZoneState zoneState;
         float nextSpawnAt, waveDoneAt = -1f, hallT, prevHallT;
@@ -157,6 +177,8 @@ namespace ProjectInk
             LockZone(z);
             SetDoors(z);
             if (director != null) director.ShowBanner($"{z + 1}  ·  {ZoneName[z]}", 2.4f);
+            watching.Clear();
+            if (z == 2) postWatchAt = Time.time + (cut ? 0.6f : 2.5f);     // two on watch on the mezzanine
             if (cut)
             {
                 phase = Phase.Hall;
@@ -211,7 +233,10 @@ namespace ProjectInk
             {
                 var list = waves[wave];
                 int cap = Caps[zone][wave];
-                if (queued < list.Length && hallMen.Count < cap && Time.time >= nextSpawnAt && director != null)
+                watching.RemoveAll(w => w == null || !w.Alive);
+                if (postWatchAt > 0f && Time.time >= postWatchAt) PostWatch();
+                if (postWatchAt > 0f || Watched) nextSpawnAt = Mathf.Max(nextSpawnAt, Time.time + 0.8f);   // the waves wait while they don't know
+                if (queued < list.Length && hallMen.Count < cap + watching.Count && Time.time >= nextSpawnAt && director != null)
                 {
                     var sp = list[queued];
                     var e = director.SpawnScripted(sp.type, sp.kind);

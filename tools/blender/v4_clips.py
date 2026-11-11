@@ -510,6 +510,11 @@ import v4_hang  # noqa: E402
 
 CLIPS.update(v4_hang.CLIPS)
 
+# ---------------------------------------------------------------- when the men are far
+import v4_far  # noqa: E402
+
+CLIPS.update(v4_far.CLIPS)
+
 
 def key_clip(arm, name, spec):
     return vp.key_clip(arm, name, spec)

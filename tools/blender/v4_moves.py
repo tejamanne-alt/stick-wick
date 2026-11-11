@@ -83,8 +83,8 @@ def gait(n, speed, duty, lift, hz, bounce, bounce_low_at_mid, spine, chest, neck
     return keys
 
 
-def clip(frames, keys, loop=False, hit=None, note="", speed=0.0, shift=False, striker=None, breath=False, breaths=2):
-    return dict(frames=frames, keys=keys, hit=hit, load=None, loop=loop, aim=None, reach=None, react=None, note=note,
+def clip(frames, keys, loop=False, hit=None, note="", speed=0.0, shift=False, striker=None, breath=False, breaths=2, reach=None, react=None):
+    return dict(frames=frames, keys=keys, hit=hit, load=None, loop=loop, aim=None, reach=reach, react=react, note=note,
                 striker=striker, shift=shift, breath=breath, breaths=breaths, lag=True, speed=speed)
 
 

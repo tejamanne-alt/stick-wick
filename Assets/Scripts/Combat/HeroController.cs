@@ -986,6 +986,12 @@ namespace ProjectInk
 
         void ThrowWeapon()
         {
+            if (carried != null)
+            {
+                if (carried.kind == PropKind.Chain) { DropCarried(); return; }
+                ThrowProp(PickTarget(Facing, 16f) ?? PickTarget(-Facing, 16f));
+                return;
+            }
             if (Style != FightStyle.Fists) Tell("throw");
             if (Style == FightStyle.Fists) { Duck(); return; }
             if (Style == FightStyle.Knife) { KnifeThrow(PickTarget(Facing, 16f) ?? PickTarget(-Facing, 16f)); return; }
@@ -1060,6 +1066,7 @@ namespace ProjectInk
 
         void UpdateIdle()
         {
+            FarTick();
             if (MovesV4) { UpdateIdleV4(); return; }
             HandleCommand(GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None);
             if (state != State.Idle) { running = false; return; }
@@ -1116,7 +1123,10 @@ namespace ProjectInk
                 // one swipe down: throw the weapon in hand (bare hands: a duck); two: drop through the floor
                 case Command.ThrowWeapon: ThrowWeapon(); break;
                 case Command.DropDown: if (!TryDropThrough()) Duck(); break;
-                case Command.Interact: InteractV4(GestureInput.InteractTarget); break;
+                case Command.Interact:
+                    if (GestureInput.InteractTarget is Throwable tp && !MovesV4) { if (carried == null && Mathf.Abs(tp.transform.position.x - transform.position.x) < 1.2f) PickProp(tp); break; }
+                    InteractV4(GestureInput.InteractTarget); break;
+                case Command.HoldOn: TryChainDrag(GestureInput.HeldEnemy); break;
                 case Command.JumpLeft: JumpTowards(-1); break;
                 case Command.JumpRight: JumpTowards(1); break;
                 case Command.Rampage: StartRampage(); break;
@@ -1409,7 +1419,8 @@ namespace ProjectInk
 
             // a knife flying in from that side: catch it and send it back
             var incoming = IncomingKnife(side);
-            if (incoming != null) { CatchKnife(incoming, side); return; }
+            if (incoming != null && carried == null) { CatchKnife(incoming, side); return; }
+            if (FarStrike(side, kick)) return;                        // far range, props, the chain, running attacks (HeroFarV4)
             // a knife in hand and a tap on the man himself, wherever he is on the screen: throw it at him
             // (within arm's reach the tap still stabs)
             var tapped = GestureInput.TappedEnemy;
@@ -2536,6 +2547,7 @@ namespace ProjectInk
                 return;
             }
             if (state == State.Clinch) EndClinch();          // hit from behind: he lets go
+            ReleaseFarFoe();
             Health = Mathf.Max(0f, Health - hit.damage);
             ComboCount = 0;
             comboStep = 0;

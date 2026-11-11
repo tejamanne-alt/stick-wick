@@ -1325,14 +1325,16 @@ namespace ProjectInk
             Label(new Rect(panel.x, panel.y + 4, panel.width, 56), Spaced("MOVES"), new GUIStyle(gTitle) { fontSize = 50 });
             string[,] rows =
             {
-                { "TAP HIGH", "Punch combo  (left / right side = that way)" },
-                { "TAP LOW", "Kick combo" },
+                { "TAP HIGH", "Punch combo (that side) · a man far off: close in behind the guard, then strike" },
+                { "TAP LOW", "Kick combo · running (or just stopped): high = flying knee, low = baseball slide" },
                 { "HOLD", "Walk that way · keep holding: jog, then run · swipe down and hold: crouch (slide to creep)" },
                 { "SWIPE UP", "Jump (up-left / up-right: that way) · vault a drum · climb a ledge · grab a rope or bar" },
                 { "SWIPE DOWN", "Throw your weapon (bare hands: duck) · swipe down twice: drop through the floor" },
-                { "SWIPE SIDEWAYS", "Dodge · vault · slide kick · wall flip" },
+                { "SWIPE SIDEWAYS", "Dodge · at a man 3-8 m off: rush in · as a charge comes: sidestep it" },
+                { "CROUCHED", "Tap the back of a man who hasn't seen you: the silent choke" },
+                { "PROPS", "Walk over a bottle, brick, stone...: tap a man to throw it · tap as one flies at you: swat it" },
                 { "RAMPAGE", "A rare power for when you're in trouble: the round button appears (or two fingers / Space when charged)" },
-                { "WALK OVER", "Pick up a dropped weapon (sword, pipe, gun, knives): your taps use it" },
+                { "WALK OVER", "Pick up a weapon · the chain: tap = lash, hold on a man = haul him in" },
                 { "TAP AN ENEMY", "Target him: your strikes go to him, the rest hang back (click him, or T, on a keyboard)" },
             };
             float rowH = Mathf.Min(42f, (panel.height - 190f) / rows.GetLength(0));

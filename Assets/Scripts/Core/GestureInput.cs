@@ -15,6 +15,7 @@ namespace ProjectInk
         KickLeft, KickRight, KickForward, LockNext,
         DropDown,             // two swipes down: drop through the floor (a one-way platform)
         Interact,             // a tap on a thing (a weapon on the floor, a drum): go and use it
+        HoldOn,               // a press held on a man (with the chain in hand): drag him in
         JumpLeft, JumpRight   // a swipe up and to the side: a jump that way
     }
 
@@ -78,6 +79,13 @@ namespace ProjectInk
         float lastDownSwipeAt = -9f;
         /// <summary>The thing a tap landed on (Command.Interact): a WeaponPickup or an OilDrum.</summary>
         public static Component InteractTarget;
+        /// <summary>The man a press is being held on (Command.HoldOn), when HoldOnArmed (the chain in hand).</summary>
+        public static Enemy HeldEnemy;
+        public static bool HoldOnArmed;
+        // the run's momentum: a tap just after letting go of a run still goes the way he was running
+        int runDir;
+        float runLetGoAt = -10f;
+        const float Momentum = 0.35f;
         /// <summary>The man a tap landed on (his body), and when: a knife in hand is thrown at him.</summary>
         public static Enemy TappedEnemy;
         public static float TappedAt = -9f;
@@ -146,7 +154,8 @@ namespace ProjectInk
         /// <summary>Which side of the hero a screen point is on.</summary>
         int SideOf(Vector2 screen)
         {
-            if (Mathf.Abs(MoveAxis) > 0.3f) return MoveAxis > 0 ? 1 : -1;     // running: strike that way
+            if (Mathf.Abs(MoveAxis) > 0.3f) return MoveAxis > 0 ? 1 : -1;     // running: any tap strikes forward (its height: high or low)
+            if (UnityEngine.Time.unscaledTime - runLetGoAt < Momentum) return runDir;   // just let go: still forward
             var cam = Camera.main;
             if (hero == null || cam == null) return screen.x < Screen.width * 0.5f ? -1 : 1;
             float hx = cam.WorldToScreenPoint(hero.position + Vector3.up * 0.8f).x;
@@ -252,6 +261,14 @@ namespace ProjectInk
                 float dd = Vector2.Distance(screen, c);
                 if (dd < pad * 1.4f && dd < bestD) { bestD = dd; best = w; }
             }
+            foreach (var tp in Throwable.All)
+            {
+                if (tp == null || !tp.Lying) continue;
+                var c = cam.WorldToScreenPoint(tp.transform.position + Vector3.up * 0.1f);
+                if (c.z <= 0f) continue;
+                float dd = Vector2.Distance(screen, c);
+                if (dd < pad * 1.4f && dd < bestD) { bestD = dd; best = tp; }
+            }
             foreach (var dr in OilDrum.All)
             {
                 if (dr == null || !dr.Available || dr.Rolling) continue;
@@ -318,7 +335,12 @@ namespace ProjectInk
                     return;
                 }
                 if (UnityEngine.Time.unscaledTime - t0 > holdToRun && (pos - s0).magnitude < Screen.height * swipeFraction)
+                {
+                    // the chain in hand and the press is on a man: drag him in instead of running
+                    var on = HoldOnArmed ? EnemyAt(s0) : null;
+                    if (on != null) { HeldEnemy = on; consumed.Add(id); Push(Command.HoldOn); return; }
                     holding[id] = s0.x < Screen.width * 0.5f ? -1 : 1;
+                }
                 return;
             }
             if (id != stickId) return;
@@ -480,6 +502,7 @@ namespace ProjectInk
                 float dx = (stickNow.x - stickOrigin.x) / (Screen.height * stickRange);
                 axis = Mathf.Abs(dx) < 0.15f ? 0f : Mathf.Clamp(dx, -1f, 1f);
             }
+            if (Mathf.Abs(MoveAxis) > 0.3f && Mathf.Abs(axis) <= 0.3f) { runDir = MoveAxis > 0 ? 1 : -1; runLetGoAt = UnityEngine.Time.unscaledTime; }
             MoveAxis = axis;
             // the creep while crouched
             float ca = keyCrouchAxis;

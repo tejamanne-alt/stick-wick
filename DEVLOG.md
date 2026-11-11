@@ -1462,3 +1462,48 @@ Walking (not sprinting) off the forklift, a rack or the mezzanine, he lowers him
 - **Hit while hanging:** torn off the edge.
 
 Every fall of a metre or more on the new body now lands with the soft or the heavy landing.
+
+## When the men are far (chapter 1's V4 body; props in every chapter)
+
+**Detail on every action** (`tools/blender/v4_pose.py`, `build_stickman_v4.py`):
+- **Torso wave:** the waist and chest twist trail the hips by a beat.
+- **Follow-through:** the off hand's wrist and fingers spring on after the arm stops.
+- **Shoulders:** a raised arm lifts its shoulder.
+- **Impacts:** the knees give a little at every hit.
+- **Loops:** a small drift in the head and forearms, so he never holds perfectly still.
+- **Carried-over clips:** the old clips get the same lag on the neck, head, wrists and fingers.
+
+**New clips** (`tools/blender/v4_far.py`): advance, rush_in, flying_knee, slide_tackle, shoulder_barge, throw_object, sidestep, swat, chain_lash, chain_drag (+_v), takedown_choke (+_v), unaware. Contact sheets are in docs/previews/v4/.
+
+**Controls** (`HeroFarV4.cs`):
+
+| Input | What he does |
+|---|---|
+| Tap a man 2.2–6.5 m off | Closes in behind his guard (a boxer's step-drag), then strikes. |
+| Swipe towards a man 3–8 m off | The rush: step-drag bursts until he's in front of him. |
+| Running, tap | Any tap counts as forward, with height picking high or low. A tap within 0.35 s of letting go cuts the stop short. High = the flying knee (the clothesline when closer), low = the baseball slide. |
+| Sprinting into a man | The shoulder barge. Jogging into him still takes hold. |
+| Swipe as a charge comes | The sidestep, with a hammer on his head as he passes. |
+| Crouched, tap a man's back | The silent choke. Others don't hear it. |
+| A prop in hand, tap a man | Throws it at him, wherever he is on screen. Within arm's reach he smashes it on him instead. |
+| Something thrown at you, tap | The swat. |
+| Chain in hand, tap | The lash, out to 2.6 m. |
+| Chain in hand, hold on a man | Hauls him in, into the clinch. |
+
+**Stealth** (`EnemyFar.cs`):
+- A man on watch smokes and looks about.
+- He sees you in front within 7 m; crouched, you can get within 4 m.
+- He hears you standing behind him within 1.6 m, running within 5 m, or a fight within 9 m.
+- Chapter 1's mezzanine starts with two men on watch, backs to the stair. The waves wait until they know.
+
+**Props by chapter** (`Props/Throwable.cs`): chosen from the place and the story.
+
+| Chapter | Props |
+|---|---|
+| Warehouse | The night crew's bottles, the forklift wrench, the crane's hoist chain. |
+| Street | Café and market bottles, bricks loose from the railway arches. |
+| Home | The Cleaner's bleach bottle (it blinds), a wine bottle. Nothing of Elena's or Maya's. |
+| Backyard | Flower pots, pond stones. |
+| Fortress | Battlement rubble, the guards' torches (in the blackout the beam spins and blinds). |
+
+The men pick props up and throw them at you too, so the swat has a job.

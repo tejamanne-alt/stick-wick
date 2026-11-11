@@ -1876,6 +1876,160 @@
       "reach": 0.0,
       "endShift": 0.0,
       "v4": true
+    },
+    {
+      "name": "advance",
+      "frames": 18,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rush_in",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 1.1,
+      "v4": true
+    },
+    {
+      "name": "flying_knee",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 8,
+      "loadFrame": -1,
+      "reach": 1.15,
+      "endShift": 0.86,
+      "v4": true
+    },
+    {
+      "name": "slide_tackle",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 10,
+      "loadFrame": -1,
+      "reach": 2.1,
+      "endShift": 2.12,
+      "v4": true
+    },
+    {
+      "name": "shoulder_barge",
+      "frames": 20,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 0.95,
+      "endShift": 0.9,
+      "v4": true
+    },
+    {
+      "name": "throw_object",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 11,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.2,
+      "v4": true
+    },
+    {
+      "name": "sidestep",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 11,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "swat",
+      "frames": 12,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 3,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "chain_lash",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 12,
+      "loadFrame": -1,
+      "reach": 2.6,
+      "endShift": 0.14,
+      "v4": true
+    },
+    {
+      "name": "chain_drag",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 20,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "chain_drag_v",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 1.78,
+      "v4": true
+    },
+    {
+      "name": "takedown_choke",
+      "frames": 64,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 12,
+      "loadFrame": -1,
+      "reach": 0.52,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "takedown_choke_v",
+      "frames": 64,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.55,
+      "v4": true
+    },
+    {
+      "name": "unaware",
+      "frames": 150,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
     }
   ]
 }

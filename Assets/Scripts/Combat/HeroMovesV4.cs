@@ -86,6 +86,7 @@ namespace ProjectInk
                 if (velocity.x * dir < -2.2f) { BeginTraverse("run_turn", 0f); SetFacing(dir); return; }
                 if (TryLowerDown(dir)) return;                          // a raised floor's edge: lower himself down
                 SetFacing(dir);
+                if (TryBarge(dir)) return;                              // flat out into him: the shoulder barge
                 if (Contact && WalkIntoClinch(dir)) return;
                 float want = !float.IsNaN(stepGoal) ? WalkSpeed
                            : holdTime < 0.4f ? WalkSpeed : holdTime < 1.25f || !alone ? JogSpeed : RunSpeedV4;
@@ -106,7 +107,7 @@ namespace ProjectInk
             if (running)
             {
                 running = false;
-                if (Mathf.Abs(velocity.x) > 2.4f && Grounded) { BeginTraverse("run_stop", 0f); velocity.x = 0f; return; }
+                if (Mathf.Abs(velocity.x) > 2.4f && Grounded) { NoteRunStop(); BeginTraverse("run_stop", 0f); velocity.x = 0f; return; }
                 velocity.x = 0f;
                 body.Play(IdleClipV4, 0.2f);
                 return;
@@ -152,6 +153,7 @@ namespace ProjectInk
             if (thing == null) return;
             FaceTowards(thing.transform.position.x);
             if (thing is WeaponPickup wp) { pickingUp = wp; BeginTraverse("pick_up", 0f); }
+            else if (thing is Throwable tp) { if (carried == null) PickProp(tp); }
             else if (thing is OilDrum) BeginTraverse("push", 0f);
         }
 
@@ -221,6 +223,8 @@ namespace ProjectInk
         // ------------------------------------------------------------------ traversals (one clip, its own travel)
         void BeginTraverse(string clip, float startX)
         {
+            farMove = null;
+            farSlideUntil = 0f;
             traverse = clip;
             traverseHit = false;
             traverseFrom = transform.position.x;
@@ -234,6 +238,7 @@ namespace ProjectInk
 
         void UpdateTraverse(float dt)
         {
+            if (FarTraverseUpdate(dt)) return;
             var e = body.Current;
             if (e == null) { EndTraverse(); return; }
             // the vault: slide into place for the hands to land on the lid
@@ -271,6 +276,7 @@ namespace ProjectInk
 
         void EndTraverse()
         {
+            string ended = traverse;
             var e = body.Current;
             if (e != null && Mathf.Abs(e.endShift) > 0.001f)
             {
@@ -281,7 +287,11 @@ namespace ProjectInk
             if (traverse == "vault" || traverse == "run_stop") Sound.Play(Sfx.Land, 0.7f, transform.position);
             traverse = null;
             pickingUp = null;
+            // a far move ends: keep what it needs before EnterIdle, then let it chain on
+            string move = farMove;
             EnterIdle();
+            farMove = move;
+            FarTraverseEnd(ended);
         }
     }
 }

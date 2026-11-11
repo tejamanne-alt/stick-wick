@@ -22,7 +22,7 @@ namespace ProjectInk
         public static int MaxCorpses = 40;
 
         enum State { Enter, Approach, Wait, Advance, Windup, Attack, Recover, Hurt, Down, GetUp, Dead, Holding, Carried, Pounce,
-                     Flee, BossIntro, Charge, Slam, Stunned, Enrage, Stagger, Scripted }
+                     Flee, BossIntro, Charge, Slam, Stunned, Enrage, Stagger, Scripted, Unaware, Throwing }
 
         public float walkSpeed = 2.6f;
         public float windupSeconds = 0.45f;
@@ -187,6 +187,7 @@ namespace ProjectInk
             if (hero == null) return;
             if (state == State.Carried || state == State.Scripted) { UpdateTint(); return; }   // the hero swings us / a cutscene poses us
             if (UpdateLedge(dt)) { UpdateTint(); return; }
+            if (state == State.Unaware) { UpdateUnaware(dt); UpdateTint(); return; }
             float dx = hero.transform.position.x - transform.position.x;
             float dist = Mathf.Abs(dx);
             // the hall is one continuous walking surface (ground, stairs, deck): walking towards the
@@ -223,6 +224,7 @@ namespace ProjectInk
                 case State.Wait:
                     FaceTowards(hero.transform.position.x);
                     velocity.x = 0f;
+                    if (TryThrowProp(dist, sameLevel)) break;
                     if (!sameLevel || Mathf.Abs(dist - Ring) > 1.0f) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
                     else if (!Passive && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
@@ -308,6 +310,7 @@ namespace ProjectInk
                     if (body.Finished) { GoWait(); body.Play(IdleClip, 0.15f); }
                     break;
                 case State.Pounce: UpdatePounce(); break;
+                case State.Throwing: UpdateThrowing(); break;
                 case State.Flee: UpdateFlee(dt); break;
                 case State.BossIntro: UpdateBossIntro(dx); break;
                 case State.Charge: UpdateCharge(dt); break;
@@ -1476,6 +1479,8 @@ namespace ProjectInk
         {
             if (Untouchable || state == State.Dead) return;
             if (!Targetable && !hit.hitsDowned && !OnLedge) return;
+            if (state == State.Unaware) { state = State.Hurt; Noise(transform.position); }
+            DropProp();
             if (OnLedge) { DropFromLedge(); }
             if (ShieldBlocks(hit)) return;
             if (Foreman && ForemanReads(hit)) return;

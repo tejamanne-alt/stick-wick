@@ -147,6 +147,7 @@ namespace ProjectInk
         /// <summary>A swipe in story mode: under a swing (slide), into a hold, a spear, or a step back.</summary>
         void ContactDodge(int dir)
         {
+            if (TrySidestep(dir)) return;                            // a charge coming: the matador
             Tell("dodge");
             pendingExecution = null;
             throwPending = false;
@@ -171,6 +172,8 @@ namespace ProjectInk
             }
             if (near != null && Grounded && ContactBare && TryClinch(near, dir)) return;
             if (mid != null && Grounded && ContactBare && mid.CanBeHeld && !mid.TooHeavy) { BeginGrapple(Spear, mid, dir); return; }
+
+            if (TryRush(dir)) return;                                // a man far off that way: the rush
 
             // a quick step back, still facing them
             state = State.Dodge;

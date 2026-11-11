@@ -89,7 +89,11 @@ def preview(only, every):
         vfr = vp.frames(vic) if vic else None
         for o in (tgt, bpy.data.objects["TargetBody"]):
             o.hide_render = D is None and vfr is None
-        tgt.location.x = 0.62 if vfr else (D or 1.0)
+        tgt.location.x = spec.get("vat", 0.62) if vfr else (D or 1.0)
+        tgt.rotation_euler = (0, 0, 0 if spec.get("vface", -1) > 0 else math.pi)
+        wide = max(tgt.location.x, D or 0.0) > 1.6 or spec.get("shift")
+        cam.data.ortho_scale = 4.0 if wide else 2.3
+        cam.location = (1.3 if wide else 0.5, -8, 1.0 if wide else 0.8)
         react = c4.CLIPS.get(spec.get("react") or "")
         rfr = vp.frames(react) if react else None
         if name.endswith("_v") and name[:-2] in c4.CLIPS:
