@@ -1,4 +1,6 @@
-# Chapter 5: THE FORTRESS
+# Chapter 6: THE FORTRESS (v2, the storm and the roof)
+
+> **The fight up the hill is replaced by docs/story/chapter6_fortress_v3.md (Kessel Hill v3: eleven levels and a passage).** This file still describes what is kept: the arrival's opening shots (T1–T4), the tower cutscene (T15), the roof, the duel's frame, the fall, the dawn, and the storm systems.
 
 Kessel Hill, the same night. **The storm (dry until the roof):** wind, thunder and lightning all the way up, but no rain. The rain holds off until the face-off with Voss: after "Yes. So here we are." one drop hits the stone between them, a second the ribbon at his wrist, they look up as the sky splits, and the downpour sweeps across the terrace onto them (StoryFinale.TheRain). It pours through the trade, the duel and the fall, and stops at dawn. Before that: lightning that really lights the place (a second bake of the whole set, lit by the strike, flickered in), forked bolts, thunder, rain running on the lens. The final chapters keep the storm.
 
