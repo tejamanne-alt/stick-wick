@@ -506,14 +506,6 @@
       "source": "CMU 90_18"
     },
     {
-      "name": "run",
-      "frames": 22,
-      "fps": 30,
-      "loop": true,
-      "hitFrame": -1,
-      "source": "CMU 09_02"
-    },
-    {
       "name": "gedan_barai",
       "frames": 31,
       "fps": 30,
@@ -1645,6 +1637,138 @@
       "fps": 30,
       "loop": false,
       "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "walk_alone",
+      "frames": 28,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "run",
+      "frames": 18,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "sprint",
+      "frames": 16,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "sneak",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "idle_alone",
+      "frames": 150,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "crouch_idle",
+      "frames": 60,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "run_stop",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.24,
+      "v4": true
+    },
+    {
+      "name": "run_turn",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "jump_run",
+      "frames": 20,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "vault",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 1.16,
+      "v4": true
+    },
+    {
+      "name": "pick_up",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 11,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "push",
+      "frames": 20,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 9,
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,

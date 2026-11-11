@@ -24,7 +24,7 @@ namespace ProjectInk
     /// grabbed = tap to break free with a reversal throw. Full Flow = Rampage.</summary>
     public partial class HeroController : Fighter
     {
-        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors, Dive, Clinch }
+        enum State { Idle, Dash, Attack, Dodge, Hurt, Dead, Swing, Grabbed, Duck, ToLedge, Air, Rope, Bar, WallRun, Scissors, Dive, Clinch, Traverse }
 
         public float targetRange = 9f;
         public float gunRange = 14f;
@@ -81,7 +81,7 @@ namespace ProjectInk
                                     state == State.Rope || state == State.Bar || state == State.WallRun || state == State.Scissors;
         public bool IsGrabbedBy(Enemy e) => state == State.Grabbed && grabber == e;
 
-        string IdleClip => Style == FightStyle.Sword || Style == FightStyle.Pipe ? "sword_idle" : Style == FightStyle.Gun ? "gun_idle" : "idle";
+        string IdleClip => Style == FightStyle.Sword || Style == FightStyle.Pipe ? "sword_idle" : Style == FightStyle.Gun ? "gun_idle" : IdleClipV4;
 
         protected override void Awake()
         {
@@ -758,7 +758,7 @@ namespace ProjectInk
         /// <summary>Footsteps while running (synced to the run speed) and the landing thump.</summary>
         void FootSounds(float dt)
         {
-            if (running && Grounded && state == State.Idle)
+            if (running && Grounded && state == State.Idle && !crouching)
             {
                 stepTimer -= dt * Mathf.Max(0.6f, Mathf.Abs(velocity.x) / runSpeed);
                 if (stepTimer <= 0f) { stepTimer = 0.27f; Sound.Play(Sfx.Footstep, 1f, transform.position); }
@@ -905,11 +905,12 @@ namespace ProjectInk
                 case State.Scissors: UpdateScissors(); break;
                 case State.Dive: UpdateDive(dt); break;
                 case State.Clinch: UpdateClinch(dt); break;
+                case State.Traverse: UpdateTraverse(dt); break;
                 case State.Dead: break;
             }
             if (state != State.Dead) TryPickup();
 
-            if (state != State.Dash && state != State.Dodge && state != State.ToLedge && state != State.Air && !running &&
+            if (state != State.Dash && state != State.Dodge && state != State.ToLedge && state != State.Air && state != State.Traverse && !running &&
                 !(state == State.Attack && currentAttack.clip == "slide_kick") && Grounded)
                 velocity.x = Mathf.MoveTowards(velocity.x, 0f, 30f * dt);
             bool scripted = state == State.Swing || state == State.Grabbed || state == State.Rope || state == State.Bar || state == State.Scissors || state == State.Clinch ||
@@ -960,15 +961,23 @@ namespace ProjectInk
             {
                 if (Mathf.Abs(p.transform.position.x - transform.position.x) > 0.9f ||
                     Mathf.Abs(p.transform.position.y - 0.35f - transform.position.y) > 0.8f) continue;
-                if (Style == FightStyle.Knife && p.kind == FightStyle.Knife) Knives = Mathf.Min(6, Knives + p.uses);
-                else if (Style == FightStyle.Fists) Equip(p.kind, p.uses);
-                else continue;
-                if (InkFx.Instance != null) InkFx.Instance.Burst(p.transform.position, 1.6f);
-                Tell("pickup");
-                Sound.Play(p.kind == FightStyle.Sword ? Sfx.SwordClash : Sfx.Pickup, p.kind == FightStyle.Sword ? 0.5f : 1f, p.transform.position);
-                Destroy(p.gameObject);
+                if (!(Style == FightStyle.Knife && p.kind == FightStyle.Knife) && Style != FightStyle.Fists) continue;
+                if (PickUpV4(p)) return;                                  // the new body bends down for it
+                DoPickup(p);
                 return;
             }
+        }
+
+        void DoPickup(WeaponPickup p)
+        {
+            if (p == null) return;
+            if (Style == FightStyle.Knife && p.kind == FightStyle.Knife) Knives = Mathf.Min(6, Knives + p.uses);
+            else if (Style == FightStyle.Fists) Equip(p.kind, p.uses);
+            else return;
+            if (InkFx.Instance != null) InkFx.Instance.Burst(p.transform.position, 1.6f);
+            Tell("pickup");
+            Sound.Play(p.kind == FightStyle.Sword ? Sfx.SwordClash : Sfx.Pickup, p.kind == FightStyle.Sword ? 0.5f : 1f, p.transform.position);
+            Destroy(p.gameObject);
         }
 
         bool WeaponSpent => (Style == FightStyle.Sword && SwordUses <= 0) || (Style == FightStyle.Gun && Ammo <= 0) ||
@@ -1036,6 +1045,7 @@ namespace ProjectInk
         void EnterIdle()
         {
             edgeThrow = false;
+            traverse = null;
             if (clinchFoe != null) { var f = clinchFoe; clinchFoe = null; clinchMove = null; if (f.Held) f.ReleaseHeld(); }
             state = State.Idle;
             stateTime = 0f;
@@ -1049,6 +1059,7 @@ namespace ProjectInk
 
         void UpdateIdle()
         {
+            if (MovesV4) { UpdateIdleV4(); return; }
             HandleCommand(GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None);
             if (state != State.Idle) { running = false; return; }
             float a = Axis;
@@ -1101,7 +1112,12 @@ namespace ProjectInk
                 case Command.DodgeLeft: Dodge(-1); break;
                 case Command.DodgeRight: Dodge(1); break;
                 // swipe down: throw the weapon at someone ahead on this level, otherwise drop through the floor
-                case Command.ThrowWeapon: if (WantsThrow() || !TryDropThrough()) ThrowWeapon(); break;
+                // one swipe down: throw the weapon in hand (bare hands: a duck); two: drop through the floor
+                case Command.ThrowWeapon: ThrowWeapon(); break;
+                case Command.DropDown: if (!TryDropThrough()) Duck(); break;
+                case Command.Interact: InteractV4(GestureInput.InteractTarget); break;
+                case Command.JumpLeft: JumpTowards(-1); break;
+                case Command.JumpRight: JumpTowards(1); break;
                 case Command.Rampage: StartRampage(); break;
                 case Command.LockNext: LockNext(); break;
                 case Command.CycleStyle: SetStyle((FightStyle)(((int)Style + 1) % 5)); break;
@@ -1393,6 +1409,7 @@ namespace ProjectInk
             // a knife flying in from that side: catch it and send it back
             var incoming = IncomingKnife(side);
             if (incoming != null) { CatchKnife(incoming, side); return; }
+            if (TryAloneTap(side, kick)) return;                      // nobody near: a step, not a punch at the air
 
             if (Style == FightStyle.Gun && !kick) { GunStrike(side); return; }   // kicks work with any weapon in hand
 
@@ -1593,6 +1610,9 @@ namespace ProjectInk
                 Sound.Play(Sfx.Cloth, 1f, transform.position);
                 return;
             }
+
+            // the new body: a drum in reach is vaulted; a jump while running carries
+            if (JumpV4(0)) return;
 
             // a plain jump
             state = State.Air;
@@ -2325,6 +2345,15 @@ namespace ProjectInk
 
         void UpdateDuck()
         {
+            // the second swipe down of a pair: drop through the floor
+            var gi = GestureInput.Instance;
+            if (gi != null && gi.Peek() == Command.DropDown)
+            {
+                gi.Next();
+                state = State.Idle;
+                if (!TryDropThrough()) Duck();
+                return;
+            }
             if (stateTime > 0.55f) EnterIdle();
         }
 

@@ -1327,9 +1327,9 @@ namespace ProjectInk
             {
                 { "TAP HIGH", "Punch combo  (left / right side = that way)" },
                 { "TAP LOW", "Kick combo" },
-                { "HOLD", "Run that way" },
-                { "SWIPE UP", "Jump · climb a striped ledge · grab a rope, trapeze or bar" },
-                { "SWIPE DOWN", "Throw your weapon at someone ahead · or drop through the floor (onto anyone below)" },
+                { "HOLD", "Walk that way · keep holding: jog, then run · swipe down and hold: crouch (slide to creep)" },
+                { "SWIPE UP", "Jump (up-left / up-right: that way) · vault a drum · climb a ledge · grab a rope or bar" },
+                { "SWIPE DOWN", "Throw your weapon (bare hands: duck) · swipe down twice: drop through the floor" },
                 { "SWIPE SIDEWAYS", "Dodge · vault · slide kick · wall flip" },
                 { "RAMPAGE", "A rare power for when you're in trouble: the round button appears (or two fingers / Space when charged)" },
                 { "WALK OVER", "Pick up a dropped weapon (sword, pipe, gun, knives): your taps use it" },

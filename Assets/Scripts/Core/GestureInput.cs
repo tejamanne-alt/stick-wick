@@ -12,7 +12,10 @@ namespace ProjectInk
     {
         None, StrikeLeft, StrikeRight, JumpKick, DodgeLeft, DodgeRight, Restart, CycleStyle,
         StyleFists, StyleSword, StyleGun, ThrowWeapon, Rampage, StrikeForward, DodgeForward,
-        KickLeft, KickRight, KickForward, LockNext
+        KickLeft, KickRight, KickForward, LockNext,
+        DropDown,             // two swipes down: drop through the floor (a one-way platform)
+        Interact,             // a tap on a thing (a weapon on the floor, a drum): go and use it
+        JumpLeft, JumpRight   // a swipe up and to the side: a jump that way
     }
 
     public enum ControlScheme { Classic, TwoThumb }
@@ -72,6 +75,18 @@ namespace ProjectInk
         /// 2 low (lower part, or Z/X held). The clinch reads it: hold high = the choke, low = the lift.</summary>
         public int HoldHeight { get; private set; }
         float lowKeyAt = -1f;
+        float lastDownSwipeAt = -9f;
+        /// <summary>The thing a tap landed on (Command.Interact): a WeaponPickup or an OilDrum.</summary>
+        public static Component InteractTarget;
+        // the crouch: a swipe down that stays held; sliding that finger sideways creeps
+        int crouchId = int.MinValue;
+        Vector2 crouchAnchor, crouchNow;
+        bool keyCrouch;
+        float keyCrouchAxis;
+        /// <summary>Crouching (a swipe down held, or C on a keyboard).</summary>
+        public bool CrouchHeld => crouchId != int.MinValue || keyCrouch;
+        /// <summary>The creep while crouched, -1 .. +1 (the held finger slid sideways, or A/D with C).</summary>
+        public float CrouchAxis { get; private set; }
         /// <summary>Run input, -1 (left) .. +1 (right).</summary>
         public float MoveAxis { get; private set; }
         public bool StickActive => stickId != int.MinValue;
@@ -149,6 +164,8 @@ namespace ProjectInk
             float min = Screen.height * swipeFraction;
             if (d.magnitude < min)
             {
+                var thing = ThingAt(start);
+                if (thing != null && EnemyAt(start) == null) { InteractTarget = thing; return Command.Interact; }
                 // tap high = punch, tap low = kick
                 bool kick = start.y < Screen.height * kickLine;
                 int side = Classic ? (start.x < Screen.width * 0.5f ? -1 : 1) : SideOf(start);
@@ -168,7 +185,14 @@ namespace ProjectInk
                 return side < 0 ? Command.StrikeLeft : Command.StrikeRight;
             }
             LastSwipeHigh = start.y >= Screen.height * kickLine;
-            if (Mathf.Abs(d.y) > Mathf.Abs(d.x)) return d.y > 0 ? Command.JumpKick : Command.ThrowWeapon;
+            // up and to the side (between about 28 and 62 degrees): a jump that way
+            float ang = Mathf.Atan2(d.y, Mathf.Abs(d.x)) * Mathf.Rad2Deg;
+            if (d.y > 0f && ang > 28f && ang < 62f) return d.x < 0f ? Command.JumpLeft : Command.JumpRight;
+            if (Mathf.Abs(d.y) > Mathf.Abs(d.x))
+            {
+                if (d.y > 0) return Command.JumpKick;
+                return DownSwipe();
+            }
             return d.x < 0 ? Command.DodgeLeft : Command.DodgeRight;
         }
 
@@ -197,6 +221,46 @@ namespace ProjectInk
         }
 
         bool InStickZone(Vector2 p) => !Classic && p.x < Screen.width * stickZone;
+
+        /// <summary>One swipe down throws the weapon in hand (or ducks); a second within half a second
+        /// drops through the floor.</summary>
+        Command DownSwipe()
+        {
+            float now = UnityEngine.Time.unscaledTime;
+            if (now - lastDownSwipeAt < 0.45f) { lastDownSwipeAt = -9f; return Command.DropDown; }
+            lastDownSwipeAt = now;
+            return Command.ThrowWeapon;
+        }
+
+        /// <summary>A weapon lying on the floor, or a standing drum, under a screen point.</summary>
+        public static Component ThingAt(Vector2 screen)
+        {
+            var cam = Camera.main;
+            if (cam == null) return null;
+            float pad = Screen.height * 0.05f;
+            Component best = null;
+            float bestD = float.MaxValue;
+            foreach (var w in WeaponPickup.All)
+            {
+                if (w == null) continue;
+                var c = cam.WorldToScreenPoint(w.transform.position);
+                if (c.z <= 0f) continue;
+                float dd = Vector2.Distance(screen, c);
+                if (dd < pad * 1.4f && dd < bestD) { bestD = dd; best = w; }
+            }
+            foreach (var dr in OilDrum.All)
+            {
+                if (dr == null || !dr.Available || dr.Rolling) continue;
+                var lo = cam.WorldToScreenPoint(new Vector3(dr.transform.position.x, dr.FloorY, dr.transform.position.z));
+                var hi = cam.WorldToScreenPoint(new Vector3(dr.transform.position.x, dr.FloorY + OilDrum.Height, dr.transform.position.z));
+                if (lo.z <= 0f) continue;
+                float half = Mathf.Abs(hi.y - lo.y) * 0.4f + pad * 0.5f;
+                if (screen.x < lo.x - half || screen.x > lo.x + half || screen.y < lo.y - pad * 0.5f || screen.y > hi.y + pad * 0.5f) continue;
+                float dd = Mathf.Abs(screen.x - lo.x);
+                if (dd < bestD) { bestD = dd; best = dr; }
+            }
+            return best;
+        }
 
         /// <summary>Screen rects (pixels, origin bottom-left) owned by on-screen buttons: touches
         /// starting there are not fight input. Set each frame by the HUD.</summary>
@@ -233,11 +297,22 @@ namespace ProjectInk
 
         void TouchMoved(int id, Vector2 pos)
         {
+            if (id == crouchId) { crouchNow = pos; return; }
             if (Classic)
             {
                 // a still press held a moment becomes a run towards that half of the screen
                 if (holding.ContainsKey(id) || consumed.Contains(id)) return;
                 if (!touchStart.TryGetValue(id, out var s0) || !touchTime.TryGetValue(id, out var t0)) return;
+                // a swipe down that stays held: the crouch (no swipe fires when it is let go)
+                var dd0 = pos - s0;
+                if (crouchId == int.MinValue && -dd0.y > Screen.height * swipeFraction && -dd0.y > Mathf.Abs(dd0.x) * 1.2f &&
+                    UnityEngine.Time.unscaledTime - t0 > 0.16f)
+                {
+                    crouchId = id;
+                    crouchAnchor = crouchNow = pos;
+                    consumed.Add(id);
+                    return;
+                }
                 if (UnityEngine.Time.unscaledTime - t0 > holdToRun && (pos - s0).magnitude < Screen.height * swipeFraction)
                     holding[id] = s0.x < Screen.width * 0.5f ? -1 : 1;
                 return;
@@ -252,6 +327,7 @@ namespace ProjectInk
 
         void TouchEnded(int id, Vector2 pos)
         {
+            if (id == crouchId) { crouchId = int.MinValue; consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
             if (id == stickId) { stickId = int.MinValue; return; }
             if (holding.Remove(id)) { consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
             if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s)) Push(Classify(s, pos));
@@ -301,18 +377,23 @@ namespace ProjectInk
                 bool left = kb.aKey.isPressed || kb.leftArrowKey.isPressed, right = kb.dKey.isPressed || kb.rightArrowKey.isPressed;
                 bool leftDown = kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame;
                 bool rightDown = kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame;
+                keyCrouch = kb.cKey.isPressed;
+                keyCrouchAxis = keyCrouch ? (right ? 1f : 0f) - (left ? 1f : 0f) : 0f;
                 if (Classic)
                 {
+                    if (keyCrouch) { left = right = leftDown = rightDown = false; }
                     ClassicKeys(left, right, leftDown, rightDown);
                     if (kb.zKey.wasPressedThisFrame) Push(Command.KickLeft);
                     if (kb.xKey.wasPressedThisFrame) Push(Command.KickRight);
                     bool lowHeld = kb.zKey.isPressed || kb.xKey.isPressed;
                     if (kb.zKey.wasPressedThisFrame || kb.xKey.wasPressedThisFrame) lowKeyAt = UnityEngine.Time.unscaledTime;
                     else if (!lowHeld) lowKeyAt = -1f;
-                    if (kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame) Push(Command.JumpKick);
+                    if (kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame)
+                        Push(kb.aKey.isPressed || kb.leftArrowKey.isPressed ? Command.JumpLeft : kb.dKey.isPressed || kb.rightArrowKey.isPressed ? Command.JumpRight : Command.JumpKick);
                     if (kb.qKey.wasPressedThisFrame) Push(Command.DodgeLeft);
                     if (kb.eKey.wasPressedThisFrame) Push(Command.DodgeRight);
-                    if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame || kb.fKey.wasPressedThisFrame) Push(Command.ThrowWeapon);
+                    if (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame) Push(DownSwipe());
+                    if (kb.fKey.wasPressedThisFrame) Push(Command.ThrowWeapon);
                     if (kb.spaceKey.wasPressedThisFrame) Push(Command.Rampage);
                 }
                 else
@@ -396,6 +477,14 @@ namespace ProjectInk
                 axis = Mathf.Abs(dx) < 0.15f ? 0f : Mathf.Clamp(dx, -1f, 1f);
             }
             MoveAxis = axis;
+            // the creep while crouched
+            float ca = keyCrouchAxis;
+            if (crouchId != int.MinValue)
+            {
+                float cx = (crouchNow.x - crouchAnchor.x) / (Screen.height * 0.08f);
+                ca = Mathf.Abs(cx) < 0.2f ? 0f : Mathf.Clamp(cx, -1f, 1f);
+            }
+            CrouchAxis = ca;
             // which height a held press is at
             int hh = 0;
             foreach (var kv in holding)

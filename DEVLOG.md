@@ -1429,3 +1429,25 @@ The classic controls are the base for the next improvements.
   - `GestureInput` now reports a swipe's height and a held press's height.
   - The old clinch stays for chapters 2–6, which keep the old body.
 - Contact sheets: `docs/previews/v4_moves.png` (every move), `docs/previews/v4_clinch.png`.
+
+## Moving on his own (chapter 1, the V4 body)
+
+- **Gaits** (`v4_moves.py`): walk, jog and run cycles plus a sneak, generated from gait physics.
+  - Each foot's stance slides back at exactly the body's speed; the landing is heel first (walking) or midfoot (running), rolling flat and peeling up to push off.
+  - The swing arcs forward.
+  - The hips bob on the gait's rhythm, the pelvis turns against the chest, and the arms swing against the legs.
+- **Hand-keyed moves:**
+  - stopping from a run (the heel plants, he leans back, takes a braking step and settles);
+  - the running turn (plant, pivot, push off);
+  - the running jump;
+  - vaulting a drum (both hands stay planted on the lid while he goes over);
+  - picking up (a squat, the hand closes);
+  - pushing a drum over;
+  - a relaxed idle when alone (weight shifting, looking around) and a crouched idle.
+- **Controls** (`HeroMovesV4.cs`, `GestureInput`):
+  - Holding builds walk → jog → run (near men, no faster than a jog). Letting go from speed plays the stop; holding the other way while running plays the turn.
+  - Swipe down and hold: crouch; slide that finger to creep (no footsteps). Keyboard: hold C.
+  - Swipe up at a drum: vault it. While running: the running jump. Up-left / up-right: jump that way (keyboard: W with A/D).
+  - One swipe down throws the weapon in hand (bare hands: duck); two drop through the floor (keyboard: S twice).
+  - A tap with nobody within 6 m takes a step instead of punching the air. A tap on a weapon or a drum walks to it and uses it, and walking over a weapon bends down to pick it up.
+  - Relaxed when alone, the guard when a man comes within 6 m.

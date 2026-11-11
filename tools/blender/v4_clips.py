@@ -500,6 +500,11 @@ import v4_clinch  # noqa: E402
 
 CLIPS.update(v4_clinch.CLIPS)
 
+# ---------------------------------------------------------------- moving on his own
+import v4_moves  # noqa: E402
+
+CLIPS.update(v4_moves.CLIPS)
+
 
 def key_clip(arm, name, spec):
     return vp.key_clip(arm, name, spec)
