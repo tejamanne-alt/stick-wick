@@ -1695,3 +1695,13 @@ Then the roof, as built.
   - PINNED counts an oil drum behind him.
   - A prop in hand is put down when he walks onto a weapon.
 - **Parked:** step 13 (knife and rod controls) and step 14 (the book / evidence story, which needs your brief).
+
+## Backlog step 13: the rod and the knife on the weapon grammar
+- **The rod (the pipe):**
+  - Held two-handed like the katana, it gets its guard, its walk and its swipe-along-the-line swings, blunt.
+  - The level sweep catches everyone in reach (CLEARING THE ROOM); the overhead floors a man.
+  - It wears out (PipeUses). No scabbard, so no iai.
+- **The knife:**
+  - A swipe is a one-handed slash along its line: level = across, down = the hammer stab, up = the rising slash, away = the retreat.
+  - A tap still stabs, or throws at a man far off.
+  - A killing slash cuts him down like the katana's.

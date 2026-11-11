@@ -311,6 +311,7 @@ namespace ProjectInk
             {
                 case "throw": LaunchCarried(); break;
                 case "katana": KatanaImpact(); break;
+                case "knife": KnifeImpact(); break;
                 case "pass": PassClick(); break;
                 case "parry": break;
                 case "smash":

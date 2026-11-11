@@ -36,6 +36,6 @@ Each step is built on the ones before it, so nothing is redone. Every step ends 
 | 10 ✅ | **The Voss duel, rebuilt** | His shikomizue: faster red lines, feints, two taps of the cane before a thrust. The Kata of Three, mirrored. The katana thrown aside, bare hands, the cane blade taken. Then the gun and the edge (as built). | 6, 7 |
 | 11 ✅ | **The fortress sound** | The storm with height (the thunder getting closer). Each room's acoustic. Surfaces underfoot. The katana's sounds. The score stems by act: storm, then drums, then the choir, then silence for Voss. | 7–10 |
 | 12 ✅ | **Each chapter's named combo** | 2 the street: Dutch Two-and-Low against the Driver · 3 home: Close Quarters · 4 the backyard: slip and overhand against the Handler's knuckles. | 1 |
-| 13 | **Knife and rod controls, new enemy types** (parked) | Their gesture maps on the step 2 grammar. | 2 |
+| 13 ✅ | **Knife and rod controls, new enemy types** (parked) | Their gesture maps on the step 2 grammar. | 2 |
 | 14 | **The book / evidence story logic** (parked) | Needs a brief from you. | – |
 | 15 (partly ✅) | **Tuning after phone testing** | Fade the read words once learned. Crates and racks count for PINNED. A prop in hand vs a weapon pickup. The advance speed. The distances at which guards on watch notice you. How long the readable poses are held. Previews that draw the second man in three-body clips. | testing |

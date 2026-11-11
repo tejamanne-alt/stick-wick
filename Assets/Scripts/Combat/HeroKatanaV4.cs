@@ -23,7 +23,11 @@ namespace ProjectInk
     /// three cuts without a pause = the Kata of Three.</summary>
     public partial class HeroController
     {
-        public bool KatanaMode => Contact && Style == FightStyle.Sword && body != null && body.Has("katana_guard");
+        /// <summary>Two hands on a blade (the katana) or a rod (the pipe: the same lines, swung blunt; backlog step 13).</summary>
+        public bool KatanaMode => Contact && (Style == FightStyle.Sword || Style == FightStyle.Pipe) && body != null && body.Has("katana_guard");
+        bool RodMode => Style == FightStyle.Pipe;
+        /// <summary>The knife in story mode: swipes slash along their line too (taps still stab, or throw at a man far off).</summary>
+        bool KnifeLines => Contact && Style == FightStyle.Knife && body != null && body.Has("katana_guard");
         bool sheathed;
         float kaeshiUntil, katanaMul = 1f, iaiSlowAt;
         string katanaLabel, katanaCut;
@@ -39,7 +43,7 @@ namespace ProjectInk
         /// <summary>Every idle frame (FarTick): the grammar follows the weapon.</summary>
         void KatanaTick()
         {
-            GestureInput.Grammar = KatanaMode ? GestureInput.WeaponGrammar.Katana : GestureInput.WeaponGrammar.Fists;
+            GestureInput.Grammar = KatanaMode || KnifeLines ? GestureInput.WeaponGrammar.Katana : GestureInput.WeaponGrammar.Fists;
             if (!KatanaMode) { sheathed = false; return; }
             // the world slows while he waits on the draw
             if (sheathed && GestureInput.IaiHolding && Time.unscaledTime > iaiSlowAt && TimeController.Instance != null)
@@ -69,6 +73,7 @@ namespace ProjectInk
         // ------------------------------------------------------------------ commands
         bool KatanaCommand(Command cmd)
         {
+            if (KnifeLines && cmd == Command.Cut) { KnifeSlash(GestureInput.CutVector); return true; }
             if (!KatanaMode) return false;
             switch (cmd)
             {
@@ -166,6 +171,7 @@ namespace ProjectInk
             string cut = katanaCut;
             float reach = cut == "ushiro" ? -1.2f : cut.StartsWith("tsuki") ? 1.5f : cut == "yoko" ? 1.3f : 1.25f;
             float dmg = (cut == "oroshi" ? 28f : cut.StartsWith("tsuki") ? 22f : cut == "kiriage" ? 18f : 22f) * katanaMul;
+            if (RodMode) { RodImpact(cut, reach, dmg * 0.8f); return; }
             bool any = false;
             foreach (var e in Enemy.All.ToArray())
             {
@@ -192,6 +198,57 @@ namespace ProjectInk
             }
             if (any && katanaLabel != null && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(katanaLabel == "KATA OF THREE" ? 400 : 180, katanaLabel);
             if (!any) Sound.Play(Sfx.Whoosh, 0.6f, transform.position);
+        }
+
+        /// <summary>The rod: the same lines, blunt. The level sweep catches everyone in reach (CLEARING THE ROOM);
+        /// the overhead floors a man; it wears out with use.</summary>
+        void RodImpact(string cut, float reach, float dmg)
+        {
+            int n = 0;
+            foreach (var e in Enemy.All.ToArray())
+            {
+                if (e == null || !e.Targetable || Mathf.Abs(e.transform.position.y - transform.position.y) > 1.0f) continue;
+                float dx = (e.transform.position.x - transform.position.x) * Facing;
+                if (dx < -0.2f || dx > reach + 0.4f) continue;
+                if (e != farFoe && cut != "yoko" && farFoe != null) continue;
+                n++;
+                e.TakeHit(new HitInfo { damage = dmg, direction = Facing, knockback = cut == "yoko" ? 5f : 3f, knockdown = cut == "oroshi" || cut == "yoko",
+                                        heavy = true, react = cut == "kiriage" ? "hit_up" : "hit_chin", attacker = this });
+                Sound.Play(Sfx.PipeHit, 1f, e.Chest);
+            }
+            if (n >= 2 && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(250, "CLEARING THE ROOM");
+            else if (n == 1 && katanaLabel != null && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(150, katanaLabel);
+            if (n > 0 && TimeController.Instance != null) TimeController.Instance.HitStop(5);
+            if (--PipeUses <= 0) { Style = FightStyle.Fists; ApplyStyleVisuals(); if (WaveDirector.Instance != null) WaveDirector.Instance.ShowBanner("THE ROD BENDS: FISTS", 1.2f); }
+        }
+
+        /// <summary>The knife: a swipe is a one-handed slash along its line (a tap still stabs, or throws at a man far off).</summary>
+        void KnifeSlash(Vector2 v)
+        {
+            if (state != State.Idle && state != State.Traverse) return;
+            lastStroke = InkStroke.Draw(GestureInput.CutStart, GestureInput.CutEnd, 0.14f, transform.position.z);
+            float ang = CutAngle(v);
+            if (Mathf.Abs(ang) > 112f)
+            {
+                BeginTraverse("katana_retreat", 0f);
+                invulnerableUntil = Time.time + 0.3f;
+                return;
+            }
+            string clip = ang > 40f ? "uppercut" : ang < -55f ? "hammer_fist" : "hook";
+            var t = PickTarget(Facing, 2.2f, false);
+            katanaCut = "knife";
+            if (t != null) BeginFar(clip, t, "knife", 0.9f); else BeginFarClip(clip, "knife");
+            Sound.Play(Sfx.Knife, 1f, transform.position);
+        }
+
+        void KnifeImpact()
+        {
+            var e = farFoe;
+            if (e == null || !e.Targetable || Mathf.Abs((e.transform.position.x - transform.position.x) * Facing - 0.9f) > 0.6f) { Sound.Play(Sfx.Whoosh, 0.6f, transform.position); return; }
+            if (e.Health <= 18f && !e.Boss && e.CanBeHeld) { CutDown(e); return; }
+            e.TakeHit(new HitInfo { damage = 18f, direction = Facing, knockback = 1.5f, react = "hit_chin", attacker = this });
+            Sound.Play(Sfx.SwordHit, 0.8f, e.Chest, 1.3f);
+            if (InkFx.Instance != null) InkFx.Instance.Splash(e.Chest, new Vector3(Facing, 0.2f, 0f), 12, e.InkColor);
         }
 
         /// <summary>A killing cut: he stands a beat with the stroke across him, the knees go, he falls on his face.</summary>
@@ -269,7 +326,7 @@ namespace ProjectInk
         // ------------------------------------------------------------------ iai: the draw
         void BeginIaiStance()
         {
-            if (state != State.Idle) return;
+            if (state != State.Idle || RodMode) return;                // a rod has no scabbard
             sheathed = true;
             running = false;
             velocity.x = 0f;
