@@ -1705,3 +1705,17 @@ Then the roof, as built.
   - A swipe is a one-handed slash along its line: level = across, down = the hammer stab, up = the rising slash, away = the retreat.
   - A tap still stabs, or throws at a man far off.
   - A killing slash cuts him down like the katana's.
+
+## The katana: bright, shiny, cinematic
+- **The blade:**
+  - polished steel from spine to edge (`SwordFx`)
+  - a soft additive halo along it, brighter as it moves
+  - a glint that runs from the guard to the tip and flares there as a star: when it's taken, drawn, kills, parries perfectly, at the pass's sheathing click, and now and then on its own
+- **The ribbon of light** behind the blade now shows on every katana cut, parry and pass (a traversal had been putting the trails out).
+- **The cuts, staged for the screen** (`v4_katana.cut`):
+  - a small dip before, up to the peak and held a beat
+  - the stamp and the cut
+  - the follow-through carrying on past
+  - the body settling low and still (zanshin), then back into the guard
+- **The flow:** once a cut has landed, a new line cancels the follow-through, so kata still flow at speed.
+- **After a killing cut:** zanshin, then the chiburi flick (with a glint), and a small push-in of the camera on the kill.

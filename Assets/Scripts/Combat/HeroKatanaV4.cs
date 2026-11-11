@@ -67,6 +67,7 @@ namespace ProjectInk
             sheathed = false;
             SwordUses = 999;                                          // a katana doesn't wear out
             Lesson("take", "The line comes before the blade.");
+            if (swordFx != null) swordFx.Glint();
             body.Play("katana_guard", 0.2f);
         }
 
@@ -252,8 +253,13 @@ namespace ProjectInk
         }
 
         /// <summary>A killing cut: he stands a beat with the stroke across him, the knees go, he falls on his face.</summary>
+        bool killedThisCut;
+
         void CutDown(Enemy e)
         {
+            killedThisCut = true;
+            if (swordFx != null) swordFx.Glint();
+            if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(-3f, 0.5f);
             e.BeginHeld(this);
             e.HeldPlay("cut_down", 0.04f);
             e.HeldDamage(e.Health + 1f);
@@ -317,6 +323,7 @@ namespace ProjectInk
             Clash(best.Chest + Vector3.up * 0.25f + Vector3.right * -Facing * 0.3f, perfect);
             if (TimeController.Instance != null) { TimeController.Instance.HitStop(perfect ? 7 : 4); if (perfect) TimeController.Instance.SlowMo(0.3f, 0.55f); }
             if (CameraDirector.Instance != null && perfect) CameraDirector.Instance.ZoomPunch(-4f, 0.4f);
+            if (swordFx != null && perfect) swordFx.Glint();
             if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(perfect ? 250 : 120, perfect ? "PERFECT PARRY" : "PARRIED");
             Lesson("parry", "Don't meet his sword. Meet his line.");
             Tell("parry");
@@ -360,6 +367,7 @@ namespace ProjectInk
             if (t != null) BeginFar("iai_draw", t, "katana", 1.45f); else BeginFarClip("iai_draw", "katana");
             Sound.Play(Sfx.FlashCut, 1f, transform.position);
             Sound.Play(Sfx.SwordSwing, 1.2f, transform.position, 0.9f);
+            if (swordFx != null) swordFx.Glint();
         }
 
         // ------------------------------------------------------------------ the pass
@@ -389,6 +397,7 @@ namespace ProjectInk
         {
             Sound.Play(Sfx.Latch, 1f, transform.position);
             sheathed = true;
+            if (swordFx != null) swordFx.Glint();
             StartCoroutine(PassFalls(new List<Enemy>(passMen)));
             passMen.Clear();
             if (WaveDirector.Instance != null) { WaveDirector.Instance.AddStyle(500, "THE PASS"); WaveDirector.Instance.ShowBanner("THE PASS", 1.4f); }

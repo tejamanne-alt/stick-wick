@@ -85,19 +85,28 @@ CLIPS["katana_retreat"] = clip(12, [
 
 
 def cut(name, frames, hit, reach, raised, strike, follow, note, step=0.2, react="hit_chin", extra_raise=None, extra_hit=None):
-    """A cut: from the guard up (or down) to its start, a stamping step, through him, follow-through."""
+    """A cut, staged for the screen: a small dip before it (the anticipation), up to its start and held
+    there a beat, a stamping step and the blade through him, the follow-through carrying on past, the
+    body settling low and still (zanshin), then back up into the guard."""
     rs = dict(extra_raise or {})
     hs = dict(extra_hit or {})
+    sx, sz, sa = strike
+    fx, fz, fa = follow
+    end = frames + 8
     keys = [
         (0, KG, "lin"),
-        (hit - 4, K(hx=-0.03, hz=0.63, fR=(FR[0], 20), **{**dict(gx=raised[0], gz=raised[1], a=raised[2]), **rs}), "out"),
+        (max(1, hit - 6), K(hz=0.605, spine=171, chest=166, gx=0.27, gz=0.8, a=150, fR=(FR[0], 40)), "out"),          # the dip
+        (hit - 4, K(hx=-0.03, hz=0.63, fR=(FR[0], 20), **{**dict(gx=raised[0], gz=raised[1], a=raised[2]), **rs}), "out3"),   # the peak
+        (hit - 2, K(hx=-0.03, hz=0.632, fR=(FR[0], 22), **{**dict(gx=raised[0] - 0.01, gz=raised[1] + 0.015, a=raised[2] + 4), **rs}), "smooth"),  # held a beat
         (hit, K(hx=step * 0.6, hz=0.59, spine=166, chest=160, neck=158, head=166, fL=(FL[0] + step, 0), fR=(FR[0], 60),
-                **{**dict(gx=strike[0], gz=strike[1], a=strike[2]), **hs}), "in3"),
-        (hit + 3, K(hx=step * 0.6, hz=0.585, spine=164, chest=158, fL=(FL[0] + step, 0), fR=(FR[0], 56),
-                    gx=follow[0], gz=follow[1], a=follow[2]), "out"),
-        (frames, at(KG, step * 0.6, fL=(FL[0] + step, 0), fR=(FR[0] + step * 0.6, 34)), "smooth"),
+                **{**dict(gx=sx, gz=sz, a=sa), **hs}), "in3"),
+        (hit + 3, K(hx=step * 0.6, hz=0.585, spine=164, chest=158, fL=(FL[0] + step, 0), fR=(FR[0], 56), gx=fx, gz=fz, a=fa), "out"),
+        (hit + 8, K(hx=step * 0.62, hz=0.56, spine=160, spine_mid=158, chest=154, neck=156, head=164, fL=(FL[0] + step, 0), fR=(FR[0], 50),
+                    gx=fx - 0.04, gz=fz - 0.08, a=fa - 18), "out3"),                                                  # zanshin: low and still
+        (hit + 14, K(hx=step * 0.62, hz=0.562, spine=161, chest=155, fL=(FL[0] + step, 0), fR=(FR[0], 50), gx=fx - 0.05, gz=fz - 0.09, a=fa - 20), "smooth"),
+        (end, at(KG, step * 0.6, fL=(FL[0] + step, 0), fR=(FR[0] + step * 0.6, 34)), "smooth"),
     ]
-    CLIPS[name] = clip(frames, keys, hit=hit, reach=reach, react=react, striker="R", shift=True, note=note)
+    CLIPS[name] = clip(end, keys, hit=hit, reach=reach, react=react, striker="R", shift=True, note=note)
 
 
 cut("kesa", 18, 8, 1.25, (0.06, 1.24, 212), (0.5, 0.96, 122), (0.44, 0.7, 62),

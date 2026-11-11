@@ -56,6 +56,7 @@ namespace ProjectInk
             if (bladeMesh == null) { bladeMesh = BuildBlade(); fittingsMesh = BuildFittings(); }
             Child("Blade", bladeMesh, bladeMat);
             Child("Fittings", fittingsMesh, bladeMat);
+            BuildShine();
             if (ribbonMat != null)
             {
                 var g = new GameObject("SlashRibbon");               // world-space mesh, so it is not parented
@@ -90,7 +91,7 @@ namespace ProjectInk
             var v = new List<Vector3>();
             var c = new List<Color>();
             var t = new List<int>();
-            Color spine = new Color(0.55f, 0.57f, 0.6f), ridge = new Color(0.86f, 0.88f, 0.9f), edge = Color.white;
+            Color spine = new Color(0.8f, 0.82f, 0.86f), ridge = new Color(0.97f, 0.98f, 1f), edge = Color.white;   // polished: bright from spine to edge
             for (int i = 0; i <= segs; i++)
             {
                 float u = i / (float)segs;
@@ -175,8 +176,106 @@ namespace ProjectInk
 
         void OnDestroy() { if (ribbonRenderer != null) Destroy(ribbonRenderer.gameObject); }
 
+        // ------------------------------------------------------------------ the shine
+        // A polished blade in the dark: a soft halo along it (additive), and a glint that runs from the
+        // guard to the tip and flares there as a star: when it's drawn, when it kills, when it parries
+        // perfectly, and now and then on its own while it's out.
+        static Material glowMat;
+        static Texture2D glowTex;
+        Transform halo, star;
+        Renderer haloR, starR;
+        float glintT = -1f, nextIdleGlint;
+
+        static Texture2D Soft()
+        {
+            if (glowTex != null) return glowTex;
+            const int n = 64;
+            glowTex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float dx = (x + 0.5f) / n * 2f - 1f, dy = (y + 0.5f) / n * 2f - 1f;
+                    float r = Mathf.Sqrt(dx * dx + dy * dy);
+                    float a = Mathf.Clamp01(1f - r);
+                    a = a * a;
+                    float rays = Mathf.Max(Mathf.Clamp01(1f - Mathf.Abs(dx) * 14f) * Mathf.Clamp01(1f - Mathf.Abs(dy)), Mathf.Clamp01(1f - Mathf.Abs(dy) * 14f) * Mathf.Clamp01(1f - Mathf.Abs(dx)));
+                    glowTex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(a + rays * 0.8f)));
+                }
+            glowTex.Apply();
+            return glowTex;
+        }
+
+        void BuildShine()
+        {
+            if (glowMat == null)
+            {
+                var sh = Shader.Find("Legacy Shaders/Particles/Additive") ?? Shader.Find("Sprites/Default");
+                glowMat = new Material(sh) { mainTexture = Soft() };
+                if (glowMat.HasProperty("_TintColor")) glowMat.SetColor("_TintColor", new Color(0.5f, 0.5f, 0.52f, 0.5f));
+            }
+            halo = Quad("Halo", new Vector3(0f, 0.01f, 0.07f + BladeLength * 0.5f), new Vector3(0.16f, BladeLength * 1.15f, 1f), out haloR);
+            halo.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            star = Quad("Star", new Vector3(0f, 0f, 0.07f + BladeLength), Vector3.one * 0.0001f, out starR);
+            SetAlpha(haloR, 0.16f);
+            SetAlpha(starR, 0f);
+        }
+
+        Transform Quad(string name, Vector3 at, Vector3 scale, out Renderer r)
+        {
+            var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            Destroy(q.GetComponent<Collider>());
+            q.name = name;
+            q.transform.SetParent(transform, false);
+            q.transform.localPosition = at;
+            q.transform.localScale = scale;
+            r = q.GetComponent<Renderer>();
+            r.sharedMaterial = glowMat;
+            r.material = new Material(glowMat);
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            return q.transform;
+        }
+
+        static void SetAlpha(Renderer r, float a)
+        {
+            if (r == null) return;
+            var m = r.material;
+            if (m.HasProperty("_TintColor")) m.SetColor("_TintColor", new Color(0.5f, 0.5f, 0.52f, a * 0.5f));
+            else m.color = new Color(1f, 1f, 1f, a);
+        }
+
+        /// <summary>The glint: a light runs up the blade and flares at the tip.</summary>
+        public void Glint() { glintT = 0f; }
+
+        void UpdateShine()
+        {
+            if (halo == null) return;
+            var cam = Camera.main;
+            if (cam != null) star.rotation = Quaternion.LookRotation(cam.transform.forward, cam.transform.up);
+            // the halo breathes a little, brighter while it moves
+            float speed = TipVelocity.magnitude;
+            SetAlpha(haloR, Mathf.Clamp(0.14f + speed * 0.012f, 0.14f, 0.45f));
+            if (glintT < 0f && Time.unscaledTime > nextIdleGlint)
+            {
+                nextIdleGlint = Time.unscaledTime + Random.Range(3.5f, 6f);
+                glintT = 0f;
+            }
+            if (glintT >= 0f)
+            {
+                glintT += Time.unscaledDeltaTime;
+                float u = glintT / 0.32f;                               // up the blade
+                float z = 0.07f + Mathf.Clamp01(u) * BladeLength;
+                star.localPosition = new Vector3(0f, Curve(Mathf.Clamp01(u)), z);
+                float size = u < 1f ? 0.12f + 0.1f * u : Mathf.Lerp(0.42f, 0f, (glintT - 0.32f) / 0.28f);   // the flare at the tip
+                star.localScale = Vector3.one * Mathf.Max(0.0001f, size);
+                SetAlpha(starR, u < 1f ? 0.7f : Mathf.Lerp(1f, 0f, (glintT - 0.32f) / 0.28f));
+                if (glintT > 0.6f) { glintT = -1f; SetAlpha(starR, 0f); star.localScale = Vector3.one * 0.0001f; }
+            }
+        }
+
         void LateUpdate()
         {
+            UpdateShine();
             var tip = Tip;
             float dt = Mathf.Max(1e-4f, Time.deltaTime);
             TipVelocity = (tip - lastTip) / dt;

@@ -2253,7 +2253,7 @@
     },
     {
       "name": "kesa",
-      "frames": 18,
+      "frames": 26,
       "fps": 30,
       "loop": false,
       "hitFrame": 8,
@@ -2264,7 +2264,7 @@
     },
     {
       "name": "gyaku",
-      "frames": 18,
+      "frames": 26,
       "fps": 30,
       "loop": false,
       "hitFrame": 8,
@@ -2275,7 +2275,7 @@
     },
     {
       "name": "oroshi",
-      "frames": 20,
+      "frames": 28,
       "fps": 30,
       "loop": false,
       "hitFrame": 10,
@@ -2286,7 +2286,7 @@
     },
     {
       "name": "kiriage",
-      "frames": 18,
+      "frames": 26,
       "fps": 30,
       "loop": false,
       "hitFrame": 8,
@@ -2297,7 +2297,7 @@
     },
     {
       "name": "yoko",
-      "frames": 20,
+      "frames": 28,
       "fps": 30,
       "loop": false,
       "hitFrame": 9,

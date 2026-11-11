@@ -231,6 +231,8 @@ namespace ProjectInk
             BeginTraverse(clip, 0f);
             farMove = move;
             farHit = false;
+            // the katana's ribbon of light follows every cut (BeginTraverse had put the trails out)
+            if (swordFx != null) swordFx.Emitting = KatanaMode && (move == "katana" || move == "pass" || move == "parry");
             var e = body.Current;
             farHitAt = e != null && e.hitTime >= 0f ? e.hitTime : 0.25f;
         }
@@ -275,6 +277,12 @@ namespace ProjectInk
                 }
             }
             if (traverse == "advance") { UpdateAdvance(dt); return true; }
+            // a katana cut flows into the next: once the blade has landed, a new line cancels the follow-through
+            if (farMove == "katana" && farHit && gi != null && body.Time > farHitAt + 0.08f)
+            {
+                var nc = gi.Next();
+                if (nc != Command.None) { killedThisCut = false; EndTraverse(); HandleCommand(nc); return true; }
+            }
             if (farMove == null) return false;
             if (farMove == "crossfire") { UpdateCrossfire(); if (body.Finished) EndTraverse(); return true; }
             // slide the root so the hit lands on him
@@ -390,6 +398,16 @@ namespace ProjectInk
             string move = farMove;
             var e = farFoe;
             farMove = null;
+            if (swordFx != null) swordFx.Emitting = false;
+            // zanshin: after a killing cut, the stillness, then the flick that cleans the blade
+            if (move == "katana" && killedThisCut && KatanaMode && body.Has("chiburi"))
+            {
+                killedThisCut = false;
+                BeginTraverse("chiburi", 0f);
+                if (swordFx != null) swordFx.Glint();
+                Sound.Play(Sfx.SwordSwing, 0.6f, transform.position, 1.4f);
+                return;
+            }
             farFoe = null;
             farSlideUntil = 0f;
             if (ended == "pick_up" && pickingProp != null) { var p = pickingProp; pickingProp = null; TakeProp(p); }
