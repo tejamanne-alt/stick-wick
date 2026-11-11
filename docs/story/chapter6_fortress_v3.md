@@ -1,6 +1,6 @@
 # Chapter 6 · KESSEL HILL (v3): the ascent
 
-> **Status: proposal.** It replaces the fortress fight (`chapter5_fortress.md`, `StoryFortress.cs`,
+> **Status: approved.** It replaces the fortress fight (`chapter5_fortress.md`, `StoryFortress.cs`,
 > `build_fortress_set.py`) from the cliff road up to Voss's fall. The walk-out and the epilogue are kept.
 
 ## 0. Why rebuild, and the rules that fix the glitches
@@ -40,8 +40,11 @@ ends higher than it began. You feel the climb in:
 | III · THE BAILEY | 7 the courtyard · 8 Voss's gallery | dark, the blackout, Voss's world | choir |
 | IV · THE KEEP | 9 the great hall · 10 the tower stair · 11 the observatory · 12 the roof | the climax coming | all of it, then silence for Voss |
 
-### Pacing
-Every level is about 2–3 minutes, about 30 minutes in all:
+### Pacing (decided: eleven levels and one passage, about 25–28 minutes)
+- **The road** is a short warm-up, about 90 s.
+- **The wall tower (6)** is a 30-second descent with one ambush on a turn, not a full level.
+
+The rest are about 2–3 minutes each:
 1. **Fight** (the main thing)
 2. **Traversal** (a set piece you play between levels)
 3. **A story beat** (short)
@@ -314,6 +317,6 @@ New traversal and reaction clips include:
 - the barrel jump
 - cutting through the screens
 
-### Decisions for you
-1. **Length:** twelve levels at about 30 minutes, or trim to nine? To trim, merge 2 and 3, 6 into 5, and 10 into 11.
-2. **Voss's gallery:** the Japanese room inside a European fort, as Voss's private world. Keep?
+### Decided
+- **Length:** eleven levels plus the wall tower passage, about 25–28 minutes, a checkpoint at each.
+- **Voss's gallery:** kept.
