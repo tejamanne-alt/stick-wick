@@ -78,6 +78,9 @@ namespace ProjectInk
         float lastDownSwipeAt = -9f;
         /// <summary>The thing a tap landed on (Command.Interact): a WeaponPickup or an OilDrum.</summary>
         public static Component InteractTarget;
+        /// <summary>The man a tap landed on (his body), and when: a knife in hand is thrown at him.</summary>
+        public static Enemy TappedEnemy;
+        public static float TappedAt = -9f;
         // the crouch: a swipe down that stays held; sliding that finger sideways creeps
         int crouchId = int.MinValue;
         Vector2 crouchAnchor, crouchNow;
@@ -171,6 +174,7 @@ namespace ProjectInk
                 int side = Classic ? (start.x < Screen.width * 0.5f ? -1 : 1) : SideOf(start);
                 // a tap on an enemy picks him: he is the target from now on, and this strike goes his way
                 var picked = EnemyAt(start);
+                if (picked != null) { TappedEnemy = picked; TappedAt = UnityEngine.Time.unscaledTime; }
                 if (picked != null && hero != null)
                 {
                     var hc = hero.GetComponent<HeroController>();

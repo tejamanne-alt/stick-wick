@@ -1410,6 +1410,15 @@ namespace ProjectInk
             // a knife flying in from that side: catch it and send it back
             var incoming = IncomingKnife(side);
             if (incoming != null) { CatchKnife(incoming, side); return; }
+            // a knife in hand and a tap on the man himself, wherever he is on the screen: throw it at him
+            // (within arm's reach the tap still stabs)
+            var tapped = GestureInput.TappedEnemy;
+            if (!kick && Style == FightStyle.Knife && Knives > 0 && tapped != null && tapped.Targetable &&
+                Time.unscaledTime - GestureInput.TappedAt < 0.4f)
+            {
+                GestureInput.TappedEnemy = null;
+                if (Vector3.Distance(tapped.transform.position, transform.position) > 1.2f) { KnifeThrow(tapped); return; }
+            }
             if (TryAloneTap(side, kick)) return;                      // nobody near: a step, not a punch at the air
 
             if (Style == FightStyle.Gun && !kick) { GunStrike(side); return; }   // kicks work with any weapon in hand
