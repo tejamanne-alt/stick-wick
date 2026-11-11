@@ -75,7 +75,7 @@ namespace ProjectInk
         // ------------------------------------------------------------------ strings
 
         /// <summary>The next strike of the string the taps are making.</summary>
-        AttackData ContactMove(bool kick, Enemy t, bool behindClose)
+        AttackData ContactMoveClassic(bool kick, Enemy t, bool behindClose)
         {
             if (behindClose) { strSeq = ""; return AttackData.SBackKick; }
             if (t != null && t.Dazed)
@@ -187,6 +187,7 @@ namespace ProjectInk
             foreach (var e in Enemy.All)
                 if (e != null && e.Telegraphing && Mathf.Abs(e.transform.position.x - transform.position.x) < 2.2f)
                 {
+                    e.Overreached();                                   // his punch hits air: he falls in after it
                     if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.4f, 0.4f);
                     if (WaveDirector.Instance != null) WaveDirector.Instance.OnPerfectDodge("SLIPPED IT");
                     break;

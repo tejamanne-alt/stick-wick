@@ -36,8 +36,11 @@ namespace ProjectInk
         const float KneeReach = 1.15f, SlideReach = 2.1f, BargeReach = 0.95f, LashReach = 2.6f;
 
         // ------------------------------------------------------------------ every idle frame
+        OpeningCue cue;
+
         void FarTick()
         {
+            if (Contact && cue == null) { cue = gameObject.AddComponent<OpeningCue>(); cue.hero = this; }
             if (GestureInput.Instance != null) GestureInput.HoldOnArmed = carried != null && carried.kind == PropKind.Chain && MovesV4;
             // walking over a prop with empty hands: pick it up
             if (carried == null && Style == FightStyle.Fists && Grounded && state == State.Idle && traverse == null)
@@ -96,6 +99,7 @@ namespace ProjectInk
         bool FarStrike(int side, bool kick)
         {
             if (TrySwat()) return true;
+            if (TryCrossfire(side)) return true;                    // two men on him: CROSSFIRE (HeroNearV4)
             if (TryTakedown(side)) return true;
             Enemy.Noise(transform.position);                         // anything else is heard
 
@@ -260,6 +264,7 @@ namespace ProjectInk
             }
             if (traverse == "advance") { UpdateAdvance(dt); return true; }
             if (farMove == null) return false;
+            if (farMove == "crossfire") { UpdateCrossfire(); if (body.Finished) EndTraverse(); return true; }
             // slide the root so the hit lands on him
             if (farSlideUntil > 0f && stateTime <= farSlideUntil + dt)
             {
@@ -378,6 +383,7 @@ namespace ProjectInk
                 if (d > 1.7f) { rushLeft--; BeginFar("rush_in", e, "rush", 0f); farSlideUntil = 0f; }
             }
             if (move == "sidestep" && e != null) FaceTowards(e.transform.position.x);
+            if (move == "crossfire") EndCrossfire();
             if (move == "takedown" && e != null)
             {
                 float sh = e.body != null && e.body.Current != null ? e.body.Current.endShift : 0f;
@@ -563,6 +569,9 @@ namespace ProjectInk
         void ReleaseFarFoe()
         {
             if (farFoe != null && farFoe.Held) farFoe.ReleaseHeld();
+            if (crossA != null && crossA.Held) crossA.ReleaseHeld();
+            if (crossB != null && crossB.Held) crossB.ReleaseHeld();
+            crossA = crossB = null;
             farFoe = null;
             farMove = null;
             advanceFoe = null;

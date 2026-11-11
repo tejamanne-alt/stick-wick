@@ -225,6 +225,7 @@ namespace ProjectInk
                     FaceTowards(hero.transform.position.x);
                     velocity.x = 0f;
                     if (TryThrowProp(dist, sameLevel)) break;
+                    UpdateGuardStance();
                     if (!sameLevel || Mathf.Abs(dist - Ring) > 1.0f) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
                     else if (!Passive && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {

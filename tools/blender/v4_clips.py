@@ -515,6 +515,11 @@ import v4_far  # noqa: E402
 
 CLIPS.update(v4_far.CLIPS)
 
+# ---------------------------------------------------------------- near range: reading the man
+import v4_near  # noqa: E402
+
+CLIPS.update(v4_near.CLIPS)
+
 
 def key_clip(arm, name, spec):
     return vp.key_clip(arm, name, spec)

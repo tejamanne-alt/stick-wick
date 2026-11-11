@@ -1325,8 +1325,10 @@ namespace ProjectInk
             Label(new Rect(panel.x, panel.y + 4, panel.width, 56), Spaced("MOVES"), new GUIStyle(gTitle) { fontSize = 50 });
             string[,] rows =
             {
-                { "TAP HIGH", "Punch combo (that side) · a man far off: close in behind the guard, then strike" },
-                { "TAP LOW", "Kick combo · running (or just stopped): high = flying knee, low = baseball slide" },
+                { "TAP HIGH", "Punches (up close: hooks and elbows) · a man far off: close in, then strike" },
+                { "TAP LOW", "Up close: to the body · further: kicks · running: high = flying knee, low = slide" },
+                { "READ HIM", "Follow the words over him: guard up = go low, folded = knee, head back = body..." },
+                { "TWO ON YOU", "One in front, one behind: tap = CROSSFIRE" },
                 { "HOLD", "Walk that way · keep holding: jog, then run · swipe down and hold: crouch (slide to creep)" },
                 { "SWIPE UP", "Jump (up-left / up-right: that way) · vault a drum · climb a ledge · grab a rope or bar" },
                 { "SWIPE DOWN", "Throw your weapon (bare hands: duck) · swipe down twice: drop through the floor" },

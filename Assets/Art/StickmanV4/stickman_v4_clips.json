@@ -2030,6 +2030,193 @@
       "reach": 0.0,
       "endShift": 0.0,
       "v4": true
+    },
+    {
+      "name": "liver_hook",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 0.75,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "body_cross",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 0.95,
+      "endShift": 0.08,
+      "v4": true
+    },
+    {
+      "name": "rear_elbow",
+      "frames": 17,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 0.62,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "elbow_up",
+      "frames": 19,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 7,
+      "loadFrame": -1,
+      "reach": 0.55,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rising_knee",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 8,
+      "loadFrame": -1,
+      "reach": 0.6,
+      "endShift": 0.04,
+      "v4": true
+    },
+    {
+      "name": "overhand",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 10,
+      "loadFrame": -1,
+      "reach": 1.1,
+      "endShift": 0.16,
+      "v4": true
+    },
+    {
+      "name": "head_kick",
+      "frames": 26,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 9,
+      "loadFrame": -1,
+      "reach": 0.8,
+      "endShift": 0.04,
+      "v4": true
+    },
+    {
+      "name": "cover_high",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "cover_low",
+      "frames": 40,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "fold",
+      "frames": 44,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "head_back",
+      "frames": 36,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "overreach",
+      "frames": 32,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "leg_buckle",
+      "frames": 40,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "wall_slump",
+      "frames": 80,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "crossfire",
+      "frames": 64,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 7,
+      "loadFrame": -1,
+      "reach": 0.6,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "crossfire_a_v",
+      "frames": 64,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -1.5,
+      "v4": true
+    },
+    {
+      "name": "crossfire_b_v",
+      "frames": 64,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -1.2,
+      "v4": true
     }
   ]
 }

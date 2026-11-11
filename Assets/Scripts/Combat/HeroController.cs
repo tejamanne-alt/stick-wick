@@ -724,7 +724,8 @@ namespace ProjectInk
 
         // ------------------------------------------------------------------ sound
 
-        bool IsKickClip(string c) => c != null && (c.Contains("kick") || c.Contains("geri") || c.Contains("knee") || c == "stomp" || c == "slide_kick" || c == "sweep");
+        bool IsKickClip(string c) => c != null && (c.Contains("kick") || c.Contains("geri") || c.Contains("knee") || c == "stomp" || c == "slide_kick" || c == "sweep" ||
+                                                   c == "liver_hook" || c == "body_cross");    // "low": under a high guard
 
         void SwingSound()
         {

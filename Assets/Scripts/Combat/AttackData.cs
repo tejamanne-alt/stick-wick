@@ -34,6 +34,15 @@ namespace ProjectInk
         public static readonly AttackData OiZuki = new AttackData { clip = "oi_zuki", damage = 13, reach = 1.15f, knockback = 3f, hitStopFrames = 4, shake = 0.09f, heavy = true, react = "hit_body" };
         public static readonly AttackData GyakuZuki = new AttackData { clip = "gyaku_zuki", damage = 14, reach = 1.0f, knockback = 3f, hitStopFrames = 4, shake = 0.1f, heavy = true, react = "hit_body" };
         public static readonly AttackData Elbow = new AttackData { clip = "elbow", damage = 15, reach = 0.75f, knockback = 2.5f, hitStopFrames = 5, shake = 0.12f, heavy = true, react = "hit_chin" };
+        // near range, reading the man (V4 body: HeroNearV4)
+        public static readonly AttackData LiverHook = new AttackData { clip = "liver_hook", damage = 12, reach = 0.75f, knockback = 0.8f, hitStopFrames = 6, shake = 0.1f, heavy = true, react = "fold" };
+        public static readonly AttackData BodyCross = new AttackData { clip = "body_cross", damage = 12, reach = 0.95f, knockback = 1.2f, hitStopFrames = 5, shake = 0.09f, react = "fold" };
+        public static readonly AttackData RearElbow = new AttackData { clip = "rear_elbow", damage = 14, reach = 0.62f, knockback = 2f, hitStopFrames = 5, shake = 0.11f, heavy = true, react = "head_back" };
+        public static readonly AttackData ElbowUp = new AttackData { clip = "elbow_up", damage = 16, reach = 0.55f, knockback = 2.5f, hitStopFrames = 6, shake = 0.14f, heavy = true, react = "hit_up" };
+        public static readonly AttackData RisingKnee = new AttackData { clip = "rising_knee", damage = 22, reach = 0.6f, knockback = 3f, hitStopFrames = 8, shake = 0.18f, heavy = true, react = "hit_up" };
+        public static readonly AttackData Overhand = new AttackData { clip = "overhand", damage = 18, reach = 1.1f, knockback = 3f, hitStopFrames = 7, shake = 0.16f, heavy = true, react = "head_back" };
+        public static readonly AttackData HeadKick = new AttackData { clip = "head_kick", damage = 24, reach = 0.8f, knockback = 5f, hitStopFrames = 8, shake = 0.2f, heavy = true, react = "hit_chin" };
+        public static readonly AttackData SUppercut = new AttackData { clip = "uppercut", damage = 15, reach = 0.85f, knockback = 2.5f, hitStopFrames = 6, shake = 0.14f, heavy = true, react = "hit_up" };
         public static readonly AttackData BackFist = new AttackData { clip = "back_fist", damage = 9, reach = 0.95f, knockback = 1.5f, hitStopFrames = 3, shake = 0.06f, react = "hit_front" };
         public static readonly AttackData PalmStrike = new AttackData { clip = "palm_strike", damage = 18, reach = 0.85f, knockback = 3.5f, hitStopFrames = 6, shake = 0.14f, heavy = true, react = "stumble_back" };
         public static readonly AttackData HammerFist = new AttackData { clip = "hammer_fist", damage = 18, reach = 0.9f, knockback = 1f, hitStopFrames = 6, shake = 0.14f, heavy = true, react = "hit_body" };

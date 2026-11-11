@@ -1507,3 +1507,47 @@ Every fall of a metre or more on the new body now lands with the soft or the hea
 | Fortress | Battlement rubble, the guards' torches (in the blackout the beam spins and blinds). |
 
 The men pick props up and throw them at you too, so the swat has a job.
+
+## Near range: reading the man, and CROSSFIRE (chapter 1's V4 body)
+
+**Distance decides what a tap throws** (`HeroNearV4.cs`):
+
+| How close | Tap high | Tap low |
+|---|---|---|
+| Inside 0.9 m | elbows, hooks, the uppercut | to the body: liver hook, body cross |
+| Further out | jab, cross | kicks |
+
+**Strings:**
+- Boxer's Four (now ends on the uppercut)
+- Dutch Two-and-Low
+- One-Two-Liver
+- Up-Down-Up
+- Liver and Lights
+- Dig and Lift
+- Close Quarters
+- Kick String (calf, body, head)
+- Karate
+- Off-book taps throw the natural next shot instead of a dead end.
+
+**Read the man** (`EnemyRead.cs`): every opening is a pose held long enough to read, and it is spelled out over him (`OpeningCue`).
+
+| What his body shows | Answer |
+|---|---|
+| High shell (`cover_high`) | tap low: UNDER THE GUARD |
+| Low guard (`cover_low`) | tap high: OVER THE TOP |
+| Folded (`fold`) | tap high: KNEE TO THE FACE |
+| Head back (`head_back`) | tap low: HE FORGOT HIS BODY |
+| Stumbling | tap low: SENT OVER |
+| His punch missed after your slip (`overreach`) | tap high: COUNTER (overhand) |
+| Leg gone after two calf kicks (`leg_buckle`) | tap high: TIMBER (head kick) |
+| Back to the wall | everything lands 25% harder; a finisher slams him down it (`wall_slump`) |
+
+Men waiting their turn now hold a visible high or low guard, changed every few seconds. It blocks that level and leaves the other open.
+
+**CROSSFIRE:** one man close in front and one close behind, and a tap does this:
+1. He drops under their swings, and their punches land on each other.
+2. He comes up between them: a palm in front, an elbow behind.
+3. A push kick sends the front man flying.
+4. A back kick sends the other.
+
+It runs as a three-body paired clip with slow motion, camera focus, shakes and the banner. It recharges in 16 s.

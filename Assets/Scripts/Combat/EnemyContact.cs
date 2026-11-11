@@ -149,6 +149,12 @@ namespace ProjectInk
             if (string.IsNullOrEmpty(react) || !body.Has(react)) return false;
             body.Play(react, 0.03f);
             hurtFor = react == "hit_body" ? 0.6f : react == "stumble_back" ? 0.75f : react == "hit_legs" ? 0.45f : 0.42f;
+            // the readable ones are held long enough to see and answer (HeroNearV4)
+            if (react == "fold") hurtFor = 1.0f;
+            else if (react == "head_back") hurtFor = 0.85f;
+            else if (react == "leg_buckle") hurtFor = 0.95f;
+            else if (react == "wall_slump") hurtFor = 2.4f;
+            readUntil = Time.time + hurtFor;
             // the V3 body's reactions are keyed to the end: he is hurt until he is back in his guard
             if (CombatV3.V3Body && body.Current != null) hurtFor = Mathf.Max(hurtFor, body.Current.Length * 0.8f);
             return true;
@@ -360,6 +366,12 @@ namespace ProjectInk
             float chance = Handler ? (HandlerPhase == 1 ? 0.35f : HandlerPhase == 2 ? 0.3f : 0f) : Cleaner ? (CleanerPhase == 1 ? 0.3f : CleanerPhase == 2 ? 0.25f : 0f) : Driver ? (DriverPhase == 1 ? 0.45f : DriverPhase == 2 ? 0.2f : 0f)
                          : Type == EnemyType.DoorMan ? 0.4f : Type == EnemyType.Grabber ? 0.3f : Type == EnemyType.Runner ? 0.1f : 0.22f;
             if (repeat) chance += 0.45f;
+            // his guard stance decides it: the level he covers is blocked, the other is open
+            if (guardLevel != 0 && state == State.Wait)
+            {
+                if ((guardLevel == 2) == hit.low) chance = 0.85f;
+                else { guardHits = 0; return false; }
+            }
             if (Random.value >= chance) { guardHits = 0; return false; }
             guardHits++;
             Health = Mathf.Max(MinHealth, Health - hit.damage * 0.2f);
