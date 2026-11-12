@@ -1779,3 +1779,37 @@ Then the roof, as built.
   - The hall's table, benches and the Warden's chair are behind the lane (the table is no longer a floor).
   - The gallery stair and the stable roof are open treads over the floor below.
   - The telescope is behind the lane; the retaining wall's end is out of the road; the hay bale is above head height.
+
+## The training ground (chapter 1, the three men at the shutter)
+INSTINCT is now played, not directed. The three men are sparring partners, and every bare-handed move is a lesson.
+
+**The lessons (20, in seven groups):**
+- Basics: walk and run, jump, pick your man.
+- Strikes: punch, kick, to the body.
+- Strings: BOXER'S FOUR, KICK STRING, your own string.
+- Read him: under the guard.
+- Defence: parry, slip and counter.
+- Clinch: grab him, throw him.
+- From far: rush in, running attacks, sidestep the bull.
+- Tricks: crossfire, silent takedown, throw something.
+
+**How it teaches:**
+- A card at the top: the group and lesson number, the move's name, the gesture in plain words, a tip (and the keys on a desktop), rep dots, and a progress bar for the whole set.
+- A ghost finger makes the gesture where the game reads it (the high/low line is marked). It shows for the first seconds, then again whenever he goes five seconds without landing anything.
+- A rep pops a dot. A finished lesson stamps GOT IT, then the next card slides in.
+- Lessons that need the men somewhere (a man far off, one behind him, one with his back turned) dip the picture for a breath while everyone takes their marks.
+- SKIP and FREE PLAY sit beside the card.
+
+**The men:**
+- New Enemy flags: `Sparring` (can't die, can still be held and thrown), `HoldFire` (no swings), `Keep` (stands his mark).
+- Training cues: `ChargeAt()` for the sidestep and `ForceGuard()` for the read.
+- The hero can't die here either (`HeroController.Sparring`). Both sides heal when worn down.
+
+**Free play:**
+- All three come at him.
+- A checklist down the right lights each move as he lands it; a row tapped replays that lesson.
+- CONTINUE STORY makes it real: the knife comes out of his belt, the men fight to the finish, then the memory as before.
+- Once seen, later visits open straight in free play. A defeat in the real fight retries straight back into it.
+
+**Detection:** new hooks `HeroController.Landed` (clip, string name, low tap), `WaveDirector.Styled` (every style label), and `Tell("far_<move>")` for every far move. The old directed duel (StoryDuel) is no longer in the flow.
+

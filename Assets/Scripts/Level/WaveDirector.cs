@@ -542,8 +542,12 @@ namespace ProjectInk
             ShowStyle(label);
         }
 
+        /// <summary>Every style label as it is shown (the training ground listens for its moves).</summary>
+        public static event System.Action<string> Styled;
+
         void ShowStyle(string label)
         {
+            Styled?.Invoke(label);
             StyleText = label;
             StyleUntil = Time.unscaledTime + 1.2f;
         }

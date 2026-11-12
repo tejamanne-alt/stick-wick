@@ -230,6 +230,7 @@ namespace ProjectInk
         {
             BeginTraverse(clip, 0f);
             farMove = move;
+            Tell("far_" + move);
             farHit = false;
             // the katana's ribbon of light follows every cut (BeginTraverse had put the trails out)
             if (swordFx != null) swordFx.Emitting = KatanaMode && (move == "katana" || move == "pass" || move == "parry");

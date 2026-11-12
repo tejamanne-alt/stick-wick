@@ -38,7 +38,7 @@ namespace ProjectInk
         public HeroController hero;
         public WaveDirector director;
 
-        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Fight, Memory, ToHall, Hall, Ending, End, Bank, Street, Home, Park, Fortress, Road, Epilogue }
+        enum Phase { Cinematic, Walk, Breach, Escape, Duel, Training, Fight, Memory, ToHall, Hall, Ending, End, Bank, Street, Home, Park, Fortress, Road, Epilogue }
         Phase phase = Phase.Cinematic;
 
         /// <summary>The fight HUD steps aside while the story holds the screen.</summary>
@@ -73,7 +73,7 @@ namespace ProjectInk
         float walkFromX;
 
         void Awake() { Instance = this; }
-        void OnDestroy() { if (Instance == this) Instance = null; HeroController.Did -= OnFortHit; }
+        void OnDestroy() { if (Instance == this) Instance = null; HeroController.Did -= OnFortHit; TrainingUnhook(); }
 
         void Start()
         {
@@ -133,7 +133,7 @@ namespace ProjectInk
             {
                 setUp = true;
                 HeadWound.Chapter = 1;                       // the warehouse: the night of the blow
-                if (!Retry) EscapeSeen = false;              // from the top: he has not found the knife yet
+                if (!Retry) { EscapeSeen = false; TrainedThisRun = false; }   // from the top: he has not found the knife yet
                 if (TestEnding > 0) { JumpToEnding(); }                         // TEST: straight into the ending
                 else if (HallCheckpoint >= 0) { BeginHall(HallCheckpoint, true); }      // a defeat in the hall: back to that zone
                 else if (Retry) { BeginAtDoor(); }
@@ -166,6 +166,7 @@ namespace ProjectInk
                     UpdateEscape();
                     break;
                 case Phase.Duel: UpdateDuel(); break;
+                case Phase.Training: UpdateTraining(); break;
                 case Phase.ToHall:
                     prevHallT = hallT; hallT += dt;
                     UpdateToHall();
@@ -801,9 +802,16 @@ namespace ProjectInk
             }
             barsPx = b < ReleaseAt ? Mathf.Lerp(0f, 70f, Ease(0f, 0.5f, b)) : Mathf.Lerp(70f, 0f, Ease(ReleaseAt, ReleaseAt + 0.6f, b));
             if (AtB(ReleaseAt) && CanEscape) { BeginEscape(); return; }       // he runs (see StoryEscape)
+            if (AtB(ReleaseAt) && !TrainedThisRun)
+            {
+                // the training ground (StoryTraining): the knife stays in his belt until it is real
+                if (floorKnife != null && EscapeSeen) floorKnife.gameObject.SetActive(false);
+                BeginTraining();
+                return;
+            }
             if (AtB(ReleaseAt))
             {
-                // a retry: the knife is already his
+                // a retry after a defeat in the real fight: the knife is already his
                 if (EscapeSeen) { hero.GiveWeapon(FightStyle.Knife, 4); if (floorKnife != null) floorKnife.gameObject.SetActive(false); }
                 foreach (var e in men) if (e != null) e.Passive = false;
                 hero.CineRelease();
@@ -905,6 +913,7 @@ namespace ProjectInk
             if (phase == Phase.Memory) Memory(w, h);
             if (phase == Phase.Escape) EscapeGUI(w, h);
             if (phase == Phase.Duel || Time.unscaledTime - okAt < 0.4f) DuelGUI(w, h);
+            if (phase == Phase.Training) TrainingGUI(w, h);
             HallGUI(w, h);
 
             // lightning: two white frames, then a blue afterglow

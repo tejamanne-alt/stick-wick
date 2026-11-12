@@ -22,7 +22,9 @@ namespace ProjectInk
     ///   7 TAP HIM (tap the man)     the first, the last one standing: he picks him, and ends it
     ///
     /// Nobody can lose it; a wrong gesture only shakes the prompt. It runs every playthrough
-    /// (it is the scene, not a tutorial screen).</summary>
+    /// (it is the scene, not a tutorial screen).
+    /// RETIRED from the flow: the training ground (StoryTraining) now plays this fight. Its helpers
+    /// (ScreenOf, Finger) are shared with it.</summary>
     public partial class StoryIntro
     {
         enum Ask { None, TapHigh, TapLow, Swipe, SwipeDown, TapHim }

@@ -1421,6 +1421,7 @@ namespace ProjectInk
             if (KatanaMode) { KatanaThrust(side, kick); return; }    // a tap with the katana: the thrust
             if (state == State.Idle && Time.time - lastAttackEnd > comboWindow) { comboStep = 0; closeStep = 0; punchStep = 0; kickStep = 0; ResetString(); }
             comboLabel = null;
+            lastStrikeLow = kick;
 
             // a knife flying in from that side: catch it and send it back
             var incoming = IncomingKnife(side);
@@ -2252,6 +2253,7 @@ namespace ProjectInk
                 }
                 Impact();
                 V3Landed();
+                Landed?.Invoke(currentAttack.clip, comboLabel ?? currentAttack.name, lastStrikeLow);
                 // a few slow-motion beats, never on every hit: cutting two at once, or a heavy killing blow
                 if (bladeCut && SwordSlowReady && (cut >= 2 || (lastKilled && currentAttack.heavy)))
                 {
@@ -2312,6 +2314,12 @@ namespace ProjectInk
         /// <summary>What the hero just did, for the training reel and the chalk hints:
         /// punch, kick, combo, run, jump, climb, drop, dodge, rampage, crate, grab, dive, throw, pickup.</summary>
         public static event System.Action<string> Did;
+        /// <summary>A strike landed: its clip, its string's name (or null), and whether it was a low tap.
+        /// The training ground (StoryTraining) ticks its lessons off these.</summary>
+        public static event System.Action<string, string, bool> Landed;
+        /// <summary>The training ground: he can be knocked down, never out.</summary>
+        public static bool Sparring;
+        bool lastStrikeLow;
         static void Tell(string what) { Did?.Invoke(what); }
 
         void OnStrikeLanded(Enemy e, bool killing)
@@ -2553,7 +2561,7 @@ namespace ProjectInk
             }
             if (state == State.Clinch) EndClinch();          // hit from behind: he lets go
             ReleaseFarFoe();
-            Health = Mathf.Max(0f, Health - hit.damage);
+            Health = Mathf.Max(Sparring ? 1f : 0f, Health - hit.damage);
             ComboCount = 0;
             comboStep = 0;
             pendingExecution = null;

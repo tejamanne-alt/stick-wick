@@ -27,6 +27,8 @@ namespace ProjectInk
 
         public float Health { get; protected set; }
         public bool Alive => Health > 0f;
+        /// <summary>Back to full health (the training ground's sparring partners, the hero there).</summary>
+        public void HealFull() { if (Alive) Health = maxHealth; }
         public int Facing { get; private set; } = 1;
         public bool Grounded { get; protected set; } = true;
         /// <summary>Chibi proportions: about 1.45 m tall, hips at 0.70 m. Melee reaches scale with it.</summary>

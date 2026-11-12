@@ -244,7 +244,7 @@ namespace ProjectInk
             {
                 EscapeSeen = true;
                 StoryCameraFX.Set(0f, 0f);
-                BeginDuel();                                  // INSTINCT: the directed fight (StoryDuel)
+                BeginTraining();                              // INSTINCT: the training ground (StoryTraining)
                 return;
             }
             if (d > D_Release)

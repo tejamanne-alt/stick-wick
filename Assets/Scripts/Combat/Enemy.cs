@@ -73,7 +73,30 @@ namespace ProjectInk
         /// <summary>A training stunt double: walks up and takes the hits, never attacks.</summary>
         public bool Passive;
         /// <summary>Stunt doubles cannot die: they go down, and get up again.</summary>
-        float MinHealth => Passive ? 1f : 0f;
+        float MinHealth => Passive || Sparring ? 1f : 0f;
+        /// <summary>The training ground (StoryTraining): a sparring partner. He fights back (unless
+        /// HoldFire), can be held, thrown and read like anyone, but never dies: he goes down and gets up.</summary>
+        public bool Sparring;
+        /// <summary>Sparring: no swings of his own (the lesson isn't about defence).</summary>
+        public bool HoldFire;
+        /// <summary>Sparring: he stands his ground on his mark (a man to rush, to run at, to flank).</summary>
+        public bool Keep;
+        bool NoAttack => Passive || HoldFire || Keep;
+
+        /// <summary>Training: the bull's charge on cue, from wherever he stands (for the sidestep).</summary>
+        public void ChargeAt()
+        {
+            if (!Alive || hero == null || state == State.Charge || IsDown || Held) return;
+            ReleaseToken();
+            BeginCharge(hero.transform.position.x - transform.position.x);
+        }
+
+        /// <summary>Training: hold the high shell (1) or the low guard (2) for a while.</summary>
+        public void ForceGuard(int level, float seconds)
+        {
+            guardLevel = level;
+            guardSwitchAt = Time.time + seconds;
+        }
 
         /// <summary>Training: put a stunt double back on his mark, on his feet, healed.</summary>
         public void ResetTo(Vector3 at, float faceX)
@@ -211,6 +234,7 @@ namespace ProjectInk
             {
                 case State.Enter: UpdateEnter(dx); break;
                 case State.Approach:
+                    if (Keep && sameLevel && !onStairs) { velocity.x = 0f; FaceTowards(hero.transform.position.x); GoWait(); break; }
                     if (!sameLevel || onStairs) { if (LevelNav.Active) NavTravel(dt, dx); else Travel(dt); break; }
                     LeaveStairsLane(dt);
                     FaceTowards(hero.transform.position.x);
@@ -226,8 +250,9 @@ namespace ProjectInk
                     velocity.x = 0f;
                     if (TryThrowProp(dist, sameLevel)) break;
                     UpdateGuardStance();
+                    if (Keep) break;
                     if (!sameLevel || Mathf.Abs(dist - Ring) > 1.0f) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
-                    else if (!Passive && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
+                    else if (!NoAttack && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
                         HasToken = true;
                         if (Boss && !Driver && TryBossSpecial(dist, dx)) break;
@@ -458,7 +483,7 @@ namespace ProjectInk
             }
             // drop. A fighter whose turn it is leaps down at the hero; the rest step off.
             bool heroBelowClose = hero.Grounded && Mathf.Abs(hero.transform.position.x - p.x) < 6.5f && dy < -1f;
-            if (!Passive && !Ranged && leapDown && heroBelowClose && !hero.IsDead && AttackTokens.TryTake(this))
+            if (!NoAttack && !Ranged && leapDown && heroBelowClose && !hero.IsDead && AttackTokens.TryTake(this))
             {
                 HasToken = true;
                 state = State.Pounce;

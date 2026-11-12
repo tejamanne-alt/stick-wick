@@ -195,7 +195,7 @@ namespace ProjectInk
         static readonly (string chapter, string label, System.Action go)[] Checkpoints =
         {
             ("CHAPTER 1  ·  THE WAREHOUSE", "Opening  ·  open your eyes, break the ties", () => Ch1(() => { })),
-            ("CHAPTER 1  ·  THE WAREHOUSE", "At the shutter (the walk)", () => Ch1(() => { StoryIntro.Retry = true; })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "At the shutter (the training ground)", () => Ch1(() => { StoryIntro.Retry = true; StoryIntro.TrainedThisRun = false; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 1  ·  Loading bay", () => Ch1(() => Hall(0))),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 2  ·  Racking aisle", () => Ch1(() => Hall(1))),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Hall 3  ·  Mezzanine", () => Ch1(() => Hall(2))),
