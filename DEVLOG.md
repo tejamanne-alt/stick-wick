@@ -1822,3 +1822,27 @@ Now a swipe at a man 3–8 m off is one unbroken burst:
 - **The burst:** `rush_burst`, a looped pair of explosive bounds behind a tight guard, chin down, feet never crossing; the root is carried at the clip's pace, with a footstep on every bound and motion trails.
 - **The strike:** a stride out, the last bound becomes `rush_strike`, a cross with the whole run behind it. It lands on him wherever he stands (16 damage, he stumbles back, RUSH IN!).
 - **Chaining:** after the blow, a swipe at the next man far off rushes again.
+
+## The training ground, redesigned: watch, then your turn
+Reading a card, understanding it and copying it was too hard. Each move is now two beats with almost no text.
+
+**WATCH**
+- The men take their marks and the game plays the move itself.
+- A finger appears and makes the gesture, and that finger is the input. `GestureInput.Demo` turns off real touches; two virtual fingers (`GestureInput.Sim`) go through the very same gesture code.
+- So what you see the finger do (tap high, swipe at him, hold to run, swipe down and keep holding, a second finger tapping his back) is exactly what moves the hero.
+- Along the bottom, each step is a little landscape phone screen showing where the thumb goes, with the current step lit and a 2–4 word caption.
+
+**YOUR TURN**
+- Back on the marks. The demo's finger, recorded, replays as a faint ghost at the start and whenever you're stuck (long waits shrink in the replay).
+- The steps stay along the bottom and dots count the reps. GOT IT, then the next move.
+- WATCH AGAIN (it pulses if you're stuck) replays the demonstration; TRY IT NOW cuts a demo short.
+
+**Robustness:** if a demonstration doesn't come off (a man moved), it plays once more.
+
+**Options weighed:**
+- Picture-in-picture clips: need a second camera rig, and show a stock situation rather than yours.
+- Text plus a decorative ghost (the first version): too much reading.
+- The live scene played by a real virtual finger: **chosen**.
+
+The lessons are now 21: flying knee and slide tackle are separate.
+

@@ -465,10 +465,48 @@ namespace ProjectInk
                 keyAxis = (right ? 1f : 0f) - (left ? 1f : 0f);
         }
 
+        // ---------------------------------------------------------------- the demo finger
+        /// <summary>The training ground's demonstrations: real touches, mouse and keys are ignored and the
+        /// two virtual fingers below are read instead, through the very same gesture code, so the finger
+        /// the player watches is exactly what moves the hero.</summary>
+        public static bool Demo;
+        public struct SimFinger { public bool down; public Vector2 pos; }
+        public static readonly SimFinger[] Sim = new SimFinger[2];
+        readonly bool[] simWas = new bool[2];
+        const int SimId = -1000;
+
+        /// <summary>Let go of every real finger (a demonstration takes over the hands).</summary>
+        public void ReleaseReal()
+        {
+            holding.Clear();
+            touchStart.Clear();
+            touchTime.Clear();
+            consumed.Clear();
+            crouchId = int.MinValue;
+            stickId = int.MinValue;
+            iaiId = int.MinValue;
+            queue.Clear();
+        }
+
+        void UpdateSim()
+        {
+            for (int i = 0; i < Sim.Length; i++)
+            {
+                var f = Sim[i];
+                int id = SimId - i;
+                if (f.down && !simWas[i]) TouchBegan(id, f.pos);
+                else if (f.down) TouchMoved(id, f.pos);
+                else if (simWas[i]) TouchEnded(id, f.pos);
+                simWas[i] = f.down;
+            }
+        }
+
         void Update()
         {
             AnyPressThisFrame = false;
             keyAxis = 0f;
+            UpdateSim();
+            if (!Demo) {
 #if ENABLE_INPUT_SYSTEM
             foreach (var t in ETouch.activeTouches)
             {
@@ -588,6 +626,7 @@ namespace ProjectInk
             if (Input.GetKeyDown(KeyCode.Alpha3)) Push(Command.StyleGun);
             if (Input.anyKeyDown) AnyPressThisFrame = true;
 #endif
+            }
             // the stick: horizontal travel → run speed (with a small dead zone)
             float axis = keyAxis;
             foreach (var kv in holding) axis = kv.Value;   // classic: a held press runs
