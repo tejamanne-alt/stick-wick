@@ -251,8 +251,8 @@ namespace ProjectInk
                     match = (k, a, l, low) => k == 's' && l != null && (l.Contains("THROW") || l.Contains("SWEEP") || l.Contains("SUPLEX") || l.Contains("DDT") || l.Contains("SLAM")) },
                 // ---------------------------------------------------------------- from far
                 new Lesson { group = "FROM FAR", title = "RUSH IN", glyph = Glyph.SwipeAt, who = 1,
-                    how = "A man 3 to 8 metres off: SWIPE TOWARD him. You close the gap with a blow.",
-                    tip = "Keep swiping: the rush chains into the next man.",
+                    how = "A man 3 to 8 metres off: SWIPE TOWARD him. One explosive burst, and a cross with the run behind it.",
+                    tip = "After the blow, swipe at the next man far off: rush again.",
                     stage = () => { HeroAt(-3f, 1); Mark(1, 2.6f, true, false); Mark(0, -6.5f, true, false); Mark(2, -7.5f, true, false); },
                     restage = true,
                     match = (k, a, l, low) => k == 'd' && a == "far_rush" },

@@ -28,7 +28,11 @@ namespace ProjectInk
         string farMove;
         float farSlideFrom, farSlideTo, farSlideUntil, farHitAt, advanceGoal;
         bool farHit, advanceKick, advanceLash;
-        int rushLeft, advanceSide;
+        int advanceSide;
+        // the rush (the blitz): one unbroken burst, then the cross with the run behind it
+        Enemy rushFoe;
+        float rushV, rushStepIn;
+        const float RushSpeed = 5.4f, RushHitReach = 1.02f;
         float runEndAt = -10f, runEndSpeed;
         ChainLine chainLine;
 
@@ -278,6 +282,7 @@ namespace ProjectInk
                 }
             }
             if (traverse == "advance") { UpdateAdvance(dt); return true; }
+            if (traverse == "rush") { UpdateRush(dt); return true; }
             // a katana cut flows into the next: once the blade has landed, a new line cancels the follow-through
             if ((farMove == "katana" || farMove == "rod") && farHit && gi != null && body.Time > farHitAt + 0.12f)
             {
@@ -337,6 +342,14 @@ namespace ProjectInk
                         if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(130, spec.label);
                         if (spec.breaks) UseUpCarried();
                     }
+                    break;
+                case "rush":
+                    if (Connects(e, RushHitReach, 0.7f))
+                    {
+                        Land(e, 16f, false, 4.5f, "stumble_back", "RUSH IN!", 140, 0f);
+                        if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(3f, 0.12f);
+                    }
+                    else Sound.Play(Sfx.Whoosh, 1f, transform.position);
                     break;
                 case "knee":
                     if (Connects(e, KneeReach - 0.05f))
@@ -413,11 +426,6 @@ namespace ProjectInk
             farFoe = null;
             farSlideUntil = 0f;
             if (ended == "pick_up" && pickingProp != null) { var p = pickingProp; pickingProp = null; TakeProp(p); }
-            if (move == "rush" && e != null && e.Targetable && rushLeft > 0)
-            {
-                float d = Mathf.Abs(e.transform.position.x - transform.position.x);
-                if (d > 1.7f) { rushLeft--; BeginFar("rush_in", e, "rush", 0f); farSlideUntil = 0f; }
-            }
             if (move == "sidestep" && e != null) FaceTowards(e.transform.position.x);
             if (move == "crossfire") EndCrossfire();
             if (move == "takedown" && e != null)
@@ -481,7 +489,7 @@ namespace ProjectInk
         /// <summary>A swipe towards a man 3–8 m off: the rush.</summary>
         bool TryRush(int dir)
         {
-            if (!MovesV4 || !ContactBare || !Grounded || !body.Has("rush_in")) return false;
+            if (!MovesV4 || !ContactBare || !Grounded || !body.Has("rush_burst") || !body.Has("rush_strike")) return false;
             Enemy best = null;
             float bd = 8f;
             foreach (var e in Enemy.All)
@@ -493,11 +501,58 @@ namespace ProjectInk
                 best = e;
             }
             if (best == null) return false;
-            rushLeft = 4;
-            BeginFar("rush_in", best, "rush", 0f);
-            farSlideUntil = 0f;
+            BeginRush(best);
             Tell("rush");
             return true;
+        }
+
+        /// <summary>The blitz: out of his stance at full speed in a tenth of a second, explosive bounds
+        /// behind the guard (the root carried at the clip's pace), and a stride out the last bound
+        /// becomes the cross (rush_strike, a far move, so the blow lands on him wherever he is).</summary>
+        void BeginRush(Enemy t)
+        {
+            rushFoe = t;
+            rushV = 0f;
+            rushStepIn = 0.06f;
+            FaceTowards(t.transform.position.x);
+            farMove = null;
+            farSlideUntil = 0f;
+            traverse = "rush";
+            traverseHit = false;
+            state = State.Traverse;
+            stateTime = 0f;
+            velocity.x = 0f;
+            SetTrails(true);
+            body.Play("rush_burst", 0.05f, true, RushSpeed / 4.8f);
+            Sound.Play(Sfx.HeroEffort, 1f, transform.position);
+            Sound.Play(Sfx.WhooshBig, 0.7f, transform.position);
+            if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(2f, 0.15f);
+        }
+
+        void UpdateRush(float dt)
+        {
+            var t = rushFoe;
+            bool lost = t == null || !t.Targetable || stateTime > 2.4f || Mathf.Abs(t.transform.position.y - transform.position.y) > 0.6f;
+            if (lost) { traverse = null; rushFoe = null; SetTrails(false); EnterIdle(); return; }
+            FaceTowards(t.transform.position.x);
+            float d = Mathf.Abs(t.transform.position.x - transform.position.x);
+            // a stride out: the last bound becomes the punch (it carries him the rest of the way)
+            if (d <= RushHitReach + 0.55f)
+            {
+                traverse = null;
+                rushFoe = null;
+                BeginFar("rush_strike", t, "rush", RushHitReach);
+                SetTrails(true);
+                return;
+            }
+            // full speed in a tenth of a second, then flat out
+            rushV = Mathf.MoveTowards(rushV, RushSpeed, RushSpeed / 0.1f * dt);
+            var p = transform.position;
+            p.x = Mathf.Clamp(p.x + Facing * Mathf.Min(rushV * dt, d - RushHitReach - 0.5f), arenaMinX, arenaMaxX);
+            transform.position = p;
+            // a foot lands every bound
+            rushStepIn -= dt;
+            if (rushStepIn <= 0f) { rushStepIn = 0.1667f * 4.8f / RushSpeed; Sound.Play(Sfx.Footstep, 1f, transform.position, 1.15f); }
         }
 
         /// <summary>A swipe as a charge comes at him: off the line, and a hammer as he goes past.</summary>

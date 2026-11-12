@@ -1813,3 +1813,12 @@ INSTINCT is now played, not directed. The three men are sparring partners, and e
 
 **Detection:** new hooks `HeroController.Landed` (clip, string name, low tap), `WaveDirector.Styled` (every style label), and `Tell("far_<move>")` for every far move. The old directed duel (StoryDuel) is no longer in the flow.
 
+
+## The rush, rebuilt (the blitz)
+The old rush was up to four separate 1.1 m hops, each restarting its clip (choppy and slow), and it never struck when it arrived.
+
+Now a swipe at a man 3–8 m off is one unbroken burst:
+- **The launch:** from his stance to full speed (5.4 m/s) in a tenth of a second.
+- **The burst:** `rush_burst`, a looped pair of explosive bounds behind a tight guard, chin down, feet never crossing; the root is carried at the clip's pace, with a footstep on every bound and motion trails.
+- **The strike:** a stride out, the last bound becomes `rush_strike`, a cross with the whole run behind it. It lands on him wherever he stands (16 damage, he stumbles back, RUSH IN!).
+- **Chaining:** after the blow, a swipe at the next man far off rushes again.

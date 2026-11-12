@@ -1900,6 +1900,28 @@
       "v4": true
     },
     {
+      "name": "rush_burst",
+      "frames": 10,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rush_strike",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5,
+      "loadFrame": -1,
+      "reach": 1.02,
+      "endShift": 0.5,
+      "v4": true
+    },
+    {
       "name": "flying_knee",
       "frames": 24,
       "fps": 30,

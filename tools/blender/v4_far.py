@@ -2,7 +2,9 @@
 
   advance         tap at a man 3–6 m off: he comes in behind his guard (a boxer's step-drag, never
                   crossing his feet), then strikes when in reach
-  rush_in         swipe towards a man 3–8 m off: two explosive step-drags, the chin down
+  rush_in         (old) two explosive step-drags, the chin down
+  rush_burst      swipe towards a man 3–8 m off: the blitz, looped explosive bounds (the game carries him)
+  rush_strike     the blitz lands: a cross with the whole run behind it
   flying_knee     running, tap high: off one foot, the knee driven up into his face, hands pulling
                   his head down onto it
   slide_tackle    running, tap low: a baseball slide, the lead leg through his ankles
@@ -89,6 +91,66 @@ CLIPS["rush_in"] = clip(18, [
     (14, G(hx=1.0, hz=0.612, fL=(GL[0] + 1.1, 0), fR=(GR[0] + 0.7, 0.05, 30), head=167), "in"),
     (18, at(GUARD, 1.1), "smooth"),
 ], shift=True, note="the rush: two explosive step-drags, chin down behind the shoulder, landing on guard")
+
+# ---------------------------------------------------------------- the rush, v2 (the blitz)
+# One unbroken burst instead of hops: a looped pair of explosive bounds (the rear leg fires him, both
+# feet leave the floor for a frame, the lead lands heel-light and the rear snaps in behind it, never
+# crossing), chin buried behind the lead shoulder, the guard tight and riding the bounds; the game
+# carries the root at the clip's speed until he is a stride out, then the momentum goes straight into
+# rush_strike. 10 frames, two bounds of 0.8 m: 4.8 m/s.
+BOUND = 0.8
+RUSH_SPEED = round(2 * BOUND * 30 / 10, 3)
+_RB = dict(hz=0.6, spine=168, spine_mid=164, chest=156, neck=148, head=162, tw_chest=-10,
+           uaL=70, faL=140, haL=150, uaR=26, faR=164, haR=170, clL=(18, 12), clR=(6, 8))
+
+
+def _bound(x0):
+    """One bound starting on the crouched guard at x0 (clip space), as (frame offset, pose, ease)."""
+    return [
+        (1, G(**dict(_RB, hx=x0 + 0.18, hz=0.615, spine=166, fL=(GL[0] + x0 + 0.22, 0.05, -12), fR=(GR[0] + x0, 72),
+                     uaL=74, faL=136, clL=(22, 14))), "out3"),                                     # the rear leg fires
+        (2, G(**dict(_RB, hx=x0 + 0.4, hz=0.635, fL=(GL[0] + x0 + 0.6, 0.06, -10), fR=(GR[0] + x0 + 0.2, 0.09, 46),
+                     head=160, tw_head=-3)), "lin"),                                                # both feet off: the skip
+        (3, G(**dict(_RB, hx=x0 + 0.6, hz=0.592, fL=(GL[0] + x0 + BOUND, 0), fR=(GR[0] + x0 + 0.5, 0.06, 40),
+                     chest=154, head=161)), "in"),                                                  # the lead lands, the knee gives
+        (5, G(**dict(_RB, hx=x0 + BOUND, fL=(GL[0] + x0 + BOUND, 0), fR=(GR[0] + x0 + BOUND, 64), tw_head=0)), "smooth"),  # the rear snaps in
+    ]
+
+
+def _rush_burst():
+    seq = [(0, G(**dict(_RB, hx=0.0, fL=(GL[0], 0), fR=(GR[0], 64))), "smooth")]
+    for f, p, e in _bound(0.0):
+        seq.append((f, p, e))
+    for f, p, e in _bound(BOUND):
+        seq.append((f + 5, p, e))
+    # in place: the root carries the travel (as the advance)
+    return [(f, at(p, -2 * BOUND * f / 10), e) for f, p, e in seq]
+
+
+CLIPS["rush_burst"] = clip(10, _rush_burst(), loop=True, speed=RUSH_SPEED,
+                           note="the blitz: explosive bounds behind the guard, chin down, never crossing the feet")
+
+# the blitz lands: the last bound becomes the punch. The rear foot fires one more time, the lead lands
+# as the hips whip round, and the cross arrives with the whole run behind it; the rear foot slides
+# through on its ball, then he settles on guard where the momentum left him (0.5 m on).
+CLIPS["rush_strike"] = clip(18, [
+    (0, G(**dict(_RB, hx=0.0, fL=(GL[0], 0), fR=(GR[0], 64))), "lin"),
+    (2, G(**dict(_RB, hx=0.2, hz=0.61, fL=(GL[0] + 0.3, 0.05, -12), fR=(GR[0], 74), tw_hips=-20, tw_spine=-16,
+                 tw_chest=-18, uaR=18, faR=168, clR=(-4, 6))), "out3"),                               # the last push, the shoulders wound
+    (4, G(**dict(_RB, hx=0.38, hz=0.6, fL=(GL[0] + 0.48, 0), fR=(GR[0] + 0.12, 0.05, 40), tw_hips=20, tw_spine=14,
+                 tw_chest=6, uaR=58, faR=128, haR=128, twR=50, clR=(24, 10), uaL=46, faL=160, haL=166)), "in"),   # lead lands, hips turning
+    (5, G(**dict(_RB, hR=(1.02, 1.06), hx=0.46, hz=0.598, tw_hips=34, tw_spine=34, tw_spine_mid=36, tw_chest=42, chest=148,
+                 spine_mid=162, neck=146, head=162, fL=(GL[0] + 0.5, 0), fR=(GR[0] + 0.24, 76), twR=94, clR=(58, 16),
+                 uaL=38, faL=167, haL=173)), "in3"),                                                   # HIT: the run behind the fist
+    (7, G(**dict(_RB, hR=(1.04, 1.055), hx=0.48, hz=0.6, tw_hips=35, tw_spine=35, tw_spine_mid=37, tw_chest=43, chest=148,
+                 neck=146, head=162, fL=(GL[0] + 0.5, 0), fR=(GR[0] + 0.32, 76), twR=95, clR=(60, 16),
+                 uaL=38, faL=167, haL=173)), "lin"),                                                   # through him, the rear foot sliding in
+    (10, G(hx=0.5, hz=0.615, uaR=60, faR=130, haR=132, twR=56, clR=(28, 10), tw_hips=20, tw_chest=12, chest=156,
+           fL=(GL[0] + 0.5, 0), fR=(GR[0] + 0.42, 60)), "out"),
+    (14, G(hx=0.5, uaR=26, faR=162, haR=166, twR=24, tw_chest=-4, fL=(GL[0] + 0.5, 0), fR=(GR[0] + 0.5, 44)), "out"),
+    (18, at(GUARD, 0.5), "smooth"),
+], shift=True, hit=5, reach=1.02, striker="R", react="stumble_back",
+    note="the blitz lands: the last bound becomes a cross with the whole run behind it")
 
 # ---------------------------------------------------------------- running attacks
 CLIPS["flying_knee"] = clip(24, [
