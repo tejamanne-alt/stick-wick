@@ -891,6 +891,7 @@ namespace ProjectInk
 
         void OnGUI()
         {
+            if (Event.current.type == EventType.Repaint) GestureInput.BlockedStory.Clear();
             if (hero == null) return;
             // paused: the pause card (HudGUI) owns the screen; nothing of the story is drawn over it or
             // under it to catch a tap (SKIP, choices, prompts)

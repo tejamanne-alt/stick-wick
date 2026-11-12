@@ -550,7 +550,7 @@ namespace ProjectInk
                             cap.normal.textColor = new Color(1f, 1f, 1f, (hov ? 1f : 0.86f) * k);
                             GUI.Label(new Rect(r.x + 22, r.y, r.width - 30, r.height), (Application.isMobilePlatform ? "" : (i + 1) + "    ") + scOptions[i], cap);
                             if (GUI.Button(r, GUIContent.none, GUIStyle.none) && chosen < 0) chosen = i;
-                            if (Event.current.type == EventType.Repaint) GestureInput.Blocked.Add(new Rect(r.x * scale, r.y * scale, r.width * scale, r.height * scale));
+                            if (Event.current.type == EventType.Repaint) GestureInput.BlockGui(r, scale);
                         }
                         break;
                     }

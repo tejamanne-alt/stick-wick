@@ -92,7 +92,7 @@ namespace ProjectInk
             Tell("prop");
         }
 
-        void DropCarried()
+        public void DropCarried()
         {
             if (carried == null) return;
             var k = carried.kind;

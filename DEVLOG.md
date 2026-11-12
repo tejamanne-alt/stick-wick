@@ -1870,3 +1870,32 @@ The lessons are now 21: flying knee and slide tackle are separate.
 - The old code-driven scissors and its dice rolls are now arcade-only: in story mode the air tap is always the flying kick, and a low tap on a dazed man is always the side kick.
 
 **Training:** SPEAR and HEAD SCISSORS lessons sit after THROW HIM (23 lessons; the saved progress key was renamed). The HUD's MOVES card is updated.
+
+## Training ground: glitch review and fixes
+I traced every lesson against the systems it uses, then had an independent review.
+
+**First pass:**
+- **Swipes went to the wrong man:** the idle men stood within rush range (3–8 m), so a swipe away (the slip, a mistimed sidestep) rushed one of them. They now stand far off on the right, beyond 8 m.
+- **PICK YOUR MAN:** any tap on a man now counts (tapping the same man twice used to count once). The target is no longer behind another man.
+- **THROW HIM:** a swipe toward him in the clinch is the O-SOTO-GARI reap; it now counts (any throw from the hold counts).
+- **Strings broken at random:** the man's guard is held down during strike and string lessons, so random read counters no longer cut a string. Sparring men are kept at full health, so damage never piles up into finishers or knockdowns.
+- **Timing:**
+  - The demo finger only takes time to move when it actually has to (it always spent 0.32 s), so parry and slip are no longer late.
+  - String taps are spaced to the input buffer.
+  - The sidestep starts as the charge begins.
+  - The takedown man starts closer, so the creep takes about 2.5 s instead of up to 5 s.
+- **TO THE BODY:** one rep per setup, since the first body shot pushes him out of close range.
+- **Stray input:** TRY IT NOW took the demo fingers away cleanly, without leaving a stray tap or swipe.
+
+**From the review:**
+- **Button areas flipped (the worst bug):** the areas that keep a tap on a button from also counting as a gesture were stored upside down (GUI space, not screen space). They ate the demo's low taps (KICK, TO THE BODY, the strings, UNDER THE GUARD, SLIDE TACKLE), and real taps on the buttons also punched. Story buttons now use `GestureInput.BlockGui` (flipped to screen space, in their own list the story clears, so the HUD can't race it). The chapters' choice buttons and the recap's SKIP had the same bug and are fixed too.
+- **CROSSFIRE:** its 16 s cooldown is off while sparring; the demo used to spend it before your turn.
+- **Props:**
+  - Each setup clears bottles left on the floor and empties everyone's hands.
+  - Men told not to swing no longer throw props.
+- **SIDESTEP:** a charge that ends without the sidestep puts everyone back on their marks (no more getting stuck).
+- **Pause:** the training ground waits while the game is paused (timers, demo).
+- **Small fixes:**
+  - A tap made earlier in the story no longer ticks PICK YOUR MAN.
+  - WATCH AGAIN gets a fresh retry.
+- **Game-wide, the string rule:** a step-in stops at 92% of the punch's reach (a jab: 0.87 m), which was inside the 0.9 m "inside" line. So the second tap of a string turned into an inside shot, and BOXER'S FOUR (this chapter's combo) broke. The inside line is now 0.8 m: elbows and liver hooks stay inside, step-ins stay outside.

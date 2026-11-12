@@ -107,7 +107,7 @@ namespace ProjectInk
         /// and throw it from range. One throw in the room every few seconds, never a boss.</summary>
         bool TryThrowProp(float dist, bool sameLevel)
         {
-            if (Boss || Passive || Ranged || Armed || hero == null || hero.IsDead) return false;
+            if (Boss || Passive || NoAttack || Ranged || Armed || hero == null || hero.IsDead) return false;
             if (Time.time < propCheckAt) return false;
             propCheckAt = Time.time + 0.4f;
             if (heldProp == null)
@@ -157,7 +157,7 @@ namespace ProjectInk
         }
 
         /// <summary>Hit or killed holding a prop: it drops.</summary>
-        void DropProp()
+        public void DropProp()
         {
             if (heldProp == null) return;
             var k = heldProp.kind;

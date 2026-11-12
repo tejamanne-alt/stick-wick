@@ -319,10 +319,24 @@ namespace ProjectInk
         public static readonly System.Collections.Generic.List<Rect> Blocked = new System.Collections.Generic.List<Rect>();
         /// <summary>The last press on an on-screen button (pixels), for the HUD to act on.</summary>
         public static Vector2? LastButtonTap;
+        /// <summary>The story's on-screen buttons (cleared by the story itself each repaint, so the HUD's own
+        /// clearing can't race it).</summary>
+        public static readonly System.Collections.Generic.List<Rect> BlockedStory = new System.Collections.Generic.List<Rect>();
+        /// <summary>Block a GUI rect (GUI space: y down, divided by `scale`) for touches: flipped into screen pixels.</summary>
+        public static void BlockGui(Rect r, float scale)
+        {
+            BlockedStory.Add(new Rect(r.x * scale, Screen.height - (r.y + r.height) * scale, r.width * scale, r.height * scale));
+        }
+        public static bool IsBlocked(Vector2 pos)
+        {
+            foreach (var r in Blocked) if (r.Contains(pos)) return true;
+            foreach (var r in BlockedStory) if (r.Contains(pos)) return true;
+            return false;
+        }
 
         void TouchBegan(int id, Vector2 pos)
         {
-            foreach (var r in Blocked) if (r.Contains(pos)) { consumed.Add(id); LastButtonTap = pos; return; }
+            if (IsBlocked(pos)) { consumed.Add(id); LastButtonTap = pos; return; }
             if (TimeController.Paused) { consumed.Add(id); return; }
             AnyPressThisFrame = true;
             if (InStickZone(pos) && stickId == int.MinValue)

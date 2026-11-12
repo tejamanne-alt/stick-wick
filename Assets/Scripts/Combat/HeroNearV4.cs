@@ -53,7 +53,7 @@ namespace ProjectInk
                 return kick ? AttackData.SideKick.Finisher("OUT ON HIS FEET") : AttackData.PalmStrike.Finisher("PALM TO THE CHIN");
             }
             float d = t != null ? Mathf.Abs(t.transform.position.x - transform.position.x) : 1.2f;
-            bool inside = d < 0.9f;
+            bool inside = d < 0.8f;          // a step-in stops at 92% of the reach (a jab: 0.87 m): still outside, the string goes on
 
             // read him first
             if (t != null)
@@ -170,7 +170,7 @@ namespace ProjectInk
         bool CrossfirePair(out Enemy front, out Enemy back, int side)
         {
             front = back = null;
-            if (!MovesV4 || !ContactBare || !Grounded || Time.time < crossfireReadyAt || !body.Has("crossfire")) return false;
+            if (!MovesV4 || !ContactBare || !Grounded || (Time.time < crossfireReadyAt && !Sparring) || !body.Has("crossfire")) return false;
             float bf = 1.8f, bb = 1.8f;
             foreach (var e in Enemy.All)
             {

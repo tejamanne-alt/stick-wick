@@ -158,7 +158,7 @@ namespace ProjectInk
             btn.fontSize = 18;
             btn.normal.textColor = new Color(1f, 1f, 1f, 0.5f);
             if (GUI.Button(skipR, Spaced("SKIP"), btn)) recapSkip = true;
-            if (Event.current.type == EventType.Repaint) GestureInput.Blocked.Add(new Rect(skipR.x * scale, skipR.y * scale, skipR.width * scale, skipR.height * scale));
+            if (Event.current.type == EventType.Repaint) GestureInput.BlockGui(skipR, scale);
             btn.fontSize = 30;
             btn.normal.textColor = Color.white;
             // the heading

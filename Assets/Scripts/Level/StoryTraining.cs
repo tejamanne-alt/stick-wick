@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace ProjectInk
@@ -57,6 +58,7 @@ namespace ProjectInk
         int flashRow = -1;
         float trainCx;
         float dipAt = -9f, dipSince; Action dipThen; bool dipDone = true;
+        bool wasCharging; float chargeMissAt = -1f;
         float runFor, chargeAt, unawareLostAt = -1f, slipAt = -9f, bottleCheckAt;
         bool wasAir, listOpen = true;
         float lastTapAt;
@@ -112,6 +114,7 @@ namespace ProjectInk
             learned = new bool[lessons.Length];
             int mask = PlayerPrefs.GetInt(PrefMask, 0);
             for (int i = 0; i < lessons.Length && i < 31; i++) learned[i] = (mask & (1 << i)) != 0;
+            lastTapAt = GestureInput.TappedAt;
             HeroController.Did += TrainDid;
             HeroController.Landed += TrainLanded;
             WaveDirector.Styled += TrainStyled;
@@ -256,7 +259,7 @@ namespace ProjectInk
                     match = (k, a, l, low) => k == 'l' && IsBody(a) },
                 new Lesson { title = "BOXER'S FOUR",
                     steps = new[] { S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH") },
-                    stage = () => Spar(1.2f, true, false),
+                    stage = () => Spar(1.05f, true, false),
                     demo = () => DemoString("HHHH"),
                     match = (k, a, l, low) => (k == 'l' || k == 's') && Named(l, "BOXER'S FOUR") },
                 new Lesson { title = "KICK STRING",
@@ -266,7 +269,7 @@ namespace ProjectInk
                     match = (k, a, l, low) => (k == 'l' || k == 's') && Named(l, "KICK STRING") },
                 new Lesson { title = "MIX A STRING",
                     steps = new[] { S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH"), S(Gest.TapLow, "LOW") },
-                    stage = () => Spar(1.3f, true, false),
+                    stage = () => Spar(1.05f, true, false),
                     demo = () => DemoString("HHL"),
                     match = (k, a, l, low) => (k == 'l' || k == 's') && l != null && Array.Exists(OwnStrings, n => l.StartsWith(n)) },
                 new Lesson { title = "UNDER THE GUARD", reps = 2, guard = 1,
@@ -367,7 +370,7 @@ namespace ProjectInk
             foreach (var fx in xs)
             {
                 var p = new Vector2(W * fx, y);
-                if (GestureInput.EnemyAt(p) == null && GestureInput.ThingAt(p) == null) return p;
+                if (GestureInput.EnemyAt(p) == null && GestureInput.ThingAt(p) == null && !GestureInput.IsBlocked(p)) return p;
             }
             return new Vector2(W * xs[0], y);
         }
@@ -375,7 +378,9 @@ namespace ProjectInk
         Vector2 ManPx(Enemy e) => e != null ? ScreenPx(e.Chest) : Px(0.75f, 0.55f);
         Vector2 HeroPx => ScreenPx(hero.Chest);
 
-        static IEnumerator WaitU(float s) { float t = 0f; while (t < s) { t += Time.unscaledDeltaTime; yield return null; } }
+        /// <summary>Demo time: stands still while the game is paused.</summary>
+        static float UDt => TimeController.Paused ? 0f : Time.unscaledDeltaTime;
+        static IEnumerator WaitU(float s) { float t = 0f; while (t < s) { t += UDt; yield return null; } }
 
         void SetF(int i, Vector2 p, bool down)
         {
@@ -394,7 +399,7 @@ namespace ProjectInk
             float dist = (to - from).magnitude;
             if (dist < 6f) { SetF(i, to, false); yield break; }
             t = Mathf.Lerp(0.1f, t, Mathf.Clamp01(dist / (W * 0.25f)));          // a short hop is quick
-            for (float k = 0f; k < 1f; k += Time.unscaledDeltaTime / t) { SetF(i, Vector2.Lerp(from, to, Mathf.SmoothStep(0f, 1f, k)), false); yield return null; }
+            for (float k = 0f; k < 1f; k += UDt / t) { SetF(i, Vector2.Lerp(from, to, Mathf.SmoothStep(0f, 1f, k)), false); yield return null; }
             SetF(i, to, false);
         }
 
@@ -425,7 +430,7 @@ namespace ProjectInk
             SetF(i, a, true);
             fTrail[i].Add(a);
             yield return null;
-            for (float k = 0f; k < 1f; k += Time.unscaledDeltaTime / dur)
+            for (float k = 0f; k < 1f; k += UDt / dur)
             {
                 float e = 1f - (1f - k) * (1f - k);              // ease out: well past the swipe threshold at once
                 SetF(i, Vector2.Lerp(a, b, e), true);
@@ -451,7 +456,7 @@ namespace ProjectInk
             while (t < max && (t < min || until == null || !until()))
             {
                 SetF(i, at, true);
-                t += Time.unscaledDeltaTime;
+                t += UDt;
                 yield return null;
             }
         }
@@ -493,7 +498,7 @@ namespace ProjectInk
         {
             var a = Man(0);
             float t = 0f;
-            while (t < 3f && (a == null || a.Read != Opening.GuardHigh)) { if (a != null) a.ForceGuard(1, 2f); t += Time.unscaledDeltaTime; yield return null; }
+            while (t < 3f && (a == null || a.Read != Opening.GuardHigh)) { if (a != null) a.ForceGuard(1, 2f); t += UDt; yield return null; }
             yield return WaitU(0.3f);
             yield return Tap(Spot(1, false), 0);
         }
@@ -503,7 +508,7 @@ namespace ProjectInk
             var a = Man(0);
             yield return Glide(0, Spot(1, true));
             float t = 0f;
-            while (t < 6f && (a == null || !a.Telegraphing)) { t += Time.unscaledDeltaTime; yield return null; }
+            while (t < 6f && (a == null || !a.Telegraphing)) { t += UDt; yield return null; }
             yield return Tap(Spot(1, true), 0, 0, 0.02f);
             yield return WaitU(0.8f);
         }
@@ -515,7 +520,7 @@ namespace ProjectInk
             Hint(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f));
             yield return Glide(0, c + new Vector2(-W * 0.04f, 0f));
             float t = 0f;
-            while (t < 6f && (a == null || !a.Telegraphing)) { t += Time.unscaledDeltaTime; yield return null; }
+            while (t < 6f && (a == null || !a.Telegraphing)) { t += UDt; yield return null; }
             yield return Swipe(fPos[0], fPos[0] + new Vector2(-W * 0.22f, 0f), 0, 0.16f, 0, true);
             yield return WaitU(0.25f);
             yield return Tap(Spot(1, true), 1, 0, 0.02f);
@@ -570,8 +575,8 @@ namespace ProjectInk
             {
                 SetF(0, hp, true);
                 tp = Spot(1, high);
-                SetF(1, Vector2.Lerp(fPos[1], tp, Time.unscaledDeltaTime * 8f), false);
-                t += Time.unscaledDeltaTime;
+                SetF(1, Vector2.Lerp(fPos[1], tp, UDt * 8f), false);
+                t += UDt;
                 yield return null;
             }
             demoStep = 1;
@@ -592,7 +597,7 @@ namespace ProjectInk
             Hint(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f));
             yield return Glide(0, c + new Vector2(-W * 0.04f, 0f));
             float t = 0f;
-            while (t < 6f && (b == null || !b.Charging || Gap(b) > 4.3f)) { t += Time.unscaledDeltaTime; yield return null; }
+            while (t < 6f && (b == null || !b.Charging || Gap(b) > 4.3f)) { t += UDt; yield return null; }
             yield return Swipe(fPos[0], fPos[0] + new Vector2(-W * 0.22f, 0f), 0, 0.16f, 0, true);
             yield return WaitU(1.0f);
         }
@@ -608,18 +613,18 @@ namespace ProjectInk
             yield return Glide(0, a);
             yield return WaitU(0.35f);
             fTrail[0].Clear();
-            for (float k = 0f; k < 1f; k += Time.unscaledDeltaTime / 0.24f) { SetF(0, Vector2.Lerp(a, b, k), true); fTrail[0].Add(fPos[0]); yield return null; }
+            for (float k = 0f; k < 1f; k += UDt / 0.24f) { SetF(0, Vector2.Lerp(a, b, k), true); fTrail[0].Add(fPos[0]); yield return null; }
             HintOff();
-            for (float k = 0f; k < 0.35f; k += Time.unscaledDeltaTime) { SetF(0, b, true); yield return null; }
+            for (float k = 0f; k < 0.35f; k += UDt) { SetF(0, b, true); yield return null; }
             demoStep = 1;
             var cr = b + new Vector2(W * 0.06f, 0f);
-            for (float k = 0f; k < 1f; k += Time.unscaledDeltaTime / 0.2f) { SetF(0, Vector2.Lerp(b, cr, k), true); yield return null; }
+            for (float k = 0f; k < 1f; k += UDt / 0.2f) { SetF(0, Vector2.Lerp(b, cr, k), true); yield return null; }
             float t = 0f;
-            while (t < 6f && e != null && (e.transform.position.x - hero.transform.position.x) > 0.85f) { SetF(0, cr, true); t += Time.unscaledDeltaTime; yield return null; }
+            while (t < 6f && e != null && (e.transform.position.x - hero.transform.position.x) > 0.85f) { SetF(0, cr, true); t += UDt; yield return null; }
             SetF(0, b, true);
             // finger two: the tap on his back, the crouch still held
             yield return Tap(ManPx(e), 2, 1);
-            for (float k = 0f; k < 0.3f; k += Time.unscaledDeltaTime) { SetF(0, b, true); yield return null; }
+            for (float k = 0f; k < 0.3f; k += UDt) { SetF(0, b, true); yield return null; }
             Lift(0);
             yield return WaitU(1.6f);
         }
@@ -711,13 +716,15 @@ namespace ProjectInk
         void UpdateDip()
         {
             if (dipDone) return;
-            dipSince += Time.unscaledDeltaTime;
+            dipSince += UDt;
             bool busy = !hero.Free;
             foreach (var e in men) if (e != null && e.Held) busy = true;
             if (dipSince >= 0.22f && (!busy || dipSince > 2.5f))
             {
                 hero.CineLock();
-                foreach (var e in men) if (e != null) e.HealFull();
+                hero.DropCarried();
+                foreach (var tp in Throwable.All.ToArray()) if (tp != null && tp.Lying) Destroy(tp.gameObject);
+                foreach (var e in men) if (e != null) { e.HealFull(); e.DropProp(); }
                 hero.HealFull();
                 dipThen?.Invoke();
                 dipDone = true;
@@ -731,10 +738,12 @@ namespace ProjectInk
             lreps++;
             repAt = Time.unscaledTime;
             lastMoveAt = Time.unscaledTime;
+            chargeMissAt = -1f;
             var L = lessons[li];
             if (lreps >= L.reps)
             {
                 lessonDoneAt = Time.unscaledTime;
+                restageAt = -1f;
                 MarkLearned(li);
                 Sound.Play(Sfx.RankUp, 0.9f);
             }
@@ -834,6 +843,16 @@ namespace ProjectInk
         void UpdateTraining()
         {
             if (!training) return;
+            if (TimeController.Paused)
+            {
+                // paused: every timer of the ground is pushed on by the pause, so nothing moves on under it
+                float d = Time.unscaledDeltaTime;
+                groundAt += d; lessonAt += d; tryAt += d; lastMoveAt += d;
+                if (lessonDoneAt > 0f) lessonDoneAt += d;
+                if (restageAt > 0f) restageAt += d;
+                if (unawareLostAt > 0f) unawareLostAt += d;
+                return;
+            }
             float now = Time.unscaledTime;
             UpdateDip();
             if (ts == TS.Title && now - groundAt > 3.2f) StartLesson(0);
@@ -871,6 +890,10 @@ namespace ProjectInk
                 if (L.title == "SIDESTEP THE BULL")
                 {
                     var b = Man(0);
+                    // a charge that ended without the sidestep (he was hit, or jumped it): back on the marks
+                    if (b != null && wasCharging && !b.Charging && ts == TS.Try) chargeMissAt = now + 1.0f;
+                    wasCharging = b != null && b.Charging;
+                    if (chargeMissAt > 0f && now > chargeMissAt) { chargeMissAt = -1f; if (lessonDoneAt < 0f && restageAt < 0f) Dip(L.stage); }
                     if (b != null && b.Alive && !b.Charging && !b.IsDown && Time.time > chargeAt)
                     {
                         float gap = Gap(b);
@@ -921,7 +944,7 @@ namespace ProjectInk
             Fill(new Rect(r.x, r.y, r.width, 1), new Color(1f, 1f, 1f, strong ? 0.6f : 0.35f + 0.4f * p));
             Fill(new Rect(r.x, r.yMax - 1, r.width, 1), new Color(1f, 1f, 1f, strong ? 0.6f : 0.35f + 0.4f * p));
             tBtn.normal.textColor = Color.white;
-            if (Event.current.type == EventType.Repaint) GestureInput.Blocked.Add(new Rect(r.x * scale, r.y * scale, r.width * scale, r.height * scale));
+            if (Event.current.type == EventType.Repaint) GestureInput.BlockGui(r, scale);
             return GUI.Button(r, label, tBtn);
         }
 
@@ -1143,7 +1166,7 @@ namespace ProjectInk
 
             // ---------------------------------------------------------------- the buttons, top right
             float bx = w - 182, by = 12;
-            if (!demo && TrainButton(new Rect(bx, by, 170, 40), "▶  " + Spaced("WATCH AGAIN"), false, now - lastMoveAt > 8f ? 1f : 0f)) { StartDemo(); return; }
+            if (!demo && TrainButton(new Rect(bx, by, 170, 40), "▶  " + Spaced("WATCH AGAIN"), false, now - lastMoveAt > 8f ? 1f : 0f)) { demoTries = 0; restageAt = -1f; StartDemo(); return; }
             if (demo && TrainButton(new Rect(bx, by, 170, 40), Spaced("TRY IT NOW"))) { StopDemo(); BeginTry(); return; }
             if (li > 0 && TrainButton(new Rect(bx, by + 48, 82, 40), "‹ PREV")) { StopDemo(); lessonDoneAt = -9f; StartLesson(li - 1); return; }
             if (TrainButton(new Rect(bx + 88, by + 48, 82, 40), "NEXT ›")) { StopDemo(); lessonDoneAt = -9f; if (li + 1 < lessons.Length) StartLesson(li + 1); else EnterFreePlay(false); return; }
@@ -1277,7 +1300,7 @@ namespace ProjectInk
                 GUI.Label(new Rect(row.x + 26, row.y, rw - 54, rh), lessons[i].title, tRow);
                 tRow.normal.textColor = new Color(1f, 1f, 1f, 0.45f);
                 GUI.Label(new Rect(row.xMax - 24, row.y, 20, rh), "▶", tRow);
-                if (Event.current.type == EventType.Repaint) GestureInput.Blocked.Add(new Rect(row.x * scale, row.y * scale, row.width * scale, row.height * scale));
+                if (Event.current.type == EventType.Repaint) GestureInput.BlockGui(row, scale);
                 if (GUI.Button(row, GUIContent.none, GUIStyle.none)) { StartLesson(i, true); return; }
                 y += rh;
             }
