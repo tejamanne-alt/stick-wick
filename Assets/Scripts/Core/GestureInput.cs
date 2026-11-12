@@ -488,6 +488,23 @@ namespace ProjectInk
             queue.Clear();
         }
 
+        /// <summary>Take the demo fingers away without letting go: no tap or swipe is read from them.</summary>
+        public void CancelSim()
+        {
+            for (int i = 0; i < Sim.Length; i++)
+            {
+                int id = SimId - i;
+                if (simWas[i])
+                {
+                    holding.Remove(id); touchStart.Remove(id); touchTime.Remove(id); consumed.Remove(id);
+                    if (crouchId == id) crouchId = int.MinValue;
+                }
+                simWas[i] = false;
+                Sim[i].down = false;
+            }
+            queue.Clear();
+        }
+
         void UpdateSim()
         {
             for (int i = 0; i < Sim.Length; i++)

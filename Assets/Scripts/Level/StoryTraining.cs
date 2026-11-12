@@ -38,6 +38,7 @@ namespace ProjectInk
         {
             public string title;
             public int reps = 1;
+            public int guard;                         // man 0's guard: 0 down (no read counters break a string), 1 high, -1 his own
             public bool restage;                      // back on their marks after every rep
             public Step[] steps;
             public Action stage;                      // the marks: where the men stand, who swings
@@ -58,7 +59,7 @@ namespace ProjectInk
         float dipAt = -9f, dipSince; Action dipThen; bool dipDone = true;
         float runFor, chargeAt, unawareLostAt = -1f, slipAt = -9f, bottleCheckAt;
         bool wasAir, listOpen = true;
-        Enemy lastLock;
+        float lastTapAt;
         Coroutine demoCo;
         GUIStyle tTag, tTitle, tCap, tBtn, tRow, tBig, tPill;
 
@@ -96,7 +97,7 @@ namespace ProjectInk
             hero.runSpeed = runSpeed;
             HeroController.Sparring = true;
             float x0 = hero.arenaMinX, x1 = hero.arenaMaxX;
-            trainCx = x1 - x0 < 15f ? (x0 + x1) * 0.5f : Mathf.Clamp(hero.transform.position.x, x0 + 7.5f, x1 - 7.5f);
+            trainCx = x1 - x0 < 20f ? (x0 + x1) * 0.5f - 1.5f : Mathf.Clamp(hero.transform.position.x, x0 + 8f, x1 - 11f);   // room on the right for the men set aside
             foreach (var e in men)
                 if (e != null)
                 {
@@ -182,8 +183,16 @@ namespace ProjectInk
         {
             HeroAt(0f);
             Mark(0, gap, keep, swings);
-            Mark(1, 6.5f, true, false);
-            Mark(2, -6.5f, true, false);
+            Aside();
+        }
+
+        /// <summary>The two men the lesson isn't about: far off on the right, beyond the rush's 8 m, so no
+        /// swipe either way can go to them (a swipe away must be a step back, the slip).</summary>
+        void Aside()
+        {
+            float hx = hero.transform.position.x - trainCx;
+            Mark(1, hx + 9.5f, true, false);
+            Mark(2, hx + 10.6f, true, false);
         }
 
         void PostAway(int i, float dx)
@@ -227,23 +236,23 @@ namespace ProjectInk
                     match = (k, a, l, low) => k == 't' && a == "jump" },
                 new Lesson { title = "PICK YOUR MAN",
                     steps = new[] { S(Gest.TapMan, "TAP HIM") },
-                    stage = () => { HeroAt(-1f); Mark(0, 2f, true, false); Mark(1, 4f, true, false); Mark(2, -7f, true, false); },
+                    stage = () => { HeroAt(-1f); Mark(1, 1.6f, true, false); Mark(0, -5f, true, false); Mark(2, 6.5f, true, false); },
                     demo = () => DemoTapMan(1),
                     match = (k, a, l, low) => k == 't' && a == "lock" },
                 new Lesson { title = "PUNCH", reps = 3,
                     steps = new[] { S(Gest.TapHigh, "TAP HIGH") },
-                    stage = () => Spar(1.2f, false, false),
+                    stage = () => Spar(1.2f, true, false),
                     demo = () => DemoTaps(true, 3, 0.45f),
                     match = (k, a, l, low) => k == 'l' && !low },
                 new Lesson { title = "KICK", reps = 3,
                     steps = new[] { S(Gest.TapLow, "TAP LOW") },
                     stage = () => Spar(1.45f, true, false),
                     demo = () => DemoTaps(false, 3, 0.55f),
-                    match = (k, a, l, low) => k == 'l' && low && !IsBody(a) },
-                new Lesson { title = "TO THE BODY", reps = 2,
+                    match = (k, a, l, low) => k == 'l' && low },
+                new Lesson { title = "TO THE BODY", reps = 2, restage = true,
                     steps = new[] { S(Gest.TapLow, "CLOSE: TAP LOW") },
                     stage = () => Spar(0.75f, true, false),
-                    demo = () => DemoTaps(false, 2, 0.5f),
+                    demo = () => DemoTaps(false, 1, 0.5f),
                     match = (k, a, l, low) => k == 'l' && IsBody(a) },
                 new Lesson { title = "BOXER'S FOUR",
                     steps = new[] { S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH") },
@@ -260,17 +269,17 @@ namespace ProjectInk
                     stage = () => Spar(1.3f, true, false),
                     demo = () => DemoString("HHL"),
                     match = (k, a, l, low) => (k == 'l' || k == 's') && l != null && Array.Exists(OwnStrings, n => l.StartsWith(n)) },
-                new Lesson { title = "UNDER THE GUARD", reps = 2,
+                new Lesson { title = "UNDER THE GUARD", reps = 2, guard = 1,
                     steps = new[] { S(Gest.TapLow, "HANDS UP? GO LOW") },
                     stage = () => { Spar(1.2f, true, false); var a = Man(0); if (a != null) a.ForceGuard(1, 6f); },
                     demo = () => DemoGuard(),
                     match = (k, a, l, low) => k == 'd' && a == "read" },
-                new Lesson { title = "PARRY", reps = 2,
+                new Lesson { title = "PARRY", reps = 2, guard = -1,
                     steps = new[] { S(Gest.TapHigh, "HE SWINGS: TAP") },
-                    stage = () => Spar(1.4f, false, true),
+                    stage = () => Spar(1.3f, false, true),
                     demo = () => DemoParry(),
                     match = (k, a, l, low) => k == 'd' && a == "parry" },
-                new Lesson { title = "SLIP AND COUNTER",
+                new Lesson { title = "SLIP AND COUNTER", guard = -1,
                     steps = new[] { S(Gest.SwipeAway, "HE SWINGS: SWIPE AWAY"), S(Gest.TapHigh, "HIT BACK") },
                     stage = () => Spar(1.4f, false, true),
                     demo = () => DemoSlip(),
@@ -284,7 +293,7 @@ namespace ProjectInk
                     steps = new[] { S(Gest.SwipeAt, "GRAB"), S(Gest.TapHigh, "KNEE"), S(Gest.SwipeAt, "SWIPE AT: THROW") },
                     stage = () => Spar(0.9f, true, false), restage = true,
                     demo = () => DemoGrab(true),
-                    match = (k, a, l, low) => k == 's' && l != null && (l.Contains("THROW") || l.Contains("SWEEP") || l.Contains("SUPLEX") || l.Contains("DDT") || l.Contains("SLAM")) },
+                    match = (k, a, l, low) => k == 'd' && a == "throw" },          // any throw from the hold (reap, hip, shoulder, suplex, DDT, sweep)
                 new Lesson { title = "SPEAR",
                     steps = new[] { S(Gest.SwipeAt, "TWO STEPS OFF: SWIPE FLAT AT HIM") },
                     stage = () => Spar(2.2f, true, false), restage = true,
@@ -297,22 +306,22 @@ namespace ProjectInk
                     match = (k, a, l, low) => k == 's' && l != null && l.StartsWith("HEAD SCISSORS") },
                 new Lesson { title = "RUSH IN",
                     steps = new[] { S(Gest.SwipeAt, "FAR OFF: SWIPE AT HIM") },
-                    stage = () => { HeroAt(-3f); Mark(0, 2.6f, true, false); Mark(1, -6.5f, true, false); Mark(2, -7.5f, true, false); }, restage = true,
+                    stage = () => { HeroAt(-3f); Mark(0, 2.6f, true, false); Aside(); }, restage = true,
                     demo = () => DemoRush(),
                     match = (k, a, l, low) => k == 'd' && a == "far_rush" },
                 new Lesson { title = "FLYING KNEE", reps = 2,
                     steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), S(Gest.TapHigh, "CLOSE: TAP HIGH") },
-                    stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); Mark(1, -6.5f, true, false); Mark(2, -7.5f, true, false); }, restage = true,
+                    stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); Aside(); }, restage = true,
                     demo = () => DemoRunning(true),
                     match = (k, a, l, low) => k == 'd' && (a == "far_knee" || a == "far_barge") },
                 new Lesson { title = "SLIDE TACKLE",
                     steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), S(Gest.TapLow, "CLOSE: TAP LOW") },
-                    stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); Mark(1, -6.5f, true, false); Mark(2, -7.5f, true, false); }, restage = true,
+                    stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); Aside(); }, restage = true,
                     demo = () => DemoRunning(false),
                     match = (k, a, l, low) => k == 'd' && a == "far_slide" },
                 new Lesson { title = "SIDESTEP THE BULL",
                     steps = new[] { S(Gest.SwipeAway, "HE CHARGES: SWIPE") },
-                    stage = () => { HeroAt(-2f); Mark(0, 3.8f, true, false); Mark(1, -6.5f, true, false); Mark(2, -7.5f, true, false); chargeAt = Time.time + 1.2f; }, restage = true,
+                    stage = () => { HeroAt(-2f); Mark(0, 3.8f, true, false); Aside(); chargeAt = Time.time + 1.2f; }, restage = true,
                     demo = () => DemoSidestep(),
                     match = (k, a, l, low) => k == 'd' && a == "sidestep" },
                 new Lesson { title = "CROSSFIRE",
@@ -322,12 +331,12 @@ namespace ProjectInk
                     match = (k, a, l, low) => k == 'd' && a == "crossfire" },
                 new Lesson { title = "SILENT TAKEDOWN",
                     steps = new[] { S(Gest.CrouchHold, "SWIPE DOWN, HOLD"), S(Gest.Creep, "SLIDE: CREEP"), S(Gest.TapMan, "TAP HIS BACK") },
-                    stage = () => { HeroAt(-2f); Mark(0, -6.5f, true, false); Mark(1, -7.5f, true, false); PostAway(2, 1.6f); }, restage = true,
+                    stage = () => { HeroAt(-2f); PostAway(2, 0.2f); Mark(0, 8f, true, false); Mark(1, 9f, true, false); }, restage = true,
                     demo = () => DemoTakedown(),
                     match = (k, a, l, low) => k == 'd' && (a == "takedown" || a == "far_takedown") },
                 new Lesson { title = "THROW A BOTTLE",
                     steps = new[] { S(Gest.Hold, "WALK OVER IT"), S(Gest.TapMan, "TAP A MAN") },
-                    stage = () => { HeroAt(-3f); Mark(0, 3.5f, true, false); Mark(1, 5f, true, false); Mark(2, -7f, true, false); Bottle(-2f); }, restage = true,
+                    stage = () => { HeroAt(-3f); Mark(0, 3.5f, true, false); Aside(); Bottle(-2f); }, restage = true,
                     demo = () => DemoBottle(),
                     match = (k, a, l, low) => k == 'd' && (a == "far_throw" || a == "far_smash") },
             };
@@ -382,6 +391,9 @@ namespace ProjectInk
             if (fShow[i] < 0.5f) { fPos[i] = to + new Vector2(W * 0.06f, -H * 0.12f); fTrail[i].Clear(); }
             fShow[i] = 1f;
             var from = fPos[i];
+            float dist = (to - from).magnitude;
+            if (dist < 6f) { SetF(i, to, false); yield break; }
+            t = Mathf.Lerp(0.1f, t, Mathf.Clamp01(dist / (W * 0.25f)));          // a short hop is quick
             for (float k = 0f; k < 1f; k += Time.unscaledDeltaTime / t) { SetF(i, Vector2.Lerp(from, to, Mathf.SmoothStep(0f, 1f, k)), false); yield return null; }
             SetF(i, to, false);
         }
@@ -474,7 +486,7 @@ namespace ProjectInk
         /// <summary>A string, in rhythm: H high, L low.</summary>
         IEnumerator DemoString(string s)
         {
-            for (int k = 0; k < s.Length; k++) { yield return Tap(Spot(1, s[k] == 'H'), k, 0, k == 0 ? 0.14f : 0.02f); yield return WaitU(0.16f); }
+            for (int k = 0; k < s.Length; k++) { yield return Tap(Spot(1, s[k] == 'H'), k, 0, k == 0 ? 0.14f : 0.02f); yield return WaitU(0.28f); }
         }
 
         IEnumerator DemoGuard()
@@ -504,7 +516,7 @@ namespace ProjectInk
             yield return Glide(0, c + new Vector2(-W * 0.04f, 0f));
             float t = 0f;
             while (t < 6f && (a == null || !a.Telegraphing)) { t += Time.unscaledDeltaTime; yield return null; }
-            yield return Swipe(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f), 0, 0.16f, 0, true);
+            yield return Swipe(fPos[0], fPos[0] + new Vector2(-W * 0.22f, 0f), 0, 0.16f, 0, true);
             yield return WaitU(0.25f);
             yield return Tap(Spot(1, true), 1, 0, 0.02f);
             yield return WaitU(0.2f);
@@ -545,7 +557,7 @@ namespace ProjectInk
         {
             var a = Man(0);
             var hp = Px(0.62f, 0.5f);
-            var tp = new Vector2(W * 0.88f, high ? Mathf.Lerp(KickY, H, 0.42f) : KickY * 0.45f);
+            var tp = Spot(1, high);
             demoStep = 0;
             yield return Glide(0, hp);
             yield return WaitU(0.12f);
@@ -557,11 +569,13 @@ namespace ProjectInk
             while (t < 3f && (t < 0.5f || Gap(a) > thr))
             {
                 SetF(0, hp, true);
+                tp = Spot(1, high);
                 SetF(1, Vector2.Lerp(fPos[1], tp, Time.unscaledDeltaTime * 8f), false);
                 t += Time.unscaledDeltaTime;
                 yield return null;
             }
             demoStep = 1;
+            tp = Spot(1, high);
             SetF(1, tp, true);
             yield return WaitU(0.08f);
             SetF(1, tp, false);
@@ -578,7 +592,7 @@ namespace ProjectInk
             Hint(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f));
             yield return Glide(0, c + new Vector2(-W * 0.04f, 0f));
             float t = 0f;
-            while (t < 6f && (b == null || !b.Charging || Gap(b) > 3.0f)) { t += Time.unscaledDeltaTime; yield return null; }
+            while (t < 6f && (b == null || !b.Charging || Gap(b) > 4.3f)) { t += Time.unscaledDeltaTime; yield return null; }
             yield return Swipe(fPos[0], fPos[0] + new Vector2(-W * 0.22f, 0f), 0, 0.16f, 0, true);
             yield return WaitU(1.0f);
         }
@@ -650,7 +664,8 @@ namespace ProjectInk
         void StopDemo()
         {
             if (demoCo != null) { StopCoroutine(demoCo); demoCo = null; }
-            for (int i = 0; i < 2; i++) { SetF(i, fPos[i], false); fShow[i] = 0f; }
+            for (int i = 0; i < 2; i++) { fDown[i] = false; fShow[i] = 0f; }
+            if (GestureInput.Instance != null) GestureInput.Instance.CancelSim();
             hintOn = false;
             GestureInput.Demo = false;
         }
@@ -789,7 +804,7 @@ namespace ProjectInk
         void TrainStyled(string label)
         {
             if (!training) return;
-            if (label != null && label.Contains("OVERREACH")) Fire('t', "slip", null, false);
+            if (label != null && (label.Contains("OVERREACH") || label.Contains("SLIPPED"))) slipAt = Time.unscaledTime;
             Fire('s', label, label, false);
         }
 
@@ -827,8 +842,8 @@ namespace ProjectInk
 
             // sparring: nobody stays hurt for long, nobody dies
             foreach (var e in men)
-                if (e != null && e.Alive && !e.Held && !e.IsDown && e.HealthFraction < 0.45f) e.HealFull();
-            if (hero.Health < hero.maxHealth * 0.4f && hero.Free) hero.HealFull();
+                if (e != null && e.Alive && !e.Held && e.HealthFraction < 0.999f) e.HealFull();
+            if (hero.Free && hero.Health < hero.maxHealth) hero.HealFull();
 
             // moves read off his body
             if (hero.RunningFast) runFor += Time.deltaTime; else runFor = 0f;
@@ -836,9 +851,7 @@ namespace ProjectInk
             bool air = !hero.Grounded && !hero.OnLedge;
             if (air && !wasAir) Fire('t', "jump", null, false);
             wasAir = air;
-            var lk = hero.Locked;
-            if (lk != null && lk != lastLock) Fire('t', "lock", null, false);
-            lastLock = lk;
+            if (GestureInput.TappedAt > lastTapAt) { lastTapAt = GestureInput.TappedAt; if (GestureInput.TappedEnemy != null) Fire('t', "lock", null, false); }
 
             // the demo fingers: drawn alpha, and the recording the ghost replays
             for (int i = 0; i < 2; i++) fShowNow[i] = Mathf.MoveTowards(fShowNow[i], fShow[i], Time.unscaledDeltaTime * 5f);
@@ -854,7 +867,7 @@ namespace ProjectInk
             var L = (ts == TS.Demo || ts == TS.Try) && li >= 0 ? lessons[li] : null;
             if (L != null && dipDone && lessonDoneAt < 0f)
             {
-                if (L.title == "UNDER THE GUARD") { var a = Man(0); if (a != null && a.Alive) a.ForceGuard(1, 1.5f); }
+                if (L.guard >= 0) { var a = Man(0); if (a != null && a.Alive) a.ForceGuard(L.guard, 1.5f); }
                 if (L.title == "SIDESTEP THE BULL")
                 {
                     var b = Man(0);
