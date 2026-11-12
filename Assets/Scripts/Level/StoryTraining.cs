@@ -39,6 +39,7 @@ namespace ProjectInk
         {
             public string title;
             public int reps = 1;
+            public int[] cast = { 0 };                // the men in this lesson; the others step back into the dark
             public int guard;                         // man 0's guard: 0 down (no read counters break a string), 1 high, -1 his own
             public bool restage;                      // back on their marks after every rep
             public Step[] steps;
@@ -57,7 +58,7 @@ namespace ProjectInk
         float lessonAt, tryAt, repAt = -9f, lessonDoneAt = -9f, lastMoveAt, groundAt, flashRowAt = -9f, restageAt = -1f;
         int flashRow = -1;
         float trainCx;
-        float dipAt = -9f, dipSince; Action dipThen; bool dipDone = true;
+        float dipAt = -9f, dipSince; Action dipThen; bool dipDone = true; int[] dipCast;
         bool wasCharging; float chargeMissAt = -1f;
         float runFor, chargeAt, unawareLostAt = -1f, slipAt = -9f, bottleCheckAt;
         bool wasAir, listOpen = true;
@@ -115,6 +116,7 @@ namespace ProjectInk
             int mask = PlayerPrefs.GetInt(PrefMask, 0);
             for (int i = 0; i < lessons.Length && i < 31; i++) learned[i] = (mask & (1 << i)) != 0;
             lastTapAt = GestureInput.TappedAt;
+            GestureInput.Tapped += OnPadTap;
             HeroController.Did += TrainDid;
             HeroController.Landed += TrainLanded;
             WaveDirector.Styled += TrainStyled;
@@ -126,6 +128,7 @@ namespace ProjectInk
 
         void TrainingUnhook()
         {
+            GestureInput.Tapped -= OnPadTap;
             HeroController.Did -= TrainDid;
             HeroController.Landed -= TrainLanded;
             WaveDirector.Styled -= TrainStyled;
@@ -145,7 +148,11 @@ namespace ProjectInk
             PlayerPrefs.Save();
             TrainingUnhook();
             foreach (var e in men)
-                if (e != null) { e.Sparring = false; e.HoldFire = false; e.Keep = false; e.HealFull(); }
+                if (e != null)
+                {
+                    if (!e.gameObject.activeSelf) { e.gameObject.SetActive(true); e.ResetTo(new Vector3(MarkX(3f), home.y, 0f), hero.transform.position.x); }
+                    e.Sparring = false; e.HoldFire = false; e.Keep = false; e.HealFull();
+                }
             hero.HealFull();
             if (EscapeSeen) { hero.GiveWeapon(FightStyle.Knife, 4); Sound.Play(Sfx.KnifeGrab, 1f); if (floorKnife != null) floorKnife.gameObject.SetActive(false); }
             Sound.Tension(true);
@@ -186,16 +193,39 @@ namespace ProjectInk
         {
             HeroAt(0f);
             Mark(0, gap, keep, swings);
-            Aside();
         }
 
-        /// <summary>The two men the lesson isn't about: far off on the right, beyond the rush's 8 m, so no
-        /// swipe either way can go to them (a swipe away must be a step back, the slip).</summary>
-        void Aside()
+        /// <summary>Only these men in the scene: the others step back into the dark (switched off: no tap, no
+        /// auto-target, no lock can go to them). And nobody is anyone's target any more.</summary>
+        void Only(int[] cast)
         {
-            float hx = hero.transform.position.x - trainCx;
-            Mark(1, hx + 9.5f, true, false);
-            Mark(2, hx + 10.6f, true, false);
+            for (int i = 0; i < men.Length; i++)
+            {
+                var e = men[i];
+                if (e == null) continue;
+                bool on = cast == null || Array.IndexOf(cast, i) >= 0;
+                if (!on && e.gameObject.activeSelf) e.gameObject.SetActive(false);
+                else if (on && !e.gameObject.activeSelf) e.gameObject.SetActive(true);
+            }
+            hero.ClearLock();
+            GestureInput.TappedEnemy = null;
+        }
+
+        static readonly int[] NoMen = new int[0], All3 = { 0, 1, 2 };
+
+        /// <summary>The man the lesson is about (for the pads' side): man 0 if he's in, else the nearest in.</summary>
+        Enemy Focus()
+        {
+            Enemy best = null;
+            float bd = 99f;
+            foreach (var m0 in men)
+            {
+                if (m0 == null || !m0.Alive || !m0.gameObject.activeInHierarchy) continue;
+                if (m0 == Man(0)) return m0;
+                float d = Gap(m0);
+                if (d < bd) { bd = d; best = m0; }
+            }
+            return best;
         }
 
         void PostAway(int i, float dx)
@@ -229,17 +259,17 @@ namespace ProjectInk
             {
                 new Lesson { title = "RUN",
                     steps = new[] { S(Gest.Hold, "HOLD") },
-                    stage = () => { HeroAt(-4f); Mark(0, 6.5f, true, false); Mark(1, 7.5f, true, false); Mark(2, -7f, true, false); },
+                    cast = NoMen, stage = () => HeroAt(-4f),
                     demo = () => DemoRun(),
                     match = (k, a, l, low) => k == 't' && a == "run" },
                 new Lesson { title = "JUMP", reps = 2,
                     steps = new[] { S(Gest.SwipeUp, "SWIPE UP"), S(Gest.SwipeUpAt, "UP-RIGHT") },
-                    stage = () => { HeroAt(-2f); Mark(0, 6.5f, true, false); Mark(1, 7.5f, true, false); Mark(2, -7f, true, false); },
+                    cast = NoMen, stage = () => HeroAt(-2f),
                     demo = () => DemoJump(),
                     match = (k, a, l, low) => k == 't' && a == "jump" },
                 new Lesson { title = "PICK YOUR MAN",
                     steps = new[] { S(Gest.TapMan, "TAP HIM") },
-                    stage = () => { HeroAt(-1f); Mark(1, 1.6f, true, false); Mark(0, -5f, true, false); Mark(2, 6.5f, true, false); },
+                    cast = new[] { 0, 1 }, stage = () => { HeroAt(-1f); Mark(1, 1.6f, true, false); Mark(0, -4f, true, false); },
                     demo = () => DemoTapMan(1),
                     match = (k, a, l, low) => k == 't' && a == "lock" },
                 new Lesson { title = "PUNCH", reps = 3,
@@ -309,37 +339,37 @@ namespace ProjectInk
                     match = (k, a, l, low) => k == 's' && l != null && l.StartsWith("HEAD SCISSORS") },
                 new Lesson { title = "RUSH IN",
                     steps = new[] { S(Gest.SwipeAt, "FAR OFF: SWIPE AT HIM") },
-                    stage = () => { HeroAt(-3f); Mark(0, 2.6f, true, false); Aside(); }, restage = true,
+                    stage = () => { HeroAt(-3f); Mark(0, 2.6f, true, false); }, restage = true,
                     demo = () => DemoRush(),
                     match = (k, a, l, low) => k == 'd' && a == "far_rush" },
                 new Lesson { title = "FLYING KNEE", reps = 2,
                     steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), S(Gest.TapHigh, "CLOSE: TAP HIGH") },
-                    stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); Aside(); }, restage = true,
+                    stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); }, restage = true,
                     demo = () => DemoRunning(true),
                     match = (k, a, l, low) => k == 'd' && (a == "far_knee" || a == "far_barge") },
                 new Lesson { title = "SLIDE TACKLE",
                     steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), S(Gest.TapLow, "CLOSE: TAP LOW") },
-                    stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); Aside(); }, restage = true,
+                    stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); }, restage = true,
                     demo = () => DemoRunning(false),
                     match = (k, a, l, low) => k == 'd' && a == "far_slide" },
                 new Lesson { title = "SIDESTEP THE BULL",
                     steps = new[] { S(Gest.SwipeAway, "HE CHARGES: SWIPE") },
-                    stage = () => { HeroAt(-2f); Mark(0, 3.8f, true, false); Aside(); chargeAt = Time.time + 1.2f; }, restage = true,
+                    stage = () => { HeroAt(-2f); Mark(0, 3.8f, true, false); chargeAt = Time.time + 1.2f; }, restage = true,
                     demo = () => DemoSidestep(),
                     match = (k, a, l, low) => k == 'd' && a == "sidestep" },
                 new Lesson { title = "CROSSFIRE",
                     steps = new[] { S(Gest.TapHigh, "ONE EACH SIDE: TAP") },
-                    stage = () => { HeroAt(0f); Mark(0, 1.0f, true, false); Mark(1, -1.0f, true, false); Mark(2, 6.5f, true, false); }, restage = true,
+                    cast = new[] { 0, 1 }, stage = () => { HeroAt(0f); Mark(0, 1.0f, true, false); Mark(1, -1.0f, true, false); }, restage = true,
                     demo = () => DemoTaps(true, 1, 0.3f),
                     match = (k, a, l, low) => k == 'd' && a == "crossfire" },
                 new Lesson { title = "SILENT TAKEDOWN",
                     steps = new[] { S(Gest.CrouchHold, "SWIPE DOWN, HOLD"), S(Gest.Creep, "SLIDE: CREEP"), S(Gest.TapMan, "TAP HIS BACK") },
-                    stage = () => { HeroAt(-2f); PostAway(2, 0.2f); Mark(0, 8f, true, false); Mark(1, 9f, true, false); }, restage = true,
+                    cast = new[] { 2 }, stage = () => { HeroAt(-2f); PostAway(2, 0.2f); }, restage = true,
                     demo = () => DemoTakedown(),
                     match = (k, a, l, low) => k == 'd' && (a == "takedown" || a == "far_takedown") },
                 new Lesson { title = "THROW A BOTTLE",
                     steps = new[] { S(Gest.Hold, "WALK OVER IT"), S(Gest.TapMan, "TAP A MAN") },
-                    stage = () => { HeroAt(-3f); Mark(0, 3.5f, true, false); Aside(); Bottle(-2f); }, restage = true,
+                    stage = () => { HeroAt(-3f); Mark(0, 3.5f, true, false); Bottle(-2f); }, restage = true,
                     demo = () => DemoBottle(),
                     match = (k, a, l, low) => k == 'd' && (a == "far_throw" || a == "far_smash") },
             };
@@ -361,19 +391,16 @@ namespace ProjectInk
 
         float KickY => H * (GestureInput.Instance != null ? GestureInput.Instance.kickLine : 0.45f);
 
-        /// <summary>A clear place to tap on that half of the screen, high or low: not on a man (a tap on a man
-        /// picks him and always punches), not on a thing.</summary>
-        Vector2 Spot(int side, bool high)
+        /// <summary>The tap pads (pixels): on the man's side, on the arc a thumb sweeps from the bottom corner.
+        /// LOW low and further in, HIGH above the line and near the edge: one rock of the thumb between them,
+        /// both well clear of the high/low line, the screen's edge and the buttons.</summary>
+        Vector2 PadPos(int side, bool high)
         {
-            float y = high ? Mathf.Lerp(KickY, H, 0.42f) : KickY * 0.45f;
-            float[] xs = side > 0 ? new[] { 0.9f, 0.8f, 0.7f, 0.62f } : new[] { 0.1f, 0.2f, 0.3f, 0.38f };
-            foreach (var fx in xs)
-            {
-                var p = new Vector2(W * fx, y);
-                if (GestureInput.EnemyAt(p) == null && GestureInput.ThingAt(p) == null && !GestureInput.IsBlocked(p)) return p;
-            }
-            return new Vector2(W * xs[0], y);
+            float inX = H * (high ? 0.14f : 0.32f), y = H * (high ? 0.6f : 0.2f);
+            return new Vector2(side > 0 ? W - inX : inX, y);
         }
+
+        Vector2 Spot(int side, bool high) => PadPos(side, high);
 
         Vector2 ManPx(Enemy e) => e != null ? ScreenPx(e.Chest) : Px(0.75f, 0.55f);
         Vector2 HeroPx => ScreenPx(hero.Chest);
@@ -662,7 +689,7 @@ namespace ProjectInk
             demoStep = -1;
             rec.Clear();
             recT = recIdle = 0f;
-            Dip(lessons[li].stage);
+            StageDip();
             demoCo = StartCoroutine(RunDemo());
         }
 
@@ -701,12 +728,15 @@ namespace ProjectInk
             tryAt = Time.unscaledTime;
             lastMoveAt = Time.unscaledTime;
             if (GestureInput.Instance != null) GestureInput.Instance.Flush();
-            Dip(lessons[li].stage);
+            StageDip();
             Sound.Play(Sfx.Glint, 1f);
         }
 
-        void Dip(Action then)
+        void StageDip() { Dip(lessons[li].stage, lessons[li].cast); }
+
+        void Dip(Action then, int[] cast = null)
         {
+            dipCast = cast;
             dipAt = Time.unscaledTime;
             dipSince = 0f;
             dipThen = then;
@@ -722,6 +752,7 @@ namespace ProjectInk
             if (dipSince >= 0.22f && (!busy || dipSince > 2.5f))
             {
                 hero.CineLock();
+                if (dipCast != null) Only(dipCast);
                 hero.DropCarried();
                 foreach (var tp in Throwable.All.ToArray()) if (tp != null && tp.Lying) Destroy(tp.gameObject);
                 foreach (var e in men) if (e != null) { e.HealFull(); e.DropProp(); }
@@ -781,7 +812,7 @@ namespace ProjectInk
             lessonAt = Time.unscaledTime;
             PlayerPrefs.SetInt(PrefSeen, 1);
             PlayerPrefs.Save();
-            foreach (var e in men) if (e != null) { e.Keep = false; e.HoldFire = false; e.Sparring = true; if (e.Unaware) e.PlaceAt(e.transform.position, -1); }
+            Dip(() => { HeroAt(0f); Mark(0, 2.6f, false, true); Mark(1, -2.8f, false, true); Mark(2, 4.6f, false, true); }, All3);
             if (graduated)
             {
                 Sound.Play(Sfx.WaveClear, 0.9f);
@@ -857,7 +888,7 @@ namespace ProjectInk
             UpdateDip();
             if (ts == TS.Title && now - groundAt > 3.2f) StartLesson(0);
             if (ts == TS.Try && lessonDoneAt > 0f && now - lessonDoneAt > 1.5f) { lessonDoneAt = -9f; NextLesson(); }
-            if (ts == TS.Try && restageAt > 0f && now > restageAt) { restageAt = -1f; Dip(lessons[li].stage); }
+            if (ts == TS.Try && restageAt > 0f && now > restageAt) { restageAt = -1f; StageDip(); }
 
             // sparring: nobody stays hurt for long, nobody dies
             foreach (var e in men)
@@ -893,7 +924,7 @@ namespace ProjectInk
                     // a charge that ended without the sidestep (he was hit, or jumped it): back on the marks
                     if (b != null && wasCharging && !b.Charging && ts == TS.Try) chargeMissAt = now + 1.0f;
                     wasCharging = b != null && b.Charging;
-                    if (chargeMissAt > 0f && now > chargeMissAt) { chargeMissAt = -1f; if (lessonDoneAt < 0f && restageAt < 0f) Dip(L.stage); }
+                    if (chargeMissAt > 0f && now > chargeMissAt) { chargeMissAt = -1f; if (lessonDoneAt < 0f && restageAt < 0f) StageDip(); }
                     if (b != null && b.Alive && !b.Charging && !b.IsDown && Time.time > chargeAt)
                     {
                         float gap = Gap(b);
@@ -907,7 +938,7 @@ namespace ProjectInk
                     if (c != null && !c.Unaware && !c.Held)
                     {
                         if (unawareLostAt < 0f) { unawareLostAt = now; Say("THUG", "Hey! I can hear you!", 1.2f); }
-                        else if (now - unawareLostAt > 1.6f) Dip(L.stage);
+                        else if (now - unawareLostAt > 1.6f) StageDip();
                     }
                 }
                 if (L.title == "THROW A BOTTLE" && ts == TS.Try && now > bottleCheckAt)
@@ -1188,6 +1219,13 @@ namespace ProjectInk
                 if (i < n - 1) Arrow(new Vector2(r.xMax + 4, r.center.y), new Vector2(r.xMax + gap - 4, r.center.y), 2f, new Color(1f, 1f, 1f, 0.4f * slide));
             }
 
+            // ---------------------------------------------------------------- the tap pads (where the thumb goes)
+            if (dipDone && Array.Exists(L.steps, st => st.g == Gest.TapHigh || st.g == Gest.TapLow))
+            {
+                Gest cur = lit0 >= 0 && lit0 < n ? L.steps[lit0].g : n == 1 ? L.steps[0].g : Gest.Hold;
+                Pads(w, h, cur == Gest.TapHigh, cur == Gest.TapLow, slide);
+            }
+
             // ---------------------------------------------------------------- the finger
             if (demo)
             {
@@ -1221,6 +1259,69 @@ namespace ProjectInk
                 GUI.Label(new Rect(0, c.y - 45, w, 90), Spaced("GOT IT"), tBig);
                 GUI.matrix = m;
             }
+        }
+
+        // ---------------------------------------------------------------- the tap pads
+
+        int padSide = 1;
+        readonly float[] padFlashAt = { -9f, -9f };     // high, low
+
+        void OnPadTap(Vector2 at, bool low, int side)
+        {
+            if (side == padSide) padFlashAt[low ? 1 : 0] = Time.unscaledTime;
+        }
+
+        /// <summary>Both pads on the man's side: the one this step wants lit (a pulsing ring round it, its
+        /// quarter of the screen faintly lit: the whole quarter works, the pad is where the thumb sits best),
+        /// the other quieter. A tap in either makes it pop.</summary>
+        void Pads(float w, float h, bool litHigh, bool litLow, float a)
+        {
+            var f = Focus();
+            padSide = f != null ? (f.transform.position.x >= hero.transform.position.x ? 1 : -1) : hero.Facing;
+            var gi = GestureInput.Instance;
+            float lineY = h * (gi != null ? 1f - gi.kickLine : 0.55f);
+            float x0 = padSide > 0 ? w * 0.5f : 0f;
+            if (litHigh) Fill(new Rect(x0, 0f, w * 0.5f, lineY), new Color(1f, 1f, 1f, 0.045f * a));
+            if (litLow) Fill(new Rect(x0, lineY, w * 0.5f, h - lineY), new Color(1f, 1f, 1f, 0.045f * a));
+            // the line between high and low, on that half: dashes
+            for (float x = x0 + 8f; x < x0 + w * 0.5f - 8f; x += 22f) Fill(new Rect(x, lineY, 12f, 2f), new Color(1f, 1f, 1f, 0.22f * a));
+            float R = H * 0.085f / scale;
+            Pad(Gui(PadPos(padSide, true)), R, litHigh, padFlashAt[0], "HIGH", a);
+            Pad(Gui(PadPos(padSide, false)), R, litLow, padFlashAt[1], "LOW", a);
+        }
+
+        void Pad(Vector2 c, float R, bool lit, float flashAt, string label, float a)
+        {
+            var o = GUI.color;
+            float now = Time.unscaledTime;
+            float fk = Mathf.Clamp01(1f - (now - flashAt) / 0.35f);              // a tap: the pop
+            float s = 1f + 0.18f * fk;
+            if (lit)
+            {
+                // the call: rings breathing out from it, two at a time
+                for (int i = 0; i < 2; i++)
+                {
+                    float k = Mathf.Repeat(now / 1.2f + i * 0.5f, 1f);
+                    float rr = R * (1.1f + 0.7f * k);
+                    GUI.color = new Color(1f, 1f, 1f, 0.6f * (1f - k) * a);
+                    GUI.DrawTexture(new Rect(c.x - rr, c.y - rr, rr * 2f, rr * 2f), ring);
+                }
+            }
+            float r0 = R * s;
+            GUI.color = new Color(0f, 0f, 0f, (lit ? 0.5f : 0.3f) * a);
+            GUI.DrawTexture(new Rect(c.x - r0, c.y - r0, r0 * 2f, r0 * 2f), disc);
+            GUI.color = new Color(1f, 1f, 1f, (lit ? 0.95f : 0.35f) * a);
+            float re = r0 * 1.06f;
+            GUI.DrawTexture(new Rect(c.x - re, c.y - re, re * 2f, re * 2f), ring);
+            float ri = r0 * (lit ? 0.62f + 0.04f * Mathf.Sin(now * 6f) : 0.5f);
+            GUI.color = Color.Lerp(new Color(0.85f, 0.08f, 0.08f, (lit ? 0.9f : 0.3f) * a), new Color(1f, 1f, 1f, a), fk);
+            GUI.DrawTexture(new Rect(c.x - ri, c.y - ri, ri * 2f, ri * 2f), circle);
+            GUI.color = o;
+            tPill.normal.textColor = new Color(1f, 1f, 1f, (lit ? 1f : 0.45f) * a);
+            int fs = tPill.fontSize;
+            tPill.fontSize = 17;
+            GUI.Label(new Rect(c.x - R, c.y - 12f, R * 2f, 24f), label, tPill);
+            tPill.fontSize = fs;
         }
 
         // ---------------------------------------------------------------- the ghost (the demo, replayed faintly)

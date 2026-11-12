@@ -1899,3 +1899,26 @@ I traced every lesson against the systems it uses, then had an independent revie
   - A tap made earlier in the story no longer ticks PICK YOUR MAN.
   - WATCH AGAIN gets a fresh retry.
 - **Game-wide, the string rule:** a step-in stops at 92% of the punch's reach (a jab: 0.87 m), which was inside the 0.9 m "inside" line. So the second tap of a string turned into an inside shot, and BOXER'S FOUR (this chapter's combo) broke. The inside line is now 0.8 m: elbows and liver hooks stay inside, step-ins stay outside.
+
+## Training ground: only the men the lesson needs; tap pads
+**The men:**
+- Each lesson lists its cast:
+  - one man for most lessons;
+  - two for PICK YOUR MAN and CROSSFIRE;
+  - none for RUN and JUMP;
+  - the one on watch for the takedown.
+- The others step back into the dark during the dip. They are switched off, so no tap, auto-target or lock can go to them.
+- Every dip also clears the hero's target. The old lock from PICK YOUR MAN had been pulling later lessons' strikes, and the demos, toward another man.
+- FREE PLAY brings all three back onto their marks, swinging.
+
+**Tap pads:**
+- Two big pads on the man's side, on the arc a thumb sweeps from the bottom corner:
+  - LOW: 20% up, 0.32 × the screen height in from the edge.
+  - HIGH: 60% up, 0.14 × the screen height in from the edge.
+- One rock of the thumb mixes high and low. Both are clear of the high/low line, the edge and the buttons.
+- The pad the step wants is lit: a pulsing red core, rings breathing out, and its quarter of the screen faintly tinted (the whole quarter works; the pad is the sweet spot). The other pad is quieter.
+- A dashed line marks high and low on that half.
+- A real tap pops the pad it hit.
+- The demo finger taps exactly on the pads.
+
+**Game-wide rule change:** with empty hands, a tap on a man's legs is now a kick (his body is still a punch); before, any tap on a man punched. A low pad over his legs no longer turns into a punch. With a bottle or a knife, the tap on him is still the throw.

@@ -1338,7 +1338,7 @@ namespace ProjectInk
                 { "PROPS", "Walk over a bottle, brick, stone...: tap a man to throw it · tap as one flies at you: swat it" },
                 { "RAMPAGE", "A rare power for when you're in trouble: the round button appears (or two fingers / Space when charged)" },
                 { "WALK OVER", "Pick up a weapon · the chain: tap = lash, hold on a man = haul him in" },
-                { "TAP AN ENEMY", "Target him: your strikes go to him, the rest hang back (click him, or T, on a keyboard)" },
+                { "TAP AN ENEMY", "Target him (his body: punch · his legs: kick); your strikes go to him, the rest hang back" },
             };
             float rowH = Mathf.Min(42f, (panel.height - 190f) / rows.GetLength(0));
             // the type follows the row: on a short (phone) screen the rows shrink, and so do the words
