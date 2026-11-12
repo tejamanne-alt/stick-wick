@@ -1131,8 +1131,8 @@ namespace ProjectInk
                     if (GestureInput.InteractTarget is Throwable tp && !MovesV4) { if (carried == null && Mathf.Abs(tp.transform.position.x - transform.position.x) < 1.2f) PickProp(tp); break; }
                     InteractV4(GestureInput.InteractTarget); break;
                 case Command.HoldOn: TryChainDrag(GestureInput.HeldEnemy); break;
-                case Command.JumpLeft: JumpTowards(-1); break;
-                case Command.JumpRight: JumpTowards(1); break;
+                case Command.JumpLeft: if (!TryScissorsLeap(-1)) JumpTowards(-1); break;
+                case Command.JumpRight: if (!TryScissorsLeap(1)) JumpTowards(1); break;
                 case Command.Rampage: StartRampage(); break;
                 case Command.LockNext: LockNext(); break;
                 case Command.CycleStyle: SetStyle((FightStyle)(((int)Style + 1) % 5)); break;
@@ -1480,8 +1480,8 @@ namespace ProjectInk
             if (TryOverTheEdge(t, side)) return;
             if (!Contact && TrySpringboard(t, side)) return;
             if (!Contact && t != null && t.transform.position.y < transform.position.y - 1.8f && TryDeathFromAbove(t)) return;
-            // the head scissors takedown: in story mode, only on a man out on his feet (no dice)
-            if ((!Contact || (t != null && t.Dazed && kick)) && TryHeadScissors(t, side, kick)) return;
+            // the old head scissors (by situation and chance): arcade mode only; the story's is a gesture (TryScissorsLeap)
+            if (!Contact && TryHeadScissors(t, side, kick)) return;
 
             bool armed = !kick && (Style == FightStyle.Sword || Style == FightStyle.Pipe || Style == FightStyle.Knife);
             var combo = Style == FightStyle.Sword ? AttackData.SwordCombo : AttackData.PipeCombo;
@@ -1695,7 +1695,7 @@ namespace ProjectInk
                 int side = cmd == Command.StrikeLeft ? -1 : cmd == Command.StrikeRight ? 1 : (AxisDir != 0 ? AxisDir : Facing);
                 var t = PickTarget(side, 5f);
                 // close enough in the air: land on his shoulders instead of kicking him
-                if (t != null && Mathf.Abs(t.transform.position.x - transform.position.x) < 1.9f && Random.value < 0.65f && CanScissors(t, side, true))
+                if (!Contact && t != null && Mathf.Abs(t.transform.position.x - transform.position.x) < 1.9f && Random.value < 0.65f && CanScissors(t, side, true))
                 { BeginScissors(t, side); return; }
                 // far below: dive on him
                 var below = PickBelow(side, 4.5f);

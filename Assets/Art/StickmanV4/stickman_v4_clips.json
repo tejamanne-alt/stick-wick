@@ -344,21 +344,6 @@
       "hitFrame": 3
     },
     {
-      "name": "spear",
-      "frames": 26,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 8
-    },
-    {
-      "name": "spear_v",
-      "frames": 26,
-      "fps": 30,
-      "loop": false,
-      "hitFrame": 8,
-      "endShift": -0.4421
-    },
-    {
       "name": "clothesline_v",
       "frames": 16,
       "fps": 30,
@@ -1919,6 +1904,50 @@
       "loadFrame": -1,
       "reach": 1.02,
       "endShift": 0.5,
+      "v4": true
+    },
+    {
+      "name": "spear",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 13,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.9,
+      "v4": true
+    },
+    {
+      "name": "spear_v",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.72,
+      "v4": true
+    },
+    {
+      "name": "head_scissors",
+      "frames": 34,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 17,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.6,
+      "v4": true
+    },
+    {
+      "name": "head_scissors_v",
+      "frames": 34,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 1.94,
       "v4": true
     },
     {

@@ -59,6 +59,7 @@ namespace ProjectInk
             public bool keepHold;                      // a knee: back to the clinch afterwards
             public string react;                       // a held blow: the clip he plays at the hit
             public float daze;                         // let go standing (V4): dazed this long
+            public float closeAt;                      // from range: the gap is closed by this time (default: the hit)
         }
 
         static readonly GrappleMove Knee = new GrappleMove { clip = "clinch_knee", damage = 12, keepHold = true, react = "hit_body", label = "KNEE" };
@@ -69,7 +70,9 @@ namespace ProjectInk
         static readonly GrappleMove Suplex = new GrappleMove { clip = "suplex", victim = "suplex_v", damage = 32, throwDown = true, behind = true, label = "SUPLEX" };
         static readonly GrappleMove BodySlam = new GrappleMove { clip = "body_slam", victim = "body_slam_v", damage = 30, throwDown = true, label = "BODY SLAM" };
         static readonly GrappleMove Ddt = new GrappleMove { clip = "ddt", victim = "ddt_v", damage = 34, throwDown = true, faceDown = true, label = "DDT" };
-        static readonly GrappleMove Spear = new GrappleMove { clip = "spear", victim = "spear_v", damage = 24, throwDown = true, fromRange = true, label = "SPEAR" };
+        static readonly GrappleMove Spear = new GrappleMove { clip = "spear", victim = "spear_v", damage = 24, throwDown = true, fromRange = true, closeAt = 0.2f, label = "SPEAR" };
+        /// <summary>Swipe up and across at a man 0.8-2.3 m off: onto his shoulders, the walkover, he lands behind.</summary>
+        static readonly GrappleMove HeadScissors = new GrappleMove { clip = "head_scissors", victim = "head_scissors_v", damage = 28, throwDown = true, behind = true, fromRange = true, closeAt = 0.23f, label = "HEAD SCISSORS" };
         static readonly GrappleMove ClotheslineMove = new GrappleMove { clip = "clothesline", victim = "clothesline_v", damage = 20, throwDown = true, fromRange = true, label = "CLOTHESLINE" };
 
         // ------------------------------------------------------------------ strings
@@ -143,6 +146,31 @@ namespace ProjectInk
         }
 
         // ------------------------------------------------------------------ movement
+
+        /// <summary>A swipe up and across at a man close by (story mode, bare hands): the head scissors.
+        /// Anywhere else it is the jump that way.</summary>
+        bool TryScissorsLeap(int dir)
+        {
+            if (!Contact || !ContactBare || !Grounded || !body.Has("head_scissors")) return false;
+            Enemy best = null;
+            float bd = 2.3f;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.CanBeHeld || e.TooHeavy || e.Boss) continue;
+                float dx = (e.transform.position.x - transform.position.x) * dir;
+                if (dx < 0.6f || dx > bd || Mathf.Abs(e.transform.position.y - transform.position.y) > 0.4f) continue;
+                bd = dx;
+                best = e;
+            }
+            if (best == null) return false;
+            // floor behind to slam him onto
+            float landX = transform.position.x - dir * 0.9f;
+            if (landX < arenaMinX + 0.2f || landX > arenaMaxX - 0.2f) return false;
+            BeginGrapple(HeadScissors, best, dir);
+            Sound.Play(Sfx.WhooshBig, 1f, transform.position);
+            Tell("scissors");
+            return true;
+        }
 
         /// <summary>A swipe in story mode: under a swing (slide), into a hold, a spear, or a step back.</summary>
         void ContactDodge(int dir)
@@ -356,7 +384,7 @@ namespace ProjectInk
             if (grapple.fromRange)
             {
                 // close the gap in the first beat (the tackle's drive, the arm's sweep)
-                float u = Mathf.Clamp01(body.Time / Mathf.Max(0.05f, e.hitTime));
+                float u = Mathf.Clamp01(body.Time / Mathf.Max(0.05f, grapple.closeAt > 0f ? grapple.closeAt : e.hitTime));
                 var p = transform.position;
                 p.x = Mathf.Lerp(pairedFromX, pairedToX, u * u * (3f - 2f * u));
                 transform.position = p;

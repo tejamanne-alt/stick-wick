@@ -152,6 +152,101 @@ CLIPS["rush_strike"] = clip(18, [
 ], shift=True, hit=5, reach=1.02, striker="R", react="stumble_back",
     note="the blitz lands: the last bound becomes a cross with the whole run behind it")
 
+# ---------------------------------------------------------------- the spear and the head scissors (paired, from range)
+# Both are taken from a step or two away: the game slides the hero's root in to the clinch gap (0.62) by
+# the moment of contact (GrappleMove.closeAt), the bodies keyed as a pair in the clinch's space (v4_clinch:
+# the hero at 0 facing +x, the man GAP in front facing him, his clip in his own frame).
+TORSO = ("hips", "spine", "spine_mid", "chest", "neck", "head")
+
+
+def turned(pose, deg):
+    """The same pose with the whole torso chain wound on by deg (a full flip keeps its numbers climbing)."""
+    q = dict(pose)
+    for k in TORSO:
+        if k in q:
+            q[k] = q[k] + deg
+    return q
+
+
+GAP = 0.62
+_GUARD_V = G()                       # the man, on guard, before it starts
+
+# SPEAR (swipe flat at a man 1.5-3 m off): the level change, the shoulder through his waist, arms round
+# his thighs, the legs driving him off his feet, and both come down, the hero on top of him.
+CLIPS.update(pair("spear", 30, [
+    (0, GUARD, "smooth"),
+    (3, G(hx=0.02, hz=0.44, spine=142, spine_mid=136, chest=128, neck=136, head=158, tw_chest=0,
+          fL=(GL[0] + 0.24, 0), fR=(GR[0] - 0.2, 66), uaL=70, faL=96, uaR=60, faR=90, clL=(10, 6), clR=(10, 6)), "in"),      # the level change: under his hands
+    (6, G(hx=0.16, hz=0.47, spine=122, spine_mid=118, chest=112, neck=126, head=150, tw_chest=0,
+          hL=(0.78, 0.56), hR=(0.74, 0.5), fL=(GL[0] + 0.3, 0), fR=(GR[0] + 0.0, 76), clL=(30, 10), clR=(30, 10)), "in3"),   # CONTACT: shoulder in his middle
+    (9, G(hx=0.48, hz=0.46, spine=112, spine_mid=110, chest=104, neck=118, head=144, tw_chest=0,
+          hL=(1.04, 0.62), hR=(1.0, 0.58), fL=(GL[0] + 0.62, 0), fR=(GR[0] + 0.4, 0.06, 40)), "lin"),                       # driving, his feet off the floor
+    (13, G(hx=0.92, hz=0.3, spine=96, spine_mid=95, chest=93, neck=104, head=120, tw_chest=0,
+           thL=24, shL=-84, fpL=-60, thR=10, shR=-92, fpR=-60, hL=(1.38, 0.06), hR=(1.34, 0.08), fiL=40, fiR=40), "in3"),     # SLAM: down on top of him
+    (18, G(hx=0.95, hz=0.4, spine=140, spine_mid=134, chest=128, neck=134, head=150, tw_chest=0,
+           thL=84, shL=0, fpL=0, thR=4, shR=-90, fpR=-70, uaL=50, faL=80, uaR=40, faR=70), "out"),                            # up onto a knee over him
+    (24, G(hx=0.92, hz=0.58, spine=168, chest=158, fL=(GL[0] + 0.9, 0), fR=(GR[0] + 0.86, 40)), "out"),
+    (30, at(GUARD, 0.9), "smooth"),
+], [
+    (0, _GUARD_V, "smooth"),
+    (4, G(hx=-0.02, hz=0.62, spine=170, chest=162, head=168, uaL=90, faL=120, uaR=70, faR=110), "in"),                      # sees it coming, too late
+    (6, G(hx=-0.06, hz=0.7, hips=176, spine=146, spine_mid=134, chest=122, neck=118, head=126,
+          uaL=110, faL=150, uaR=100, faR=140, fL=(GL[0] - 0.06, 0.06, 20), fR=(GR[0] - 0.1, 40)), "in3"),                  # CONTACT: folded over the shoulder
+    (9, G(hx=-0.42, hz=0.86, hips=214, spine=222, spine_mid=228, chest=232, neck=236, head=240,
+          thL=72, shL=40, fpL=40, thR=58, shR=26, fpR=40, uaL=160, faL=176, uaR=150, faR=170), "in"),                     # lifted, going over backwards
+    (13, P(LIE, hx=-0.72, hz=0.074, thL=80, shL=60, thR=70, shR=50, uaL=150, faL=170, uaR=140, faR=160), "in3"),           # SLAM: flat on his back
+    (15, P(LIE, hx=-0.72, hz=0.12, chest=262, head=256, thL=90, shL=70, thR=84, shR=66), "out"),
+    (30, P(LIE, hx=-0.72), "smooth"),
+], hit=13, vshift=True, hshift=True, note="the spear: level change, shoulder through his middle, driven off his feet and slammed"))
+
+# HEAD SCISSORS (swipe up and across at a man 1-2 m off): the leap, sat on his shoulders with the legs
+# locked round his head, then thrown backwards in a walkover: the legs whip his head down and round, he
+# somersaults forward over the hero and is slammed on his back behind him; the hero comes over onto his
+# feet. (The torso numbers climb past 360: a full turn, not a spin back.)
+_HS_HERO = [
+    (0, GUARD, "smooth"),
+    (3, G(hx=0.02, hz=0.52, spine=166, spine_mid=160, chest=152, neck=150, head=164, uaL=-20, faL=-10, uaR=-30, faR=-20,
+          fL=(GL[0] + 0.04, 0), fR=(GR[0], 60)), "in"),                                                                   # the load: arms swung back
+    (5, G(hx=0.2, hz=0.92, spine=176, spine_mid=176, chest=176, neck=172, head=174, uaL=160, faL=170, uaR=150, faR=160,
+          thL=96, shL=10, fpL=30, thR=40, shR=-40, fpR=50), "out3"),                                                     # off the floor, knees coming up
+    (7, G(hx=0.44, hz=1.38, hips=182, spine=184, spine_mid=184, chest=182, neck=178, head=176,
+          thL=94, shL=-4, fpL=40, thR=86, shR=2, fpR=40, hL=(0.66, 1.36), hR=(0.62, 1.32), fiL=90, fiR=90), "in3"),       # ON HIS SHOULDERS: legs locked round his head
+    (9, G(hx=0.45, hz=1.36, hips=186, spine=190, spine_mid=192, chest=194, neck=192, head=190,
+          thL=94, shL=-4, fpL=40, thR=86, shR=2, fpR=40, hL=(0.6, 1.4), hR=(0.58, 1.36), fiL=90, fiR=90), "smooth"),
+    (12, G(hx=0.32, hz=1.12, hips=238, spine=244, spine_mid=248, chest=252, neck=256, head=262,
+           thL=112, shL=30, fpL=40, thR=104, shR=36, fpR=40, uaL=230, faL=236, uaR=224, faR=230), "in"),                   # thrown backwards, arms reaching for the floor
+    (14, G(hx=0.04, hz=0.74, hips=300, spine=306, spine_mid=310, chest=314, neck=318, head=322,
+           thL=160, shL=120, fpL=40, thR=150, shR=110, fpR=40, hL=(-0.36, 0.04), hR=(-0.32, 0.04), fiL=20, fiR=20), "lin"),  # upside down, hands planted, his head whipped down
+    (16, G(hx=-0.24, hz=0.62, hips=350, spine=354, spine_mid=356, chest=358, neck=360, head=362,
+           thL=210, shL=200, fpL=30, thR=196, shR=188, fpR=30, hL=(-0.36, 0.04), hR=(-0.32, 0.04)), "lin"),                 # legs over the top
+    (19, G(hx=-0.42, hz=0.72, hips=420, spine=422, spine_mid=422, chest=420, neck=422, head=428,
+           thL=150, shL=110, fpL=20, thR=136, shR=96, fpR=20, uaL=150, faL=160, uaR=140, faR=150), "lin"),                  # coming over, the feet reaching for the floor
+    (22, G(hx=-0.52, hz=0.46, hips=500, spine=500, spine_mid=496, chest=492, neck=496, head=508,
+           thL=80, shL=-10, fpL=0, thR=70, shR=-20, fpR=0, fL=(-0.38, 0), fR=(-0.72, 20), uaL=40, faL=70, uaR=30, faR=60), "in3"),  # lands, crouched over
+    (27, turned(G(hx=-0.58, hz=0.56, spine=166, spine_mid=160, chest=154, neck=152, head=166,
+                  fL=(GL[0] - 0.58, 0), fR=(GR[0] - 0.58, 40)), 360), "out"),
+    (34, turned(at(GUARD, -0.6), 360), "smooth"),
+]
+_HS_MAN = [
+    (0, _GUARD_V, "smooth"),
+    (5, G(hx=0.0, hz=0.62, spine=172, chest=166, head=170, uaL=120, faL=150, uaR=110, faR=140), "in"),                 # arms up at the leap
+    (7, G(hx=0.0, hz=0.58, spine=168, spine_mid=164, chest=158, neck=150, head=150, hL=(0.26, 1.22), hR=(0.22, 1.18),
+          fL=(GL[0], 0), fR=(GR[0] - 0.06, 30)), "in3"),                                                                 # the weight lands on his shoulders
+    (9, G(hx=0.02, hz=0.56, spine=164, spine_mid=158, chest=150, neck=142, head=140, hL=(0.24, 1.2), hR=(0.2, 1.16)), "smooth"),  # clawing at the legs
+    (12, G(hx=0.18, hz=0.66, hips=150, spine=132, spine_mid=118, chest=104, neck=90, head=80,
+           fL=(GL[0] + 0.1, 0.06, 20), fR=(GR[0], 0.1, 40), uaL=90, faL=60, uaR=80, faR=50), "in"),                     # yanked forward by the head, feet leaving
+    (14, G(hx=0.62, hz=1.1, hips=56, spine=46, spine_mid=40, chest=32, neck=24, head=18,
+           thL=196, shL=200, fpL=30, thR=180, shR=184, fpR=30, uaL=40, faL=20, uaR=30, faR=10), "in"),                   # over the top, upside down
+    (16, G(hx=1.36, hz=0.62, hips=-34, spine=-40, spine_mid=-46, chest=-52, neck=-58, head=-62,
+           thL=166, shL=150, fpL=30, thR=150, shR=136, fpR=30, uaL=150, faL=160, uaR=136, faR=150), "in"),
+    (17, P(LIE, hx=GAP + 1.3, hz=0.074, hips=-90, spine=-90, spine_mid=-90, chest=-90, neck=-88, head=-86,
+           thL=110, shL=100, thR=96, shR=90), "in3"),                                                                     # SLAM: flat on his back, behind the hero
+    (19, P(LIE, hx=GAP + 1.32, hz=0.12, hips=-90, spine=-90, spine_mid=-90, chest=-98, neck=-102, head=-104, thL=100, shL=84), "out"),
+    (34, P(LIE, hx=GAP + 1.32, hips=-90, spine=-90, spine_mid=-90, chest=-90, neck=-88, head=-86), "smooth"),
+]
+CLIPS.update(pair("head_scissors", 34, _HS_HERO, _HS_MAN, hit=17, vshift=True, hshift=True,
+                  note="head scissors: onto his shoulders, legs locked, the walkover whips him over and down behind"))
+
 # ---------------------------------------------------------------- running attacks
 CLIPS["flying_knee"] = clip(24, [
     (0, RUN0, "lin"),

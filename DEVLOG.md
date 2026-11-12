@@ -1854,3 +1854,19 @@ The lessons are now 21: flying knee and slide tackle are separate.
   - **The sweep:** the finger presses and sweeps fast off the mark, easing at the end, over 0.3 s instead of 0.2.
   - **The streak:** behind the finger, a thick white streak with a red core, thinning and fading back to where it began. A ripple marks the release.
   - **The ghost:** your turn's ghost replays the same path and streak.
+
+## Spear and head scissors: rebuilt, deliberate, taught
+**Controls (story mode, bare hands):**
+- **SPEAR:** swipe *flat* at a man two steps off (1.5–3 m). You go low, through his waist.
+- **HEAD SCISSORS:** swipe *up and across* at a man close by (0.6–2.3 m). You go high, onto his head.
+- **Unchanged:** a straight-up swipe is still the jump, and a diagonal swipe with no man close is still the jump that way.
+
+**Animations:** both are hand-keyed pairs for the V4 body (hero and victim on the same timing), in `tools/blender/v4_far.py`.
+- **spear / spear_v:** the level change, the shoulder through his middle with the arms round his thighs, driven off his feet, both slammed down; up onto a knee over him.
+- **head_scissors / head_scissors_v:** the load and leap, sat on his shoulders with the legs locked round his head, thrown back into a walkover with the hands planted. His head is whipped down and he somersaults forward over the hero onto his back, 1.3 m behind. The hero rolls over onto his feet and turns to face him. The torso angles climb past 360°, so it's one full turn.
+
+**Runtime:**
+- Both run on the grapple system (`GrappleMove`, from range). A new `closeAt` field closes the gap by the moment of contact, not the slam.
+- The old code-driven scissors and its dice rolls are now arcade-only: in story mode the air tap is always the flying kick, and a low tap on a dazed man is always the side kick.
+
+**Training:** SPEAR and HEAD SCISSORS lessons sit after THROW HIM (23 lessons; the saved progress key was renamed). The HUD's MOVES card is updated.

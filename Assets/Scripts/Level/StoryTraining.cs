@@ -75,7 +75,7 @@ namespace ProjectInk
         readonly List<Rec> rec = new List<Rec>();
         float recT, recIdle;
 
-        const string PrefMask = "training_mask", PrefSeen = "training_seen";
+        const string PrefMask = "training_mask_v2", PrefSeen = "training_seen";
 
         // ================================================================ start and end
 
@@ -285,6 +285,16 @@ namespace ProjectInk
                     stage = () => Spar(0.9f, true, false), restage = true,
                     demo = () => DemoGrab(true),
                     match = (k, a, l, low) => k == 's' && l != null && (l.Contains("THROW") || l.Contains("SWEEP") || l.Contains("SUPLEX") || l.Contains("DDT") || l.Contains("SLAM")) },
+                new Lesson { title = "SPEAR",
+                    steps = new[] { S(Gest.SwipeAt, "TWO STEPS OFF: SWIPE FLAT AT HIM") },
+                    stage = () => Spar(2.2f, true, false), restage = true,
+                    demo = () => DemoSwipeAt(false),
+                    match = (k, a, l, low) => k == 's' && l != null && l.StartsWith("SPEAR") },
+                new Lesson { title = "HEAD SCISSORS",
+                    steps = new[] { S(Gest.SwipeUpAt, "CLOSE: SWIPE UP AT HIM") },
+                    stage = () => Spar(1.4f, true, false), restage = true,
+                    demo = () => DemoSwipeAt(true),
+                    match = (k, a, l, low) => k == 's' && l != null && l.StartsWith("HEAD SCISSORS") },
                 new Lesson { title = "RUSH IN",
                     steps = new[] { S(Gest.SwipeAt, "FAR OFF: SWIPE AT HIM") },
                     stage = () => { HeroAt(-3f); Mark(0, 2.6f, true, false); Mark(1, -6.5f, true, false); Mark(2, -7.5f, true, false); }, restage = true,
@@ -512,6 +522,16 @@ namespace ProjectInk
             c = HeroPx;
             yield return Swipe(c + new Vector2(W * 0.04f, 0f), c + new Vector2(W * 0.28f, 0f), 2);
             yield return WaitU(1.0f);
+        }
+
+        /// <summary>A swipe at the man from beside the hero: flat (the spear) or up and across (the head scissors).</summary>
+        IEnumerator DemoSwipeAt(bool up)
+        {
+            var c = HeroPx;
+            var a = c + new Vector2(W * 0.04f, up ? -H * 0.04f : 0f);
+            var b = up ? a + new Vector2(W * 0.15f, H * 0.26f) : a + new Vector2(W * 0.26f, 0f);
+            yield return Swipe(a, b, 0);
+            yield return WaitU(1.6f);
         }
 
         IEnumerator DemoRush()
