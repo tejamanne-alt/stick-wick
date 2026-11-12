@@ -1846,3 +1846,11 @@ Reading a card, understanding it and copying it was too hard. Each move is now t
 
 The lessons are now 21: flying knee and slide tackle are separate.
 
+
+## Training ground: PREV / NEXT, and a readable swipe
+- **PREV / NEXT:** beside the lesson (under WATCH AGAIN), to go back and practise the previous move or move on. FREE PLAY sits under them.
+- **The swipe, made readable:**
+  - **The path first:** before the finger moves, a rail appears from where the swipe starts to where it ends, with chevrons marching along it and a red arrowhead at the end. In slip and sidestep, the path shows while waiting for his swing or charge, so you see what's coming.
+  - **The sweep:** the finger presses and sweeps fast off the mark, easing at the end, over 0.3 s instead of 0.2.
+  - **The streak:** behind the finger, a thick white streak with a red core, thinning and fading back to where it began. A ripple marks the release.
+  - **The ghost:** your turn's ghost replays the same path and streak.

@@ -68,8 +68,10 @@ namespace ProjectInk
         readonly float[] fShow = new float[2], fShowNow = new float[2];
         readonly List<Vector2>[] fTrail = { new List<Vector2>(), new List<Vector2>() };
         float rippleAt = -9f; Vector2 rippleAtPos;
+        // the swipe's path, shown before and while it is made: marching chevrons from start to end
+        bool hintOn; Vector2 hintA, hintB; float hintAt = -9f, hintOffAt = -9f;
         // the recording the ghost replays in YOUR TURN
-        struct Rec { public float t; public Vector2 p0, p1; public bool d0, d1; public float s0, s1; public int step; }
+        struct Rec { public float t; public Vector2 p0, p1; public bool d0, d1; public float s0, s1; public int step; public bool hint; public Vector2 ha, hb; }
         readonly List<Rec> rec = new List<Rec>();
         float recT, recIdle;
 
@@ -386,17 +388,35 @@ namespace ProjectInk
             yield return WaitU(0.1f);
         }
 
-        IEnumerator Swipe(Vector2 a, Vector2 b, int step, float dur = 0.2f, int i = 0)
+        void Hint(Vector2 a, Vector2 b) { hintOn = true; hintA = a; hintB = b; hintAt = Time.unscaledTime; }
+        void HintOff() { if (hintOn) { hintOn = false; hintOffAt = Time.unscaledTime; } }
+
+        /// <summary>A swipe: its path appears (chevrons marching from start to end), the finger lands on the
+        /// start, presses, and sweeps (fast off the mark, easing at the end) leaving a streak behind it.</summary>
+        IEnumerator Swipe(Vector2 a, Vector2 b, int step, float dur = 0.3f, int i = 0, bool hinted = false)
         {
             demoStep = step;
+            if (!hinted) Hint(a, b);
             yield return Glide(i, a);
-            yield return WaitU(0.14f);
+            if (!hinted) yield return WaitU(0.35f);
             fTrail[i].Clear();
-            for (float k = 0f; k < 1f; k += Time.unscaledDeltaTime / dur) { SetF(i, Vector2.Lerp(a, b, Mathf.SmoothStep(0f, 1f, k)), true); fTrail[i].Add(fPos[i]); yield return null; }
+            SetF(i, a, true);
+            fTrail[i].Add(a);
+            yield return null;
+            for (float k = 0f; k < 1f; k += Time.unscaledDeltaTime / dur)
+            {
+                float e = 1f - (1f - k) * (1f - k);              // ease out: well past the swipe threshold at once
+                SetF(i, Vector2.Lerp(a, b, e), true);
+                fTrail[i].Add(fPos[i]);
+                yield return null;
+            }
             SetF(i, b, true);
+            fTrail[i].Add(b);
             yield return null;
             SetF(i, b, false);
-            yield return WaitU(0.12f);
+            rippleAt = Time.unscaledTime; rippleAtPos = b;
+            HintOff();
+            yield return WaitU(0.25f);
         }
 
         /// <summary>Pressed and held there until `until` (at least `min`, at most `max` seconds).</summary>
@@ -470,10 +490,11 @@ namespace ProjectInk
         {
             var a = Man(0);
             var c = HeroPx;
+            Hint(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f));
             yield return Glide(0, c + new Vector2(-W * 0.04f, 0f));
             float t = 0f;
             while (t < 6f && (a == null || !a.Telegraphing)) { t += Time.unscaledDeltaTime; yield return null; }
-            yield return Swipe(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f), 0, 0.14f);
+            yield return Swipe(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f), 0, 0.16f, 0, true);
             yield return WaitU(0.25f);
             yield return Tap(Spot(1, true), 1, 0, 0.02f);
             yield return WaitU(0.2f);
@@ -534,11 +555,11 @@ namespace ProjectInk
         {
             var b = Man(0);
             var c = HeroPx;
+            Hint(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f));
             yield return Glide(0, c + new Vector2(-W * 0.04f, 0f));
             float t = 0f;
             while (t < 6f && (b == null || !b.Charging || Gap(b) > 3.0f)) { t += Time.unscaledDeltaTime; yield return null; }
-            c = HeroPx;
-            yield return Swipe(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f), 0, 0.14f);
+            yield return Swipe(fPos[0], fPos[0] + new Vector2(-W * 0.22f, 0f), 0, 0.16f, 0, true);
             yield return WaitU(1.0f);
         }
 
@@ -547,12 +568,14 @@ namespace ProjectInk
             var e = Man(2);
             // finger one: swipe down and keep holding (the crouch), then slide to creep
             var a = Px(0.7f, 0.62f);
-            demoStep = 0;
-            yield return Glide(0, a);
-            yield return WaitU(0.14f);
-            fTrail[0].Clear();
             var b = a + new Vector2(0f, -H * 0.16f);
+            demoStep = 0;
+            Hint(a, b);
+            yield return Glide(0, a);
+            yield return WaitU(0.35f);
+            fTrail[0].Clear();
             for (float k = 0f; k < 1f; k += Time.unscaledDeltaTime / 0.24f) { SetF(0, Vector2.Lerp(a, b, k), true); fTrail[0].Add(fPos[0]); yield return null; }
+            HintOff();
             for (float k = 0f; k < 0.35f; k += Time.unscaledDeltaTime) { SetF(0, b, true); yield return null; }
             demoStep = 1;
             var cr = b + new Vector2(W * 0.06f, 0f);
@@ -608,6 +631,7 @@ namespace ProjectInk
         {
             if (demoCo != null) { StopCoroutine(demoCo); demoCo = null; }
             for (int i = 0; i < 2; i++) { SetF(i, fPos[i], false); fShow[i] = 0f; }
+            hintOn = false;
             GestureInput.Demo = false;
         }
 
@@ -803,7 +827,7 @@ namespace ProjectInk
                 bool active = fDown[0] || fDown[1] || (rec.Count > 0 && (rec[rec.Count - 1].p0 - fPos[0]).sqrMagnitude > 1f);
                 recIdle = active ? 0f : recIdle + Time.unscaledDeltaTime;
                 if (recIdle < 0.35f) recT += Time.unscaledDeltaTime;            // long waits (for his swing) shrink in the replay
-                rec.Add(new Rec { t = recT, p0 = fPos[0], p1 = fPos[1], d0 = fDown[0], d1 = fDown[1], s0 = fShowNow[0], s1 = fShowNow[1], step = demoStep });
+                rec.Add(new Rec { t = recT, p0 = fPos[0], p1 = fPos[1], d0 = fDown[0], d1 = fDown[1], s0 = fShowNow[0], s1 = fShowNow[1], step = demoStep, hint = hintOn, ha = hintA, hb = hintB });
             }
 
             // the lessons' own staging, kept up
@@ -950,6 +974,51 @@ namespace ProjectInk
             GUI.color = o;
         }
 
+        /// <summary>The streak behind a swiping finger: thick at the finger, thinning and fading back to where it began.</summary>
+        void Streak(List<Vector2> pts, float a)
+        {
+            int n = pts.Count;
+            if (n < 2) return;
+            for (int k = 1; k < n; k++)
+            {
+                float f = (float)k / (n - 1);
+                var p0 = Gui(pts[k - 1]);
+                var p1 = Gui(pts[k]);
+                Line(p0, p1, 4f + 18f * f, new Color(1f, 1f, 1f, 0.12f + 0.4f * f * a));
+                Line(p0, p1, 2f + 6f * f, new Color(0.9f, 0.12f, 0.1f, (0.2f + 0.7f * f) * a));
+            }
+        }
+
+        /// <summary>The path of a swipe: a faint rail and chevrons marching along it, from start to end.</summary>
+        void SwipePath(Vector2 aPx, Vector2 bPx, float alpha)
+        {
+            if (alpha <= 0.01f) return;
+            var a = Gui(aPx);
+            var b = Gui(bPx);
+            var d = b - a;
+            float len = d.magnitude;
+            if (len < 10f) return;
+            var u = d / len;
+            var n = new Vector2(-u.y, u.x);
+            Line(a, b, 3f, new Color(1f, 1f, 1f, 0.22f * alpha));
+            int count = Mathf.Max(3, Mathf.RoundToInt(len / 46f));
+            float phase = Mathf.Repeat(Time.unscaledTime * 1.6f, 1f);
+            for (int k = 0; k < count; k++)
+            {
+                float f = (k + phase) / count;
+                var c = a + d * f;
+                float bump = Mathf.Sin(f * Mathf.PI);                     // brightest mid-path, fading at both ends
+                float sz = 13f + 6f * bump;
+                var col = new Color(1f, 1f, 1f, alpha * (0.25f + 0.75f * bump));
+                Line(c - u * sz * 0.7f + n * sz, c, 5f, col);
+                Line(c - u * sz * 0.7f - n * sz, c, 5f, col);
+            }
+            // the head: a bigger arrow at the end
+            var hcol = new Color(0.9f, 0.12f, 0.1f, alpha);
+            Line(b - u * 26f + n * 20f, b, 6f, hcol);
+            Line(b - u * 26f - n * 20f, b, 6f, hcol);
+        }
+
         /// <summary>The finger: lifted (a soft disc), or pressing (solid, with a trail on a swipe).</summary>
         void DrawFinger(Vector2 px, bool down, float a, List<Vector2> trail, float ghost)
         {
@@ -1043,8 +1112,9 @@ namespace ProjectInk
             float bx = w - 182, by = 12;
             if (!demo && TrainButton(new Rect(bx, by, 170, 40), "▶  " + Spaced("WATCH AGAIN"), false, now - lastMoveAt > 8f ? 1f : 0f)) { StartDemo(); return; }
             if (demo && TrainButton(new Rect(bx, by, 170, 40), Spaced("TRY IT NOW"))) { StopDemo(); BeginTry(); return; }
-            if (TrainButton(new Rect(bx, by + 48, 170, 40), Spaced("SKIP") + "  ›")) { StopDemo(); lessonDoneAt = -9f; NextLesson(); return; }
-            if (TrainButton(new Rect(bx, by + 96, 170, 40), practiseOne ? Spaced("BACK") : Spaced("FREE PLAY"))) { EnterFreePlay(false); return; }
+            if (li > 0 && TrainButton(new Rect(bx, by + 48, 82, 40), "‹ PREV")) { StopDemo(); lessonDoneAt = -9f; StartLesson(li - 1); return; }
+            if (TrainButton(new Rect(bx + 88, by + 48, 82, 40), "NEXT ›")) { StopDemo(); lessonDoneAt = -9f; if (li + 1 < lessons.Length) StartLesson(li + 1); else EnterFreePlay(false); return; }
+            if (TrainButton(new Rect(bx, by + 96, 170, 40), Spaced("FREE PLAY"))) { EnterFreePlay(false); return; }
 
             // ---------------------------------------------------------------- the steps along the bottom
             int lit0 = demo ? demoStep : GhostStep();
@@ -1065,7 +1135,10 @@ namespace ProjectInk
             // ---------------------------------------------------------------- the finger
             if (demo)
             {
-                for (int i = 0; i < 2; i++) DrawFinger(fPos[i], fDown[i], fShowNow[i], fTrail[i], 1f);
+                float ha = hintOn ? Mathf.Clamp01((now - hintAt) / 0.2f) : 1f - Mathf.Clamp01((now - hintOffAt) / 0.4f);
+                SwipePath(hintA, hintB, ha);
+                for (int i = 0; i < 2; i++) if (fDown[i]) Streak(fTrail[i], 1f);
+                for (int i = 0; i < 2; i++) DrawFinger(fPos[i], fDown[i], fShowNow[i], null, 1f);
                 float rk = (now - rippleAt) / 0.4f;
                 if (rk >= 0f && rk < 1f)
                 {
@@ -1109,9 +1182,23 @@ namespace ProjectInk
 
         void Ghost(float now)
         {
-            var r = RecAt(now);
-            DrawFinger(r.p0, r.d0, r.s0, null, 0.55f);
-            DrawFinger(r.p1, r.d1, r.s1, null, 0.55f);
+            float len = rec[rec.Count - 1].t + 0.8f;
+            float t = Mathf.Repeat(now - tryAt, len);
+            int idx = 0;
+            while (idx < rec.Count - 1 && rec[idx + 1].t <= t) idx++;
+            var r = rec[idx];
+            if (r.hint) SwipePath(r.ha, r.hb, 0.75f);
+            if (r.d0)
+            {
+                // the streak: back through the recording while the finger was down
+                var pts = new List<Vector2>();
+                int k = idx;
+                while (k > 0 && rec[k - 1].d0 && idx - k < 40) k--;
+                for (; k <= idx; k++) pts.Add(rec[k].p0);
+                if (pts.Count > 1 && (pts[pts.Count - 1] - pts[0]).sqrMagnitude > 100f) Streak(pts, 0.7f);
+            }
+            DrawFinger(r.p0, r.d0, r.s0, null, 0.6f);
+            DrawFinger(r.p1, r.d1, r.s1, null, 0.6f);
         }
 
         // ---------------------------------------------------------------- free play
