@@ -161,7 +161,7 @@ namespace ProjectInk
             // (c) VOSS, low: the face from the photo, twelve years older
             if (director != null) director.ShowBanner("VOSS", 2.6f);
             Sound.Play(Sfx.CineMassive, 0.6f);
-            Say("VOSS", "Look at you. Twelve years, and you still walk like one of mine.", 3.4f, vh);
+            Say("VOSS", "Look at you. Six years out, and you still walk like one of mine.", 3.4f, vh);
             yield return Cut(3.4f, u => CineCam.LowAngleArc(vHead() + Vector3.down * 0.5f, u, 2.8f, -40f, -20f, 34f), 0.015f);
             Say("YOU", "Let her go.", 1.8f);
             yield return Cut(2.0f, u => CineCam.DollyIn(HeroHead(), new Vector3(-0.5f, -0.05f, 1f), u, 2.2f, 1.4f, 30f), 0.015f);
@@ -194,7 +194,7 @@ namespace ProjectInk
             Sound.Play(Sfx.Struggle, 0.6f, mh != null ? mh.position : vHead());
             Say("VOSS", "You've killed my whole house to get here. Now: the book. Or she learns to fly.", 4.0f, vh);
             yield return Cut(4.0f, u => Static(Roof(FortressPlan.EdgeX - 3.0f, -5.2f) + Vector3.up * 0.6f, Roof(FortressPlan.EdgeX - 0.8f, -2.2f) + Vector3.up * 0.9f, 36f), 0.03f);
-            Walkie("...Papa?", 1.4f);
+            Say("MAYA", "...Papa?", 1.4f, mh);
             yield return Cut(1.6f, u => Static((mh != null ? mh.position : vHead()) + new Vector3(-0.9f, 0.0f, -0.8f), mh != null ? mh.position : vHead(), 30f), 0.015f);
             // he slides it across the wet stones to him
             bookProp = MakeBook();

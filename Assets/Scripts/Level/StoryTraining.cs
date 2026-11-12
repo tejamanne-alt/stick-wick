@@ -122,7 +122,7 @@ namespace ProjectInk
             WaveDirector.Styled += TrainStyled;
             Sound.Tension(false);
             Sound.Play(Sfx.Riser, 0.5f);
-            Say("THUG", "Easy... boss wants him breathing. Don't break him.", 2.2f);
+            Say("THUG", "Go on, then. Show us what you've got left.", 2.2f);
             if (PlayerPrefs.GetInt(PrefSeen, 0) == 1) EnterFreePlay(false);     // seen it: straight to the playground
         }
 
@@ -157,7 +157,7 @@ namespace ProjectInk
             if (EscapeSeen) { hero.GiveWeapon(FightStyle.Knife, 4); Sound.Play(Sfx.KnifeGrab, 1f); if (floorKnife != null) floorKnife.gameObject.SetActive(false); }
             Sound.Tension(true);
             Sound.Play(Sfx.CineHit, 0.7f);
-            Say("THUG", "Enough. Forget the boss... put him down.", 1.8f);
+            Say("THUG", "Enough. Boss said breathing. Nobody said walking.", 1.8f);
             if (WaveDirector.Instance != null) WaveDirector.Instance.ShowBanner("NOW IT'S REAL", 1.6f);
             clearedAt = -1f;
             chipUntil = Time.unscaledTime + 5f;

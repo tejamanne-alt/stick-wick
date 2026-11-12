@@ -274,7 +274,7 @@ namespace ProjectInk
             yield return Cut(5.0f, u => Static(RoadPlan.CarStop + new Vector3(-6f, 3f, -9f), RoadPlan.Fortress, Mathf.Lerp(40f, 32f, u)), 0.03f);
             cardAt = Time.unscaledTime;
             cardLine = "It was never a trade.";
-            cardTitle = "OVER AND OUT";
+            cardTitle = "THE ROAD";
             yield return RealWait(6.0f);
             CineOff();
             phase = Phase.End;

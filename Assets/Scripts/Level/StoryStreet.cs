@@ -630,7 +630,7 @@ namespace ProjectInk
             System.Action onHim = () => EndShot(new Vector3(dx + 1.4f, 0.7f, -1.4f), dh != null ? dh.position : d.Chest, 30f);
             System.Action onYou = () => EndShot(new Vector3(dx + 0.6f, 1.0f, -1.6f), HeadC(), 28f);
             yield return Hold(1.0f, close);
-            Say("THE DRIVER", "I used to drive you, you know. You'd sit in the back and never say a word.", 3.4f, dh);
+            Say("THE DRIVER", "You'd sit in the back and never say a word.", 3.4f, dh);
             yield return Hold(3.6f, onHim);
             // the player asks
             StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, onYou));

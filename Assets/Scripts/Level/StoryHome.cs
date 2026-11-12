@@ -203,7 +203,7 @@ namespace ProjectInk
                 // ------------------------------------------------ H2b the black car: he turns to it (a pan off him onto it)
                 var carAt = new Vector3(-18f, 0.8f, -5.2f);
                 yield return Move(2.4f, u => CineCam.Pan(new Vector3(-8.2f, 1.55f, -2.2f), HeroHead(), carAt, u, 40f));
-                Say("YOU", "...The same car.", 2.0f);
+                Say("YOU", "...Another black car.", 2.0f);
                 yield return Hold(2.0f, () => Cine(CineCam.Pan(new Vector3(-8.2f, 1.55f, -2.2f), HeroHead(), carAt, 1f, 40f)));
 
                 // ------------------------------------------------ H3 play: up to the gate; the chalk on the path, from straight above
@@ -297,20 +297,17 @@ namespace ProjectInk
                 yield return RealWait(0.6f);
                 Say("YOU", "...I'm home.", 2.6f);
                 yield return Hold(3.2f, () => Cine(CineCam.CraneDown(kneelAt, 1f, 3.6f, 0.9f, 2.8f, 38f)));
-                // ------------------------------------------------ H10 how it happened: broken stills
-                flashAt = Time.unscaledTime;
-                Sound.Play(Sfx.Static, 0.6f);
-                float ft = 0f;
-                bool f1 = false, f2 = false, shot = false;
-                while (ft < 8.0f)
-                {
-                    ft += Time.unscaledDeltaTime;
-                    if (!f1 && ft > 1.6f) { f1 = true; Say("YOU", "She was running. Out the back... pulling someone small.", 3.2f); Sound.Play(Sfx.Static, 0.4f); }
-                    if (!f2 && ft > 4.9f) { f2 = true; Say("YOU", "She got her out of the door first.", 2.6f); Sound.Play(Sfx.Static, 0.5f); }
-                    if (!shot && ft > 7.55f) { shot = true; Sound.Play(Sfx.GunshotIndoor, 0.7f); Buzz(); }
-                    yield return null;
-                }
-                flashAt = -1f;
+                // ------------------------------------------------ H10 how it happened: read off the room, not remembered
+                // (he can't remember a night he wasn't there for; Maya tells it in chapter 4). From her, his eyes go
+                // to the back door, a few steps away, still open on the dark garden.
+                var backDoor = new Vector3(HomePlan.BackDoorX, 1.1f, 0f);
+                Sound.Play(Sfx.Wind, 0.5f, backDoor);
+                Sound.Play(Sfx.Creak, 0.5f, backDoor);
+                yield return Hold(2.4f, () => Cine(new CineCam.Shot(new Vector3(HomePlan.ElenaX - 0.8f, 0.6f, -1.6f), backDoor, 34f)));
+                Say("YOU", "The back door's open.", 2.0f);
+                yield return Hold(2.2f, () => Cine(new CineCam.Shot(new Vector3(HomePlan.ElenaX - 0.8f, 0.6f, -1.6f), backDoor, 30f)));
+                Say("YOU", "She got her out of the door first.", 2.6f);
+                yield return Hold(2.8f, () => Cine(new CineCam.Shot(new Vector3(HomePlan.ElenaX - 0.3f, 0.5f, -1.2f), backDoor + Vector3.down * 0.4f, 28f)));
                 // ------------------------------------------------ H11 back, on him: the voice upstairs, the floor drops away (a dolly zoom)
                 Sound.Play(Sfx.Creak, 0.8f, new Vector3(20f, 4f, 2f));
                 Say("VOICE, UPSTAIRS", "Bag the rest. Silas wants this place spotless before the police come back.", 3.6f);
@@ -348,7 +345,7 @@ namespace ProjectInk
                 yield return Move(3.0f, u => CineCam.ArcShot(inRoom, u, 2.8f, -46f, 0f, 0.3f, 36f));
                 yield return ShelfWalkie();
                 yield return Move(3.0f, u => CineCam.ArcShot(inRoom, u, 2.8f, 0f, 22f, 0.3f, 36f),
-                    u => { if (u > 0.4f && u - Time.unscaledDeltaTime / 3f <= 0.4f) Say("YOU", "...I'm coming, sweetheart.", 2.6f); });
+                    u => { if (u > 0.4f && u - Time.unscaledDeltaTime / 3f <= 0.4f) Say("YOU", "...Where are you, sweetheart?", 2.6f); });
                 CineOff();
                 yield return PlayerWalk(24.2f, 17.5f, 1.6f, Application.isMobilePlatform ? "HOLD TO WALK" : "HOLD  D  TO WALK");
             }

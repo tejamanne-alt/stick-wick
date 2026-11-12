@@ -164,7 +164,7 @@ namespace ProjectInk
                     {
                         hero.CinePose(new Vector3(Mathf.Lerp(2.2f, 8.2f, u), 0f, 0f));
                         if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.55f; Sound.Play(Sfx.Footstep, 0.25f, hero.transform.position, 0.8f); }
-                        if (u > 0.5f && u - Time.unscaledDeltaTime / 4.2f <= 0.5f) Say("YOU", "Small steps. Running.", 2.2f);
+                        if (u > 0.5f && u - Time.unscaledDeltaTime / 4.2f <= 0.5f) Say("YOU", "...To the swings.", 2.2f);
                     });
                 CineOff();
                 yield return PlayerWalk(ParkPlan.RibbonX - 0.9f, 7.5f, 1.6f, Application.isMobilePlatform ? "HOLD TO FOLLOW THEM" : "HOLD  D  TO FOLLOW THEM");
@@ -244,7 +244,7 @@ namespace ProjectInk
                 yield return Hold(2.0f, () => Cine(CineCam.DollyZoom(vw, 1f, 30f, 22f, 4.0f)));
                 Say("YOU", "Stay down. Keep the walkie hidden. Papa's coming.", 3.0f);
                 yield return Hold(3.2f, atMouth);
-                Say("VOICE, IN THE VAN", "Who are you talking to? Give me that!", 2.4f);
+                Say("VOICE, IN THE VAN", "Who are you talking to? Get away from that window!", 2.4f);
                 Sound.Play(Sfx.Static, 0.7f, null, 1.2f);
                 yield return Hold(1.4f, closeOn);
                 if (vanLights != null) vanLights.gameObject.SetActive(true);
@@ -486,7 +486,7 @@ namespace ProjectInk
             yield return Hold(2.2f, () => Cine(new CineCam.Shot(two + new Vector3(-0.2f, 0.4f, -3.8f), two, 34f)));
             Say("THE HANDLER", "...Kessel Hill. The old fort, with the observatory.", 3.2f, hh);
             yield return Move(3.4f, u => CineCam.DollyIn(hHead(), new Vector3(-1f, -0.15f, 0.7f), u, 2.6f, 1.4f, 32f));
-            Say("THE HANDLER", "He won't hurt her. He wants you back. Don't you get it?", 3.2f, hh);
+            Say("THE HANDLER", "He won't hurt her. She was bait. We kept her by the swings till you came home.", 3.2f, hh);
             yield return Hold(3.4f, () => Cine(CineCam.DollyIn(hHead(), new Vector3(-1f, -0.15f, 0.7f), 1f, 2.6f, 1.4f, 32f)));
             Say("THE HANDLER", "He pulled you off the street at nineteen. You were more his son than Silas ever was...", 4.0f, hh);
             yield return Hold(4.2f, () => Cine(CineCam.DollyIn(hHead(), new Vector3(-1f, -0.15f, 0.7f), 1f, 2.6f, 1.4f, 32f)));

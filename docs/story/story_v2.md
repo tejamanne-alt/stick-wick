@@ -67,7 +67,7 @@ This replaces `story_arc.md` as the source of truth. The sets, fights and bosses
 | Thread | Planted | Grows | Pays off |
 |---|---|---|---|
 | **THE BOOK** | Ch1: the note says "Get what's in 417". | Ch2: he opens the box; the book is in it, and he reads one page. Ch2 street: "The box. Hand it over." | Ch6: the trade on the roof. Ch7: he keeps it, locked in a drawer under Elena's photo. |
-| **"V"** | Ch1: the note is signed **— V.** | Ch2: the clerk on the phone: "Yes, Mr. V... he's here." Ch3: a photo in his study, inscribed *"To my best student. — V."* Ch3: V's voice on the Cleaner's phone. Ch4: the Handler: "He made you." | Ch6: VOSS on the roof, the same face as the photo, twelve years older. |
+| **"V"** | Ch1: the note is signed **— V.** | Ch2: the clerk on the phone: "Yes, Mr. V... he's here." Ch3: a photo in his study, inscribed *"To my best student. — V."* Ch3: V's voice on the Cleaner's phone. Ch4: the Handler: "He made you." | Ch6: VOSS on the roof, the same face as the photo, older. |
 | **The blow** | Ch1: wakes with the wound; the first flash is just a pipe and a shadow. | Ch3: the second flash is Voss's office, "I'm out, Voss." | Ch6: the third flash is the window, "Then finish it. All of them." The whole night comes back. |
 | **"Promise me you'll always come home"** | Ch2: the wedding memory, Elena's voice. | Ch3: the Cleaner: "They always come home." The words turn sour. | Ch7: he does come home, to her grave, with Maya. |
 | **The red ribbon** | Ch3: Maya's photo, the red ribbon in her hair. | Ch4: the ribbon in the grass, which she left as a trail ("Mama said leave a trail if you're lost"). He ties it round his wrist. | Ch6: he ties it back in her hair. |
@@ -146,9 +146,9 @@ Morning, no rain. Keep the set, the street fights and the Driver.
 |---|---|---|---|
 | 2.1 | (as built) the key's mark matched to the stone above the doors | **YOU:** "Nine o'clock. They'll be here at nine." He checks the bank's clock: **8:41**. The clock stays on screen as a quiet timer for the bank part. | |
 | 2.2 | The clerk at the counter, over his shoulder | **CLERK:** "Box four-one-seven... Of course, sir. You haven't been in for six years." "The standing instruction is still in place: if anything happens to you, the box goes to your lawyer." "Palm on the glass, please." | **HOLD** the palm on the scanner. Lines run up his hand and the box unlocks. |
-| 2.3 | Top-down on the open box | The box holds, in order: the ring, three passports (him, Elena, a girl of six, new names), a thick black **book**, and an envelope with a letter. | **TAP** each item. |
+| 2.3 | Top-down on the open box | The box holds, in order: the ring, three passports (him, Elena, a baby; new names, made the year he got out), a thick black **book**, and an envelope with a letter. | **TAP** each item. |
 | 2.4 | The ring | **The wedding memory** (stills as built). **HER · A MEMORY:** "Promise me you'll always come home." **YOU:** "...Elena." | |
-| 2.5 | A child's passport, the photo | **YOU:** "A daughter... I have a daughter." The name on it: **MAYA.** | |
+| 2.5 | A child's passport, the photo | **YOU:** "Me... a woman... and a baby." "And the baby... *Maya.*" (the passports were made the year he left; she is six now) The name on it: **MAYA.** | |
 | 2.6 | The book, opened at random | A page of names and dates in his own hand, with a payment beside each. Every order is signed **V.** **YOU:** "...Forty-one names." "I didn't keep this to remember them. I kept it so he'd leave us alone." | **DRAG** to turn one page. |
 | 2.7 | The letter | His own words, to himself: *"If you're reading this, it went wrong. 14 Alder Lane. Get them out."* | |
 | 2.8 | Through the glass: the clerk on the phone | **CLERK** (low): "Yes, Mr. V... He's here. He opened it." Cut to him, who heard. **YOU:** "...Mr. V." | |
@@ -245,7 +245,7 @@ The storm. Keep everything built: the road, the gate, the trap, the courtyard, t
 | 6.2 | (as built) the blackout; the courtyard dark | **YOU** (to himself): "I don't need to see them." | |
 | 6.3 | (as built) the Warden | **WARDEN:** "I kept his door. Twenty years. Boss said, whoever brings the book... I've waited twenty years for that chair." After: "Go on up. He's been waiting. He's been waiting years." "Boss falls... hill burns. Nothing left... for Harrow." (Voss's dead-man's switch, paid off in 6.11.) | (fight) |
 | 6.3b | (as built) the tower: the man and the child on the gallery, lit by a strike. Then the walkie in his pocket clicks on | **MAYA (walkie, whispering):** "Papa! I see you! You're tiny!" "The cane man is taking me up to the roof." **YOU:** "I see you too. I'm coming up. Over." | **HOLD** to answer. |
-| 6.4 | (as built) the stair, the roof | **VOSS:** "Look at you. Twelve years, and you still walk like one of mine." | |
+| 6.4 | (as built) the stair, the roof | **VOSS:** "Look at you. Six years out, and you still walk like one of mine." | |
 | 6.5 | Flash 3: the window, the phone | **VOSS (in the flash):** "Bring them to me. All of them. Alive." Now the whole night comes back. **VOSS:** "Six years I lived on your mercy. A detective at your door, and I'm meant to wait?" **VOSS:** "So I learned your trick. If I fall, Kessel falls with me. Every page of it." **VOSS:** "I told him to bring her. He never listened. Not once in his life." **YOU:** "Your boy killed Elena." **VOSS:** "...I know. And I still loved him. That's what fathers do. You'd know." **YOU:** "And I killed him." **VOSS:** "Yes. So here we are." | |
 | 6.6 | **The trade.** Two-shot down the terrace; the book in his hand, Maya in Voss's | **VOSS:** "The book, and she walks to you. That was always the deal." Every man has failed, so the trade is Voss's last card, now open force: Maya held at the broken edge. **VOSS:** "You've killed my whole house to get here. Now, the book, or she learns to fly." **DRAG** the book across the wet stones to him. Voss lets Maya go ("Run along, little one"), weighs the book in his hand, then drops it and raises the silver pistol: "I did teach you better than to trust me." Into the duel. | **DRAG** |
 | 6.7 | (as built) the duel: I the teacher (the sword-cane), II the gun (slip the shot, get in close), III the edge | **VOSS**, phase II: "Every one of them down there, you taught. I taught you." Phase III: "Then let's finish what I started." | (fight) |
@@ -311,3 +311,22 @@ Card: **CHAPTER 6 · THE STORM.**
    - the book back in his coat.
 7. **Ch7 · Home:** the epilogue (Harrow, the cemetery, the swing, the drawer; reuses the Backyard set and the Fortress road, plus a small cemetery dressing).
 8. **Docs, test checkpoints** for every new beat, then a play-through script for you to test.
+
+## Corrections from the whole-game story review
+- The bank: the clerk sends him down with **Mr. Pell** (Harrow is the detective).
+- The box hasn't been opened for six years, so the passports show **a baby**; Maya is six now.
+- Voss on the roof: **"Six years out, and you still walk like one of mine."**
+- Voss's men keep his rule (he needs the hero's hand alive, for the box):
+  - the training ground's turn to the real fight: **"Boss said breathing. Nobody said walking."**
+  - the Foreman: **"He needs your hand breathing till nine. Not the rest of you."** and **"The old man wants the book."**
+- The van man: **"Get away from that window!"** (he no longer takes the walkie, which she keeps using all the way to the fortress).
+- The Handler: **"She was bait. We kept her by the swings till you came home."** (why she is in the van by the swings a day later).
+- Chapter 3 H10: no memory stills of a night he wasn't there for. He sees the **open back door**: "The back door's open." "She got her out of the door first." Maya tells the rest in chapter 4.
+- "I'm coming, sweetheart" is chapter 4's alone. In chapter 3 he says **"...Where are you, sweetheart?"**, and chapter 4 opens on **"...To the swings."**
+- Chapter 5's card is **THE ROAD** ("OVER AND OUT" belongs to the walk-out).
+- The epilogue: **SIX WEEKS LATER** between Harrow at the foot of the hill and the grave.
+- Maya's "...Papa?" on the roof is spoken (she is in shot), not over the walkie.
+- Smaller fixes:
+  - The Driver's second "I drove you" is cut.
+  - "Another black car" (the Driver's car was wrecked in chapter 2).
+- Still open (backlog step 14, the book): whose book it is. The vault says the hero's handwriting, but the epilogue's "Voss had a book" and Voss's "Every page of it" lean the other way.

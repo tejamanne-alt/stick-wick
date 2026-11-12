@@ -126,7 +126,7 @@ namespace ProjectInk
             Say("YOU", "Tell me who I am. WHO SENT YOU?", 2.4f);
             Sound.Play(Sfx.Tinnitus, 0.25f);
             yield return Hold(2.4f, close);
-            Say("THE FOREMAN", "The old man wants his book back. Nine o'clock, you open a box for him.", 3.4f);
+            Say("THE FOREMAN", "The old man wants the book. Nine o'clock, you open a box for him.", 3.4f);
             Sound.Play(Sfx.Heartbeat, 0.8f);
             yield return Hold(3.4f, close);
             Say("YOU", "What book? What old man?", 2.0f);
@@ -176,7 +176,7 @@ namespace ProjectInk
 
             // ---------------------------------------------------------------- 4d the hammer: the gun in profile against the light
             Sound.Play(Sfx.GunCock, 1f);
-            Say("THE FOREMAN", "He wanted you breathing till nine. I'll tell him you didn't make it.", 2.6f);
+            Say("THE FOREMAN", "He needs your hand breathing till nine. Not the rest of you.", 2.6f);
             heartBpm = 120f;
             yield return Hold(1.6f, () =>
             {

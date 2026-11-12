@@ -16,7 +16,7 @@ namespace ProjectInk
         Enemy harrowMan;
         Transform swingSeat, drawerFront, policeLights;
         Transform[] policeR;
-        float epTitleAt = -1f, theEndCardAt = -1f;
+        float epTitleAt = -1f, theEndCardAt = -1f, laterAt = -1f;
 
         void BeginEpilogue()
         {
@@ -146,6 +146,10 @@ namespace ProjectInk
             }
             if (from <= 1)
             {
+                // ------------------------------------------------ the time cut: the grave is weeks on
+                blackout = 1f;
+                laterAt = Time.unscaledTime;
+                yield return RealWait(2.8f);
                 // ------------------------------------------------ 7.3 the grave, on the hill, at dawn
                 var g0 = EpiloguePlan.KneelSpot + new Vector3(-7f, 0f, -0.9f);
                 hero.CinePose(g0);
@@ -282,6 +286,20 @@ namespace ProjectInk
                     GUI.Label(new Rect(0, h * 0.38f + 30, w, 96), Spaced("HOME"), big);
                     big.fontSize = bs;
                     Fill(new Rect(w * 0.5f - 110 * a, h * 0.38f + 128, 220 * a, 3), new Color(0.8f, 0.06f, 0.07f, a));
+                    cap.alignment = TextAnchor.MiddleLeft;
+                    cap.fontSize = 20;
+                }
+            }
+            if (laterAt > 0f)
+            {
+                float t1 = Time.unscaledTime - laterAt;
+                float la = Mathf.Clamp01(t1 / 0.6f) * Mathf.Clamp01((2.8f - t1) / 0.6f);
+                if (la > 0f)
+                {
+                    cap.alignment = TextAnchor.MiddleCenter;
+                    cap.fontSize = 26;
+                    cap.normal.textColor = new Color(1f, 1f, 1f, 0.85f * la);
+                    GUI.Label(new Rect(0, h * 0.46f, w, 34), Spaced("SIX WEEKS LATER"), cap);
                     cap.alignment = TextAnchor.MiddleLeft;
                     cap.fontSize = 20;
                 }

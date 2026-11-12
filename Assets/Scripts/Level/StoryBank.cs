@@ -212,7 +212,7 @@ namespace ProjectInk
             bankUi = 0;
 
             // ------------------------------------------------------------ B9 her smile, a beat too bright
-            Say("CLERK", "Of course. Mr. Harrow will take you down.", 2.6f, HeadT(clerk));
+            Say("CLERK", "Of course. Mr. Pell will take you down.", 2.6f, HeadT(clerk));
             yield return Hold(2.8f, () => EndShot(Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)) + new Vector3(-0.2f, 0.05f, -1.4f), Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)), 28f));
 
             // ------------------------------------------------------------ B10 Harrow; the corridor; the gate; the round door
@@ -466,7 +466,7 @@ namespace ProjectInk
             yield return Hold(1.8f, boxShot);
             Say("YOU", "Three passports. New names, all of them...", 2.4f);
             yield return Hold(2.5f, boxShot);
-            Say("YOU", "Me... a woman... and a little girl.", 2.6f);
+            Say("YOU", "Me... a woman... and a baby.", 2.6f);
             yield return Hold(2.8f, boxShot);
             Say("YOU", "I was getting someone out.", 2.2f);
             yield return Hold(2.4f, boxShot);
@@ -516,7 +516,7 @@ namespace ProjectInk
             yield return Hold(2.2f, boxShot);
             passportFocus = 2;
             Sound.Play(Sfx.MusicNote, 0.5f);
-            Say("YOU", "And the girl... \"Maya.\"", 2.4f);
+            Say("YOU", "And the baby... \"Maya.\"", 2.4f);
             yield return Hold(2.6f, boxShot);
             Say("YOU", "...I have a daughter.", 2.4f);
             Sound.Play(Sfx.Heartbeat, 0.6f);
