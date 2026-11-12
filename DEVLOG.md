@@ -1768,3 +1768,14 @@ Then the roof, as built.
 - A landed swing can be cut short into the next.
 - It still wears out (14 swings).
 - The reads chain off it: the jab folds a man (then the overhead), the shins buckle his leg.
+
+## Chapter 6 glitch pass
+- **The barbican:** the level now stops at the moat's edge; men knocked into the moat had made the fight unfinishable.
+- **The tower stair:** the fight stays this side of the broken steps until the jump.
+- **Falls:** anyone who falls out of a level is dealt with. A man is finished off; the hero is put back on the floor with a small hit.
+- **Between levels:** walks replace the pops (wall walk → wall tower → courtyard, gallery → hall).
+- **The chandeliers:** each one that falls takes the nearest hanging one with it (no twin left hanging).
+- **The set:**
+  - The hall's table, benches and the Warden's chair are behind the lane (the table is no longer a floor).
+  - The gallery stair and the stable roof are open treads over the floor below.
+  - The telescope is behind the lane; the retaining wall's end is out of the road; the hay bale is above head height.

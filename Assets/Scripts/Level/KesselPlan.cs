@@ -21,7 +21,6 @@ namespace ProjectInk
             new Platform(548.0f, 560.0f, 18.6f, true),   // hay_loft
             new Platform(584.0f, 612.0f, 15.4f, false),   // gallery
             new Platform(612.0f, 660.0f, 15.4f, false),   // great_hall
-            new Platform(626.0f, 640.0f, 16.3f, true),   // hall_table
             new Platform(644.0f, 658.0f, 19.6f, true),   // minstrel_gallery
             new Platform(672.0f, 676.0f, 21.4f, false),   // tower_landing
             new Platform(684.0f, 688.0f, 24.4f, false),   // tower_ledge
@@ -41,10 +40,10 @@ namespace ProjectInk
             new Stair(472.0f, 15.4f, 480.0f, 22.4f, 6, 7),
             new Stair(528.0f, 15.4f, 520.0f, 22.4f, 8, 7),
             new Stair(566.0f, 15.4f, 560.0f, 18.6f, 8, 9),
-            new Stair(640.0f, 15.4f, 644.0f, 19.6f, 11, 13),
-            new Stair(660.0f, 15.4f, 672.0f, 21.4f, 11, 14),
-            new Stair(676.0f, 21.4f, 681.4f, 24.4f, 14, 17),
-            new Stair(688.0f, 24.4f, 698.0f, 30.4f, 15, 16),
+            new Stair(640.0f, 15.4f, 644.0f, 19.6f, 11, 12),
+            new Stair(660.0f, 15.4f, 672.0f, 21.4f, 11, 13),
+            new Stair(676.0f, 21.4f, 681.4f, 24.4f, 13, 16),
+            new Stair(688.0f, 24.4f, 698.0f, 30.4f, 14, 15),
         };
 
         public static readonly Ledge[] Ledges =
@@ -59,7 +58,7 @@ namespace ProjectInk
         {
             ("THE SWITCHBACK ROAD", 300.0f, 380.0f, 0.0f),
             ("THE GREAT STAIR", 380.0f, 420.0f, 3.4f),
-            ("THE BARBICAN", 420.0f, 446.0f, 15.4f),
+            ("THE BARBICAN", 420.0f, 443.8f, 15.4f),
             ("THE GATE PASSAGE", 448.0f, 472.0f, 15.4f),
             ("THE WALL WALK", 472.0f, 520.0f, 22.4f),
             ("THE WALL TOWER", 520.0f, 528.0f, 22.4f),

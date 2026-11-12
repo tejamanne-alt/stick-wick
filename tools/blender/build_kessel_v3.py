@@ -71,6 +71,18 @@ def floor_slab(g, x0, x1, z, m, front=-1.6, back=4.0, thick=1.0):
         g.box(((x0 + x1) / 2, (front + back) / 2, z - thick / 2), (x1 - x0, back - front, thick), m)
 
 
+def open_steps(g, x0, z0, x1, z1, m, front=-1.3, back=0.6, n=None):
+    """An open flight (treads on a stringer, nothing under it): a floor runs on below it, and a man
+    walking there must not walk through a solid block."""
+    n = n or max(4, int(abs(z1 - z0) / 0.2))
+    for i in range(n):
+        u = (i + 1) / n
+        xa, xb = x0 + (x1 - x0) * i / n, x0 + (x1 - x0) * u
+        z = z0 + (z1 - z0) * u
+        g.box(((xa + xb) / 2, (front + back) / 2, z - 0.04), (abs(xb - xa) + 0.04, back - front, 0.08), m)
+    g.beam((x0, back + 0.06, z0), (x1, back + 0.06, z1), 0.08, 0.3, m)       # the stringer, behind the lane
+
+
 def steps(g, x0, z0, x1, z1, m, front=-1.4, back=2.0, n=None, base=None):
     """A flight of real steps from (x0, z0) to (x1, z1) (either direction)."""
     n = n or max(4, int(abs(z1 - z0) / 0.2))
@@ -114,7 +126,7 @@ def build_road(coll, M):
     g.beam((298, -3.0, 0.76), (343, -3.0, 0.76), 0.07, 0.05, M["iron"])
     # the retaining wall under the upper road (behind the lower one): cut stone, a drain, ivy dark
     g.box(((322 + 352) / 2, BACK + 0.4, 1.7), (30.0, 0.8, 3.4), M["stone"])
-    g.box((322.0, 0.0, 1.7), (0.6, 2.6, 3.4), M["stone"])                        # its end (the face you climb)
+    g.box((322.0, BACK + 0.4, 1.7), (0.6, 0.8, 3.4), M["stone"])                  # its end (behind the lane: the lower road runs on)
     floor_slab(g, 322.0, 384.0, 3.4, M["road"], front=-1.4, back=BACK + 2.4, thick=0.5)   # the upper road over it
     for x in range(323, 380, 2):
         g.box((x, -1.5, 3.8), (0.16, 0.16, 0.8), M["stone_dark"])
@@ -306,14 +318,14 @@ def build_court(coll, M):
     for px in (lx0 + 0.2, (lx0 + lx1) / 2, lx1 - 0.2):
         g.box((px, BACK + 1.4, (z + lz) / 2), (0.25, 0.25, lz - z), M["planks_wall"])
     g.box(((lx0 + lx1) / 2, BACK + 2.0, (z + lz) / 2 + 1.5), (lx1 - lx0, 0.3, lz - z + 3.0), M["planks_wall"])
-    steps(g, K.S[6][2], K.S[6][3], K.S[6][0], K.S[6][1], M["planks"], front=-1.3, back=BACK + 1.6, n=10)   # the roof's slope
+    open_steps(g, K.S[6][2], K.S[6][3], K.S[6][0], K.S[6][1], M["planks"], front=-1.3, back=0.8, n=10)   # the roof's slope (the yard runs on under it)
     for k in range(9):                                                     # the ladder at the loft's edge
         g.box((lx0 - 0.15, -0.6, z + 0.3 + k * 0.36), (0.1, 0.5, 0.05), M["planks_wall"])
     for s in (-1, 1):
         g.box((lx0 - 0.15, -0.6 + s * 0.25, (z + lz) / 2), (0.06, 0.06, lz - z + 0.4), M["planks_wall"])
     hx, _ = K.MARKS["hay_hoist"]
     g.beam((hx, -0.2, lz + 3.2), (hx, BACK + 2.0, lz + 3.2), 0.16, 0.16, M["planks_wall"])
-    g.box((hx, -0.2, lz + 1.5), (0.9, 0.7, 0.7), M["planks"])                # the bale on its rope
+    g.box((hx, -0.2, lz + 2.7), (0.9, 0.7, 0.7), M["planks"])                # the bale on its rope (above head height on the loft)
     # the cart, carts and barrels
     cx, _ = K.MARKS["cart"]
     g.box((cx, BACK + 0.8, z + 0.7), (2.8, 1.4, 0.5), M["planks_wall"])
@@ -399,28 +411,28 @@ def build_hall(coll, M):
     g.box(((x0 + x1) / 2, 0.8, top), (x1 - x0, 7.0, 0.6), M["planks"])                        # the roof beams' ceiling
     for bx in range(614, 662, 4):
         g.box((bx, 0.8, top - 0.4), (0.3, 7.0, 0.5), M["planks_wall"])
-    # the long table (a plan floor: you can get up on it), benches behind it
-    tx0, tx1, tz = K.P[12][0], K.P[12][1], K.P[12][2]
-    g.box(((tx0 + tx1) / 2, 0.0, tz - 0.06), (tx1 - tx0, 1.6, 0.12), M["planks"])
+    # the long table, its benches and the Warden's chair: behind the lane (nobody walks through them)
+    tx0, tx1, ty = 626.0, 640.0, BACK + 0.9
+    g.box(((tx0 + tx1) / 2, ty, z + 0.86), (tx1 - tx0, 1.4, 0.12), M["planks"])
     for lx in (tx0 + 0.6, (tx0 + tx1) / 2, tx1 - 0.6):
         for s in (-1, 1):
-            g.box((lx, s * 0.6, (z + tz) / 2), (0.14, 0.14, tz - z), M["planks_wall"])
-    g.box(((tx0 + tx1) / 2, 1.3, z + 0.45), (tx1 - tx0, 0.4, 0.1), M["planks"])
+            g.box((lx, ty + s * 0.55, z + 0.4), (0.14, 0.14, 0.8), M["planks_wall"])
+    g.box(((tx0 + tx1) / 2, ty + 1.0, z + 0.45), (tx1 - tx0, 0.4, 0.1), M["planks"])
+    g.box((tx1 + 0.8, ty, z + 0.8), (0.8, 0.8, 1.6), M["planks_wall"])
+    g.box((tx1 + 1.1, ty, z + 2.0), (0.2, 0.8, 1.6), M["planks_wall"])
     # the minstrels' gallery and its stair
-    mx0, mx1, mz = K.P[13][0], K.P[13][1], K.P[13][2]
+    mx0, mx1, mz = K.P[12][0], K.P[12][1], K.P[12][2]
     floor_slab(g, mx0, mx1, mz, M["planks"], front=-1.4, back=BACK + 4.0, thick=0.4)
     g.box(((mx0 + mx1) / 2, -1.45, mz + 0.5), (mx1 - mx0, 0.1, 1.0), M["planks_wall"])     # its balustrade (low, in front)
     for bx in range(int(mx0), int(mx1), 1):
         g.box((bx + 0.5, -1.45, mz + 0.5), (0.06, 0.06, 1.0), M["planks_wall"])
-    steps(g, K.S[7][0], K.S[7][1], K.S[7][2], K.S[7][3], M["planks"], front=-1.3, back=0.6, n=12)
+    open_steps(g, K.S[7][0], K.S[7][1], K.S[7][2], K.S[7][3], M["planks"], front=-1.3, back=0.6, n=12)   # open: the hall's floor runs on under it
     # the fireplace at the far end, big enough to stand in
     fx, _ = K.MARKS["fireplace"]
     g.box((fx, BACK + 3.6, z + 2.0), (3.6, 1.2, 4.0), M["stone_dark"])
     g.box((fx, BACK + 3.0, z + 0.5), (2.4, 0.4, 0.8), M["fire"])
     g.box((fx, BACK + 3.0, z + 4.2), (4.2, 1.6, 0.5), M["stone"])
-    # the Warden's chair at the table's head; banners
-    g.box((tx1 + 0.8, 0.9, z + 0.8), (0.8, 0.8, 1.6), M["planks_wall"])
-    g.box((tx1 + 1.1, 0.9, z + 2.0), (0.2, 0.8, 1.6), M["planks_wall"])
+    # banners
     for bx in (620.0, 636.0, 652.0):
         banner(g, bx, BACK + 3.8, z + 10.0, 4.0, M)
     return g.finish(coll)
@@ -451,7 +463,7 @@ def build_tower(coll, M):
         g.box((690.0 + math.cos(a) * 6.02, BACK + 5.0 + math.sin(a) * 6.02, 18.0 + (k % 3) * 4.0), (0.12, 0.06, 1.0), M["stone_dark"])
     for st in (K.S[8], K.S[9], K.S[10]):
         steps(g, st[0], st[1], st[2], st[3], M["steps"], front=-1.4, back=BACK + 0.6)
-    for i in (14, 15, 17):
+    for i in (13, 14, 16):
         x0, x1, z = K.P[i][0], K.P[i][1], K.P[i][2]
         floor_slab(g, x0, x1, z, M["steps"], back=BACK + 0.6, thick=1.0)
     # the gap: broken steps fallen away, their stubs, the drop
@@ -467,7 +479,7 @@ def build_tower(coll, M):
 
 def build_dome(coll, M):
     g = S.Group("KDome")
-    x0, x1, z = K.P[16][0], K.P[16][1], K.P[16][2]
+    x0, x1, z = K.P[15][0], K.P[15][1], K.P[15][2]
     floor_slab(g, x0, x1, z, M["planks"], back=BACK + 4.0, thick=1.0)
     # the dome (behind and over): copper ribs, the open slot to the storm
     cx = (x0 + x1) / 2
@@ -492,7 +504,7 @@ def build_telescope(coll, M):
     g.cyl((0, 0, 0.9), 0.35, 1.8, M["iron"], n=12, r2=0.5)                  # the pier
     g.cyl((0, 0, 2.0), 0.4, 4.2, M["copper"], rot=(0, 55, 0), n=20, r2=0.32)  # the tube, tilted to the slot
     ob = g.finish(coll)
-    ob.location = (K.MARKS["telescope"][0], 0.9, 30.4)
+    ob.location = (K.MARKS["telescope"][0], BACK + 0.8, 30.4)          # behind the lane
     return ob
 
 

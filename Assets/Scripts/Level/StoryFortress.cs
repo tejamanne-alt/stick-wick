@@ -506,6 +506,17 @@ namespace ProjectInk
         /// <summary>A chandelier cut loose over him: its shadow on the floor first, then it comes down.</summary>
         void DropChandelier(float x)
         {
+            // Kessel Hill's hall: the hanging chandelier nearest him is the one that comes down (no twin left hanging)
+            if (hallFloorY > 10f)
+            {
+                Transform near = null;
+                foreach (var n in new[] { "KChandelier1", "KChandelier2", "KChandelier3" })
+                {
+                    var t = Find(n);
+                    if (t != null && t.gameObject.activeSelf && (near == null || Mathf.Abs(t.position.x - x) < Mathf.Abs(near.position.x - x))) near = t;
+                }
+                if (near != null) { x = near.position.x; near.gameObject.SetActive(false); }
+            }
             var root = new GameObject("FallingChandelier").transform;
             root.position = new Vector3(x, hallFloorY + 7.4f, 0f);
             var ink = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.05f, 0.05f, 0.06f) };

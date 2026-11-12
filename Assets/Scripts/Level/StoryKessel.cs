@@ -137,6 +137,19 @@ namespace ProjectInk
         void UpdateKessel()
         {
             if (kLevel < 0 || hero == null || hero.IsDead) return;
+            float floorY = KesselPlan.Levels[kLevel].y;
+            float lowest = floorY;
+            foreach (var p in KesselPlan.Platforms) if (p.x1 > kx0 && p.x0 < kx1 && p.x0 >= 280f) lowest = Mathf.Min(lowest, p.y);
+            foreach (var e in kMen)
+                if (e != null && e.Alive && e.transform.position.y < lowest - 4f)
+                    e.Kill(new HitInfo { damage = 999f, direction = 1, knockdown = true, attacker = hero });
+            if (hero.transform.position.y < lowest - 4f && !hero.CinematicLock)
+            {
+                // fallen out of the level (a missed jump, a shove off an edge): back on its floor, a little hurt
+                hero.TakeHit(new HitInfo { damage = 10f, direction = 1, knockback = 0f });
+                hero.CinePose(new Vector3(kx0 + 1.4f, FloorAt(kx0 + 1.4f, floorY), 0f));
+                hero.CineRelease();
+            }
             if (kMen.Count > 0 && Time.unscaledTime > kBarkAt)
             {
                 kBarkAt = Time.unscaledTime + Random.Range(7f, 12f);
@@ -429,6 +442,8 @@ namespace ProjectInk
             KMan(EnemyType.Swordsman, 515f, 22.4f);
             KMan(EnemyType.Brawler, 486f, 22.4f, false, 1);
             yield return KFight();
+            SetArena(kx0, KesselPlan.Levels[5].x0 + 1.2f);
+            yield return PlayerWalk(KesselPlan.Levels[5].x0 + 0.6f, kx0, 1.8f, Application.isMobilePlatform ? "HOLD TO GO DOWN THE TOWER" : "HOLD  D  TO GO DOWN THE TOWER");
         }
 
         void UpdateGusts()
@@ -453,6 +468,7 @@ namespace ProjectInk
             var s = KMan(EnemyType.Swordsman, 526f, 15.4f);
             if (s != null) { s.arenaMinX = KesselPlan.Levels[5].x0 - 1f; s.arenaMaxX = KesselPlan.Levels[6].x0 + 3f; }
             yield return KFight();
+            yield return PlayerWalk(KesselPlan.Levels[6].x0 + 1.2f, KesselPlan.Levels[5].x0 - 1f, 1.8f, Application.isMobilePlatform ? "HOLD TO GO OUT" : "HOLD  D  TO GO OUT");
         }
 
         // ================================================================ L7 the courtyard
@@ -573,6 +589,8 @@ namespace ProjectInk
             float wait = 0f;
             while (SetPiece.All.Exists(p => p != null && p.label == "THE PHOTOGRAPH" && p.usable) && wait < 20f) { wait += Time.deltaTime; yield return null; }
             while (memoryPlaying) yield return null;
+            SetArena(kx0, KesselPlan.Levels[8].x0 + 2f);
+            yield return PlayerWalk(KesselPlan.Levels[8].x0 + 1.2f, kx0, 1.8f, Application.isMobilePlatform ? "HOLD TO GO ON" : "HOLD  D  TO GO ON");
         }
 
         bool memoryPlaying;
@@ -666,7 +684,7 @@ namespace ProjectInk
             warden.DriverPhase = 2;
             warden.arenaMinX = kx0; warden.arenaMaxX = kx1;
             warden.Puppet();
-            warden.PuppetPose(new Vector3(641.6f, 15.4f, 0.9f));
+            warden.PuppetPose(new Vector3(641.6f, 15.4f, 3.0f));            // in his chair at the table's head (behind the lane)
             warden.SetFacing(-1);
             warden.PuppetPlay("idle", 0f);
             wardenStage = 0;
@@ -746,7 +764,9 @@ namespace ProjectInk
             // first, from below: the man and the child on the gallery, lit by a strike (the old tower's shots)
             if (!cut) { yield return TheTower(); }
             yield return BeginLevel(9, true, 659.4f);
+            SetArena(kx0, 682.2f);                                   // this side of the broken steps until the jump
             KMan(EnemyType.Swordsman, 673.5f, 21.4f); KMan(EnemyType.Swordsman, 668f, 18.4f);
+            foreach (var m in kMen) if (m != null) m.arenaMaxX = 682.2f;
             yield return KFight(() => hero.transform.position.x > 679f);
             // the broken stair: only the lightning shows the gap
             SetArena(kx0, 682.2f);

@@ -25,12 +25,11 @@ P = [
     (548.0, 560.0, 18.6, True, "hay_loft"),         # 9  L7 the stable's loft
     (584.0, 612.0, 15.4, False, "gallery"),         # 10 L8 Voss's gallery
     (612.0, 660.0, 15.4, False, "great_hall"),      # 11 L9 the great hall
-    (626.0, 640.0, 16.3, True, "hall_table"),       # 12 L9 the long table
-    (644.0, 658.0, 19.6, True, "minstrel_gallery"),  # 13 L9 the minstrels' gallery
-    (672.0, 676.0, 21.4, False, "tower_landing"),   # 14 L10 a landing on the tower stair
-    (684.0, 688.0, 24.4, False, "tower_ledge"),     # 15 L10 beyond the broken step
-    (698.0, 716.0, 30.4, False, "observatory"),     # 16 L11 the observatory
-    (681.4, 682.4, 24.4, False, "broken_end"),      # 17 L10 the last whole step before the gap
+    (644.0, 658.0, 19.6, True, "minstrel_gallery"),  # 12 L9 the minstrels' gallery (the long table stands behind the lane: no walking through it)
+    (672.0, 676.0, 21.4, False, "tower_landing"),   # 13 L10 a landing on the tower stair
+    (684.0, 688.0, 24.4, False, "tower_ledge"),     # 14 L10 beyond the broken step
+    (698.0, 716.0, 30.4, False, "observatory"),     # 15 L11 the observatory
+    (681.4, 682.4, 24.4, False, "broken_end"),      # 16 L10 the last whole step before the gap
     # the old fortress set, kept: the cliff road and the keep's level (the arrival, the walk-out) and the
     # roof terrace (the duel with Voss)
     (0.0, 44.0, 0.0, False, "old_road"),            # 18
@@ -47,10 +46,10 @@ S = [
     (472.0, 15.4, 480.0, 22.4, 6, 7),      # L4 → L5 the passage's stair to the wall
     (528.0, 15.4, 520.0, 22.4, 8, 7),      # L6 the wall tower's stair (down to the courtyard)
     (566.0, 15.4, 560.0, 18.6, 8, 9),      # L7 the stable roof (slid down)
-    (640.0, 15.4, 644.0, 19.6, 11, 13),    # L9 the gallery stair
-    (660.0, 15.4, 672.0, 21.4, 11, 14),    # L10 the tower stair, first flight
-    (676.0, 21.4, 681.4, 24.4, 14, 17),    # L10 the second flight, to the last whole step before the gap
-    (688.0, 24.4, 698.0, 30.4, 15, 16),    # L10 the last flight to the observatory
+    (640.0, 15.4, 644.0, 19.6, 11, 12),    # L9 the gallery stair
+    (660.0, 15.4, 672.0, 21.4, 11, 13),    # L10 the tower stair, first flight
+    (676.0, 21.4, 681.4, 24.4, 13, 16),    # L10 the second flight, to the last whole step before the gap
+    (688.0, 24.4, 698.0, 30.4, 14, 15),    # L10 the last flight to the observatory
 ]
 
 # ---------------------------------------------------------------- ledges (x, y, dir): hang and pull up
@@ -63,7 +62,7 @@ L = [
 LEVELS = [
     ("THE SWITCHBACK ROAD", 300.0, 380.0, 0.0),
     ("THE GREAT STAIR", 380.0, 420.0, 3.4),
-    ("THE BARBICAN", 420.0, 446.0, 15.4),
+    ("THE BARBICAN", 420.0, 443.8, 15.4),       # stops at the moat's edge
     ("THE GATE PASSAGE", 448.0, 472.0, 15.4),
     ("THE WALL WALK", 472.0, 520.0, 22.4),
     ("THE WALL TOWER", 520.0, 528.0, 22.4),
