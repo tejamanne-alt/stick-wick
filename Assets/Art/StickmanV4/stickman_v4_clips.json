@@ -2481,6 +2481,94 @@
       "reach": 0.0,
       "endShift": 0.5,
       "v4": true
+    },
+    {
+      "name": "rod_guard",
+      "frames": 60,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_walk",
+      "frames": 18,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_swing",
+      "frames": 28,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 11,
+      "loadFrame": -1,
+      "reach": 1.35,
+      "endShift": 0.18,
+      "v4": true
+    },
+    {
+      "name": "rod_overhead",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 13,
+      "loadFrame": -1,
+      "reach": 1.2,
+      "endShift": 0.16,
+      "v4": true
+    },
+    {
+      "name": "rod_rising",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 10,
+      "loadFrame": -1,
+      "reach": 1.2,
+      "endShift": 0.14,
+      "v4": true
+    },
+    {
+      "name": "rod_shin",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 10,
+      "loadFrame": -1,
+      "reach": 1.3,
+      "endShift": 0.1,
+      "v4": true
+    },
+    {
+      "name": "rod_jab",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 1.2,
+      "endShift": 0.22,
+      "v4": true
+    },
+    {
+      "name": "rod_spin",
+      "frames": 36,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 16,
+      "loadFrame": -1,
+      "reach": 1.6,
+      "endShift": 0.26,
+      "v4": true
     }
   ]
 }

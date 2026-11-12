@@ -1738,3 +1738,33 @@ Then the roof, as built.
 - **The bug:** picking the katana up runs the pick-up clip, and the "katana taken" hook replaced it mid-way with the looping guard. A loop never finishes, so he stayed in the pick-up for good and every input was ignored.
 - **The fix:** the guard now plays only if he's idle.
 - **The safety net:** a one-clip move (a traversal) whose clip has become a loop, or that runs 1.5 s past its clip's length, ends by itself. Nothing can hold him like that again.
+
+## The rod, its own moves (it's a club, not a sword)
+**The clips** (`tools/blender/v4_rod.py`):
+- `rod_guard`: cocked on the rear shoulder, side-on, the weight back.
+- `rod_walk`: the guard while stepping.
+- `rod_swing`: the big level swing, hips then chest then arms, round over the lead shoulder.
+- `rod_overhead`: up, held, down with the whole back, ringing off the floor.
+- `rod_rising`: from low behind, up under the jaw.
+- `rod_shin`: low through the shins (his leg goes).
+- `rod_jab`: the butt end into his belly (he folds).
+- `rod_spin`: the full turn, everyone in reach.
+
+**The controls:**
+
+| Gesture | Swing |
+|---|---|
+| → or ↘ | the big swing |
+| ↓ | the overhead |
+| ↑ ↗ | the rising swing |
+| ↙ ↖ | the shins |
+| ← | the retreat |
+| Tap high | the jab |
+| Tap low | the shins |
+| Hold on yourself, let go | the full turn |
+
+**How it lands:**
+- The swing and the turn catch everyone in their arc (two or more: CLEARING THE ROOM). Hits are heavy, with hit-stop and shake.
+- A landed swing can be cut short into the next.
+- It still wears out (14 swings).
+- The reads chain off it: the jab folds a man (then the overhead), the shins buckle his leg.

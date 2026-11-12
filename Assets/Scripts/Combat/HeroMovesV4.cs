@@ -98,8 +98,8 @@ namespace ProjectInk
                 float accel = Mathf.Abs(velocity.x) < want ? 9f : 12f;
                 velocity.x = Mathf.MoveTowards(velocity.x, dir * want, accel * dt);
                 float sp = Mathf.Abs(velocity.x);
-                string clip = KatanaMode ? "katana_walk" : sp < 1.7f ? "walk_alone" : sp < 4.0f ? "run" : "sprint";
-                float clipSpeed = clip == "katana_walk" ? 0.7f : clip == "walk_alone" ? WalkSpeed : clip == "run" ? JogSpeed : RunSpeedV4;
+                string clip = KatanaMode ? (RodMode && body.Has("rod_walk") ? "rod_walk" : "katana_walk") : sp < 1.7f ? "walk_alone" : sp < 4.0f ? "run" : "sprint";
+                float clipSpeed = clip == "katana_walk" || clip == "rod_walk" ? 0.7f : clip == "walk_alone" ? WalkSpeed : clip == "run" ? JogSpeed : RunSpeedV4;
                 float play = Mathf.Clamp(sp / clipSpeed, 0.55f, 1.5f);
                 if (body.CurrentName != clip) body.Play(clip, 0.15f, false, play);
                 else body.SetSpeed(play);

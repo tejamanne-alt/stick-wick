@@ -525,6 +525,11 @@ import v4_katana  # noqa: E402
 
 CLIPS.update(v4_katana.CLIPS)
 
+# ---------------------------------------------------------------- the rod
+import v4_rod  # noqa: E402
+
+CLIPS.update(v4_rod.CLIPS)
+
 
 def key_clip(arm, name, spec):
     return vp.key_clip(arm, name, spec)

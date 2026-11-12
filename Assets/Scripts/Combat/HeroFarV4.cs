@@ -278,7 +278,7 @@ namespace ProjectInk
             }
             if (traverse == "advance") { UpdateAdvance(dt); return true; }
             // a katana cut flows into the next: once the blade has landed, a new line cancels the follow-through
-            if (farMove == "katana" && farHit && gi != null && body.Time > farHitAt + 0.08f)
+            if ((farMove == "katana" || farMove == "rod") && farHit && gi != null && body.Time > farHitAt + 0.12f)
             {
                 var nc = gi.Next();
                 if (nc != Command.None) { killedThisCut = false; EndTraverse(); HandleCommand(nc); return true; }
@@ -320,6 +320,7 @@ namespace ProjectInk
                 case "throw": LaunchCarried(); break;
                 case "katana": KatanaImpact(); break;
                 case "knife": KnifeImpact(); break;
+                case "rod": RodLand(); break;
                 case "pass": PassClick(); break;
                 case "parry": break;
                 case "smash":
