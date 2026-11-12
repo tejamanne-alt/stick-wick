@@ -33,13 +33,23 @@ namespace ProjectInk
         /// <summary>Where on the screen a step is made (drawn as a little phone screen).</summary>
         enum Gest { TapHigh, TapLow, TapMan, SwipeAt, SwipeAway, SwipeUp, SwipeUpAt, Hold, CrouchHold, Creep }
 
-        class Step { public Gest g; public string say; public Step(Gest g, string say) { this.g = g; this.say = say; } }
+        class Step
+        {
+            public Gest g; public string say;
+            public int who = -1;                   // a tap on a man: which (−1 any)
+            public Func<float, bool> due;          // guided: when the world freezes for this step (seconds since the last step)
+            public bool timing;                    // guided: only the frozen gesture counts (the parry waits for his swing)
+            public Func<bool> cond;                // a held step (run, crouch, creep): done when this is true
+            public Step(Gest g, string say) { this.g = g; this.say = say; }
+        }
+        static Func<float, bool> After(float s) => t => t >= s;
 
         class Lesson
         {
             public string title;
             public int reps = 1;
             public int[] cast = { 0 };                // the men in this lesson; the others step back into the dark
+            public bool stepPerRep;                   // each rep is its own step (jump straight, then jump that way)
             public int guard;                         // man 0's guard: 0 down (no read counters break a string), 1 high, -1 his own
             public bool restage;                      // back on their marks after every rep
             public Step[] steps;
@@ -74,10 +84,11 @@ namespace ProjectInk
         float rippleAt = -9f; Vector2 rippleAtPos;
         // the swipe's path, shown before and while it is made: marching chevrons from start to end
         bool hintOn; Vector2 hintA, hintB; float hintAt = -9f, hintOffAt = -9f;
-        // the recording the ghost replays in YOUR TURN
-        struct Rec { public float t; public Vector2 p0, p1; public bool d0, d1; public float s0, s1; public int step; public bool hint; public Vector2 ha, hb; }
-        readonly List<Rec> rec = new List<Rec>();
-        float recT, recIdle;
+        // YOUR TURN, guided: one control at a time; the world freezes when the next is due
+        int tryStep;
+        bool guided, frozen;
+        float stepAt, frozenAt = -9f, tWrongAt = -9f, stepDoneAt = -9f, seqDoneAt = -1f, turnAt = -9f, watchK;
+        Vector2 okFrom, okTo; float tOkAt = -9f; bool okSwipe;
 
         const string PrefMask = "training_mask_v2", PrefSeen = "training_seen";
 
@@ -117,6 +128,8 @@ namespace ProjectInk
             for (int i = 0; i < lessons.Length && i < 31; i++) learned[i] = (mask & (1 << i)) != 0;
             lastTapAt = GestureInput.TappedAt;
             GestureInput.Tapped += OnPadTap;
+            GestureInput.Pushed += OnPushed;
+            if (GestureInput.Instance != null) GestureInput.Instance.bufferSeconds = 0.5f;     // a gesture let through as time resumes waits for him
             HeroController.Did += TrainDid;
             HeroController.Landed += TrainLanded;
             WaveDirector.Styled += TrainStyled;
@@ -129,6 +142,9 @@ namespace ProjectInk
         void TrainingUnhook()
         {
             GestureInput.Tapped -= OnPadTap;
+            GestureInput.Pushed -= OnPushed;
+            GestureInput.Capture = false;
+            if (GestureInput.Instance != null) GestureInput.Instance.bufferSeconds = 0.25f;
             HeroController.Did -= TrainDid;
             HeroController.Landed -= TrainLanded;
             WaveDirector.Styled -= TrainStyled;
@@ -142,6 +158,7 @@ namespace ProjectInk
         {
             if (!training) return;
             StopDemo();
+            ClearFreeze();
             training = false;
             TrainedThisRun = true;
             PlayerPrefs.SetInt(PrefSeen, 1);
@@ -250,6 +267,11 @@ namespace ProjectInk
         static readonly string[] OwnStrings = { "DUTCH TWO-AND-LOW", "ONE-TWO-LIVER", "UP-DOWN-UP", "LIVER AND LIGHTS", "DIG AND LIFT", "CLOSE QUARTERS", "KARATE", "PALM HEEL", "FOUR-PIECE", "ONE-TWO-KICK" };
         static bool Named(string label, string name) => label != null && label.StartsWith(name);
         static Step S(Gest g, string say) => new Step(g, say);
+        static Step Due(Step s, Func<float, bool> due) { s.due = due; return s; }
+        static Step Timed(Step s, Func<float, bool> due) { s.due = due; s.timing = true; return s; }
+        static Step Held(Step s, Func<bool> cond) { s.cond = cond; return s; }
+        static Step Who(Step s, int who) { s.who = who; return s; }
+        bool Swinging() { var a = Man(0); return a != null && a.Alive && a.Telegraphing && Gap(a) < 2.4f; }
 
         // ================================================================ the lessons
 
@@ -262,13 +284,13 @@ namespace ProjectInk
                     cast = NoMen, stage = () => HeroAt(-4f),
                     demo = () => DemoRun(),
                     match = (k, a, l, low) => k == 't' && a == "run" },
-                new Lesson { title = "JUMP", reps = 2,
+                new Lesson { title = "JUMP", reps = 2, stepPerRep = true,
                     steps = new[] { S(Gest.SwipeUp, "SWIPE UP"), S(Gest.SwipeUpAt, "UP-RIGHT") },
                     cast = NoMen, stage = () => HeroAt(-2f),
                     demo = () => DemoJump(),
                     match = (k, a, l, low) => k == 't' && a == "jump" },
                 new Lesson { title = "PICK YOUR MAN",
-                    steps = new[] { S(Gest.TapMan, "TAP HIM") },
+                    steps = new[] { S(Gest.TapMan, "TAP A MAN") },
                     cast = new[] { 0, 1 }, stage = () => { HeroAt(-1f); Mark(1, 1.6f, true, false); Mark(0, -4f, true, false); },
                     demo = () => DemoTapMan(1),
                     match = (k, a, l, low) => k == 't' && a == "lock" },
@@ -288,17 +310,17 @@ namespace ProjectInk
                     demo = () => DemoTaps(false, 1, 0.5f),
                     match = (k, a, l, low) => k == 'l' && IsBody(a) },
                 new Lesson { title = "BOXER'S FOUR",
-                    steps = new[] { S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH") },
+                    steps = new[] { S(Gest.TapHigh, "HIGH"), Due(S(Gest.TapHigh, "HIGH"), After(0.22f)), Due(S(Gest.TapHigh, "HIGH"), After(0.22f)), Due(S(Gest.TapHigh, "HIGH"), After(0.22f)) },
                     stage = () => Spar(1.05f, true, false),
                     demo = () => DemoString("HHHH"),
                     match = (k, a, l, low) => (k == 'l' || k == 's') && Named(l, "BOXER'S FOUR") },
                 new Lesson { title = "KICK STRING",
-                    steps = new[] { S(Gest.TapLow, "LOW"), S(Gest.TapLow, "LOW"), S(Gest.TapLow, "LOW") },
+                    steps = new[] { S(Gest.TapLow, "LOW"), Due(S(Gest.TapLow, "LOW"), After(0.26f)), Due(S(Gest.TapLow, "LOW"), After(0.26f)) },
                     stage = () => Spar(1.45f, true, false),
                     demo = () => DemoString("LLL"),
                     match = (k, a, l, low) => (k == 'l' || k == 's') && Named(l, "KICK STRING") },
                 new Lesson { title = "MIX A STRING",
-                    steps = new[] { S(Gest.TapHigh, "HIGH"), S(Gest.TapHigh, "HIGH"), S(Gest.TapLow, "LOW") },
+                    steps = new[] { S(Gest.TapHigh, "HIGH"), Due(S(Gest.TapHigh, "HIGH"), After(0.22f)), Due(S(Gest.TapLow, "LOW"), After(0.22f)) },
                     stage = () => Spar(1.05f, true, false),
                     demo = () => DemoString("HHL"),
                     match = (k, a, l, low) => (k == 'l' || k == 's') && l != null && Array.Exists(OwnStrings, n => l.StartsWith(n)) },
@@ -308,12 +330,12 @@ namespace ProjectInk
                     demo = () => DemoGuard(),
                     match = (k, a, l, low) => k == 'd' && a == "read" },
                 new Lesson { title = "PARRY", reps = 2, guard = -1,
-                    steps = new[] { S(Gest.TapHigh, "HE SWINGS: TAP") },
+                    steps = new[] { Timed(S(Gest.TapHigh, "HE SWINGS: TAP"), _ => Swinging()) },
                     stage = () => Spar(1.3f, false, true),
                     demo = () => DemoParry(),
                     match = (k, a, l, low) => k == 'd' && a == "parry" },
                 new Lesson { title = "SLIP AND COUNTER", guard = -1,
-                    steps = new[] { S(Gest.SwipeAway, "HE SWINGS: SWIPE AWAY"), S(Gest.TapHigh, "HIT BACK") },
+                    steps = new[] { Timed(S(Gest.SwipeAway, "HE SWINGS: SWIPE AWAY"), _ => Swinging()), Due(S(Gest.TapHigh, "HIT BACK"), After(0.32f)) },
                     stage = () => Spar(1.4f, false, true),
                     demo = () => DemoSlip(),
                     match = (k, a, l, low) => k == 't' && a == "slip" },
@@ -323,7 +345,7 @@ namespace ProjectInk
                     demo = () => DemoGrab(false),
                     match = (k, a, l, low) => k == 'd' && a == "clinch" },
                 new Lesson { title = "THROW HIM", reps = 2,
-                    steps = new[] { S(Gest.SwipeAt, "GRAB"), S(Gest.TapHigh, "KNEE"), S(Gest.SwipeAt, "SWIPE AT: THROW") },
+                    steps = new[] { S(Gest.SwipeAt, "GRAB"), Due(S(Gest.TapHigh, "KNEE"), After(0.5f)), Due(S(Gest.SwipeAt, "SWIPE AT: THROW"), After(0.5f)) },
                     stage = () => Spar(0.9f, true, false), restage = true,
                     demo = () => DemoGrab(true),
                     match = (k, a, l, low) => k == 'd' && a == "throw" },          // any throw from the hold (reap, hip, shoulder, suplex, DDT, sweep)
@@ -343,17 +365,17 @@ namespace ProjectInk
                     demo = () => DemoRush(),
                     match = (k, a, l, low) => k == 'd' && a == "far_rush" },
                 new Lesson { title = "FLYING KNEE", reps = 2,
-                    steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), S(Gest.TapHigh, "CLOSE: TAP HIGH") },
+                    steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), Timed(S(Gest.TapHigh, "NOW: TAP HIGH"), _ => Gap(Man(0)) < 2.3f) },
                     stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); }, restage = true,
                     demo = () => DemoRunning(true),
                     match = (k, a, l, low) => k == 'd' && (a == "far_knee" || a == "far_barge") },
                 new Lesson { title = "SLIDE TACKLE",
-                    steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), S(Gest.TapLow, "CLOSE: TAP LOW") },
+                    steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), Timed(S(Gest.TapLow, "NOW: TAP LOW"), _ => Gap(Man(0)) < 2.2f) },
                     stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); }, restage = true,
                     demo = () => DemoRunning(false),
                     match = (k, a, l, low) => k == 'd' && a == "far_slide" },
                 new Lesson { title = "SIDESTEP THE BULL",
-                    steps = new[] { S(Gest.SwipeAway, "HE CHARGES: SWIPE") },
+                    steps = new[] { Timed(S(Gest.SwipeAway, "HE CHARGES: SWIPE"), _ => { var b = Man(0); return b != null && b.Charging && Gap(b) < 4.3f; }) },
                     stage = () => { HeroAt(-2f); Mark(0, 3.8f, true, false); chargeAt = Time.time + 1.2f; }, restage = true,
                     demo = () => DemoSidestep(),
                     match = (k, a, l, low) => k == 'd' && a == "sidestep" },
@@ -363,12 +385,14 @@ namespace ProjectInk
                     demo = () => DemoTaps(true, 1, 0.3f),
                     match = (k, a, l, low) => k == 'd' && a == "crossfire" },
                 new Lesson { title = "SILENT TAKEDOWN",
-                    steps = new[] { S(Gest.CrouchHold, "SWIPE DOWN, HOLD"), S(Gest.Creep, "SLIDE: CREEP"), S(Gest.TapMan, "TAP HIS BACK") },
+                    steps = new[] { Held(S(Gest.CrouchHold, "SWIPE DOWN, KEEP HOLDING"), () => hero.Crouching),
+                                    Held(S(Gest.Creep, "SLIDE: CREEP UP"), () => { var e = Man(2); return e != null && e.transform.position.x - hero.transform.position.x < 0.95f; }),
+                                    Due(Who(S(Gest.TapMan, "TAP HIS BACK"), 2), After(0f)) },
                     cast = new[] { 2 }, stage = () => { HeroAt(-2f); PostAway(2, 0.2f); }, restage = true,
                     demo = () => DemoTakedown(),
                     match = (k, a, l, low) => k == 'd' && (a == "takedown" || a == "far_takedown") },
                 new Lesson { title = "THROW A BOTTLE",
-                    steps = new[] { S(Gest.Hold, "WALK OVER IT"), S(Gest.TapMan, "TAP A MAN") },
+                    steps = new[] { Held(S(Gest.Hold, "HOLD: WALK OVER IT"), () => hero.Carried != null), Due(Who(S(Gest.TapMan, "TAP HIM: THROW"), 0), After(0.55f)) },
                     stage = () => { HeroAt(-3f); Mark(0, 3.5f, true, false); Bottle(-2f); }, restage = true,
                     demo = () => DemoBottle(),
                     match = (k, a, l, low) => k == 'd' && (a == "far_throw" || a == "far_smash") },
@@ -401,6 +425,58 @@ namespace ProjectInk
         }
 
         Vector2 Spot(int side, bool high) => PadPos(side, high);
+
+        /// <summary>The side the lesson's man is on (taps and swipes "at him" go that way).</summary>
+        int Side()
+        {
+            var f = Focus();
+            return f != null ? (f.transform.position.x >= hero.transform.position.x ? 1 : -1) : hero.Facing;
+        }
+
+        Step StepOf(int i) => li >= 0 && li < lessons.Length && i >= 0 && i < lessons[li].steps.Length ? lessons[li].steps[i] : null;
+
+        /// <summary>Where a step starts (pixels).</summary>
+        Vector2 From(int i)
+        {
+            var st = StepOf(i);
+            if (st == null) return Px(0.5f, 0.5f);
+            int side = Side();
+            var c = HeroPx;
+            switch (st.g)
+            {
+                case Gest.TapHigh: return PadPos(side, true);
+                case Gest.TapLow: return PadPos(side, false);
+                case Gest.TapMan: { var m = st.who >= 0 ? Man(st.who) : Focus(); return ManPx(m); }
+                case Gest.SwipeAt: return c + new Vector2(side * W * 0.05f, 0f);
+                case Gest.SwipeAway: return c + new Vector2(-side * W * 0.05f, 0f);
+                case Gest.SwipeUp: return c + new Vector2(0f, -H * 0.05f);
+                case Gest.SwipeUpAt: return c + new Vector2(side * W * 0.04f, -H * 0.05f);
+                case Gest.Hold: return new Vector2(side > 0 ? W * 0.78f : W * 0.22f, H * 0.4f);
+                case Gest.CrouchHold: return new Vector2(side > 0 ? W * 0.7f : W * 0.3f, H * 0.62f);
+                case Gest.Creep: return new Vector2(side > 0 ? W * 0.7f : W * 0.3f, H * 0.46f);
+            }
+            return c;
+        }
+
+        /// <summary>Where a step ends (pixels): the far end of a swipe, the way he goes for a hold.</summary>
+        Vector2 To(int i)
+        {
+            var st = StepOf(i);
+            if (st == null) return Px(0.5f, 0.5f);
+            int side = Side();
+            var a = From(i);
+            switch (st.g)
+            {
+                case Gest.SwipeAt: return a + new Vector2(side * W * 0.26f, 0f);
+                case Gest.SwipeAway: return a + new Vector2(-side * W * 0.24f, 0f);
+                case Gest.SwipeUp: return a + new Vector2(0f, H * 0.3f);
+                case Gest.SwipeUpAt: return a + new Vector2(side * W * 0.15f, H * 0.27f);
+                case Gest.Hold: return a + new Vector2(side * W * 0.12f, 0f);
+                case Gest.CrouchHold: return a + new Vector2(0f, -H * 0.16f);
+                case Gest.Creep: return a + new Vector2(side * W * 0.07f, 0f);
+            }
+            return a;
+        }
 
         Vector2 ManPx(Enemy e) => e != null ? ScreenPx(e.Chest) : Px(0.75f, 0.55f);
         Vector2 HeroPx => ScreenPx(hero.Chest);
@@ -494,15 +570,15 @@ namespace ProjectInk
 
         IEnumerator DemoRun()
         {
-            yield return HoldAt(Px(0.86f, 0.5f), 0, () => false, 1.6f, 1.6f);
+            yield return HoldAt(From(0), 0, () => false, 1.6f, 1.6f);
             Lift(0);
         }
 
         IEnumerator DemoJump()
         {
-            yield return Swipe(Px(0.62f, 0.32f), Px(0.62f, 0.6f), 0);
+            yield return Swipe(From(0), To(0), 0);
             yield return WaitU(1.0f);
-            yield return Swipe(Px(0.6f, 0.32f), Px(0.74f, 0.56f), 1);
+            yield return Swipe(From(1), To(1), 1);
         }
 
         IEnumerator DemoTapMan(int who)
@@ -512,13 +588,13 @@ namespace ProjectInk
 
         IEnumerator DemoTaps(bool high, int n, float every)
         {
-            for (int k = 0; k < n; k++) { yield return Tap(Spot(1, high), 0, 0, k == 0 ? 0.14f : 0.02f); yield return WaitU(every); }
+            for (int k = 0; k < n; k++) { yield return Tap(From(0), 0, 0, k == 0 ? 0.14f : 0.02f); yield return WaitU(every); }
         }
 
-        /// <summary>A string, in rhythm: H high, L low.</summary>
+        /// <summary>A string, in rhythm: each tap on its own pad.</summary>
         IEnumerator DemoString(string s)
         {
-            for (int k = 0; k < s.Length; k++) { yield return Tap(Spot(1, s[k] == 'H'), k, 0, k == 0 ? 0.14f : 0.02f); yield return WaitU(0.28f); }
+            for (int k = 0; k < s.Length; k++) { yield return Tap(From(k), k, 0, k == 0 ? 0.14f : 0.02f); yield return WaitU(0.28f); }
         }
 
         IEnumerator DemoGuard()
@@ -527,87 +603,77 @@ namespace ProjectInk
             float t = 0f;
             while (t < 3f && (a == null || a.Read != Opening.GuardHigh)) { if (a != null) a.ForceGuard(1, 2f); t += UDt; yield return null; }
             yield return WaitU(0.3f);
-            yield return Tap(Spot(1, false), 0);
+            yield return Tap(From(0), 0);
         }
 
         IEnumerator DemoParry()
         {
-            var a = Man(0);
-            yield return Glide(0, Spot(1, true));
+            demoStep = 0;
+            yield return Glide(0, From(0));
             float t = 0f;
-            while (t < 6f && (a == null || !a.Telegraphing)) { t += UDt; yield return null; }
-            yield return Tap(Spot(1, true), 0, 0, 0.02f);
+            while (t < 6f && !Swinging()) { t += UDt; yield return null; }
+            yield return Tap(From(0), 0, 0, 0.02f);
             yield return WaitU(0.8f);
         }
 
         IEnumerator DemoSlip()
         {
-            var a = Man(0);
-            var c = HeroPx;
-            Hint(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f));
-            yield return Glide(0, c + new Vector2(-W * 0.04f, 0f));
+            demoStep = 0;
+            yield return Glide(0, From(0));
             float t = 0f;
-            while (t < 6f && (a == null || !a.Telegraphing)) { t += UDt; yield return null; }
-            yield return Swipe(fPos[0], fPos[0] + new Vector2(-W * 0.22f, 0f), 0, 0.16f, 0, true);
+            while (t < 6f && !Swinging()) { t += UDt; yield return null; }
+            yield return Swipe(From(0), To(0), 0, 0.16f, 0, true);
             yield return WaitU(0.25f);
-            yield return Tap(Spot(1, true), 1, 0, 0.02f);
+            yield return Tap(From(1), 1, 0, 0.02f);
             yield return WaitU(0.2f);
-            yield return Tap(Spot(1, true), 1, 0, 0.02f);
+            yield return Tap(From(1), 1, 0, 0.02f);
         }
 
         IEnumerator DemoGrab(bool throwHim)
         {
-            var c = HeroPx;
-            yield return Swipe(c + new Vector2(W * 0.04f, 0f), c + new Vector2(W * 0.28f, 0f), 0);
+            yield return Swipe(From(0), To(0), 0);
             if (!throwHim) { yield return WaitU(0.8f); yield break; }
             yield return WaitU(0.5f);
-            yield return Tap(Spot(1, true), 1);
+            yield return Tap(From(1), 1);
             yield return WaitU(0.55f);
-            c = HeroPx;
-            yield return Swipe(c + new Vector2(W * 0.04f, 0f), c + new Vector2(W * 0.28f, 0f), 2);
+            yield return Swipe(From(2), To(2), 2);
             yield return WaitU(1.0f);
         }
 
         /// <summary>A swipe at the man from beside the hero: flat (the spear) or up and across (the head scissors).</summary>
         IEnumerator DemoSwipeAt(bool up)
         {
-            var c = HeroPx;
-            var a = c + new Vector2(W * 0.04f, up ? -H * 0.04f : 0f);
-            var b = up ? a + new Vector2(W * 0.15f, H * 0.26f) : a + new Vector2(W * 0.26f, 0f);
-            yield return Swipe(a, b, 0);
+            yield return Swipe(From(0), To(0), 0);
             yield return WaitU(1.6f);
         }
 
         IEnumerator DemoRush()
         {
-            var c = HeroPx;
-            yield return Swipe(c + new Vector2(W * 0.04f, 0f), c + new Vector2(W * 0.3f, 0f), 0);
+            yield return Swipe(From(0), To(0), 0);
             yield return WaitU(1.4f);
         }
 
         IEnumerator DemoRunning(bool high)
         {
             var a = Man(0);
-            var hp = Px(0.62f, 0.5f);
-            var tp = Spot(1, high);
+            var hp = From(0);
             demoStep = 0;
             yield return Glide(0, hp);
             yield return WaitU(0.12f);
-            // finger one holds (he runs); finger two comes to hover over its spot, and taps at the moment
+            // finger one holds (he runs); finger two comes to hover over its pad, and taps at the moment
             fShow[1] = 1f;
-            fPos[1] = tp + new Vector2(W * 0.05f, -H * 0.1f);
+            fPos[1] = From(1) + new Vector2(W * 0.05f, -H * 0.1f);
             fTrail[1].Clear();
             float t = 0f, thr = high ? 2.3f : 2.2f;
             while (t < 3f && (t < 0.5f || Gap(a) > thr))
             {
                 SetF(0, hp, true);
-                tp = Spot(1, high);
-                SetF(1, Vector2.Lerp(fPos[1], tp, UDt * 8f), false);
+                SetF(1, Vector2.Lerp(fPos[1], From(1), UDt * 8f), false);
                 t += UDt;
                 yield return null;
             }
             demoStep = 1;
-            tp = Spot(1, high);
+            var tp = From(1);
             SetF(1, tp, true);
             yield return WaitU(0.08f);
             SetF(1, tp, false);
@@ -620,12 +686,11 @@ namespace ProjectInk
         IEnumerator DemoSidestep()
         {
             var b = Man(0);
-            var c = HeroPx;
-            Hint(c + new Vector2(-W * 0.04f, 0f), c + new Vector2(-W * 0.26f, 0f));
-            yield return Glide(0, c + new Vector2(-W * 0.04f, 0f));
+            demoStep = 0;
+            yield return Glide(0, From(0));
             float t = 0f;
             while (t < 6f && (b == null || !b.Charging || Gap(b) > 4.3f)) { t += UDt; yield return null; }
-            yield return Swipe(fPos[0], fPos[0] + new Vector2(-W * 0.22f, 0f), 0, 0.16f, 0, true);
+            yield return Swipe(From(0), To(0), 0, 0.16f, 0, true);
             yield return WaitU(1.0f);
         }
 
@@ -633,18 +698,16 @@ namespace ProjectInk
         {
             var e = Man(2);
             // finger one: swipe down and keep holding (the crouch), then slide to creep
-            var a = Px(0.7f, 0.62f);
-            var b = a + new Vector2(0f, -H * 0.16f);
+            var a = From(0);
+            var b = To(0);
             demoStep = 0;
-            Hint(a, b);
             yield return Glide(0, a);
             yield return WaitU(0.35f);
             fTrail[0].Clear();
             for (float k = 0f; k < 1f; k += UDt / 0.24f) { SetF(0, Vector2.Lerp(a, b, k), true); fTrail[0].Add(fPos[0]); yield return null; }
-            HintOff();
             for (float k = 0f; k < 0.35f; k += UDt) { SetF(0, b, true); yield return null; }
             demoStep = 1;
-            var cr = b + new Vector2(W * 0.06f, 0f);
+            var cr = To(1);
             for (float k = 0f; k < 1f; k += UDt / 0.2f) { SetF(0, Vector2.Lerp(b, cr, k), true); yield return null; }
             float t = 0f;
             while (t < 6f && e != null && (e.transform.position.x - hero.transform.position.x) > 0.85f) { SetF(0, cr, true); t += UDt; yield return null; }
@@ -658,7 +721,7 @@ namespace ProjectInk
 
         IEnumerator DemoBottle()
         {
-            yield return HoldAt(Px(0.86f, 0.5f), 0, () => hero.Carried != null, 0.3f, 3f);
+            yield return HoldAt(From(0), 0, () => hero.Carried != null, 0.3f, 3f);
             Lift(0);
             yield return WaitU(0.6f);
             yield return Tap(ManPx(Man(0)), 1);
@@ -687,8 +750,7 @@ namespace ProjectInk
             ts = TS.Demo;
             demoHit = false;
             demoStep = -1;
-            rec.Clear();
-            recT = recIdle = 0f;
+            ClearFreeze();
             StageDip();
             demoCo = StartCoroutine(RunDemo());
         }
@@ -726,13 +788,136 @@ namespace ProjectInk
         {
             ts = TS.Try;
             tryAt = Time.unscaledTime;
+            turnAt = Time.unscaledTime;
             lastMoveAt = Time.unscaledTime;
+            guided = true;                      // the first rep: one control at a time, frozen when the next is due
+            tryStep = 0;
+            seqDoneAt = -1f;
+            ClearFreeze();
             if (GestureInput.Instance != null) GestureInput.Instance.Flush();
             StageDip();
+            // the turn is handed over: a beat you feel (the bars snap away, the stamp, a buzz)
+            Sound.Play(Sfx.CineHit, 0.45f);
             Sound.Play(Sfx.Glint, 1f);
+            Buzz();
         }
 
-        void StageDip() { Dip(lessons[li].stage, lessons[li].cast); }
+        // ---------------------------------------------------------------- YOUR TURN, step by step
+
+        bool IsHeldStep(Step st) => st.g == Gest.Hold || st.g == Gest.CrouchHold || st.g == Gest.Creep;
+
+        bool HeldDone(Step st)
+        {
+            if (st.cond != null) return st.cond();
+            if (st.g == Gest.Hold) return hero.RunningFast;
+            if (st.g == Gest.CrouchHold) return hero.Crouching;
+            return false;
+        }
+
+        /// <summary>Is this command the step's gesture?</summary>
+        bool Matches(Step st, Command c)
+        {
+            int side = Side();
+            bool strike = c == Command.StrikeLeft || c == Command.StrikeRight || c == Command.StrikeForward;
+            bool kick = c == Command.KickLeft || c == Command.KickRight || c == Command.KickForward;
+            switch (st.g)
+            {
+                case Gest.TapHigh: return strike;
+                case Gest.TapLow: return kick;
+                case Gest.TapMan:
+                    {
+                        var t = GestureInput.TappedEnemy;
+                        bool fresh = Time.unscaledTime - GestureInput.TappedAt < 0.5f;
+                        return (strike || kick) && fresh && t != null && (st.who < 0 || t == Man(st.who));
+                    }
+                case Gest.SwipeAt: return c == (side > 0 ? Command.DodgeRight : Command.DodgeLeft) || c == Command.DodgeForward;
+                case Gest.SwipeAway: return c == (side > 0 ? Command.DodgeLeft : Command.DodgeRight);
+                case Gest.SwipeUp: return c == Command.JumpKick;
+                case Gest.SwipeUpAt: return c == (side > 0 ? Command.JumpRight : Command.JumpLeft);
+            }
+            return false;
+        }
+
+        void OnPushed(Command c)
+        {
+            if (!training || ts != TS.Try || frozen || !dipDone || lessonDoneAt > 0f) return;
+            var st = StepOf(tryStep);
+            if (st == null || IsHeldStep(st)) return;
+            if (guided && st.timing) return;           // a timed step is taken in its frozen moment
+            if (Matches(st, c)) StepDone(st);
+        }
+
+        void StepDone(Step st)
+        {
+            stepDoneAt = Time.unscaledTime;
+            okSwipe = st.g == Gest.SwipeAt || st.g == Gest.SwipeAway || st.g == Gest.SwipeUp || st.g == Gest.SwipeUpAt;
+            if (okSwipe) { okFrom = From(tryStep); okTo = To(tryStep); tOkAt = Time.unscaledTime; }
+            tryStep++;
+            stepAt = Time.unscaledTime;
+            lastMoveAt = Time.unscaledTime;
+            Sound.Play(Sfx.Glint, 0.7f);
+        }
+
+        void Freeze()
+        {
+            frozen = true;
+            frozenAt = Time.unscaledTime;
+            GestureInput.Captured = Command.None;
+            GestureInput.Capture = true;
+            if (TimeController.Instance != null) TimeController.Instance.CineScale = 0.005f;
+            Sound.Play(Sfx.SlowmoIn, 0.6f);
+            Buzz();
+        }
+
+        /// <summary>The frozen gesture was right: time resumes and the gesture goes in, as if made now.</summary>
+        void Unfreeze(Command c)
+        {
+            ClearFreeze();
+            if (GestureInput.Instance != null) GestureInput.Instance.Inject(c);
+            Sound.Play(Sfx.SlowmoOut, 0.5f);
+        }
+
+        void ClearFreeze()
+        {
+            if (frozen && TimeController.Instance != null) TimeController.Instance.CineScale = 1f;
+            frozen = false;
+            GestureInput.Capture = false;
+            GestureInput.Captured = Command.None;
+        }
+
+        void UpdateTry(float now)
+        {
+            if (ts != TS.Try || !dipDone || lessonDoneAt > 0f || restageAt > 0f) { if (frozen) ClearFreeze(); return; }
+            var L = lessons[li];
+            var st = StepOf(tryStep);
+            if (st == null)
+            {
+                // every control made, and the move didn't come off (he was out of reach, a step mistimed): again
+                if (seqDoneAt < 0f) seqDoneAt = now;
+                else if (now - seqDoneAt > 3.2f) { seqDoneAt = -1f; Sound.Play(Sfx.Whoosh, 0.5f); StageDip(); }
+                return;
+            }
+            if (IsHeldStep(st)) { if (HeldDone(st)) StepDone(st); return; }
+            if (frozen)
+            {
+                var c = GestureInput.Captured;
+                if (c == Command.None) return;
+                GestureInput.Captured = Command.None;
+                if (Matches(st, c)) { StepDone(st); Unfreeze(c); }
+                else { tWrongAt = now; Buzz(); Sound.Play(Sfx.PhoneClick, 0.6f); }
+                return;
+            }
+            if (guided && st.due != null && st.due(now - stepAt)) Freeze();
+        }
+
+        void StageDip()
+        {
+            ClearFreeze();
+            if (ts == TS.Try) { tryStep = ResetStep(); seqDoneAt = -1f; }
+            Dip(lessons[li].stage, lessons[li].cast);
+        }
+
+        int ResetStep() => lessons[li].stepPerRep ? Mathf.Min(lreps, lessons[li].steps.Length - 1) : 0;
 
         void Dip(Action then, int[] cast = null)
         {
@@ -759,6 +944,7 @@ namespace ProjectInk
                 hero.HealFull();
                 dipThen?.Invoke();
                 dipDone = true;
+                stepAt = Time.unscaledTime;
                 dipAt = Time.unscaledTime;
                 Sound.Play(Sfx.Whoosh, 0.4f);
             }
@@ -771,6 +957,11 @@ namespace ProjectInk
             lastMoveAt = Time.unscaledTime;
             chargeMissAt = -1f;
             var L = lessons[li];
+            ClearFreeze();
+            guided = false;                     // later reps: on your own, no freezes (the real timing)
+            tryStep = ResetStep();
+            stepAt = Time.unscaledTime;
+            seqDoneAt = -1f;
             if (lreps >= L.reps)
             {
                 lessonDoneAt = Time.unscaledTime;
@@ -806,6 +997,7 @@ namespace ProjectInk
         void EnterFreePlay(bool graduated)
         {
             StopDemo();
+            ClearFreeze();
             ts = TS.Free;
             practiseOne = false;
             li = -1;
@@ -902,15 +1094,10 @@ namespace ProjectInk
             wasAir = air;
             if (GestureInput.TappedAt > lastTapAt) { lastTapAt = GestureInput.TappedAt; if (GestureInput.TappedEnemy != null) Fire('t', "lock", null, false); }
 
-            // the demo fingers: drawn alpha, and the recording the ghost replays
+            // the demo fingers' drawn alpha; the cinema bars of WATCH
             for (int i = 0; i < 2; i++) fShowNow[i] = Mathf.MoveTowards(fShowNow[i], fShow[i], Time.unscaledDeltaTime * 5f);
-            if (ts == TS.Demo && GestureInput.Demo)
-            {
-                bool active = fDown[0] || fDown[1] || (rec.Count > 0 && (rec[rec.Count - 1].p0 - fPos[0]).sqrMagnitude > 1f);
-                recIdle = active ? 0f : recIdle + Time.unscaledDeltaTime;
-                if (recIdle < 0.35f) recT += Time.unscaledDeltaTime;            // long waits (for his swing) shrink in the replay
-                rec.Add(new Rec { t = recT, p0 = fPos[0], p1 = fPos[1], d0 = fDown[0], d1 = fDown[1], s0 = fShowNow[0], s1 = fShowNow[1], step = demoStep, hint = hintOn, ha = hintA, hb = hintB });
-            }
+            watchK = Mathf.MoveTowards(watchK, ts == TS.Demo ? 1f : 0f, Time.unscaledDeltaTime * (ts == TS.Demo ? 3f : 7f));
+            UpdateTry(now);
 
             // the lessons' own staging, kept up
             var L = (ts == TS.Demo || ts == TS.Try) && li >= 0 ? lessons[li] : null;
@@ -1160,7 +1347,38 @@ namespace ProjectInk
             float since = now - lessonAt;
             float slide = Ease(0f, 0.3f, since);
 
-            // ---------------------------------------------------------------- top: the name, WATCH / YOUR TURN, the reps
+            // ---------------------------------------------------------------- WATCH: it looks like a cutscene
+            // (cinema bars, the edges dark: you are watching); a touch while watching pulses the bars
+            if (watchK > 0.01f)
+            {
+                float bk = Mathf.SmoothStep(0f, 1f, watchK);
+                GUI.color = new Color(0f, 0f, 0f, 0.55f * bk);
+                GUI.DrawTexture(new Rect(-w * 0.05f, -h * 0.05f, w * 1.1f, h * 1.1f), vig);
+                GUI.color = o;
+                float barH = h * 0.1f * bk;
+                Fill(new Rect(0, 0, w, barH), new Color(0f, 0f, 0f, 0.94f));
+                Fill(new Rect(0, h - barH, w, barH), new Color(0f, 0f, 0f, 0.94f));
+                float touch = Mathf.Clamp01(1f - (now - GestureInput.RealPressAt) / 0.6f);
+                if (touch > 0f)
+                {
+                    Fill(new Rect(0, barH - 3, w, 3), new Color(0.85f, 0.08f, 0.08f, touch));
+                    Fill(new Rect(0, h - barH, w, 3), new Color(0.85f, 0.08f, 0.08f, touch));
+                    tCap.normal.textColor = new Color(1f, 1f, 1f, touch);
+                    GUI.Label(new Rect(0, h - barH + 8, w, 30), "watching  ·  your turn is next  (or TRY IT NOW)", tCap);
+                }
+                // in the bottom bar: the film's mark
+                float bl = 0.5f + 0.5f * Mathf.Sin(now * 5f);
+                if (bk > 0.6f)
+                {
+                    GUI.color = new Color(0.85f, 0.08f, 0.08f, bl * bk);
+                    GUI.DrawTexture(new Rect(24, h - barH * 0.5f - 7, 14, 14), circle);
+                    GUI.color = o;
+                    tTag.normal.textColor = new Color(1f, 1f, 1f, 0.85f * bk);
+                    GUI.Label(new Rect(46, h - barH * 0.5f - 12, 300, 24), Spaced("WATCH"), tTag);
+                }
+            }
+
+            // ---------------------------------------------------------------- top: the name, the reps
             var head = new Rect(w * 0.5f - 230, 12 - (1f - slide) * 30f, 460, 50);
             GUI.color = new Color(1f, 1f, 1f, slide);
             Fill(head, new Color(0f, 0f, 0f, 0.6f));
@@ -1169,67 +1387,135 @@ namespace ProjectInk
             GUI.Label(new Rect(head.x + 14, head.y, 60, head.height), (li + 1) + "/" + lessons.Length, tTag);
             tTitle.normal.textColor = Color.white;
             GUI.Label(head, Spaced(L.title), tTitle);
-            var pill = new Rect(w * 0.5f - 90, head.yMax + 6, 180, 30);
-            if (demo)
+            if (!demo)
             {
-                float bl = 0.6f + 0.4f * Mathf.Sin(now * 5f);
-                Fill(pill, new Color(1f, 1f, 1f, 0.9f));
-                tPill.normal.textColor = Color.black;
-                GUI.Label(pill, Spaced("WATCH"), tPill);
-                Fill(new Rect(pill.x + 16, pill.center.y - 5, 10, 10), new Color(0.85f, 0.08f, 0.08f, bl));
-            }
-            else
-            {
-                Fill(pill, new Color(0.75f, 0.06f, 0.07f, 0.95f));
-                tPill.normal.textColor = Color.white;
-                GUI.Label(pill, Spaced("YOUR TURN"), tPill);
                 for (int i = 0; i < L.reps; i++)
                 {
                     bool lit = i < lreps;
                     float pop = lit && i == lreps - 1 ? 1f + 0.6f * Mathf.Clamp01(1f - (now - repAt) / 0.3f) : 1f;
                     float s = 14f * pop;
                     GUI.color = lit ? Color.white : new Color(1f, 1f, 1f, 0.3f);
-                    GUI.DrawTexture(new Rect(pill.xMax + 12 + i * 22 - (s - 14f) * 0.5f, pill.center.y - s * 0.5f, s, s), circle);
+                    GUI.DrawTexture(new Rect(w * 0.5f - L.reps * 11 + i * 22 + 4 - (s - 14f) * 0.5f, head.yMax + 8 - (s - 14f) * 0.5f, s, s), circle);
+                }
+                GUI.color = o;
+                if (!guided && lessonDoneAt < 0f)
+                {
+                    tCap.normal.textColor = new Color(1f, 1f, 1f, 0.7f);
+                    GUI.Label(new Rect(w * 0.5f - 200, head.yMax + 26, 400, 24), "again  ·  on your own", tCap);
                 }
             }
             GUI.color = o;
 
+            // ---------------------------------------------------------------- YOUR TURN: always-on corner brackets, and the handover
+            if (!demo)
+            {
+                float ba = 0.75f;
+                var red = new Color(0.85f, 0.08f, 0.08f, ba);
+                float L0 = 46f, T0 = 4f, inset = 10f;
+                Fill(new Rect(inset, inset, L0, T0), red); Fill(new Rect(inset, inset, T0, L0), red);
+                Fill(new Rect(w - inset - L0, inset, L0, T0), red); Fill(new Rect(w - inset - T0, inset, T0, L0), red);
+                Fill(new Rect(inset, h - inset - T0, L0, T0), red); Fill(new Rect(inset, h - inset - L0, T0, L0), red);
+                Fill(new Rect(w - inset - L0, h - inset - T0, L0, T0), red); Fill(new Rect(w - inset - T0, h - inset - L0, T0, L0), red);
+                float tk = now - turnAt;
+                if (tk < 1.1f)
+                {
+                    float fa = 1f - Mathf.Clamp01(tk / 0.5f);
+                    float e = 14f * fa;
+                    var fl = new Color(0.85f, 0.08f, 0.08f, 0.8f * fa);
+                    Fill(new Rect(0, 0, w, e), fl); Fill(new Rect(0, h - e, w, e), fl); Fill(new Rect(0, 0, e, h), fl); Fill(new Rect(w - e, 0, e, h), fl);
+                    float sa = Mathf.Clamp01(tk / 0.12f) * (1f - Ease(0.75f, 1.1f, tk));
+                    float sc = Mathf.Lerp(1.5f, 1f, Mathf.Clamp01(tk / 0.15f));
+                    var m = GUI.matrix;
+                    var c = new Vector2(w * 0.5f, h * 0.42f);
+                    GUIUtility.ScaleAroundPivot(new Vector2(sc, sc), c);
+                    tBig.normal.textColor = new Color(1f, 1f, 1f, sa);
+                    GUI.Label(new Rect(0, c.y - 45, w, 90), Spaced("YOUR TURN"), tBig);
+                    GUI.matrix = m;
+                }
+            }
+
             // ---------------------------------------------------------------- the buttons, top right
-            float bx = w - 182, by = 12;
+            float bx = w - 182, by = 12 + h * 0.1f * watchK;
             if (!demo && TrainButton(new Rect(bx, by, 170, 40), "▶  " + Spaced("WATCH AGAIN"), false, now - lastMoveAt > 8f ? 1f : 0f)) { demoTries = 0; restageAt = -1f; StartDemo(); return; }
-            if (demo && TrainButton(new Rect(bx, by, 170, 40), Spaced("TRY IT NOW"))) { StopDemo(); BeginTry(); return; }
-            if (li > 0 && TrainButton(new Rect(bx, by + 48, 82, 40), "‹ PREV")) { StopDemo(); lessonDoneAt = -9f; StartLesson(li - 1); return; }
-            if (TrainButton(new Rect(bx + 88, by + 48, 82, 40), "NEXT ›")) { StopDemo(); lessonDoneAt = -9f; if (li + 1 < lessons.Length) StartLesson(li + 1); else EnterFreePlay(false); return; }
+            if (demo && TrainButton(new Rect(bx, by, 170, 40), Spaced("TRY IT NOW"), true)) { StopDemo(); BeginTry(); return; }
+            if (li > 0 && TrainButton(new Rect(bx, by + 48, 82, 40), "‹ PREV")) { StopDemo(); ClearFreeze(); lessonDoneAt = -9f; StartLesson(li - 1); return; }
+            if (TrainButton(new Rect(bx + 88, by + 48, 82, 40), "NEXT ›")) { StopDemo(); ClearFreeze(); lessonDoneAt = -9f; if (li + 1 < lessons.Length) StartLesson(li + 1); else EnterFreePlay(false); return; }
             if (TrainButton(new Rect(bx, by + 96, 170, 40), Spaced("FREE PLAY"))) { EnterFreePlay(false); return; }
 
-            // ---------------------------------------------------------------- the steps along the bottom
-            int lit0 = demo ? demoStep : GhostStep();
+            // ---------------------------------------------------------------- the steps along the bottom (above WATCH's bar)
+            int lit0 = demo ? demoStep : tryStep;
             int n = L.steps.Length;
             float iw = 96f, ih = 58f, gap = 22f;
             float rowW = n * iw + (n - 1) * gap;
-            float x0 = w * 0.5f - rowW * 0.5f, y0 = h - ih - 58f;
+            float x0 = w * 0.5f - rowW * 0.5f, y0 = h - ih - 60f - h * 0.1f * watchK;
             for (int i = 0; i < n; i++)
             {
                 var r = new Rect(x0 + i * (iw + gap), y0, iw, ih);
                 bool lit = lit0 == i || n == 1;
-                StepIcon(r, L.steps[i].g, slide, lit);
+                bool done = !demo && i < tryStep;
+                StepIcon(r, L.steps[i].g, slide * (done ? 0.45f : 1f), lit);
+                if (done) Fill(new Rect(r.xMax - 18, r.y + 4, 14, 14), new Color(0.85f, 0.1f, 0.1f, 0.95f));
                 tCap.normal.textColor = new Color(1f, 1f, 1f, (lit ? 1f : 0.55f) * slide);
                 GUI.Label(new Rect(r.x - 30, r.yMax + 4, r.width + 60, 44), L.steps[i].say, tCap);
                 if (i < n - 1) Arrow(new Vector2(r.xMax + 4, r.center.y), new Vector2(r.xMax + gap - 4, r.center.y), 2f, new Color(1f, 1f, 1f, 0.4f * slide));
             }
 
-            // ---------------------------------------------------------------- the tap pads (where the thumb goes)
-            if (dipDone && Array.Exists(L.steps, st => st.g == Gest.TapHigh || st.g == Gest.TapLow))
+            // ---------------------------------------------------------------- the freeze: the world held, the next control
+            float fz = frozen ? Ease(0f, 0.15f, now - frozenAt) : 0f;
+            if (fz > 0f)
             {
-                Gest cur = lit0 >= 0 && lit0 < n ? L.steps[lit0].g : n == 1 ? L.steps[0].g : Gest.Hold;
-                Pads(w, h, cur == Gest.TapHigh, cur == Gest.TapLow, slide);
+                Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, 0.42f * fz));
+                Fill(new Rect(6, 6, w - 12, 2), new Color(1f, 1f, 1f, 0.3f * fz)); Fill(new Rect(6, h - 8, w - 12, 2), new Color(1f, 1f, 1f, 0.3f * fz));
+                Fill(new Rect(6, 6, 2, h - 12), new Color(1f, 1f, 1f, 0.3f * fz)); Fill(new Rect(w - 8, 6, 2, h - 12), new Color(1f, 1f, 1f, 0.3f * fz));
             }
 
-            // ---------------------------------------------------------------- the finger
+            // ---------------------------------------------------------------- the control to make: big, where it's made
+            if (dipDone && lessonDoneAt < 0f)
+            {
+                int cur = lit0;
+                var st = StepOf(cur);
+                bool tapLesson = Array.Exists(L.steps, x => x.g == Gest.TapHigh || x.g == Gest.TapLow);
+                if (tapLesson)
+                {
+                    Gest g = st != null ? st.g : Gest.Hold;
+                    Pads(w, h, g == Gest.TapHigh, g == Gest.TapLow, slide);
+                }
+                if (st != null)
+                {
+                    // waiting for its moment (his swing): shown, but quiet
+                    bool waiting = !demo && guided && st.timing && !frozen;
+                    float ga = waiting ? 0.45f : 1f;
+                    float shake = now - tWrongAt < 0.35f ? Mathf.Sin(now * 70f) * 10f * (1f - (now - tWrongAt) / 0.35f) : 0f;
+                    var m = GUI.matrix;
+                    if (shake != 0f) GUIUtility.ScaleAroundPivot(Vector2.one, Vector2.zero);
+                    var shift = new Vector2(shake, 0f);
+                    Guide(cur, st, ga, shift);
+                    GUI.matrix = m;
+                    // its words, by it (big while frozen)
+                    if (!demo || frozen)
+                    {
+                        var at = Gui(st.g == Gest.TapHigh || st.g == Gest.TapLow || st.g == Gest.TapMan ? From(cur) : Vector2.Lerp(From(cur), To(cur), 0.5f));
+                        float yOff = st.g == Gest.TapLow ? -H * 0.085f / scale - 40f : H * 0.085f / scale + 10f;
+                        int fs0 = tPill.fontSize;
+                        tPill.fontSize = frozen ? 26 : 19;
+                        var size = tPill.CalcSize(new GUIContent(waiting ? "WAIT FOR IT..." : st.say));
+                        var box = new Rect(Mathf.Clamp(at.x - size.x * 0.5f - 12, 8, w - size.x - 32) + shift.x, Mathf.Clamp(at.y + yOff, 8, h - 50), size.x + 24, size.y + 10);
+                        Fill(box, new Color(0f, 0f, 0f, 0.7f * ga));
+                        tPill.normal.textColor = frozen ? new Color(1f, 0.85f, 0.85f) : new Color(1f, 1f, 1f, ga);
+                        GUI.Label(box, waiting ? "WAIT FOR IT..." : st.say, tPill);
+                        tPill.fontSize = fs0;
+                    }
+                }
+            }
+
+            // ---------------------------------------------------------------- feedback: your own swipe, a made swipe flaring along its track
+            if (!demo) LiveTrail(now);
+            float ok = (now - tOkAt) / 0.45f;
+            if (okSwipe && ok >= 0f && ok < 1f) SwipeFlare(okFrom, okTo, ok);
+
+            // ---------------------------------------------------------------- the demo's finger (only ever when the game is playing)
             if (demo)
             {
-                float ha = hintOn ? Mathf.Clamp01((now - hintAt) / 0.2f) : 1f - Mathf.Clamp01((now - hintOffAt) / 0.4f);
-                SwipePath(hintA, hintB, ha);
                 for (int i = 0; i < 2; i++) if (fDown[i]) Streak(fTrail[i], 1f);
                 for (int i = 0; i < 2; i++) DrawFinger(fPos[i], fDown[i], fShowNow[i], null, 1f);
                 float rk = (now - rippleAt) / 0.4f;
@@ -1242,8 +1528,6 @@ namespace ProjectInk
                     GUI.color = o;
                 }
             }
-            else if (rec.Count > 1 && (now - tryAt < 5f || now - lastMoveAt > 4f) && lessonDoneAt < 0f && dipDone)
-                Ghost(now);
 
             // ---------------------------------------------------------------- done
             if (lessonDoneAt > 0f)
@@ -1258,6 +1542,195 @@ namespace ProjectInk
                 GUI.Label(new Rect(0, c.y - 45, w, 90), Spaced("GOT IT"), tBig);
                 GUI.matrix = m;
             }
+        }
+
+        // ---------------------------------------------------------------- the big guides
+
+        /// <summary>The control a step wants, drawn big where it is made (taps are the pads).</summary>
+        void Guide(int i, Step st, float a, Vector2 shift)
+        {
+            switch (st.g)
+            {
+                case Gest.SwipeAt: case Gest.SwipeAway: case Gest.SwipeUp: case Gest.SwipeUpAt:
+                    SwipeGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, false);
+                    break;
+                case Gest.CrouchHold:
+                    SwipeGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, true);
+                    break;
+                case Gest.Creep:
+                    HoldGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, "KEEP HOLDING");
+                    break;
+                case Gest.Hold:
+                    HoldGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, "HOLD");
+                    break;
+                case Gest.TapMan:
+                    {
+                        var m = st.who >= 0 ? Man(st.who) : Focus();
+                        if (m != null) Reticle(Gui(ManPx(m)) + shift, a);
+                        break;
+                    }
+            }
+        }
+
+        /// <summary>A swipe, big: a wide track from where the thumb goes down to where it lifts, a large arrowhead,
+        /// a glowing comet sweeping along it again and again with a long tail, chevrons marching inside, and a
+        /// ring calling the thumb to the start. (With `holdEnd`: a filling ring at the end: keep holding.)</summary>
+        void SwipeGuide(Vector2 a, Vector2 b, float alpha, bool holdEnd)
+        {
+            var o = GUI.color;
+            float now = Time.unscaledTime;
+            var d = b - a;
+            float len = d.magnitude;
+            if (len < 10f) return;
+            var u = d / len;
+            var n = new Vector2(-u.y, u.x);
+            float T = H * 0.1f / scale;                         // the track's width
+            // the track: a soft band, edged
+            Line(a, b, T, new Color(1f, 1f, 1f, 0.1f * alpha));
+            Line(a + n * T * 0.5f, b + n * T * 0.5f, 2f, new Color(1f, 1f, 1f, 0.35f * alpha));
+            Line(a - n * T * 0.5f, b - n * T * 0.5f, 2f, new Color(1f, 1f, 1f, 0.35f * alpha));
+            GUI.color = new Color(1f, 1f, 1f, 0.1f * alpha);
+            GUI.DrawTexture(new Rect(a.x - T * 0.5f, a.y - T * 0.5f, T, T), disc);
+            GUI.color = o;
+            // the arrowhead: big, past the end
+            var tip = b + u * T * 0.95f;
+            var red = new Color(0.9f, 0.12f, 0.1f, 0.95f * alpha);
+            Line(b + n * T * 0.85f, tip, 9f, red);
+            Line(b - n * T * 0.85f, tip, 9f, red);
+            Line(b + n * T * 0.85f, b - n * T * 0.85f, 3f, new Color(0.9f, 0.12f, 0.1f, 0.5f * alpha));
+            // chevrons marching inside the track
+            float ph = Mathf.Repeat(now * 1.4f, 1f);
+            int cn = Mathf.Max(2, Mathf.RoundToInt(len / (T * 0.9f)));
+            for (int k = 0; k < cn; k++)
+            {
+                float f = (k + ph) / cn;
+                var c = a + d * f;
+                float bump = Mathf.Sin(f * Mathf.PI);
+                var col = new Color(1f, 1f, 1f, alpha * 0.45f * bump);
+                float sz = T * 0.28f;
+                Line(c - u * sz + n * sz, c, 4f, col);
+                Line(c - u * sz - n * sz, c, 4f, col);
+            }
+            // the comet: down at the start, sweeping to the end, a long fading tail
+            float cyc = Mathf.Repeat(now, 1.25f) / 1.25f;
+            float k0 = Mathf.Clamp01((cyc - 0.12f) / 0.55f);
+            float head = 1f - (1f - k0) * (1f - k0);
+            float vis = cyc < 0.12f ? cyc / 0.12f : cyc > 0.85f ? 1f - (cyc - 0.85f) / 0.15f : 1f;
+            var hp = a + d * head;
+            for (int k = 14; k >= 1; k--)
+            {
+                float back = k / 14f;
+                var q = a + d * Mathf.Max(0f, head - back * 0.45f);
+                float r = T * (0.42f - 0.3f * back);
+                GUI.color = new Color(1f, 1f, 1f, alpha * vis * 0.35f * (1f - back));
+                GUI.DrawTexture(new Rect(q.x - r, q.y - r, r * 2f, r * 2f), disc);
+            }
+            float hr = T * 0.42f;
+            GUI.color = new Color(1f, 1f, 1f, alpha * vis);
+            GUI.DrawTexture(new Rect(hp.x - hr, hp.y - hr, hr * 2f, hr * 2f), disc);
+            GUI.color = new Color(0.9f, 0.1f, 0.1f, alpha * vis);
+            GUI.DrawTexture(new Rect(hp.x - hr * 0.45f, hp.y - hr * 0.45f, hr * 0.9f, hr * 0.9f), circle);
+            // the call at the start: rings breathing out where the thumb goes down
+            for (int k = 0; k < 2; k++)
+            {
+                float rk = Mathf.Repeat(now / 1.1f + k * 0.5f, 1f);
+                float rr = T * (0.5f + 0.6f * rk);
+                GUI.color = new Color(1f, 1f, 1f, alpha * 0.7f * (1f - rk));
+                GUI.DrawTexture(new Rect(a.x - rr, a.y - rr, rr * 2f, rr * 2f), ring);
+            }
+            if (holdEnd)
+            {
+                float hk = Mathf.Repeat(now / 0.9f, 1f);
+                GUI.color = new Color(0.9f, 0.12f, 0.1f, alpha * 0.9f);
+                float rr = T * (0.3f + 0.45f * hk);
+                GUI.DrawTexture(new Rect(b.x - rr, b.y - rr, rr * 2f, rr * 2f), ring);
+                GUI.color = new Color(1f, 1f, 1f, alpha * 0.9f);
+                GUI.DrawTexture(new Rect(b.x - T * 0.8f, b.y - T * 0.8f, T * 1.6f, T * 1.6f), ring);
+            }
+            GUI.color = o;
+        }
+
+        /// <summary>A hold, big: a disc with HOLD on it and a ring that keeps filling, chevrons streaming the way he goes.</summary>
+        void HoldGuide(Vector2 p, Vector2 toward, float alpha, string label)
+        {
+            var o = GUI.color;
+            float now = Time.unscaledTime;
+            float R = H * 0.09f / scale;
+            var d = toward - p;
+            var u = d.sqrMagnitude > 1f ? d.normalized : Vector2.right;
+            var n = new Vector2(-u.y, u.x);
+            // chevrons streaming out the way he goes
+            for (int k = 0; k < 4; k++)
+            {
+                float f = Mathf.Repeat(now * 1.2f + k * 0.25f, 1f);
+                var c = p + u * (R * 1.25f + f * R * 2.2f);
+                var col = new Color(1f, 1f, 1f, alpha * 0.7f * Mathf.Sin(f * Mathf.PI));
+                float sz = R * 0.35f;
+                Line(c - u * sz + n * sz, c, 6f, col);
+                Line(c - u * sz - n * sz, c, 6f, col);
+            }
+            GUI.color = new Color(0f, 0f, 0f, 0.5f * alpha);
+            GUI.DrawTexture(new Rect(p.x - R, p.y - R, R * 2f, R * 2f), disc);
+            GUI.color = new Color(1f, 1f, 1f, 0.95f * alpha);
+            GUI.DrawTexture(new Rect(p.x - R * 1.05f, p.y - R * 1.05f, R * 2.1f, R * 2.1f), ring);
+            float hk = Mathf.Repeat(now / 1.0f, 1f);
+            float rr = R * (0.25f + 0.75f * hk);
+            GUI.color = new Color(0.9f, 0.12f, 0.1f, alpha * (0.4f + 0.6f * hk));
+            GUI.DrawTexture(new Rect(p.x - rr, p.y - rr, rr * 2f, rr * 2f), ring);
+            GUI.color = o;
+            tPill.normal.textColor = new Color(1f, 1f, 1f, alpha);
+            int fs = tPill.fontSize;
+            tPill.fontSize = 18;
+            GUI.Label(new Rect(p.x - R * 1.4f, p.y - 13f, R * 2.8f, 26f), label, tPill);
+            tPill.fontSize = fs;
+        }
+
+        /// <summary>A man to tap: a pulsing reticle round his chest.</summary>
+        void Reticle(Vector2 c, float alpha)
+        {
+            var o = GUI.color;
+            float now = Time.unscaledTime;
+            float R = H * 0.11f / scale;
+            float k = Mathf.Repeat(now / 1.0f, 1f);
+            GUI.color = new Color(1f, 1f, 1f, alpha * 0.7f * (1f - k));
+            float rr = R * (0.9f + 0.6f * k);
+            GUI.DrawTexture(new Rect(c.x - rr, c.y - rr, rr * 2f, rr * 2f), ring);
+            GUI.color = new Color(0.9f, 0.12f, 0.1f, alpha * 0.95f);
+            GUI.DrawTexture(new Rect(c.x - R, c.y - R, R * 2f, R * 2f), ring);
+            GUI.color = o;
+            var red = new Color(0.9f, 0.12f, 0.1f, alpha);
+            float t = 16f;
+            Fill(new Rect(c.x - R - t, c.y - 2, t, 4), red); Fill(new Rect(c.x + R, c.y - 2, t, 4), red);
+            Fill(new Rect(c.x - 2, c.y - R - t, 4, t), red); Fill(new Rect(c.x - 2, c.y + R, 4, t), red);
+            GUI.color = new Color(1f, 1f, 1f, alpha * (0.6f + 0.4f * Mathf.Sin(now * 6f)));
+            GUI.DrawTexture(new Rect(c.x - 9, c.y - 9, 18, 18), circle);
+            GUI.color = o;
+        }
+
+        /// <summary>Your own finger: a bright streak where it went (fading after it lifts).</summary>
+        void LiveTrail(float now)
+        {
+            var path = GestureInput.LivePath;
+            if (path.Count < 2) return;
+            float a = GestureInput.LiveEndAt < 0f ? 1f : 1f - Mathf.Clamp01((now - GestureInput.LiveEndAt) / 0.45f);
+            if (a <= 0f) return;
+            if ((path[path.Count - 1] - path[0]).magnitude < H * 0.05f) return;      // a tap, not a swipe
+            Streak(path, a);
+        }
+
+        /// <summary>A swipe made: its track flares white from end to end.</summary>
+        void SwipeFlare(Vector2 aPx, Vector2 bPx, float k)
+        {
+            var a = Gui(aPx);
+            var b = Gui(bPx);
+            float T = H * 0.1f / scale;
+            float e = 1f - (1f - k) * (1f - k);
+            Line(a, Vector2.Lerp(a, b, Mathf.Min(1f, e * 1.4f)), T * (1f - 0.6f * k), new Color(1f, 1f, 1f, 0.55f * (1f - k)));
+            var o = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, 0.8f * (1f - k));
+            float rr = T * (0.6f + 1.2f * k);
+            GUI.DrawTexture(new Rect(b.x - rr, b.y - rr, rr * 2f, rr * 2f), ring);
+            GUI.color = o;
         }
 
         // ---------------------------------------------------------------- the tap pads
@@ -1321,40 +1794,6 @@ namespace ProjectInk
             tPill.fontSize = 17;
             GUI.Label(new Rect(c.x - R, c.y - 12f, R * 2f, 24f), label, tPill);
             tPill.fontSize = fs;
-        }
-
-        // ---------------------------------------------------------------- the ghost (the demo, replayed faintly)
-
-        Rec RecAt(float now)
-        {
-            float len = rec[rec.Count - 1].t + 0.8f;
-            float t = Mathf.Repeat(now - tryAt, len);
-            int i = 0;
-            while (i < rec.Count - 1 && rec[i + 1].t <= t) i++;
-            return rec[i];
-        }
-
-        int GhostStep() => rec.Count > 1 ? RecAt(Time.unscaledTime).step : -1;
-
-        void Ghost(float now)
-        {
-            float len = rec[rec.Count - 1].t + 0.8f;
-            float t = Mathf.Repeat(now - tryAt, len);
-            int idx = 0;
-            while (idx < rec.Count - 1 && rec[idx + 1].t <= t) idx++;
-            var r = rec[idx];
-            if (r.hint) SwipePath(r.ha, r.hb, 0.75f);
-            if (r.d0)
-            {
-                // the streak: back through the recording while the finger was down
-                var pts = new List<Vector2>();
-                int k = idx;
-                while (k > 0 && rec[k - 1].d0 && idx - k < 40) k--;
-                for (; k <= idx; k++) pts.Add(rec[k].p0);
-                if (pts.Count > 1 && (pts[pts.Count - 1] - pts[0]).sqrMagnitude > 100f) Streak(pts, 0.7f);
-            }
-            DrawFinger(r.p0, r.d0, r.s0, null, 0.6f);
-            DrawFinger(r.p1, r.d1, r.s1, null, 0.6f);
         }
 
         // ---------------------------------------------------------------- free play

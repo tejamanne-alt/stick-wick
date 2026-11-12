@@ -1933,3 +1933,25 @@ Two independent passes (story, gameplay flow), each finding checked against the 
 6. **Voss's Kata** replayed over the K.O. if he killed the hero mid-Kata. Fixed.
 7. **The walk-out's clear-sound flag** leaked into later scenes (no slow-motion pitch drop). It's reset at every story start and at the menu.
 8. **The Driver's car** could hit a hero standing behind its start with no dodge prompt. It only hits after its prompt now.
+
+## The training ground, rebuilt: watching vs playing, freeze frames, big swipes
+**Telling them apart without reading:**
+- **A finger only appears when the game is playing.** Your turn has no ghost finger at all.
+- **WATCH looks like a cutscene:** cinema bars, darkened edges, a pulsing red WATCH mark in the bottom bar. A real touch during it pulses the bars red: "watching · your turn is next (or TRY IT NOW)".
+- **YOUR TURN is handed over:** the bars snap away, a big YOUR TURN stamp, a red flash round the edges, a sound and a buzz. Red corner brackets then stay on screen for as long as you're in control.
+
+**Your turn, guided (the first rep):**
+- One control at a time, big, where it's made.
+- When you make it, the move plays. When the next input is due, the world freezes (time scale 0.005) and shows the next control. Your gesture is held while frozen (`GestureInput.Capture`) and checked. If it's right, time resumes and it goes in (`Inject`) as if made then. A wrong one shakes the guide and buzzes.
+- Timing moves freeze at the moment: the parry and the slip at his swing, the sidestep at the charge, the knee and slide two steps out, the takedown when you're behind him, the throw once the bottle is in your hand, strings between taps, the throw sequence between grab, knee and throw. A timing step shows "WAIT FOR IT..." quietly until its moment.
+- Later reps are "again · on your own": the guide still shows, but no freezes.
+- If all the controls were made and the move didn't come off, they reset and you go again.
+
+**The guides:**
+- **Swipes:** a wide track from start to end, a big red arrowhead past the end, chevrons marching inside, a glowing comet sweeping along it with a long tail, and rings at the start calling the thumb. A made swipe flares along its track, and your own finger draws a bright streak.
+- **Holds:** a HOLD disc with a filling ring and chevrons streaming the way he'll go. The crouch: a down track ending in a hold ring.
+- **A man to tap:** a pulsing reticle.
+- **Taps:** the HIGH/LOW pads.
+- The demo and your turn use the same positions, so they look identical.
+
+**Gone:** the ghost replay on your turn (it looked like playing while you were watching).

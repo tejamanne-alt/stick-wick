@@ -158,9 +158,31 @@ namespace ProjectInk
             return queue.Count > 0 ? queue.Peek().cmd : Command.None;
         }
 
+        // ---------------------------------------------------------------- the training ground's freeze frame
+        /// <summary>Held: a gesture made while the world is frozen is kept here instead of reaching the hero;
+        /// the training ground checks it, then lets it through with Inject as time resumes.</summary>
+        public static bool Capture;
+        public static Command Captured;
+        /// <summary>Every command as it is read (the training ground follows the steps of a move).</summary>
+        public static event System.Action<Command> Pushed;
+        /// <summary>A command handed to the hero now, as if just made.</summary>
+        public void Inject(Command c)
+        {
+            if (c == Command.None) return;
+            if (queue.Count >= 3) queue.Dequeue();
+            queue.Enqueue(new Pending { cmd = c, time = UnityEngine.Time.unscaledTime });
+        }
+        /// <summary>The player's own finger path (pixels), for drawing it: the latest real touch.</summary>
+        public static readonly System.Collections.Generic.List<Vector2> LivePath = new System.Collections.Generic.List<Vector2>();
+        public static float LiveEndAt = -9f;
+        public static float RealPressAt = -9f;
+        static int liveId = int.MinValue;
+
         void Push(Command c)
         {
             if (c == Command.None || TimeController.Paused) return;
+            if (Capture) { Captured = c; return; }
+            Pushed?.Invoke(c);
             if (queue.Count >= 3) queue.Dequeue();
             queue.Enqueue(new Pending { cmd = c, time = UnityEngine.Time.unscaledTime });
         }
@@ -344,6 +366,7 @@ namespace ProjectInk
         void TouchBegan(int id, Vector2 pos)
         {
             if (IsBlocked(pos)) { consumed.Add(id); LastButtonTap = pos; return; }
+            if (id > SimId + 8 || id < SimId - 8) { liveId = id; LivePath.Clear(); LivePath.Add(pos); LiveEndAt = -1f; }
             if (TimeController.Paused) { consumed.Add(id); return; }
             AnyPressThisFrame = true;
             if (InStickZone(pos) && stickId == int.MinValue)
@@ -405,6 +428,7 @@ namespace ProjectInk
 
         void TouchMoved(int id, Vector2 pos)
         {
+            if (id == liveId && LivePath.Count < 80 && (LivePath.Count == 0 || (pos - LivePath[LivePath.Count - 1]).sqrMagnitude > 9f)) LivePath.Add(pos);
             if (id == crouchId) { crouchNow = pos; return; }
             if (id == iaiId)
             {
@@ -450,6 +474,7 @@ namespace ProjectInk
 
         void TouchEnded(int id, Vector2 pos)
         {
+            if (id == liveId) { LivePath.Add(pos); LiveEndAt = UnityEngine.Time.unscaledTime; liveId = int.MinValue; }
             if (id == crouchId) { crouchId = int.MinValue; consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
             if (id == stickId) { stickId = int.MinValue; return; }
             if (id == iaiId)
@@ -544,6 +569,15 @@ namespace ProjectInk
             AnyPressThisFrame = false;
             keyAxis = 0f;
             UpdateSim();
+#if ENABLE_INPUT_SYSTEM
+            if (Demo)
+            {
+                foreach (var t in ETouch.activeTouches)
+                    if (t.phase == UnityEngine.InputSystem.TouchPhase.Began && !IsBlocked(t.screenPosition)) RealPressAt = UnityEngine.Time.unscaledTime;
+                var dm = Mouse.current;
+                if (dm != null && dm.leftButton.wasPressedThisFrame && !IsBlocked(dm.position.ReadValue())) RealPressAt = UnityEngine.Time.unscaledTime;
+            }
+#endif
             if (!Demo) {
 #if ENABLE_INPUT_SYSTEM
             foreach (var t in ETouch.activeTouches)
