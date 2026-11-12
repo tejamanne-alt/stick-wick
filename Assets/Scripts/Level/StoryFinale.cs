@@ -427,6 +427,7 @@ namespace ProjectInk
         {
             if (!mayaHere) return;
             if (vossStage >= 5) { UpdateDawn(); return; }
+            if (hero.IsDead) return;                        // the K.O. is on screen: no Kata over it
             if (vossStage == 0 || voss == null) return;
             if (!voss.Alive) { vossStage = 5; return; }
             float hp = voss.HealthFraction;

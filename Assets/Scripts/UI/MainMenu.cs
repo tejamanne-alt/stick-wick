@@ -20,6 +20,7 @@ namespace ProjectInk
         void Start()
         {
             Time.timeScale = 1f;
+            Sound.KeepClear = false;
             TimeController.Paused = false;
             AudioListener.pause = false;
             Sound.ResetAmbience();

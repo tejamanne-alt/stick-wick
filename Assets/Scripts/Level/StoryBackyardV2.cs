@@ -141,8 +141,12 @@ namespace ProjectInk
             {
                 Walkie("Papa... did you find Mama?", 2.6f);
                 yield return RealWait(2.8f);
-                // he can't answer her: the player decides how
+                // he can't answer her: the player decides how. He stops walking to answer (the question never
+                // sits over the next fight, and nobody comes at him while he's choosing).
+                while (Enemy.All.Exists(e => e != null && e.Alive && e.Targetable)) yield return null;   // never mid-fight
+                hero.CineLock();
                 yield return ChooseFrom("\"Not yet, sweetheart.\"", "(say nothing)");
+                hero.CineRelease();
                 if (chosen == 0)
                 {
                     Say("YOU", "Not yet, sweetheart.", 2.0f);

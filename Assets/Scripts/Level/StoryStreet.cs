@@ -524,7 +524,7 @@ namespace ProjectInk
                         { carDodged = true; break; }
                     if (carDodged) StartCoroutine(DiveClear());
                 }
-                if (!carDodged && !hit && front < hx + 0.5f && front > hx - 2.5f && hero.transform.position.z < 0.8f)
+                if (carPrompt && !carDodged && !hit && front < hx + 0.5f && front > hx - 2.5f && hero.transform.position.z < 0.8f)
                 {
                     hit = true;
                     carPrompt = false;

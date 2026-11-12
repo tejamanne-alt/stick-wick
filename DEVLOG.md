@@ -1922,3 +1922,14 @@ I traced every lesson against the systems it uses, then had an independent revie
 - The demo finger taps exactly on the pads.
 
 **Game-wide rule, simplified:** high or low is decided by the same line for every tap, including a tap on a man. Tapping him also targets him; there is no aiming at head, body or legs. Before, any tap on a man punched, so a low pad over his legs broke high/low combos. (A first version of this fix used his hips as the line; it was replaced, since two rules for one tap confused things.) With a bottle or a knife, the tap on him is still the throw.
+
+## Whole-game review: gameplay fixes
+Two independent passes (story, gameplay flow), each finding checked against the code. The story corrections are in docs/story/story_v2.md. Gameplay:
+1. **Chapter 6 could not be finished.** The fall safety ignored the stairs. The Wall Walk is entered at the foot of its stair, 7 m below the walk, so the hero was hurt and teleported every frame until he died, and the retry looped. The Wall Tower's swordsman died as he spawned. The cutoff now counts the level's stairs too, and a fall that kills no longer revives him at 0 HP.
+2. **Chapter 1's ending:** the Foreman's crane men, if still up, could beat the frozen hero through the ending (and a K.O. there restarted at the shutter). They now drop as it starts.
+3. **PLAY AGAIN** started chapters 3, 4 and 6 at their bosses (checkpoints left over). It's now a new run from the top.
+4. **The HUD was hidden** in the last two Kessel fights (after the Warden). Health and K.O. show again.
+5. **Chapter 4's question** ("did you find Mama?") could come up over the next fight, its buttons eating attack taps. It now waits until nobody's up, and he stands still to answer.
+6. **Voss's Kata** replayed over the K.O. if he killed the hero mid-Kata. Fixed.
+7. **The walk-out's clear-sound flag** leaked into later scenes (no slow-motion pitch drop). It's reset at every story start and at the menu.
+8. **The Driver's car** could hit a hero standing behind its start with no dodge prompt. It only hits after its prompt now.

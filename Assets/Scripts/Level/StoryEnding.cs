@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 
 namespace ProjectInk
@@ -28,6 +29,8 @@ namespace ProjectInk
         void BeginEnding(Enemy boss)
         {
             Enemy.StoryFinale = null;
+            // his crane men, if any are still up, don't get to hit a frozen hero through the ending
+            foreach (var e in Enemy.All.ToArray()) if (e != null && e != boss && e.Alive) e.PuppetDie();
             HallCheckpoint = -1;
             BossReached = false;
             phase = Phase.Ending;

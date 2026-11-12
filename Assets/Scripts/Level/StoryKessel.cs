@@ -140,6 +140,9 @@ namespace ProjectInk
             float floorY = KesselPlan.Levels[kLevel].y;
             float lowest = floorY;
             foreach (var p in KesselPlan.Platforms) if (p.x1 > kx0 && p.x0 < kx1 && p.x0 >= 280f) lowest = Mathf.Min(lowest, p.y);
+            // and the stairs in the level (the wall walk is entered at the foot of its stair, 7 m below the walk)
+            foreach (var s in KesselPlan.Stairs)
+                if (Mathf.Max(s.x0, s.x1) > kx0 && Mathf.Min(s.x0, s.x1) < kx1) lowest = Mathf.Min(lowest, Mathf.Min(s.y0, s.y1));
             foreach (var e in kMen)
                 if (e != null && e.Alive && e.transform.position.y < lowest - 4f)
                     e.Kill(new HitInfo { damage = 999f, direction = 1, knockdown = true, attacker = hero });
@@ -147,6 +150,7 @@ namespace ProjectInk
             {
                 // fallen out of the level (a missed jump, a shove off an edge): back on its floor, a little hurt
                 hero.TakeHit(new HitInfo { damage = 10f, direction = 1, knockback = 0f });
+                if (hero.IsDead) return;                    // that was the last of him: the K.O., not a revival
                 hero.CinePose(new Vector3(kx0 + 1.4f, FloorAt(kx0 + 1.4f, floorY), 0f));
                 hero.CineRelease();
             }

@@ -42,7 +42,7 @@ namespace ProjectInk
         Phase phase = Phase.Cinematic;
 
         /// <summary>The fight HUD steps aside while the story holds the screen.</summary>
-        public bool HideHud => chapter == 2 || chapter >= 9 || (chapter == 3 && (barsPx > 1f || driverStage >= 5)) || (chapter == 4 && (barsPx > 1f || cleanerStage >= 5 || hClimbing)) || (chapter == 5 && (barsPx > 1f || handlerStage >= 5)) || (chapter == 6 && (barsPx > 1f || vossStage >= 5 || (wardenStage >= 5 && vossStage == 0))) || phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
+        public bool HideHud => chapter == 2 || chapter >= 9 || (chapter == 3 && (barsPx > 1f || driverStage >= 5)) || (chapter == 4 && (barsPx > 1f || cleanerStage >= 5 || hClimbing)) || (chapter == 5 && (barsPx > 1f || handlerStage >= 5)) || (chapter == 6 && (barsPx > 1f || vossStage >= 5 || (wardenStage >= 5 && vossStage == 0 && kLevel < 0))) || phase == Phase.Cinematic || phase == Phase.Escape || phase == Phase.Duel || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending || phase == Phase.End || (phase == Phase.Breach && b < ReleaseAt);
 
         // the edit (real seconds)
         const float S1 = 4.2f, S2 = 6.8f, S3 = 10.8f, S4 = 15.6f, S5 = 22.2f, S6 = 27.0f, Control = 30.6f;
@@ -77,6 +77,7 @@ namespace ProjectInk
 
         void Start()
         {
+            Sound.KeepClear = false;                        // the walk-out's clear sound never outlives it
             cam = CameraDirector.Instance;
             if (hero == null) hero = FindAnyObjectByType<HeroController>();
             if (director == null) director = WaveDirector.Instance;
@@ -1256,7 +1257,7 @@ namespace ProjectInk
             if (chapter == 6 && GUI.Button(next, Spaced("CONTINUE") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Epilogue"); }
             if (chapter == 10 && GUI.Button(next, Spaced("PLAY FROM CHAPTER 1") + "   >", btn)) { Retry = false; NewRun(); SceneManager.LoadScene("Story_Warehouse"); }
             btn.fontSize = 24;
-            if (GUI.Button(again, Spaced("PLAY AGAIN"), btn)) { Retry = false; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
+            if (GUI.Button(again, Spaced("PLAY AGAIN"), btn)) { NewRun(); SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }   // from the top: no checkpoint left over
             if (GUI.Button(menu, Spaced("MAIN MENU"), btn)) { Retry = false; SceneManager.LoadScene("Menu"); }
             btn.fontSize = 30;
         }
