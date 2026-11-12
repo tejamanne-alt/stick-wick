@@ -1733,3 +1733,8 @@ Then the roof, as built.
 7. **The pass:** an interrupted pass lets go of its men.
 8. **Headroom:** the fortress's headroom is raised over the observatory (jumps there were clamped).
 - **The Warden:** if he fails to spawn, the hero is released.
+
+## Fix: no controls after picking up the katana
+- **The bug:** picking the katana up runs the pick-up clip, and the "katana taken" hook replaced it mid-way with the looping guard. A loop never finishes, so he stayed in the pick-up for good and every input was ignored.
+- **The fix:** the guard now plays only if he's idle.
+- **The safety net:** a one-clip move (a traversal) whose clip has become a loop, or that runs 1.5 s past its clip's length, ends by itself. Nothing can hold him like that again.

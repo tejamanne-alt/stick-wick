@@ -244,6 +244,9 @@ namespace ProjectInk
 
         void UpdateTraverse(float dt)
         {
+            // the safety net: a one-clip move whose clip was replaced by a loop (or never ends) can't hold him
+            if (traverse != "advance" && body.Current != null && (body.Current.loop || stateTime > body.Current.Length + 1.5f))
+            { EndTraverse(); return; }
             if (FarTraverseUpdate(dt)) return;
             var e = body.Current;
             if (e == null) { EndTraverse(); return; }

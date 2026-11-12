@@ -68,7 +68,7 @@ namespace ProjectInk
             SwordUses = 999;                                          // a katana doesn't wear out
             Lesson("take", "The line comes before the blade.");
             if (swordFx != null) swordFx.Glint();
-            body.Play("katana_guard", 0.2f);
+            if (state == State.Idle) body.Play("katana_guard", 0.2f);   // (mid pick-up, the pick-up's end takes him to the guard)
         }
 
         // ------------------------------------------------------------------ commands
