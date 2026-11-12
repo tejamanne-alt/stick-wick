@@ -205,10 +205,10 @@ namespace ProjectInk
                     {
                         hc.LockOn(picked);
                         side = picked.transform.position.x >= hero.position.x ? 1 : -1;
-                        // empty hands: his legs = a kick, his body = a punch (with a bottle or a knife the tap
-                        // on him is the throw, which wants the high tap)
+                        // high or low is the same line as every other tap (one rule); only with a bottle or a
+                        // knife in hand is a tap on him always the throw (the high tap)
                         bool bare = hc.Style == FightStyle.Fists && hc.Carried == null;
-                        kick = bare && start.y < HipY(picked);
+                        if (!bare) kick = false;
                     }
                 }
                 Tapped?.Invoke(start, kick, side);
@@ -238,16 +238,6 @@ namespace ProjectInk
 
         /// <summary>A tap read as a strike: where, low or high, which side (the training ground's pads light up).</summary>
         public static event System.Action<Vector2, bool, int> Tapped;
-
-        /// <summary>His hips on the screen (pixels): a tap on him below them is at his legs.</summary>
-        public static float HipY(Enemy e)
-        {
-            var cam = Camera.main;
-            if (cam == null || e == null) return 0f;
-            var feet = cam.WorldToScreenPoint(e.transform.position);
-            var head = cam.WorldToScreenPoint(e.transform.position + Vector3.up * 1.4f * e.transform.localScale.y);
-            return feet.y + (head.y - feet.y) * 0.45f;
-        }
 
         /// <summary>The enemy under a screen point (pixels), if any: his body, with a generous
         /// margin for thumbs.</summary>

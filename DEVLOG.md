@@ -1921,4 +1921,4 @@ I traced every lesson against the systems it uses, then had an independent revie
 - A real tap pops the pad it hit.
 - The demo finger taps exactly on the pads.
 
-**Game-wide rule change:** with empty hands, a tap on a man's legs is now a kick (his body is still a punch); before, any tap on a man punched. A low pad over his legs no longer turns into a punch. With a bottle or a knife, the tap on him is still the throw.
+**Game-wide rule, simplified:** high or low is decided by the same line for every tap, including a tap on a man. Tapping him also targets him; there is no aiming at head, body or legs. Before, any tap on a man punched, so a low pad over his legs broke high/low combos. (A first version of this fix used his hips as the line; it was replaced, since two rules for one tap confused things.) With a bottle or a knife, the tap on him is still the throw.
