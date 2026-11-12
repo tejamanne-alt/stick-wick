@@ -812,14 +812,13 @@ namespace ProjectInk
             lessonAt = Time.unscaledTime;
             PlayerPrefs.SetInt(PrefSeen, 1);
             PlayerPrefs.Save();
-            Dip(() => { HeroAt(0f); Mark(0, 2.6f, false, true); Mark(1, -2.8f, false, true); Mark(2, 4.6f, false, true); }, All3);
+            Dip(() => { HeroAt(0f); Mark(0, 2.6f, false, true); Mark(1, -2.8f, false, true); Mark(2, 4.6f, false, true); Bottle(-4f); }, All3);
             if (graduated)
             {
                 Sound.Play(Sfx.WaveClear, 0.9f);
                 if (WaveDirector.Instance != null) WaveDirector.Instance.ShowBanner("EVERY MOVE. NOW PLAY", 2f);
                 Say("THUG", "He's fighting like... like one of us. Get him!", 2f);
             }
-            Bottle(-4f);
         }
 
         // ================================================================ what he did
