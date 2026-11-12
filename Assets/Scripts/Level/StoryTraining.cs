@@ -271,6 +271,8 @@ namespace ProjectInk
         static Step Timed(Step s, Func<float, bool> due) { s.due = due; s.timing = true; return s; }
         static Step Held(Step s, Func<bool> cond) { s.cond = cond; return s; }
         static Step Who(Step s, int who) { s.who = who; return s; }
+        /// <summary>The slip's moment: he has fallen in after the miss (read as open) and the hero is back on his feet.</summary>
+        bool Overreached() { var a = Man(0); return a != null && a.Read == Opening.Overreach && hero.Free; }
         bool Swinging() { var a = Man(0); return a != null && a.Alive && a.Telegraphing && Gap(a) < 2.4f; }
 
         // ================================================================ the lessons
@@ -335,7 +337,7 @@ namespace ProjectInk
                     demo = () => DemoParry(),
                     match = (k, a, l, low) => k == 'd' && a == "parry" },
                 new Lesson { title = "SLIP AND COUNTER", guard = -1,
-                    steps = new[] { Timed(S(Gest.SwipeAway, "HE SWINGS: SWIPE AWAY"), _ => Swinging()), Due(S(Gest.TapHigh, "HIT BACK"), After(0.32f)) },
+                    steps = new[] { Timed(S(Gest.SwipeAway, "HE SWINGS: SWIPE AWAY"), _ => Swinging()), Timed(S(Gest.TapHigh, "HE FELL IN: HIT BACK"), t => Overreached() || t > 1.1f) },
                     stage = () => Spar(1.4f, false, true),
                     demo = () => DemoSlip(),
                     match = (k, a, l, low) => k == 't' && a == "slip" },
@@ -623,9 +625,10 @@ namespace ProjectInk
             float t = 0f;
             while (t < 6f && !Swinging()) { t += UDt; yield return null; }
             yield return Swipe(From(0), To(0), 0, 0.16f, 0, true);
-            yield return WaitU(0.25f);
-            yield return Tap(From(1), 1, 0, 0.02f);
-            yield return WaitU(0.2f);
+            demoStep = 1;
+            yield return Glide(0, From(1));
+            t = 0f;
+            while (t < 1.1f && !Overreached()) { t += UDt; yield return null; }
             yield return Tap(From(1), 1, 0, 0.02f);
         }
 
