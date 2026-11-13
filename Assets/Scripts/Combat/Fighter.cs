@@ -63,6 +63,14 @@ namespace ProjectInk
             UpdateTint();
         }
 
+        /// <summary>Until this (real) time the fighter may cover ground faster than anyone can run:
+        /// designed dashes (the iai blur), cutscene placement and respawns. The TeleportGuard
+        /// reports any other jump as a bug.</summary>
+        public float WarpAllowedUntil { get; private set; }
+        public void AllowWarp(float realSeconds) => WarpAllowedUntil = Mathf.Max(WarpAllowedUntil, Time.unscaledTime + realSeconds);
+        /// <summary>The state machine's current state, for debug logs.</summary>
+        public virtual string DebugState => "";
+
         public void SetFacing(int dir)
         {
             int f = dir >= 0 ? 1 : -1;
@@ -255,7 +263,9 @@ namespace ProjectInk
                     {
                         ledge = LedgeStage.Climb;
                         ledgeTime = 0f;
-                        // the climb clip starts from the hanging offset and ends standing here
+                        // the climb clip starts from the hanging offset and ends standing here, so
+                        // the body does not move on screen even though the root does
+                        AllowWarp(0.1f);
                         transform.position = new Vector3(ledgeX + ledgeDir * 0.24f, ledgeY, 0f);
                         body.Play("climb_up", 0.02f);
                     }

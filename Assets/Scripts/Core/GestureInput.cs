@@ -18,9 +18,9 @@ namespace ProjectInk
     public enum ControlScheme { Classic, TwoThumb }
 
     /// <summary>Two control schemes (C toggles; the choice is saved).
-    /// CLASSIC (default): tap the left or right half of the screen = strike that way (the hero
-    /// dashes in); swipe up = jump kick; swipe left/right = dodge that way; swipe down = throw;
-    /// two-finger tap = Rampage; press and HOLD a half = run that way (ropes, bars, walls).
+    /// CLASSIC (default): tap to the left or right of the hero = strike that way (the hero
+    /// steps or runs in); swipe up = jump kick; swipe left/right = dodge that way; swipe down = throw;
+    /// two-finger tap = Rampage; press and HOLD to one side of the hero = run that way (ropes, bars, walls).
     /// Keys: A/D or arrows strike (hold to run) · W/Up jump · Q/E dodge · S/Down/F throw ·
     /// Space rampage · R restart.
     /// TWO-THUMB: LEFT side (left 40% of the screen): a floating stick. Touch anywhere, drag left or right
@@ -123,9 +123,24 @@ namespace ProjectInk
         int SideOf(Vector2 screen)
         {
             if (Mathf.Abs(MoveAxis) > 0.3f) return MoveAxis > 0 ? 1 : -1;     // running: strike that way
+            return HeroSideOf(screen);
+        }
+
+        Fighter heroFighter;
+
+        /// <summary>Which side of the HERO a screen point is on (not which half of the screen):
+        /// a tap on an enemy always strikes towards that enemy, wherever the camera has put the
+        /// hero. A tap right on top of him goes the way he faces.</summary>
+        public int HeroSideOf(Vector2 screen)
+        {
             var cam = Camera.main;
             if (hero == null || cam == null) return screen.x < Screen.width * 0.5f ? -1 : 1;
             float hx = cam.WorldToScreenPoint(hero.position + Vector3.up * 0.8f).x;
+            if (Mathf.Abs(screen.x - hx) < Screen.width * 0.03f)
+            {
+                if (heroFighter == null) heroFighter = hero.GetComponent<Fighter>();
+                if (heroFighter != null) return heroFighter.Facing;
+            }
             return screen.x < hx ? -1 : 1;
         }
 
@@ -145,7 +160,7 @@ namespace ProjectInk
             {
                 // tap high = punch, tap low = kick
                 bool kick = start.y < Screen.height * kickLine;
-                int side = Classic ? (start.x < Screen.width * 0.5f ? -1 : 1) : SideOf(start);
+                int side = Classic ? HeroSideOf(start) : SideOf(start);
                 if (kick) return side < 0 ? Command.KickLeft : Command.KickRight;
                 return side < 0 ? Command.StrikeLeft : Command.StrikeRight;
             }
@@ -196,7 +211,7 @@ namespace ProjectInk
                 if (holding.ContainsKey(id) || consumed.Contains(id)) return;
                 if (!touchStart.TryGetValue(id, out var s0) || !touchTime.TryGetValue(id, out var t0)) return;
                 if (UnityEngine.Time.unscaledTime - t0 > holdToRun && (pos - s0).magnitude < Screen.height * swipeFraction)
-                    holding[id] = s0.x < Screen.width * 0.5f ? -1 : 1;
+                    holding[id] = HeroSideOf(s0);
                 return;
             }
             if (id != stickId) return;

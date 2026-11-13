@@ -68,9 +68,9 @@ Bebas Neue (titles and big numbers), Barlow Condensed (HUD text) and Permanent M
 
 | Touch | Keys | Action |
 | --- | --- | --- |
-| Tap **high** on the left / right half, again and again | A / D, ← / → | **Punch combo** that way: jab, cross, jab, hook, uppercut (launches). The hero dashes in. One more tap after the string grabs and throws |
-| Tap **low** on the left / right half, again and again | Z / X | **Kick combo** that way: front kick, roundhouse, knee, spinning kick (knocks down). Works with a weapon in hand too |
-| Press and **hold** a half | Hold A / D | Run that way (to reach ropes, bars, walls and pickups) |
+| Tap **high** to the left / right of the hero, again and again | A / D, ← / → | **Punch combo** that way: jab, cross, jab, hook, uppercut (launches). Out of reach, the hero runs in (a real run, never a blink). One more tap after the string grabs and throws |
+| Tap **low** to the left / right of the hero, again and again | Z / X | **Kick combo** that way: front kick, roundhouse, knee, spinning kick (knocks down). Works with a weapon in hand too |
+| Press and **hold** to one side of the hero | Hold A / D | Run that way (to reach ropes, bars, walls and pickups) |
 | Swipe up | W / ↑ | Jump kick. Context: grab a rope or bar, run up a wall into a corkscrew, climb the ledge |
 | Swipe left / right | Q / E | Dodge that way. Into a red flash: vault. Toward an enemy: slide kick. Toward a wall: wall flip |
 | Swipe down | S / F | Duck, or throw the weapon in hand |
@@ -123,7 +123,7 @@ python tools/blender/build_stickman.py --preview
 1. Clone the repo, then in Unity Hub choose **Add → Add project from disk** and pick the repo folder. Use Unity **6000.6.8f1** (6.6).
 2. The first import takes a few minutes. If a dialog asks to enable the Input System backends, either answer works; the code supports both.
 3. When the import finishes, the prototype scene is built and opened automatically (`Assets/Scenes/Prototype.unity`). If it isn't, run **Stick Wick → Build Prototype Scene**.
-4. Set the Game view to a landscape size (for example 1920×1080), then press **Play**. Use A/D or click the left/right half to strike, W for the flying kick, Q/E to dodge, and R to restart.
+4. Set the Game view to a landscape size (for example 1920×1080), then press **Play**. Use A/D or click to the left/right of the hero to strike, W for the flying kick, Q/E to dodge, and R to restart.
 5. Commit and push what Unity generated (`*.meta` files, `ProjectSettings/`, `Packages/packages-lock.json`), so the asset IDs stay stable for everyone.
 
 ## Build

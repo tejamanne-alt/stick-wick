@@ -27,7 +27,7 @@ namespace ProjectInk
 
         static readonly Lesson[] Lessons =
         {
-            new Lesson { title = "TAP HIGH", line = "Punch. Tap high, on the side of the screen he is on.", gesture = Gesture.TapHigh, goal = 3, evt = "punch" },
+            new Lesson { title = "TAP HIGH", line = "Punch. Tap high, on his side of the hero.", gesture = Gesture.TapHigh, goal = 3, evt = "punch" },
             new Lesson { title = "TAP LOW", line = "Kick. Tap low, on his side.", gesture = Gesture.TapLow, goal = 2, evt = "kick" },
             new Lesson { title = "KEEP TAPPING", line = "Chain them: a full punch or kick combo.", gesture = Gesture.TapAgain, goal = 1, evt = "combo" },
             new Lesson { title = "TAKE HIS WEAPON", line = "Enemies drop their weapons. Walk over one to pick it up.", gesture = Gesture.Hold, goal = 1, evt = "pickup", weapon = true },

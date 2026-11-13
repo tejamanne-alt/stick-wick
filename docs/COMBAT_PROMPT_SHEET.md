@@ -15,6 +15,19 @@ How to use this sheet:
 
 ## Part A: Diagnosis
 
+> **Status (2026-11-13).** Fixed in code; details in `DEVLOG.md`:
+> - items 1, 2, 3, 5, 7, 8 and 11
+> - item 4 for the grab
+> - item 6 for the head scissors (now a fixed low-tap rule)
+>
+> Kept on purpose: the scissors end, the ledge-climb hand-off and the iai blur. They're continuous on screen or designed, and are flagged to the new `TeleportGuard`.
+>
+> Still open:
+> - item 6 for the other situational moves (needs the intent glyph, C1.2)
+> - item 9 (high/low stays a fixed line on the screen; hero-relative was impractical with the hero low in frame)
+> - item 10 (fixed combat clock, C1.1)
+> - items 12–15 (body and rig, Phase 2)
+
 ### A1. What the clips show
 
 | Time | What happens | Why it feels wrong |

@@ -1072,20 +1072,16 @@ namespace ProjectInk
             float t = Time.unscaledTime;
             float cyc = Mathf.Repeat(t, 1.4f) / 1.4f;            // one demonstration every 1.4 s
             Vector2 a, b;
-            // taps are shown on the side the stunt double is on: in the classic scheme the half of
-            // the screen picks the direction; with the stick, the side of the hero does
+            // taps are shown on the side the stunt double is on, relative to the hero (the side of
+            // the hero you touch picks the direction, not the half of the screen)
             var tutor = TutorialDirector.Instance;
             int tside = tutor != null ? tutor.TargetSide : 1;
-            float tapX = w * 0.76f;
-            var gi = GestureInput.Instance;
-            if (tside < 0)
+            float tapX = tside > 0 ? w * 0.76f : w * 0.24f;
+            if (hero != null && Camera.main != null)
             {
-                tapX = w * 0.24f;
-                if (gi != null && !gi.Classic && hero != null && Camera.main != null)
-                {
-                    float hx = Camera.main.WorldToScreenPoint(hero.Chest).x / scale;
-                    tapX = Mathf.Max(w * gi.stickZone + 40f, hx - 90f);
-                }
+                float hx = Camera.main.WorldToScreenPoint(hero.Chest).x / scale;
+                tapX = tside > 0 ? Mathf.Min(w - 40f, Mathf.Max(hx + 90f, w * 0.62f))
+                                 : Mathf.Max(40f, Mathf.Min(hx - 90f, w * 0.38f));
             }
             switch (g)
             {
@@ -1281,7 +1277,7 @@ namespace ProjectInk
                 y += rowH;
             }
             var hint = new GUIStyle(gChalk) { fontSize = 19, wordWrap = true };
-            Label(new Rect(panel.x + 20, y + 4, panel.width - 40, 50), "Some moves happen by themselves: dive from above, over the edge, head scissors, hand stomp, springboard", hint);
+            Label(new Rect(panel.x + 20, y + 4, panel.width - 40, 50), "Some moves come from the situation: dive from above, over the edge, hand stomp, springboard. Head scissors: tap low as he winds up, or end the kick string close", hint);
             replayBtn = new Rect(w * 0.5f - 290, panel.yMax - 62, 270, 52);
             closeBtn = new Rect(w * 0.5f + 20, panel.yMax - 62, 270, 52);
             DrawButton(replayBtn, "REPLAY TRAINING", 21);

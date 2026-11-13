@@ -29,7 +29,13 @@ namespace ProjectInk
         public float targetRange = 9f;
         public float gunRange = 14f;
         public float closeQuarters = 2.0f;
-        public float dashSpeed = 20f;
+        /// <summary>No blinking across the room: closing distance before a strike is a real run.
+        /// The run clip covers about 3.5 m/s at speed 1, so these play it at about 2x and 2.8x.</summary>
+        const float ApproachSpeed = 7.5f, RampageApproachSpeed = 10f, RunClipSpeed = 3.5f;
+        /// <summary>Airborne kicks drift towards the target at most this fast (a running leap).</summary>
+        const float LeapGlideSpeed = 9f, GroundGlideSpeed = 4f;
+        /// <summary>A target on another floor is only leapt at when it is this close sideways.</summary>
+        const float MaxLeapReach = 4.5f;
         public float comboWindow = 0.9f;
         public float rampageSeconds = 5f;
         public float runSpeed = 5.2f;
@@ -49,10 +55,11 @@ namespace ProjectInk
 
         State state = State.Idle;
         AttackData currentAttack;
-        Enemy target, pendingExecution, downTarget, grabber;
+        Enemy target, pendingExecution, downTarget, grabber, lockTarget;
         bool hitDone, isCounter, throwPending, knifeThrowPending, catchPending;
         int attackDir, swingSide, grabTaps, vaultFacing;
-        float stateTime, invulnerableUntil, lastAttackEnd, rampageUntil, swingAngle, grabTick;
+        float stateTime, invulnerableUntil, lastAttackEnd, rampageUntil, swingAngle, grabTick, approachTimeout;
+        int rampageStep;
         int comboStep, closeStep;
         TrailRenderer[] limbTrails;
         readonly HashSet<Enemy> swingHit = new HashSet<Enemy>();
@@ -79,6 +86,8 @@ namespace ProjectInk
         public bool Invulnerable => Time.time < invulnerableUntil || state == State.Dead || InRampage || OnLedge || state == State.Swing ||
                                     state == State.Rope || state == State.Bar || state == State.WallRun || state == State.Scissors;
         public bool IsGrabbedBy(Enemy e) => state == State.Grabbed && grabber == e;
+
+        public override string DebugState => state.ToString();
 
         string IdleClip => Style == FightStyle.Sword || Style == FightStyle.Pipe ? "sword_idle" : Style == FightStyle.Gun ? "gun_idle" : "idle";
 
@@ -377,7 +386,6 @@ namespace ProjectInk
         bool CanScissors(Enemy t, int side, bool fromAir = false)
         {
             if (t == null || !t.Targetable || t.Type == EnemyType.Brute || t.OnLedge || t.Carried) return false;
-            if (Time.time - lastScissorsAt < 4f) return false;
             var p = transform.position;
             var e = t.transform.position;
             float dx = (e.x - p.x) * side;
@@ -389,24 +397,16 @@ namespace ProjectInk
             return Mathf.Abs(g - e.y) < 0.45f;
         }
 
-        /// <summary>The situational choice, made on a strike: a counter to a close wind-up, a
-        /// crowd behind you to throw him into, the end of a kick string, or a finishing blow.</summary>
+        /// <summary>The head scissors, by a fixed rule (never a dice roll), and always from a LOW
+        /// tap (it is a leg move): as he winds up close by (the counter), or as the last kick of
+        /// the kick string. Same situation, same tap: same move, every time.</summary>
         bool TryHeadScissors(Enemy t, int side, bool kick)
         {
-            if (t == null || !Grounded || !CanScissors(t, side)) return false;
+            if (!kick || t == null || !Grounded || !CanScissors(t, side)) return false;
             float dx = Mathf.Abs(t.transform.position.x - transform.position.x);
             bool counter = t.Telegraphing && dx < 2.3f;
-            bool crowdBehind = false;
-            foreach (var o in Enemy.All)
-            {
-                if (o == t || !o.Targetable) continue;
-                float bx = (o.transform.position.x - transform.position.x) * -side;
-                if (bx > 0.2f && bx < 3.2f && Mathf.Abs(o.transform.position.y - transform.position.y) < 0.4f) crowdBehind = true;
-            }
-            bool kickFinisher = kick && kickStep % AttackData.KickCombo.Length == AttackData.KickCombo.Length - 1;
-            bool finishing = t.Health <= 34f;
-            float chance = counter ? 0.6f : crowdBehind ? 0.45f : kickFinisher ? 0.5f : finishing ? 0.3f : 0f;
-            if (chance <= 0f || Random.value > chance) return false;
+            bool kickFinisher = kickStep % AttackData.KickCombo.Length == AttackData.KickCombo.Length - 1;
+            if (!counter && !kickFinisher) return false;
             if (kickFinisher) kickStep++;
             BeginScissors(t, side);
             return true;
@@ -649,6 +649,7 @@ namespace ProjectInk
                 }
             }
             iaiTo = Mathf.Clamp(far + attackDir * 1.25f, arenaMinX + 0.3f, arenaMaxX - 0.3f);
+            AllowWarp(0.4f);    // the draw-cut blur is the one designed dash (afterimages, time stops)
             foreach (var e in iaiVictims) e.Interrupt();
             velocity = Vector3.zero;
             Sound.Play(Sfx.WhooshBig, 1f, transform.position, 0.9f);
@@ -777,6 +778,7 @@ namespace ProjectInk
         {
             CinematicLock = true;
             cineFrozen = true;
+            AllowWarp(0.1f);
             transform.position = at;
             velocity = Vector3.zero;
             Grounded = false;
@@ -800,7 +802,7 @@ namespace ProjectInk
 
         /// <summary>A cutscene moves him by hand: no input, no physics (the boss finale).</summary>
         public void CinePuppet() { CinematicLock = true; cineFrozen = true; velocity = Vector3.zero; }
-        public void CinePose(Vector3 at) { transform.position = at; velocity = Vector3.zero; }
+        public void CinePose(Vector3 at) { AllowWarp(0.1f); transform.position = at; velocity = Vector3.zero; }
         public void CineTrails(bool on) => SetTrails(on);
 
         /// <summary>Standing, free and doing nothing special: a cutscene may take him now.</summary>
@@ -824,6 +826,7 @@ namespace ProjectInk
             {
                 var p = home.Value;
                 p.y = GroundY(p);
+                AllowWarp(0.1f);
                 transform.position = p;
                 velocity = Vector3.zero;
                 Grounded = true;
@@ -1104,9 +1107,16 @@ namespace ProjectInk
                 if (Mathf.Sign(dx) != side && Mathf.Abs(dx) > 0.2f) continue;
                 float dy = Mathf.Abs(e.transform.position.y - transform.position.y);
                 if (!anyLevel && dy > 1.4f) continue;
-                float d = Mathf.Abs(dx) + dy * 1.2f;          // prefer my own floor
+                float d = Mathf.Abs(dx) + dy * 1.2f;
                 if (d > range) continue;
-                float score = d - (e.Telegraphing ? 2.5f : 0f) - (e.HasToken ? 0.8f : 0f);
+                // the nearest enemy wins, so the player can see who gets hit. Small, fixed
+                // preferences only: the one you are already fighting keeps the lock unless another is
+                // clearly nearer; one winding up close by is the one to counter; another floor only
+                // when nobody is on this one. (It used to jump to a far enemy that was winding up.)
+                float score = d;
+                if (e == lockTarget) score -= 0.6f;
+                if (e.Telegraphing && d < 2.5f) score -= 0.5f;
+                if (dy > 1.4f) score += 6f;
                 if (score < bestScore) { bestScore = score; best = e; }
             }
             return best;
@@ -1269,30 +1279,28 @@ namespace ProjectInk
 
         /// <summary>During Rampage every tap blinks next to an enemy on that side (any floor)
         /// and lands a one-hit finisher.</summary>
+        /// <summary>During Rampage every tap is a one-hit finisher on the nearest enemy that side of
+        /// this floor. He gets there by a visible sprint with afterimages (no blinking across the
+        /// room); an enemy on another floor close by gets a flying kick.</summary>
         void RampageStrike(int side)
         {
-            var t = PickTarget(side, 30f) ?? PickTarget(-side, 30f);
-            if (t == null) return;
+            var t = PickTarget(side, targetRange, false) ?? PickTarget(-side, targetRange, false);
+            bool leap = false;
+            if (t == null)
+            {
+                t = PickTarget(side, targetRange) ?? PickTarget(-side, targetRange);
+                if (t == null || Mathf.Abs(t.transform.position.x - transform.position.x) > MaxLeapReach) return;
+                leap = true;
+            }
             int dir = t.transform.position.x > transform.position.x ? 1 : -1;
-            var p = t.transform.position - new Vector3(dir * 1.0f, 0f, t.transform.position.z);
-            if (InkFx.Instance != null) InkFx.Instance.Burst(Chest, 2.2f);   // vanish...
-            transform.position = p;                                           // ...and appear
-            velocity = Vector3.zero;
-            Grounded = true;
             SetFacing(dir);
-            AttackData move = Style == FightStyle.Sword ? AttackData.SwordC
+            AttackData move = leap ? (Style == FightStyle.Sword ? AttackData.SwordLeap : AttackData.FlyingKick)
+                            : Style == FightStyle.Sword ? AttackData.SwordC
                             : Style == FightStyle.Pipe ? AttackData.PipeC
                             : Style == FightStyle.Gun ? AttackData.GunShoot
-                            : (Random.value < 0.5f ? AttackData.SpinKick : AttackData.Roundhouse);
-            currentAttack = move;
-            target = t;
-            attackDir = dir;
-            hitDone = false;
+                            : (rampageStep++ % 2 == 0 ? AttackData.SpinKick : AttackData.Roundhouse);   // alternates, never random
+            StartAttack(move, t, dir, false);
             isCounter = true;
-            state = State.Attack;
-            stateTime = 0f;
-            body.Play(move.clip, 0.02f, true, 1.25f);
-            SetTrails(!move.ranged);
             if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(6f, 0.12f);
         }
 
@@ -1328,6 +1336,9 @@ namespace ProjectInk
             if (Style == FightStyle.Gun && !kick) { GunStrike(side); return; }   // kicks work with any weapon in hand
 
             var t = PickTarget(side, Style == FightStyle.Knife ? 16f : targetRange);
+            if (t != null && Mathf.Abs(t.transform.position.y - transform.position.y) > 1.4f &&
+                Mathf.Abs(t.transform.position.x - transform.position.x) > MaxLeapReach && Style != FightStyle.Knife)
+                t = null;   // too far to leap to: no flight across the building
 
             // a crate right there and no enemy in its way: kick it like a bowling ball
             var crate = NearCrate(side);
@@ -1560,12 +1571,15 @@ namespace ProjectInk
             }
             // strike in the air: a flying kick at whoever is near
             var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
-            if (cmd == Command.StrikeLeft || cmd == Command.StrikeRight || cmd == Command.StrikeForward)
+            bool airKick = cmd == Command.KickLeft || cmd == Command.KickRight || cmd == Command.KickForward;
+            if (cmd == Command.StrikeLeft || cmd == Command.StrikeRight || cmd == Command.StrikeForward || airKick)
             {
-                int side = cmd == Command.StrikeLeft ? -1 : cmd == Command.StrikeRight ? 1 : (AxisDir != 0 ? AxisDir : Facing);
+                int side = cmd == Command.StrikeLeft || cmd == Command.KickLeft ? -1
+                         : cmd == Command.StrikeRight || cmd == Command.KickRight ? 1 : (AxisDir != 0 ? AxisDir : Facing);
                 var t = PickTarget(side, 5f);
-                // close enough in the air: land on his shoulders instead of kicking him
-                if (t != null && Mathf.Abs(t.transform.position.x - transform.position.x) < 1.9f && Random.value < 0.65f && CanScissors(t, side, true))
+                // a LOW tap close by in the air: land on his shoulders (head scissors). A high tap,
+                // or nobody close: the flying kick. A fixed rule, never a dice roll.
+                if (airKick && t != null && Mathf.Abs(t.transform.position.x - transform.position.x) < 1.9f && CanScissors(t, side, true))
                 { BeginScissors(t, side); return; }
                 // far below: dive on him
                 var below = PickBelow(side, 4.5f);
@@ -1919,31 +1933,60 @@ namespace ProjectInk
                 TimeController.Instance.SlowMo(0.25f, 0.9f);
                 t.Interrupt();
             }
+            if (t != null) lockTarget = t;
             bool leap = move.clip == "flying_kick" || move.clip == "sword_leap" || move.iai;
             if (t != null && !move.ranged && !move.behind && !leap)
             {
                 float gap = Mathf.Abs(t.transform.position.x - transform.position.x);
-                if (gap > Reach(move) + 0.15f)
+                float travel = gap - Reach(move) * 0.92f;
+                if (travel > 0.15f)
                 {
+                    // out of reach: run to him (a real run cycle at its own pace, never a blink),
+                    // then strike. A short gap is a quick step-in burst of the same run.
+                    float speed = InRampage ? RampageApproachSpeed : ApproachSpeed;
                     state = State.Dash;
                     stateTime = 0f;
-                    body.Play("run", 0.05f, false, 1.7f);
+                    approachTimeout = travel / speed + 0.45f;
+                    body.Play("run", 0.05f, false, speed / RunClipSpeed);
                     return;
                 }
             }
             BeginSwing();
         }
 
+        /// <summary>Running in to strike. Movement goes through velocity and Integrate (floors,
+        /// stairs, arena walls) at a capped speed the run cycle can carry, so it always reads
+        /// as running. A dodge cancels it; losing the target stops it.</summary>
         void UpdateDash(float dt)
         {
-            if (target == null || !target.Targetable) { BeginSwing(); return; }
+            // the way out is always there: a dodge swipe cancels the run-in
+            var gi = GestureInput.Instance;
+            if (gi != null)
+            {
+                var peek = gi.Peek();
+                if (peek == Command.DodgeLeft || peek == Command.DodgeRight || peek == Command.DodgeForward)
+                { velocity.x = 0f; HandleCommand(gi.Next()); return; }
+            }
+            if (target == null || !target.Targetable) { velocity.x = 0f; EnterIdle(); return; }
             float goal = target.transform.position.x - attackDir * Reach(currentAttack) * 0.92f;
-            velocity.x = 0f;
-            var p = transform.position;
-            p.x = Mathf.MoveTowards(p.x, goal, dashSpeed * (Style == FightStyle.Sword ? 1.35f : 1f) * dt);
-            transform.position = p;
-            if (Style == FightStyle.Sword) Ghosts(0.045f, 0.35f);
-            if (Mathf.Abs(p.x - goal) < 0.05f || stateTime > 0.6f) BeginSwing();
+            float left = goal - transform.position.x;
+            float speed = InRampage ? RampageApproachSpeed : ApproachSpeed;
+            if (Mathf.Abs(left) < 0.05f || Mathf.Sign(left) != attackDir)
+            {
+                velocity.x = 0f;
+                BeginSwing();
+                return;
+            }
+            // land exactly on the mark instead of overshooting it
+            velocity.x = Mathf.Sign(left) * Mathf.Min(speed, Mathf.Abs(left) / Mathf.Max(dt, 1e-4f));
+            if (Style == FightStyle.Sword || InRampage) Ghosts(0.045f, 0.35f);
+            if (stateTime > approachTimeout)
+            {
+                // he got away (or something is in the way): strike only if he is in reach
+                velocity.x = 0f;
+                if (Mathf.Abs(target.transform.position.x - transform.position.x) <= Reach(currentAttack) + 0.3f) BeginSwing();
+                else EnterIdle();
+            }
         }
 
         void BeginSwing()
@@ -1989,7 +2032,9 @@ namespace ProjectInk
             {
                 var p = transform.position;
                 float goal = target.transform.position.x - attackDir * Reach(currentAttack) * 0.9f;
-                p.x = Mathf.MoveTowards(p.x, goal, dashSpeed * 0.7f * Time.deltaTime);
+                // a leap drifts at running-leap speed; the grounded spin kick only shuffles in
+                float glide = currentAttack.clip == "spin_kick" ? GroundGlideSpeed : LeapGlideSpeed;
+                p.x = Mathf.MoveTowards(p.x, goal, glide * Time.deltaTime);
                 transform.position = p;
             }
             if (currentAttack.clip == "slide_kick")
@@ -2339,9 +2384,7 @@ namespace ProjectInk
             pendingExecution = null;
             SetTrails(false);
             FaceTowards(by.transform.position.x);
-            var p = transform.position;
-            p.x = by.transform.position.x - Facing * 0.6f;
-            transform.position = p;
+            velocity = Vector3.zero;      // pulled into the hold over a few frames (UpdateGrabbed), not snapped
             body.Play("struggle", 0.06f);
             if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, "GRABBED! TAP!");
             return true;
@@ -2359,6 +2402,10 @@ namespace ProjectInk
             HandleCommand(GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None);
             if (state != State.Grabbed) return;
             if (grabber == null || !grabber.Alive || !grabber.HoldingHero) { grabber = null; EnterIdle(); return; }
+            // pulled into the hold: slide the last few centimetres in over ~0.1 s
+            var gp = transform.position;
+            gp.x = Mathf.MoveTowards(gp.x, grabber.transform.position.x - Facing * 0.6f, 5f * dt);
+            transform.position = gp;
             grabTick += dt;
             if (grabTick > 0.7f)
             {

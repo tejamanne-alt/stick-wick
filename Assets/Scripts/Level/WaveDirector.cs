@@ -169,6 +169,10 @@ namespace ProjectInk
             bool boss = index == WavesPerFloor - 1;
             ShowBanner(index == 0 ? (Floor == 1 && HadCinematic ? "FIGHT!" : $"CHAPTER {Floor}: THE LOBBY") : ChapterTitles[Mathf.Clamp(index, 0, ChapterTitles.Length - 1)], 1.6f);
 
+            // the wave's make-up, spawn timing and enemy spacing come from a seed: the same
+            // floor and wave arrive the same way on every attempt
+            CombatRandom.Seed(Floor * 1000 + index * 17 + 7);
+            Enemy.ResetPatterns();
             int count = Mathf.Min(3 + index + Floor, 11);
             var kinds = new[] { SpawnKind.LeftDoor, SpawnKind.RightDoor, SpawnKind.UpperDoor, SpawnKind.Background, SpawnKind.Ceiling };
             float t = Time.time + 0.6f;
@@ -183,7 +187,7 @@ namespace ProjectInk
             };
             if (index > 0)
             {
-                incoming.Add(new Incoming { kind = kinds[Random.Range(0, 3)], type = featured, time = t });
+                incoming.Add(new Incoming { kind = kinds[CombatRandom.Range(0, 3)], type = featured, time = t });
                 t += 0.8f;
                 count--;
             }
@@ -196,18 +200,18 @@ namespace ProjectInk
             }
             for (int i = 0; i < count; i++)
             {
-                float r = Random.value;
+                float r = CombatRandom.Value;
                 EnemyType type = EnemyType.Brawler;
                 // earlier armed types keep appearing; later floors mix in more of everything
                 float armed = Mathf.Clamp01(0.15f * index + 0.08f * (Floor - 1));
                 if (index > 0 && r < armed)
                 {
-                    int pick = Random.Range(1, index + 1);
+                    int pick = CombatRandom.Range(1, index + 1);
                     type = pick switch { 1 => EnemyType.Thrower, 2 => EnemyType.Piper, 3 => EnemyType.Swordsman, _ => EnemyType.Gunner };
                 }
-                var kind = kinds[Random.Range(0, index == 0 ? 3 : kinds.Length)];
+                var kind = kinds[CombatRandom.Range(0, index == 0 ? 3 : kinds.Length)];
                 incoming.Add(new Incoming { kind = kind, type = type, time = t });
-                t += Random.Range(0.35f, 0.9f) / (1f + 0.1f * Floor);
+                t += CombatRandom.Range(0.35f, 0.9f) / (1f + 0.1f * Floor);
             }
             WaveSize = incoming.Count;
             WaveKills = 0;
@@ -252,9 +256,9 @@ namespace ProjectInk
         {
             var point = spawnPoints[(int)inc.kind];
             if (point == null || enemyModel == null) return null;
-            Vector3 pos = point.position + new Vector3(Random.Range(-0.4f, 0.4f), 0f, 0f);
+            Vector3 pos = point.position + new Vector3(CombatRandom.Range(-0.4f, 0.4f), 0f, 0f);
             if (inc.kind == SpawnKind.Ceiling && hero != null)
-                pos.x = Mathf.Clamp(hero.transform.position.x + Random.Range(-2.5f, 2.5f), -11f, 11f);
+                pos.x = Mathf.Clamp(hero.transform.position.x + CombatRandom.Range(-2.5f, 2.5f), -11f, 11f);
             var weapon = inc.type switch
             {
                 EnemyType.Swordsman => FightStyle.Sword,

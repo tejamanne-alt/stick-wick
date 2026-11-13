@@ -753,3 +753,57 @@ Reported: after three stunt doubles died, the training gave no way forward. Each
 ## 2026-11-04: No chalk marks during training
 
 Chalk-mark hints are hidden while the training reel runs (and while it is waiting to start), even with HINTS set to ALWAYS. The reel teaches one move at a time, and hints for other moves on top of it were confusing. They come back when the fight starts.
+
+## 2026-11-13: Combat fixes: no teleports, same input = same move
+
+From two gameplay clips and a read of the code (full diagnosis in `docs/COMBAT_PROMPT_SHEET.md`, Part A).
+
+**The wrong-way strikes.**
+- **Bug:** in the classic scheme, which way a tap struck was decided by which half of the *screen* was touched, not where the hero was. Holds worked the same way. With the hero away from the screen centre, tapping on an enemy could strike the other way.
+- Taps and holds are now judged by **which side of the hero** they land on (`GestureInput.HeroSideOf`). A tap right on top of him goes the way he faces.
+- The training reel's ghost finger, its lesson line, the moves card and the README now say the same.
+
+**No teleports.**
+- **The 20 m/s dash is gone.** It covered up to 9 m in 0.45 s while a run clip played at 1.7×, which read as a blink. Out of reach, the hero now **runs in**:
+    - 7.5 m/s through velocity and `Integrate`, so floors, stairs and arena walls apply
+    - the run clip plays at the matching speed
+    - he stops exactly on his mark
+    - a dodge swipe cancels the run-in
+    - if the target dies or gets away, he stops instead of swinging at air
+- **Airborne kicks** drift at most 9 m/s (a running leap); the grounded spin kick at most 4 m/s. Both used to move at 14 m/s.
+- **Targets on another floor** are only leapt at within 4.5 m sideways. There are no more flights across the building.
+- **Rampage strikes no longer blink** next to any enemy within 30 m on any floor. Each one is a visible sprint (10 m/s, with afterimages) to the nearest enemy on that side of this floor, or a flying kick at one on another floor close by.
+- **Being grabbed** pulls the hero into the hold over about 0.1 s instead of snapping him there.
+- **New: `TeleportGuard`** (editor and development builds only). It logs any fighter that jumps faster than 16 m/s in one frame, with its state and clip, and draws a red line in the Scene view. `TeleportGuard.Violations` should stay 0 in a normal fight.
+    - Designed fast moves open a window with `Fighter.AllowWarp`: the iai blur, cutscene placement, the ledge-climb hand-off and training resets.
+
+**Same input, same move.**
+- **Head scissors** no longer fires on a 30–65% dice roll. It is always a **low tap**:
+    - on an enemy winding up close by (the counter)
+    - or as the last kick of the kick string
+    - or in the air, close by
+    - The hidden 4-second cooldown is gone.
+- **Air kicks** used to be swallowed (only high taps were read in the air). They now count: a low tap in the air is the head scissors (close by) or the flying kick.
+- **The Rampage finisher** alternates spin kick and roundhouse instead of flipping a coin.
+- **Targeting is the nearest enemy**, with small fixed preferences:
+    - the enemy you are fighting keeps the lock unless another is clearly closer
+    - one winding up close by is the one to counter
+    - another floor only when nobody is on this one
+    - It used to jump to a farther enemy just because he was winding up.
+- **Enemies attack in a fixed order** (brawler: jab, cross, kick, grab; brute: smash, kick, smash, grab, kick). Each starts at its own point in the order, so their next move can be read from their last.
+- **The boss:**
+    - he charges after a fixed beat of closing in, not a per-frame dice roll
+    - his specials alternate in a fixed rotation
+    - enraged, he ignores interrupts only once his swing is under way (it used to be 50% of the time). Interrupt him in the wind-up.
+- **Waves are seeded** (`CombatRandom`, by floor and wave number). Wave make-up, spawn timing and enemy spacing come out the same on every attempt. Cosmetics still use `UnityEngine.Random`.
+
+**No pile-ups.**
+- **One melee attacker at a time** (plus one shooter or thrower), with a 0.25 s beat between melee attacks. It used to be 3 at once of any kind.
+- **Bodies on the same floor are eased apart** at walking pace: enemies from each other and from the hero. Fighters mid-swing hold their ground and the others make room, and nobody is pushed off a floor's edge.
+
+Verified: `tools/compile_check.sh` passes (Unity 6000.6.8f1 assemblies). Not verified: play in the editor.
+
+Test in the editor:
+- Fight a full floor and watch the Console for `[TeleportGuard]` lines.
+- Put the hero near the screen edge and tap on an enemy.
+- Tap low as a brawler flashes red, close by: head scissors, every time.

@@ -77,6 +77,7 @@ namespace ProjectInk
         {
             ReleaseToken();
             ledge = LedgeStage.None;
+            AllowWarp(0.1f);
             transform.position = at;
             velocity = Vector3.zero;
             Grounded = true;
@@ -88,6 +89,7 @@ namespace ProjectInk
             FaceTowards(faceX);
             body.Play(IdleClip, 0.1f);
         }
+        public override string DebugState => state.ToString();
         public bool Gunner => Type == EnemyType.Gunner;
         public bool Ranged => Type == EnemyType.Gunner || Type == EnemyType.Thrower;
         public bool Carried => state == State.Carried;
@@ -108,10 +110,12 @@ namespace ProjectInk
             SetBaseColor(color);
             // they arrive with a sound: a door banging open, or the ceiling hatch
             Sound.Play(spawnKind == SpawnKind.Ceiling ? Sfx.MetalClang : Sfx.Door, 1f, transform.position);
-            ringDistance = Gunner ? Random.Range(4.5f, 7f) : Type == EnemyType.Thrower ? Random.Range(4f, 6f) : Random.Range(2.2f, 3.4f);
-            useLedge = Random.value < 0.55f;
-            leapDown = type != EnemyType.Brute && Random.value < 0.7f;
-            perchX = Random.Range(-2.8f, -0.6f);
+            ringDistance = Gunner ? CombatRandom.Range(4.5f, 7f) : Type == EnemyType.Thrower ? CombatRandom.Range(4f, 6f) : CombatRandom.Range(2.2f, 3.4f);
+            useLedge = CombatRandom.Value < 0.55f;
+            leapDown = type != EnemyType.Brute && CombatRandom.Value < 0.7f;
+            perchX = CombatRandom.Range(-2.8f, -0.6f);
+            // each enemy starts its attack pattern at a different point, so two brawlers are not in sync
+            attackSerial = spawnCounter++;
             weaponMat = hero.weaponMaterial;
             if (type == EnemyType.Brute)
             {
@@ -151,6 +155,7 @@ namespace ProjectInk
             float dt = Time.deltaTime;
             stateTime += dt;
             if (hero == null) return;
+            SeparateAll(hero, dt);
             if (state == State.Carried || state == State.Scripted) { UpdateTint(); return; }   // the hero swings us / a cutscene poses us
             if (UpdateLedge(dt)) { UpdateTint(); return; }
             float dx = hero.transform.position.x - transform.position.x;
@@ -179,7 +184,7 @@ namespace ProjectInk
                     if (!sameLevel || onStairs) { if (LevelNav.Active) NavTravel(dt, dx); else Travel(dt); break; }
                     LeaveStairsLane(dt);
                     FaceTowards(hero.transform.position.x);
-                    if (Boss && dist > 4f && dist < 13f && Time.time > nextSpecialAt && !hero.IsDead && Random.value < dt * 0.9f && AttackTokens.TryTake(this))
+                    if (Boss && dist > 4f && dist < 13f && Time.time > nextSpecialAt && stateTime > 1.1f && !hero.IsDead && AttackTokens.TryTake(this))
                     { HasToken = true; BeginCharge(dx); break; }
                     if (dist > ringDistance + 0.3f) Walk(Mathf.Sign(dx));
                     else if (dist < ringDistance - 0.7f) Walk(-Mathf.Sign(dx) * 0.6f);
@@ -321,7 +326,7 @@ namespace ProjectInk
                 LeaveStairsLane(dt);
                 float fx = LedgeFootX;
                 Walk(Mathf.Sign(fx - p.x));
-                if (Mathf.Abs(fx - p.x) < 0.25f && Mathf.Abs(p.z) < 0.05f) BeginLedgeClimb(Random.Range(0.4f, 0.8f));
+                if (Mathf.Abs(fx - p.x) < 0.25f && Mathf.Abs(p.z) < 0.05f) BeginLedgeClimb(CombatRandom.Range(0.4f, 0.8f));
                 return;
             }
             if (heroAbove)
@@ -386,7 +391,7 @@ namespace ProjectInk
             if (step.kind == LevelNav.StepKind.Climb)
             {
                 var L = LevelNav.Ledges[step.ledge];
-                BeginLedgeClimb(Random.Range(0.45f, 0.9f), L.x, L.y, L.dir);   // long enough to be stamped on
+                BeginLedgeClimb(CombatRandom.Range(0.45f, 0.9f), L.x, L.y, L.dir);   // long enough to be stamped on
                 return;
             }
             // drop. A fighter whose turn it is leaps down at the hero; the rest step off.
@@ -420,7 +425,7 @@ namespace ProjectInk
                 stateTime = 0f;
                 BeginWindup();
             }
-            else if (Time.time > waitUntil + 3f) waitUntil = Time.time + Random.Range(0.5f, 1.5f);
+            else if (Time.time > waitUntil + 3f) waitUntil = Time.time + CombatRandom.Range(0.5f, 1.5f);
         }
 
         // ------------------------------------------------------------------ the upper floor
@@ -445,7 +450,7 @@ namespace ProjectInk
                 stateTime = 0f;
                 BeginWindup();
             }
-            else if (Time.time > waitUntil + 3f) waitUntil = Time.time + Random.Range(0.5f, 1.5f);
+            else if (Time.time > waitUntil + 3f) waitUntil = Time.time + CombatRandom.Range(0.5f, 1.5f);
         }
 
         /// <summary>Fighters go to the open edge and wait their turn there, taunting, then pounce.</summary>
@@ -607,6 +612,65 @@ namespace ProjectInk
                 body.Play("run", 0.1f, false, 0.85f);
         }
 
+        // ------------------------------------------------------------------ personal space
+
+        static int separatedFrame = -1;
+
+        /// <summary>Standing about (not mid-swing, not flying, not held): may be nudged aside.</summary>
+        bool Shovable => Alive && Grounded && !OnLedge && !projectile &&
+                         (state == State.Approach || state == State.Wait || state == State.Advance ||
+                          state == State.Windup || state == State.Recover || state == State.Hurt);
+
+        /// <summary>Bodies on the same floor never stand inside each other or inside the hero: overlaps are
+        /// eased apart at walking pace (3 m/s), once per frame for everyone. Fighters mid-swing hold their
+        /// ground and the others make room. Nobody is pushed off the edge of a floor.</summary>
+        static void SeparateAll(HeroController hero, float dt)
+        {
+            if (separatedFrame == Time.frameCount) return;
+            separatedFrame = Time.frameCount;
+            if (dt <= 0f) return;
+            float step = 3f * dt;
+            for (int i = 0; i < All.Count; i++)
+            {
+                var a = All[i];
+                if (a == null) continue;
+                if (a.Shovable && !hero.IsDead && hero.Grounded)
+                {
+                    float dh = a.transform.position.x - hero.transform.position.x;
+                    float minH = 0.5f * a.transform.localScale.x;
+                    if (Mathf.Abs(hero.transform.position.y - a.transform.position.y) < 0.5f && Mathf.Abs(dh) < minH)
+                        a.Shove((dh >= 0f ? 1f : -1f) * Mathf.Min(step, minH - Mathf.Abs(dh)));
+                }
+                for (int j = i + 1; j < All.Count; j++)
+                {
+                    var b = All[j];
+                    if (b == null) continue;
+                    bool sa = a.Shovable, sb = b.Shovable;
+                    if (!sa && !sb) continue;
+                    var pa = a.transform.position;
+                    var pb = b.transform.position;
+                    if (Mathf.Abs(pa.y - pb.y) > 0.5f || !a.Alive || !b.Alive) continue;
+                    float d = pb.x - pa.x;
+                    float minD = 0.275f * (a.transform.localScale.x + b.transform.localScale.x);
+                    float overlap = minD - Mathf.Abs(d);
+                    if (overlap <= 0f) continue;
+                    float dir = d > 0f ? 1f : d < 0f ? -1f : 1f;      // exactly on top: the later one steps right
+                    float move = Mathf.Min(step, overlap);
+                    if (sa && sb) { a.Shove(-dir * move * 0.5f); b.Shove(dir * move * 0.5f); }
+                    else if (sa) a.Shove(-dir * move);
+                    else b.Shove(dir * move);
+                }
+            }
+        }
+
+        void Shove(float dx)
+        {
+            var p = transform.position;
+            var q = new Vector3(Mathf.Clamp(p.x + dx, arenaMinX, arenaMaxX), p.y, p.z);
+            if (Mathf.Abs(GroundY(q, 0.35f) - p.y) > 0.3f) return;   // never off the edge of a floor
+            transform.position = q;
+        }
+
         void WallSplat(int wall)
         {
             if (Boss && finaleTriggered) return;
@@ -637,7 +701,7 @@ namespace ProjectInk
             state = State.Wait;
             stateTime = 0f;
             tauntedThisWait = false;
-            waitUntil = Time.time + (Boss ? (Enraged ? Random.Range(0.3f, 0.8f) : Random.Range(0.6f, 1.3f)) : Random.Range(0.3f, 1.2f));
+            waitUntil = Time.time + (Boss ? (Enraged ? CombatRandom.Range(0.3f, 0.8f) : CombatRandom.Range(0.6f, 1.3f)) : CombatRandom.Range(0.3f, 1.2f));
             if (Fleeing) { BeginFlee(false); return; }
             if (Boss && enragePending) { BeginEnrage(); return; }
             if (body.CurrentName != IdleClip) body.Play(IdleClip, 0.15f);
@@ -662,8 +726,7 @@ namespace ProjectInk
                     break;
                 case EnemyType.Brute:
                     // the bear hug now and then: tap to break it
-                    float r0 = Random.value;
-                    attack = r0 < 0.2f ? AttackData.EnemyGrab : r0 < 0.6f ? AttackData.BruteSmash : AttackData.BruteKick;
+                    attack = BrutePattern[attackSerial++ % BrutePattern.Length];
                     body.Play("windup", 0.08f);
                     break;
                 case EnemyType.Thrower:
@@ -675,12 +738,21 @@ namespace ProjectInk
                     body.Play("sword_idle", 0.08f);
                     break;
                 default:
-                    int r = Random.Range(0, 4);
-                    attack = r == 0 ? AttackData.EnemyJab : r == 1 ? AttackData.EnemyCross : r == 2 ? AttackData.EnemyKick : AttackData.EnemyGrab;
+                    attack = BrawlerPattern[attackSerial++ % BrawlerPattern.Length];
                     body.Play("windup", 0.08f);
                     break;
             }
         }
+
+        // Attacks come in a fixed order per enemy (each starts at its own point in it), so a
+        // fighter's next move can be read from his last one. Same shares as the old dice.
+        static readonly AttackData[] BrawlerPattern = { AttackData.EnemyJab, AttackData.EnemyCross, AttackData.EnemyKick, AttackData.EnemyGrab };
+        static readonly AttackData[] BrutePattern = { AttackData.BruteSmash, AttackData.BruteKick, AttackData.BruteSmash, AttackData.EnemyGrab, AttackData.BruteKick };
+        static int spawnCounter;
+        int attackSerial, specialSerial;
+        /// <summary>A new wave: patterns start from the top again (with CombatRandom.Seed, a wave
+        /// plays out the same way on every attempt).</summary>
+        public static void ResetPatterns() { spawnCounter = 0; }
 
         void AimLaser()
         {
@@ -752,7 +824,8 @@ namespace ProjectInk
         /// <summary>Cancel a windup or attack (the hero countered or vaulted).</summary>
         public void Interrupt()
         {
-            if (Boss && Enraged && Random.value < 0.5f) return;      // enraged, he powers through half the time
+            // enraged, he powers through once a swing is under way: interrupt him in the wind-up
+            if (Boss && Enraged && state == State.Attack) return;
             if (state == State.Windup || state == State.Attack || state == State.Advance || (state == State.Pounce && !pounceLaunched))
             {
                 ReleaseToken();
@@ -775,9 +848,10 @@ namespace ProjectInk
         bool TryBossSpecial(float dist, float dx)
         {
             if (Time.time < nextSpecialAt || hero.IsDead) return false;
-            float r = Random.value;
-            if (dist > 3.2f && r < (Enraged ? 0.6f : 0.4f)) { BeginCharge(dx); return true; }
-            if (dist < 6f && r < (Enraged ? 0.8f : 0.6f)) { BeginSlam(); return true; }
+            // a fixed rotation: enraged, he always goes for a special; calm, he alternates
+            int pick = specialSerial++;
+            if (dist > 3.2f && (Enraged || pick % 2 == 0)) { BeginCharge(dx); return true; }
+            if (dist < 6f && (Enraged || pick % 3 != 2)) { BeginSlam(); return true; }
             return false;
         }
 
@@ -1135,7 +1209,7 @@ namespace ProjectInk
             velocity = Vector3.zero;
             if (laser != null) laser.enabled = false;
         }
-        public void PuppetPose(Vector3 at) { transform.position = at; }
+        public void PuppetPose(Vector3 at) { AllowWarp(0.1f); transform.position = at; }
         public void PuppetPlay(string clip, float fade = 0.05f, float speed = 1f) { if (body.Has(clip)) body.Play(clip, fade, true, speed); }
         public void PuppetFlash() { Tint(Color.white, 0.07f); }
         public void PuppetDie()
@@ -1348,21 +1422,35 @@ namespace ProjectInk
     }
 
     /// <summary>Only a few enemies may attack at once; the rest circle, taunt and wait.</summary>
+    /// <summary>Who may attack the hero right now. One melee attacker at a time (the others
+    /// circle and wait their turn) plus one shooter or knife thrower, with a short beat between
+    /// melee attacks. Pile-ups, where three fighters swing at once and the bodies merge into
+    /// one blob, cannot happen.</summary>
     public static class AttackTokens
     {
-        public static int Max = 3;
+        public static int MaxMelee = 1, MaxRanged = 1;
+        /// <summary>Real seconds between one melee attacker finishing and the next starting.</summary>
+        public static float MeleeGap = 0.25f;
         static readonly HashSet<Enemy> holders = new HashSet<Enemy>();
+        static float lastMeleeRelease = -99f;
 
         public static bool TryTake(Enemy e)
         {
             holders.RemoveWhere(h => h == null || !h.Alive);
             if (holders.Contains(e)) return true;
-            if (holders.Count >= Max) return false;
+            int melee = 0, ranged = 0;
+            foreach (var h in holders) { if (h.Ranged) ranged++; else melee++; }
+            if (e.Ranged) { if (ranged >= MaxRanged) return false; }
+            else if (melee >= MaxMelee || Time.time < lastMeleeRelease + MeleeGap) return false;
             holders.Add(e);
             return true;
         }
 
-        public static void Release(Enemy e) { holders.Remove(e); }
-        public static void Clear() { holders.Clear(); }
+        public static void Release(Enemy e)
+        {
+            if (holders.Remove(e) && e != null && !e.Ranged) lastMeleeRelease = Time.time;
+        }
+
+        public static void Clear() { holders.Clear(); lastMeleeRelease = -99f; }
     }
 }
