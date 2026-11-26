@@ -2281,3 +2281,60 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **Also:**
     - the pairing now judges each thumb's side by the same rule as the tap itself (the screen's halves, in the controls the game uses);
     - a CROSSFIRE lesson's step now ticks on the two-thumb tap.
+- **Story staging glitches fixed across every chapter.** People and props went through walls, tables and set pieces; non-fighters stood in a boxing guard; people faced sideways across counters; props were misplaced. Each chapter was audited against its set's own geometry (Blender x/y/z = Unity x/z/y).
+  - **Shared tools:**
+    - `Fighter.LookAtXZ`: face a point in depth, not only left or right.
+    - New clips: `sentry` (a guard on his post), `unlock` (a key in a lock), `carry_walk` / `carry_stand` (a box in both hands).
+  - **Bank:**
+    - The guard walks back in through the doorway (not the stone beside it), stands as a guard (`sentry`) and turns the key (`unlock`, not a punch).
+    - The clerk faces the man at her window.
+    - Mr. Pell carries the box in both hands round the table (not through it), sets it down from its end, and leaves through the round door at its widest.
+  - **Street:**
+    - The lookout under the arches works again: a misplaced `else` had cleared him.
+    - The lane stops short of the stalled bus.
+    - Spawns are out of the dumpster and the bus.
+    - The Driver's car drives nose-first, mounts the kerb, crashes against the pillar, and is kept out of.
+    - Walk speeds match their clips; the men talk in a relaxed stand.
+  - **Home:**
+    - The living-room lookout works again.
+    - Back spawns are out of the island, the coffee table and the stairwell.
+    - Men come down the stairs on the treads.
+    - The hero climbs the stairs on the treads, round the newel.
+    - The porch steps are stood on.
+    - The phone exists and goes to his ear.
+    - The lamp flex is in his hand.
+  - **Backyard:**
+    - Torches are held in the hand with a beam from the lens, the arm raised.
+    - The men come through the gate gap.
+    - Spawns are out of the slide, the railing and the pond.
+    - The ribbon is in reach.
+    - The van drives nose-first up the hill road.
+    - Maya's silhouette is in the van window.
+  - **Road:** one walkie, not two; he walks off instead of walking on the spot.
+  - **Epilogue:**
+    - Harrow faces them.
+    - Hands are held.
+    - The swing is caught and pushed safely.
+    - The hall walk is clear of the banister.
+  - **Chapter 1:**
+    - The tipped chair rests on its feet, out of the lane.
+    - The shutter is lifted from beside it.
+    - Spawns are clear of the forklift, racks, column, drums and office.
+    - The Foreman's hook, landing and crane box are fixed.
+    - The thrown Foreman is clear of props and the hero.
+    - The walk-out goes round the body.
+    - The pistol is in the palm.
+    - The set: no braces across the lane, and the fork pallet is the platform's width. Re-baked.
+  - **Fortress:**
+    - Climbs, the windlass, the dome crank and the gap jump are done at the real geometry.
+    - The Warden walks round his table.
+    - The old tower scenes are restaged on Kessel.
+    - Voss's pistol is in his hand.
+    - The trade and the fall are fixed.
+    - The set: stairs, roof boards, the bell rope and gallery treads are out of the lane; the gatehouse ceiling is under its floor; the murder hole is open; the drawbridge is shorter. Re-baked.
+  - **Everywhere:**
+    - Men from the back face their walk and turn to the hero (no crab walk, no drift into set pieces).
+    - No random step for back and top spawns.
+    - Low-angle lenses follow the subject's floor.
+    - Enemies hang on the V4 body's own offsets.
+    - Throwable props are out of crates and drums.
