@@ -80,6 +80,7 @@ namespace ProjectInk
             GestureInput.Tapped -= OnSkipTap;
             TrainingUnhook();
             if (fastForward || toNextLine) { fastForward = false; toNextLine = false; AudioListener.volume = ffVolume; }
+            Sound.Skipping = false;
         }
 
         void Start()

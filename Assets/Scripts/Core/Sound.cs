@@ -40,6 +40,39 @@ namespace ProjectInk
         public static Sound Instance { get; private set; }
         public static float Master = 1f;
 
+        /// <summary>The story racing ahead behind black (SKIP / TO PLAY): no one-shot is started (they'd
+        /// belong to moments that are gone), the score's fades finish at once. See SkipEnd.</summary>
+        public static bool Skipping;
+        static int laterGen;              // bumped by SkipEnd: sounds queued with PlayLater before it never play
+
+        /// <summary>The skip is over: the sound catches up with the story. Every one-shot still ringing (and
+        /// every one queued for later) belonged to the skipped scene and stops; the score jumps forward by
+        /// the story time that was skipped (`aheadSeconds`: the story ran that much further than the music
+        /// did), a cue that would have ended by now ends, and its fades land where they'd have landed.</summary>
+        public static void SkipEnd(float aheadSeconds)
+        {
+            Skipping = false;
+            var s = Instance;
+            if (s == null) return;
+            laterGen++;
+            for (int i = 0; i < Voices; i++) if (s.voices[i] != null && s.voices[i].isPlaying) s.voices[i].Stop();
+            s.CatchUp(s.musA, s.musWantA, aheadSeconds);
+            s.CatchUp(s.musB, s.musWantB, aheadSeconds);
+            if (s.drone != null) s.drone.volume = s.droneWant * Master;
+        }
+
+        void CatchUp(AudioSource a, float want, float ahead)
+        {
+            if (a == null) return;
+            if (want <= 0f) { a.volume = 0f; if (a.isPlaying) a.Stop(); return; }
+            a.volume = want * Master;
+            if (!a.isPlaying || a.clip == null) return;
+            float t = a.time + ahead;
+            if (a.loop) a.time = Mathf.Repeat(t, a.clip.length);
+            else if (t >= a.clip.length - 0.05f) { a.Stop(); a.volume = 0f; }
+            else a.time = t;
+        }
+
         /// <summary>Sound on or off (saved).</summary>
         public static void SetMuted(bool muted)
         {
@@ -292,12 +325,15 @@ namespace ProjectInk
 
         IEnumerator Later(Sfx s, float seconds, float volume, Vector3? at)
         {
+            int gen = laterGen;
             yield return new WaitForSecondsRealtime(seconds);
+            if (gen != laterGen) yield break;                       // a skip went past the moment it belonged to
             PlayNow(s, volume, at, 1f);
         }
 
         void PlayNow(Sfx s, float volume, Vector3? at, float pitch, int take = -1)
         {
+            if (Skipping) return;                                    // a moment being skipped: silent, and nothing left ringing after
             if (!banks.TryGetValue(s, out var bank)) return;
             Traits(s, out float level, out float spread, out float gap, out bool slows);
             float now = Time.unscaledTime;
@@ -379,8 +415,9 @@ namespace ProjectInk
             if (rain != null) rain.volume = Mathf.MoveTowards(rain.volume, Mathf.Min(1f, 0.22f * Master * RainLevel), Time.unscaledDeltaTime * 0.8f);
             if (musA != null)
             {
-                musA.volume = Mathf.MoveTowards(musA.volume, musWantA * Master, Time.unscaledDeltaTime * musRate);
-                musB.volume = Mathf.MoveTowards(musB.volume, musWantB * Master, Time.unscaledDeltaTime * musRate);
+                float mr = Skipping ? 1e6f : musRate;                    // skipping: the score's fades land at once
+                musA.volume = Mathf.MoveTowards(musA.volume, musWantA * Master, Time.unscaledDeltaTime * mr);
+                musB.volume = Mathf.MoveTowards(musB.volume, musWantB * Master, Time.unscaledDeltaTime * mr);
                 if (musA.volume <= 0f && musWantA <= 0f && musA.isPlaying) musA.Stop();
                 if (musB.volume <= 0f && musWantB <= 0f && musB.isPlaying) musB.Stop();
                 // the score bends into slow motion with everything else

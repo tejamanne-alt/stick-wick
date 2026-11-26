@@ -2071,3 +2071,7 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - Rising-line kills fall on their back (new `cut_down_back`).
     - Voss memory lines teach the edge, debana and saya no uchi the first time.
   - **Build and test:** the FBX is rebuilt (293 clips). New test checkpoint: TEST · the katana vs ordinary men.
+- **Skip takes the sound with it.** While a skip ran, everything was muted, but nothing moved the score on. When the sound came back, the music was still in the skipped scene: mid-crossfade, or a scored cue (like the walk-out's) playing from where it was. One-shots started during the skip (risers, drones, delayed hits) also rang on afterwards. Now:
+  - **During a skip:** `Sound.Skipping` starts no one-shots, and the score's crossfades land at once.
+  - **When it ends:** `Sound.SkipEnd` stops every sound still ringing and cancels queued `PlayLater` sounds. The score jumps forward by the story time skipped: loops wrap, and a cue that would have ended has ended. Volumes snap to where the fades would be.
+  - **The opening's own jump to the walk** also stops the opening's sounds.

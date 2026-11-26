@@ -27,6 +27,7 @@ namespace ProjectInk
         public static float StoryDt => TimeController.Paused ? 0f : Time.unscaledDeltaTime * (Skipping ? SkipRate : 1f);
         static bool Skipping => fastForward || toNextLine;
         float ffAt = -9f, ffEndAt = -9f, ffVolume = 1f, skipTapAt = -9f;
+        float skipAhead;                      // story seconds run beyond real time during this skip (the score catches up by it)
         // the next beat of each clock (what a skip jumps to), refilled every frame by the At() checks
         float nextT = 1e9f, nextB = 1e9f, nextM = 1e9f, nextE = 1e9f, nextH = 1e9f;
 
@@ -56,6 +57,8 @@ namespace ProjectInk
             Sound.Play(Sfx.Whoosh, 0.35f, null, 1.3f);
             toNextLine = true;
             skipStartFrame = Time.frameCount;
+            skipAhead = 0f;
+            Sound.Skipping = true;
             ffAt = Time.unscaledTime;
             ffVolume = AudioListener.volume;
             AudioListener.volume = 0f;
@@ -74,9 +77,11 @@ namespace ProjectInk
         void SkipToPlay()
         {
             // the opening has its own, proven way straight to the walk
-            if (phase == Phase.Cinematic && !gateBusy) { SkipToWalk(); return; }
+            if (phase == Phase.Cinematic && !gateBusy) { Sound.SkipEnd(0f); SkipToWalk(); return; }   // (the opening's sounds stop with it)
             if (toNextLine) { toNextLine = false; fastForward = true; return; }
             fastForward = true;
+            skipAhead = 0f;
+            Sound.Skipping = true;
             ffAt = Time.unscaledTime;
             ffVolume = AudioListener.volume;
             AudioListener.volume = 0f;
@@ -89,12 +94,14 @@ namespace ProjectInk
             fastForward = false;
             toNextLine = false;
             ffEndAt = Time.unscaledTime;
+            Sound.SkipEnd(skipAhead);                                 // the score jumps to where the story is; the skipped scene's sounds stop
             AudioListener.volume = ffVolume;
         }
 
         /// <summary>Every frame (from Update): the fast-forward ends where the player has the controls.</summary>
         void UpdateSkip()
         {
+            if (Skipping && !TimeController.Paused) skipAhead += Time.unscaledDeltaTime * (SkipRate - 1f);
             if (Skipping && (PlayerHasControl || phase == Phase.End || Time.unscaledTime - ffAt > (fastForward ? 25f : 8f))) StopFastForward();
         }
 
