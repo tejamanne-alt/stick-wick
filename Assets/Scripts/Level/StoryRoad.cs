@@ -56,6 +56,9 @@ namespace ProjectInk
             StartCoroutine(Road(from));
         }
 
+        /// <summary>At the wheel: listening (both hands on it, the walkie on the seat beside him), or talking (the
+        /// walkie picked up off the seat, at his mouth). There is one walkie: it was in his hand and on the seat at
+        /// once whenever he talked.</summary>
         void SeatHero(bool talking)
         {
             hero.CinePuppet();
@@ -64,6 +67,7 @@ namespace ProjectInk
             string clip = talking ? "sit_drive_talk" : "sit_drive";
             hero.body.Play(hero.body.Has(clip) ? clip : hero.body.Has("sit_bound") ? "sit_bound" : "idle", 0.25f);
             HoldWalkie(talking);
+            if (seatWalkie != null) seatWalkie.gameObject.SetActive(!talking);
         }
 
         void UpdateRoad()
@@ -90,14 +94,18 @@ namespace ProjectInk
         CineCam.Shot Face(float u) => CineCam.DollyIn(RoadPlan.DriverHead + Vector3.up * 0.08f, new Vector3(-1f, 0.02f, -0.15f), u, 1.1f, 0.65f, 32f);
         CineCam.Shot Pov() => Static(RoadPlan.DriverHead + new Vector3(0.05f, 0.02f, 0f), RoadPlan.OutsideAhead, 58f);
 
+        /// <summary>His line: the walkie up off the seat to his mouth (on the cut to the shot).</summary>
         IEnumerator Talk(string line, float secs, System.Func<CineCam.Shot> shot)
         {
+            SeatHero(true);
             Say("YOU", line, secs);
             yield return Cut(secs + 0.2f, u => shot(), 0.006f);
         }
 
+        /// <summary>Her line: the walkie back on the seat, her voice from it (the close shots are on the seat).</summary>
         IEnumerator Her(string line, float secs, System.Func<CineCam.Shot> shot)
         {
+            SeatHero(false);
             Walkie(line, secs);
             yield return Cut(secs + 0.2f, u => shot(), 0.006f);
         }
@@ -270,7 +278,14 @@ namespace ProjectInk
             Say("YOU", "...Over and out.", 1.8f);
             if (carInterior != null) carInterior.gameObject.SetActive(false);
             hero.CinePose(RoadPlan.GetOutSpot);
-            hero.body.Play("walk", 0.2f, true, 0.8f);
+            hero.SetFacing(1);
+            hero.body.Play("walk", 0.2f, true, 0.75f);
+            // he walks off up the road towards the gate (he stood on the spot, walking, for the whole shot and
+            // the card's fade): along the car's side (it is 0.55 m away) and on, clear of the lay-by's trestle
+            // and the low wall (z 3.6 and -2.95)
+            var out0 = RoadPlan.GetOutSpot;
+            float walked = 0f;
+            StartCoroutine(HoldFor(6.2f, () => { walked += StoryDt; hero.CinePose(out0 + Vector3.right * (0.72f * walked)); }));
             yield return Cut(5.0f, u => Static(RoadPlan.CarStop + new Vector3(-6f, 3f, -9f), RoadPlan.Fortress, Mathf.Lerp(40f, 32f, u)), 0.03f);
             cardAt = Time.unscaledTime;
             cardLine = "It was never a trade.";

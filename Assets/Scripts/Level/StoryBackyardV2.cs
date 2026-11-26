@@ -28,7 +28,7 @@ namespace ProjectInk
             m.transform.localScale = Vector3.one * 0.58f;
             m.PuppetPose(at);
             m.SetFacing(facing);
-            m.PuppetPlay("idle", 0f);
+            m.PuppetPlay(m.body.Has("idle_loose") ? "idle_loose" : "idle", 0f);     // a child standing, not a boxer's guard
             Dress(m.body, Look.Maya);
             return m;
         }
@@ -50,15 +50,42 @@ namespace ProjectInk
             vanWindow = q.transform;
             vanWindow.gameObject.SetActive(false);
             vanMaya = SpawnMaya(vw + new Vector3(0.12f, -0.62f, 0f), -1);
-            if (vanMaya != null) { if (van != null) vanMaya.transform.SetParent(van, true); vanMaya.gameObject.SetActive(false); }
-            // the van's lights: two pale points at the back
+            if (vanMaya != null)
+            {
+                if (van != null) vanMaya.transform.SetParent(van, true);
+                // the set is baked opaque (the door's glass too), so she can't be seen through it: her shape is
+                // drawn on the lit window instead, dark against it (her head, her pigtails, her shoulders; her hand
+                // on the glass), just in front of the glow. It is hers: it shows and goes with her.
+                var ink = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.05f, 0.05f, 0.06f) };
+                var shape = new GameObject("VanMayaShape").transform;
+                shape.position = vw + Vector3.left * 0.04f;
+                void Disc(Vector2 yz, Vector2 size)
+                {
+                    var d = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    Destroy(d.GetComponent<Collider>());
+                    d.transform.SetParent(shape, false);
+                    d.transform.localPosition = new Vector3(0f, yz.x, yz.y);
+                    d.transform.localScale = new Vector3(0.006f, size.x, size.y);
+                    d.GetComponent<Renderer>().sharedMaterial = ink;
+                }
+                Disc(new Vector2(0.01f, -0.04f), new Vector2(0.2f, 0.19f));                // her head
+                Disc(new Vector2(0.07f, -0.17f), new Vector2(0.1f, 0.08f));                // the pigtails
+                Disc(new Vector2(0.07f, 0.09f), new Vector2(0.1f, 0.08f));
+                Disc(new Vector2(-0.16f, -0.04f), new Vector2(0.1f, 0.36f));               // the shoulders (inside the glow: it ends 0.21 down)
+                Disc(new Vector2(0.04f, 0.2f), new Vector2(0.07f, 0.06f));                 // her hand on the glass
+                shape.SetParent(vanMaya.transform, true);
+                vanMaya.gameObject.SetActive(false);
+            }
+            // the van's lights: the two tail lamps at its back corners (z +-0.94 from its middle, 1 m up),
+            // not either side of the window, which is in the left door (one of them hung in the air off the van)
             var lights = new GameObject("VanLights").transform;
+            float vz = van != null ? van.position.z : ParkPlan.VanZ;
             for (int i = -1; i <= 1; i += 2)
             {
                 var l = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 Destroy(l.GetComponent<Collider>());
                 l.transform.SetParent(lights, false);
-                l.transform.position = vw + new Vector3(-0.02f, -0.55f, i * 0.75f);
+                l.transform.position = new Vector3(vw.x + 0.03f, 1.02f, vz + i * 0.94f);
                 l.transform.localScale = Vector3.one * 0.12f;
                 l.GetComponent<Renderer>().sharedMaterial = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.62f, 0.05f, 0.06f) };
             }
@@ -179,12 +206,20 @@ namespace ProjectInk
             if (vanWindow != null) vanWindow.gameObject.SetActive(true);
             Sound.Play(Sfx.CarRev, 1f, van != null ? van.position : new Vector3(ParkPlan.VanX, 1f, ParkPlan.VanZ));
             var v0 = van != null ? van.position : new Vector3(ParkPlan.VanX, 0f, ParkPlan.VanZ);
+            var r0 = van != null ? van.rotation : Quaternion.identity;
             float vx = 0f;
+            // out under the barrier and away up the hill road, nose first: the road curves to +z and climbs
+            // (ParkPlan.HillRoad). It used to slide sideways off at a slant, still facing +x, and sink into the
+            // rising ground beside the road.
             System.Action drive = () =>
             {
                 if (van == null) return;
                 vx += StoryDt * Mathf.Lerp(1.2f, 6f, Mathf.Clamp01(vx / 6f));
-                van.position = v0 + new Vector3(vx, 0f, vx > 8f ? (vx - 8f) * 0.6f : 0f);
+                float x = v0.x + vx;
+                var p = ParkPlan.HillRoad(x);
+                var dir = ParkPlan.HillRoad(x + 1.5f) - ParkPlan.HillRoad(x - 1.5f);
+                van.position = new Vector3(p.x, v0.y + p.y, p.z + (v0.z - ParkPlan.SightZ));
+                van.rotation = Quaternion.FromToRotation(Vector3.right, dir.normalized) * r0;
             };
             // slow motion: the van pulling away, her small hand on the glass
             if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.35f, 2.2f, 0.05f, 0.3f);
@@ -199,14 +234,18 @@ namespace ProjectInk
             StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () =>
             {
                 drive();
-                ran = Mathf.MoveTowards(ran, scProgress * 9f, StoryDt * 6f);
+                // never running on the spot between taps: a jog at least, faster as the player drives him, the
+                // stride matched to the ground he covers (the drum on the lane is at x 112: he stops short of it)
+                float was = ran;
+                ran = Mathf.Min(10f, Mathf.Max(Mathf.MoveTowards(ran, scProgress * 9f, StoryDt * 6f), ran + StoryDt * 1.4f));
+                if (StoryDt > 0f) hero.body.SetSpeed(Mathf.Clamp((ran - was) / StoryDt / 4.2f, 0.4f, 1.5f));
                 hero.CinePose(h0 + Vector3.right * ran);
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.24f; Sound.Play(Sfx.Footstep, 0.7f, hero.transform.position, 1.2f); }
                 Cine(new CineCam.Shot(hero.transform.position + new Vector3(-2.6f, 0.9f, -1.6f), Vector3.Lerp(HeroHead(), VanWindow(), 0.6f), 38f));
             }));
             yield return MashTo("RUN", 16);
-            // he almost touches it... and it's gone up the hill road
-            hero.body.Play("idle", 0.3f);
+            // he almost touches it... and it's gone up the hill road. He stands there, out of breath (no guard: nobody to fight)
+            hero.body.Play(hero.body.Has("idle_alone") ? "idle_alone" : hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.3f);
             Sound.Play(Sfx.Breath, 1f, hero.Chest, 0.85f);
             Walkie("Papa... I can't... hear y—", 2.4f);
             Sound.Play(Sfx.Static, 0.8f, null, 0.9f);

@@ -68,6 +68,17 @@ namespace ProjectInk
         public static readonly UnityEngine.Vector3 BarrierHinge = new UnityEngine.Vector3(134.6f, 1.0f, 6.5f);
         public static readonly UnityEngine.Vector3 HillRoadOut = new UnityEngine.Vector3(173.6f, 1.7f, 14.9f);
 
+        /// <summary>The hill road's centre line at x (build_park_set.py road_points and ramp): from a metre
+        /// past the barrier it runs 38 m along x, curving to +z (SightZ + 12 t^1.8) and rising with the land
+        /// (ending at HillRoadOut); before that, the car park's exit lane along SightZ, on the ground.</summary>
+        public static UnityEngine.Vector3 HillRoad(float x)
+        {
+            float x0 = BarrierHinge.x + 1f;
+            float t = UnityEngine.Mathf.Clamp01((x - x0) / 38f);
+            float rise = UnityEngine.Mathf.Min(4f, 7f * UnityEngine.Mathf.Pow(UnityEngine.Mathf.Max(0f, (x - x0) / 70f - 0.15f), 1.5f));
+            return new UnityEngine.Vector3(x, x > x0 ? rise + 0.02f : 0f, SightZ + 12f * UnityEngine.Mathf.Pow(t, 1.8f));
+        }
+
         // ---------------------------------------------------------------- the horizon
         /// <summary>The fortress on the crown of Kessel Hill (its keep), lit, storm clouds over it.</summary>
         public static readonly UnityEngine.Vector3 Fortress = new UnityEngine.Vector3(251.5f, 41f, 43f);
