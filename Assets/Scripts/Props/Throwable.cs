@@ -220,20 +220,20 @@ namespace ProjectInk
                 case "Story_Street":
                     kit = new[]
                     {
-                        (PropKind.Bottle, 35.5f, 0f), (PropKind.Bottle, 40.5f, 0f), (PropKind.Bottle, 51f, 0f),     // the café, the market
-                        (PropKind.Brick, 66.5f, 0f), (PropKind.Brick, 74f, 0f), (PropKind.Brick, 83.5f, 0f),        // loose from the arches
+                        (PropKind.Bottle, 36.1f, 0f), (PropKind.Bottle, 40.5f, 0f), (PropKind.Bottle, 51f, 0f),     // the café, the market (36.1: off the crate at 35.2)
+                        (PropKind.Brick, 66.5f, 0f), (PropKind.Brick, 73.1f, 0f), (PropKind.Brick, 83.5f, 0f),        // loose from the arches
                         (PropKind.Bottle, 104f, 0f), (PropKind.Brick, 113f, 0f),
                     };
                     break;
                 case "Story_Home":
                     kit = new[]
                     {
-                        (PropKind.Bleach, 28.6f, 0f),                                  // the Cleaner's, in the kitchen
+                        (PropKind.Bleach, 29.5f, 0f),                                  // the Cleaner's, in the kitchen
                         (PropKind.Bottle, 31.4f, 0f),                                  // the kitchen's, by the back door
                         (PropKind.Bottle, HomePlan.CoffeeTableX + 0.6f, 0f),           // wine, the living room
                         (PropKind.Pot, 16.4f, 0f),                                     // a houseplant by the living room window
                         (PropKind.Wrench, 6.2f, 0f),                                   // the toolbox under the stairs, the hall
-                        (PropKind.Pot, 12.6f, HomePlan.Floor2),                        // a plant on the landing
+                        (PropKind.Pot, 13.3f, HomePlan.Floor2),                        // a plant on the landing
                     };
                     break;
                 case "Story_Backyard":

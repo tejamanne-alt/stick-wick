@@ -479,12 +479,13 @@ namespace ProjectInk
             At(SpawnKind.RightDoor, new Vector3(R.x1 - 0.5f, R.y, 0f));
             At(SpawnKind.LeftDoor, new Vector3(R.x0 + 0.5f, R.y, 0f));
             // the back of each room, on clear floor (they step out from there to the lane, drifting towards him):
-            // the kitchen between the island (x 28.15-30.65, z 1.7-2.7, its stool at 30.35) and the bin bags by the
-            // fridge (33.1+); the living room right of the glass coffee table (x 19.3-20.7, z 0.85-1.55); the study
-            // right of his desk chair and clear of the plant by the door (9.45, 1.55); the landing right of the
-            // stairwell's newel posts and balustrade (x 9.5-9.6, z 2.36-2.66) and on the slab (z < 2.4)
-            float bx = r == 0 ? 31.9f : r == 1 ? 22.4f : r == 2 ? 13.4f : 11.4f;
-            var back = new Vector3(bx, R.y, r == 1 ? 2.4f : 2.2f);
+            // the kitchen in front of the gap between the little table (x 25.85-26.85) and the island's stool (28.45,
+            // 1.52), well left of Elena on the floor (x 31.1-33, z 0.5-0.9: from behind the island they'd walk over her);
+            // the living room right of the glass coffee table (x 19.3-20.7, z 0.85-1.55); the study right of his desk
+            // chair and clear of the plant by the door (9.45, 1.55); the landing right of the stairwell's newel posts
+            // and balustrade (x 9.5-9.6, z 2.36-2.66) and on the slab (z < 2.4)
+            float bx = r == 0 ? 27.6f : r == 1 ? 22.4f : r == 2 ? 13.4f : 11.4f;
+            var back = new Vector3(bx, R.y, r == 0 ? 1.25f : r == 1 ? 2.4f : 2.2f);
             At(SpawnKind.Background, back);
             // the hall's men come down the stairs: they appear at the top, on the landing, and are walked down
             // the flight (DownTheStairs), not spawned inside the staircase and the study wall
@@ -795,8 +796,9 @@ namespace ProjectInk
             Say("YOU", "...Small feet. She ran.", 2.6f);
             yield return Hold(2.4f, () => Cine(CineCam.OverheadRotation(floorAt, 1f, 4.4f, -20f, 24f, 50f)));
             // H21 out through the back door: the garden, the swing still moving; the camera pulls away from him.
-            // Through the middle of the doorway (|z| < 0.62; the open door's leaf lies outside along z 0.62-0.87) and over
-            // its step, at a walk's own pace (6.3 m in 2.6 s was a 2.4 m/s skate at 0.8)
+            // Past Elena (her body along z 0.5-0.9) and through the middle of the doorway (|z| < 0.62; the open door's
+            // leaf lies outside along z 0.62-0.87), over its step, at a walk's own pace (6.3 m in 2.6 s was a 2.4 m/s
+            // skate at 0.8)
             swingFrom = Time.unscaledTime;
             Sound.Play(Sfx.SwingCreak, 0.7f, new Vector3(HomePlan.SwingX, 1f, HomePlan.SwingZ));
             Sound.Play(Sfx.Door, 0.5f, new Vector3(HomePlan.BackDoorX, 1f, 0f), 0.7f);
@@ -804,7 +806,7 @@ namespace ProjectInk
             var w0 = hero.transform.position;
             var outside = new Vector3(36.4f, 0f, 0.4f);
             var swing = new Vector3(HomePlan.SwingX, 1.2f, HomePlan.SwingZ);
-            yield return StrollPath(hero, hero.CinePose, new[] { new Vector3(HomePlan.BackDoorX - 0.4f, 0f, 0.05f), outside }, 1.6f, BackStepY, true,
+            yield return StrollPath(hero, hero.CinePose, new[] { new Vector3(HomePlan.BackDoorX - 0.4f, 0f, -0.1f), outside }, 1.6f, BackStepY, true,
                 () => Cine(new CineCam.Shot(new Vector3(31.0f, 1.35f, -1.6f),
                                             Vector3.Lerp(HeroHead(), swing, Mathf.InverseLerp(w0.x, outside.x, hero.transform.position.x)), 40f)), 1);
             hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.3f);

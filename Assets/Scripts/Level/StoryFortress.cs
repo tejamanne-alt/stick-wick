@@ -246,7 +246,7 @@ namespace ProjectInk
                 // its front edge, z 4.05..4.55): at z 4.1 their legs were sunk in the merlons. On watch: a sentry's stand
                 const float walkZ = 4.85f;
                 foreach (var (g, x) in new[] { (g1, 56.2f), (g2, 57.4f) })
-                    if (g != null) { g.Puppet(); g.PuppetPose(new Vector3(x, FortressPlan.Up + 8.05f, walkZ)); g.SetFacing(-1); g.PuppetPlay("sentry", 0f); GiveTorch(g); }
+                    if (g != null) { g.Puppet(); g.PuppetPose(new Vector3(x, FortressPlan.Up + 8.05f, walkZ)); g.SetFacing(-1); g.PuppetPlay("sentry", 0f); var tg = GiveTorch(g); if (tg != null) tg.lookAt = () => hero.Chest; }   // the beams down on him
                 yield return Cut(2.4f, u => Static(new Vector3(58.5f, FortressPlan.Up + 9.6f, 4.8f), hero.transform.position + Vector3.up * 0.8f, 26f), 0.03f);
                 // (b) on the guards: "Movement on the road!"
                 Say("GUARD", "It's him! The book's on him!", 2.0f, g1 != null ? HeadOf(g1) : null);
