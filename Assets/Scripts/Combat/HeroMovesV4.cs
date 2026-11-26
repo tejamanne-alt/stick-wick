@@ -309,10 +309,11 @@ namespace ProjectInk
         {
             if (!MovesV4 || thing == null || state != State.Idle) return;
             float tx = thing.transform.position.x;
+            if (thing is WeaponPickup w0) { w0.GripNearest(transform.position.x); tx = w0.GripX; }    // to the end his hand will close on
             int side = tx >= transform.position.x ? 1 : -1;
             interactWith = thing;
             SetFacing(side);
-            float stand = thing is OilDrum ? 0.55f : thing is SetPiece sp0 ? sp0.stand : 0.32f;
+            float stand = thing is OilDrum ? 0.55f : thing is SetPiece sp0 ? sp0.stand : thing is WeaponPickup ? PickReach : 0.32f;
             stepGoal = Mathf.Clamp(tx - side * stand, arenaMinX, arenaMaxX);
             if (Mathf.Abs(stepGoal - transform.position.x) < 0.06f) { stepGoal = float.NaN; ArriveAtThing(); }
         }
@@ -323,21 +324,118 @@ namespace ProjectInk
             interactWith = null;
             if (thing == null) return;
             FaceTowards(thing.transform.position.x);
-            if (thing is WeaponPickup wp) { pickingUp = wp; BeginTraverse("pick_up", 0f); }
+            if (thing is WeaponPickup wp) { if (CanTake(wp)) PickUpV4(wp, true); }
             else if (thing is Throwable tp) { if (carried == null) PickProp(tp); }
             else if (thing is SetPiece sp) sp.Use(this);
             else if (thing is OilDrum) BeginTraverse("push", 0f);
         }
 
         /// <summary>Walking over a weapon with the new body: he bends and picks it up.</summary>
-        bool PickUpV4(WeaponPickup p)
+        // picking a weapon up (docs/design/pipe.md, sword.md): his hand goes to its grip end, the pipe and the
+        // katana each with their own way of taking it (rod_pick_up: the heave onto the shoulder; katana_pick_up:
+        // one knee, the blade rising into chudan), and at a run a scoop on the stride that never breaks it
+        const float PickReach = 0.42f;          // root → the hand on the floor at the grab (every pick-up clip)
+        float pickFrom, pickTo, pickHitAt;
+        bool pickScoop;
+
+        static bool PickClip(string c) => c == "pick_up" || c == "rod_pick_up" || c == "katana_pick_up" || c == "rod_scoop" || c == "katana_scoop";
+
+        /// <summary>Walking over (or tapped and walked to) a weapon he can take: start picking it up. On the
+        /// run, going its way, he scoops it without stopping (started early enough for the hand to meet it).</summary>
+        bool PickUpV4(WeaponPickup p, bool asked)
         {
-            if (!MovesV4) return false;
-            if (state != State.Idle || traverse != null) return true;     // handled (not now)
+            if (!MovesV4 || p == null) return false;
+            if (state != State.Idle || traverse != null || !Grounded) return false;
+            float x = transform.position.x;
+            p.GripNearest(x);
+            float gx = p.GripX, dx = gx - x;
+            string pre = p.kind == FightStyle.Pipe ? "rod_" : p.kind == FightStyle.Sword ? "katana_" : null;
+            float sp = Mathf.Abs(velocity.x);
+            bool scoop = false;
+            bool fast = !asked && running && sp > 2.6f;
+            if (fast && dx * velocity.x <= 0f) return false;              // running on past it: let it go
+            if (fast && pre != null && Contact && body.Has(pre + "scoop"))
+            {
+                float ahead = Mathf.Abs(dx);
+                float hitIn = 5f / 30f;                                   // the scoops' grab frame
+                if (ahead > sp * hitIn + PickReach + 0.05f) return false; // not yet
+                if (ahead < 0.2f) return false;                           // over it already: let it go
+                scoop = true;
+            }
+            else if (Mathf.Abs(dx) > (asked ? 1.2f : 0.9f)) return false; // (a knife, a gun at a run: he stops for it)
+            // holding a bent pipe: it's tossed aside (a clang), the fresh one taken
+            if (SwapsPipe(p)) TossPipe();
+            if (Mathf.Abs(dx) > 0.03f) SetFacing(dx > 0f ? 1 : -1);
             pickingUp = p;
-            FaceTowards(p.transform.position.x);
-            BeginTraverse("pick_up", 0f);
+            pickFrom = x;
+            pickTo = Mathf.Clamp(gx - Facing * PickReach, arenaMinX, arenaMaxX);
+            string clip = pre != null && Contact && body.Has(pre + (scoop ? "scoop" : "pick_up")) ? pre + (scoop ? "scoop" : "pick_up") : "pick_up";
+            BeginTraverse(clip, 0f);
+            pickScoop = scoop;
+            pickHitAt = body.Current != null && body.Current.hitTime > 0f ? body.Current.hitTime : 0.35f;
+            if (scoop) velocity.x = Facing * Mathf.Max(3.4f, sp);
             return true;
+        }
+
+        /// <summary>The bent pipe out of his hands: thrown down behind him, it clangs on the floor and lies there.</summary>
+        void TossPipe() => TossWeapon(-Facing * 1.6f);
+
+        /// <summary>The weapon in his hands let go of: it falls (thrown with `vx`), clangs and lies on the floor.</summary>
+        void TossWeapon(float vx)
+        {
+            if (Style == FightStyle.Fists) return;
+            var held = Style == FightStyle.Sword ? sword : Style == FightStyle.Pipe ? pipe : Style == FightStyle.Knife ? knife : pistol;
+            var hand = Throwable.FindBone(body.transform, "hand.R");
+            Vector3 at = hand != null ? hand.position : transform.position + Vector3.up * 0.9f;
+            Material mat = WaveDirector.Instance != null ? WaveDirector.Instance.weaponMaterial : null;
+            if (mat == null && held != null) { var r = held.GetComponentInChildren<Renderer>(); if (r != null) mat = r.sharedMaterial; }
+            int uses = Style == FightStyle.Sword ? SwordUses : Style == FightStyle.Pipe ? PipeUses : Style == FightStyle.Knife ? Knives : Ammo;
+            WeaponPickup.Spawn(Style, uses, new Vector3(at.x, transform.position.y, 0f), mat, true, vx);
+            Style = FightStyle.Fists;
+            ApplyStyleVisuals();
+            if (state == State.Idle) body.Play(IdleClip, 0.25f);
+            Sound.Play(Sfx.Whoosh, 0.4f, at);
+        }
+
+        /// <summary>The pick-up test (chapter 1): the weapon drops out of his hands, so it can be taken again.</summary>
+        public void PutDownForTest()
+        {
+            if (state != State.Idle || traverse != null || !Grounded) return;
+            TossWeapon(Facing * 0.7f);
+        }
+
+        /// <summary>While a pick-up plays: standing, he settles into place for the hand to meet the grip
+        /// (inside the step the clip already has); scooping, the run carries him, paced so the hand meets
+        /// it on the grab frame. True if it ended (the scoop back into the run).</summary>
+        bool PickUpdate(MoveSet.Entry e)
+        {
+            if (!PickClip(traverse)) return false;
+            if (pickScoop)
+            {
+                float spd = Mathf.Max(3.4f, Mathf.Abs(velocity.x));
+                float left = pickHitAt - body.Time;
+                if (!traverseHit && left > 0.02f) spd = Mathf.Clamp(Mathf.Abs(pickTo - transform.position.x) / left, 2.4f, 5.6f);
+                velocity.x = Facing * spd;
+                if (body.Finished || stateTime > e.Length)
+                {
+                    // out of the scoop straight into the armed run (still held: it runs on; let go: he stops)
+                    traverse = null; pickingUp = null; pickScoop = false;
+                    state = State.Idle; stateTime = 0f; running = true; holdTime = 0.5f;
+                    string run = KatanaMode ? (RodMode ? "rod_run" : "katana_run") : "run";
+                    body.Play(body.Has(run) ? run : "run", 0.08f);
+                    return true;
+                }
+                return false;
+            }
+            if (!traverseHit)
+            {
+                float k = Mathf.Clamp01(stateTime / Mathf.Max(0.05f, pickHitAt));
+                k = k * k * (3f - 2f * k);
+                var p = transform.position;
+                p.x = Mathf.Lerp(pickFrom, pickTo, k);
+                transform.position = p;
+            }
+            return false;
         }
 
         // ------------------------------------------------------------------ jumps and the vault
@@ -404,7 +502,8 @@ namespace ProjectInk
             traverseTo = clip == "vault" ? startX : transform.position.x;
             state = State.Traverse;
             stateTime = 0f;
-            if (clip != "run_turn") velocity.x = 0f;
+            pickScoop = false;
+            if (clip != "run_turn" && !clip.EndsWith("_scoop")) velocity.x = 0f;
             SetTrails(false);
             body.Play(clip, clip == "run_turn" || clip == "run_stop" ? 0.08f : 0.12f, true, 1f);
         }
@@ -431,14 +530,15 @@ namespace ProjectInk
                 if (body.Finished || stateTime > e.Length) { traverse = null; state = State.Idle; stateTime = 0f; running = true; holdTime = 0.5f; body.Play("run", 0.1f); }
                 return;
             }
+            if (PickUpdate(e)) return;
             if (!traverseHit && e.hitTime >= 0f && body.Time >= e.hitTime)
             {
                 traverseHit = true;
-                if (traverse == "pick_up" && pickingUp != null)
+                if (pickingUp != null)
                 {
                     var p = pickingUp;
                     pickingUp = null;
-                    if (p != null && Mathf.Abs(p.transform.position.x - transform.position.x) < 1.0f) DoPickup(p);
+                    if (p != null && CanTake(p) && Mathf.Abs(p.GripX - transform.position.x) < 1.2f) DoPickup(p);
                 }
                 if (traverse == "push")
                 {

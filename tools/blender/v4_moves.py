@@ -90,6 +90,22 @@ def clip(frames, keys, loop=False, hit=None, note="", speed=0.0, shift=False, st
 
 CLIPS = {}
 
+
+def scoop(base_keys, frames, table, run_keys):
+    """A pick-up on the run: the legs keep the run's own cycle, the body dips on the stride, the hand
+    takes it off the floor, and the last key is the armed run's first frame."""
+    keys = []
+    last = frames[-1]
+    for f in frames:
+        if f == last:
+            keys.append((f, run_keys[0][1], "smooth"))
+            continue
+        legs = dict(base_keys[f][1])
+        over = dict(table[f])
+        legs["hz"] = legs["hz"] + over.pop("dip_hz", 0.0)
+        keys.append((f, P(legs, **over), "smooth"))
+    return keys
+
 # ---------------------------------------------------------------- the gaits
 # walking alone: loose, the hands relaxed and swinging low, heel first, a gentle rise over each foot
 WALK_SPEED, JOG_SPEED, RUN_SPEED, SNEAK_SPEED = 1.25, 4.0, 4.8, 0.8
@@ -109,6 +125,10 @@ CLIPS["run"] = clip(16, gait(16, JOG_SPEED, duty=0.36, lift=0.15, hz=0.648, boun
                              spine=170, chest=166, neck=164, head=172, arm_base=-3, arm_amp=44, elbow=70, fist=125,
                              twist=11, lean_pump=1.4, strike=6, push=50),
                     loop=True, speed=JOG_SPEED, note="the run: leaning in, midfoot under the hips, arms driving at chest height")
+# the legs of a pick-up on the run (rod_scoop, katana_scoop): the run's cycle, 14 frames
+SCOOP_LEGS = gait(14, JOG_SPEED, duty=0.4, lift=0.1, hz=0.64, bounce=0.02, bounce_low_at_mid=True,
+                  spine=170, chest=166, neck=164, head=172, arm_base=-3, arm_amp=40, elbow=70, fist=125,
+                  twist=8, lean_pump=1.0, strike=6, push=48)
 # running flat out: leaning in, high knees, the arms driving hard
 CLIPS["sprint"] = clip(16, gait(16, RUN_SPEED, duty=0.31, lift=0.2, hz=0.635, bounce=0.035, bounce_low_at_mid=True,
                                 spine=166, chest=160, neck=158, head=170, arm_base=18, arm_amp=58, elbow=84, fist=140,

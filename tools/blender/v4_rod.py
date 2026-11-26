@@ -328,3 +328,40 @@ CLIPS["rod_takedown"] = clip(24, [
     (12, P(_CROUCH, hx=0.12, hz=0.56, spine=158, chest=148, fL=(0.34, 0), fR=(-0.06, 46), **grip(0.4, 0.7, 52)), "out"),
     (24, at(ROD_CROUCH, 0.12), "smooth"),
 ], hit=8, reach=0.6, striker="R", shift=True, note="lights out: up from behind, one short chop to the back of the head, back down low")
+
+
+# ---------------------------------------------------------------- picking it up (docs/design/pipe.md)
+# A steel pipe lies on the concrete and it's heavy. A squat with the back straight, the left hand on the
+# knee; the right hand closes on the near end; the near end comes up first with the far end still
+# scraping the floor; the left hand joins; a heave from the legs and it swings back up onto the right
+# shoulder: the guard, exactly (no pop into the stance after).
+from v4_moves import LOOSE as _LOOSE
+_PDOWN = P(_LOOSE, hx=0.1, hz=0.42, spine=150, spine_mid=144, chest=140, neck=140, head=150, tw_chest=-4,
+           fL=(0.28, 0), fR=(-0.04, 40), hL=(0.27, 0.43), fiL=60)
+CLIPS["rod_pick_up"] = clip(30, [
+    (0, _LOOSE, "smooth"),
+    (4, P(_LOOSE, hx=0.06, fL=(0.28, 0), liftL=0.03, head=166, neck=162, uaR=14, faR=30, fiR=40), "smooth"),     # a step to it, eyes on it
+    (9, P(_PDOWN, hR=(0.4, 0.14), haR=96, fiR=30), "in"),                                                       # down, the back straight, the hand open over the end
+    (11, P(_PDOWN, hz=0.41, hR=(0.42, 0.05), haR=90, fiR=165), "out"),                                         # it closes on the end
+    (15, P(_PDOWN, hx=0.08, hz=0.47, spine=158, spine_mid=152, chest=148, neck=148, head=156,
+           hR=(0.36, 0.3), haR=70, fiR=165), "in"),                                                           # the near end up, the far end still on the floor
+    (18, P(_PDOWN, hx=0.06, hz=0.53, spine=164, spine_mid=160, chest=156, neck=156, head=162, fR=(-0.06, 30),
+           **grip(0.3, 0.58, 112)), "out"),                                                                   # the left hand on it: the heave
+    (22, P(RG, hz=0.6, tw_hips=-14, tw_chest=-12, spine=172, chest=168, head=170, fL=(0.24, 0), fR=(-0.2, 30), liftR=0.03,
+           **grip(0.14, 1.02, 168)), "out"),                                                                  # up from the legs, swinging over
+    (26, R(hz=0.61, gx=-0.05, gz=1.0, a=212, head=171), "out"),                                                # onto the shoulder, the weight sinking into it
+    (30, RG, "smooth"),
+], hit=11, striker="R", note="picking up the pipe: squat, the near end, the far end dragging, both hands, a heave, onto the shoulder")
+
+
+from v4_moves import scoop as _scoop, SCOOP_LEGS as _RUNLEGS
+CLIPS["rod_scoop"] = clip(14, _scoop(_RUNLEGS, [0, 3, 5, 8, 11, 14], {
+    0: {},
+    3: dict(dip_hz=-0.12, spine=150, spine_mid=146, chest=142, neck=146, head=156, hR=(0.34, 0.2), haR=84, fiR=30,
+            hL=(0.2, 0.78), fiL=100),                                                                        # dipping on the stride, the hand low
+    5: dict(dip_hz=-0.15, spine=146, spine_mid=142, chest=138, neck=144, head=154, hR=(0.42, 0.05), haR=90, fiR=165,
+            hL=(0.18, 0.72), fiL=100),                                                                       # it's in his hand
+    8: dict(dip_hz=-0.08, spine=160, chest=156, neck=158, head=166, hR=(0.18, 0.62), haR=150, fiR=165,
+            hL=(0.06, 0.9), fiL=110),                                                                        # coming up with him, swinging over
+    11: dict(dip_hz=-0.02, spine=168, chest=164, tw_chest=-10, **{k: v for k, v in grip(-0.1, 0.98, 210).items() if k not in ("hL", "haL", "fiL")}),
+}, _rod_run()), hit=5, striker="R", note="on the run: a dip on the stride, the pipe off the floor, onto the shoulder, still running")

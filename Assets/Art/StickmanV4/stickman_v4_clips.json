@@ -2868,6 +2868,28 @@
       "v4": true
     },
     {
+      "name": "katana_pick_up",
+      "frames": 36,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 16,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_scoop",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
       "name": "rod_guard",
       "frames": 60,
       "fps": 30,
@@ -3118,6 +3140,28 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.12,
+      "v4": true
+    },
+    {
+      "name": "rod_pick_up",
+      "frames": 30,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 11,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_scoop",
+      "frames": 14,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
       "v4": true
     }
   ]

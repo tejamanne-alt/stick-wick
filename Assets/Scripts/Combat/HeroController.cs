@@ -958,14 +958,33 @@ namespace ProjectInk
             if (pipe != null) pipe.SetActive(Style == FightStyle.Pipe);
         }
 
+        /// <summary>Can he take this one? Empty hands: anything; knives onto knives; and a BENT pipe (4 swings
+        /// or fewer left) swapped for a fresh one. Never a different weapon on top of the one he holds (no
+        /// dropping the sword by accident mid-fight).</summary>
+        bool CanTake(WeaponPickup p)
+        {
+            if (p == null || !p.Settled) return false;
+            if (Style == FightStyle.Fists) return true;
+            if (Style == FightStyle.Knife && p.kind == FightStyle.Knife) return true;
+            return SwapsPipe(p);
+        }
+
+        /// <summary>When he last took a weapon off the floor (the pick-up test puts it back down after a while).</summary>
+        public float LastPickupAt { get; private set; } = -9f;
+
+        bool SwapsPipe(WeaponPickup p) => Style == FightStyle.Pipe && p.kind == FightStyle.Pipe && PipeUses <= 4 && p.uses > PipeUses;
+
         void TryPickup()
         {
             foreach (var p in WeaponPickup.All)
             {
-                if (Mathf.Abs(p.transform.position.x - transform.position.x) > 0.9f ||
-                    Mathf.Abs(p.transform.position.y - 0.35f - transform.position.y) > 0.8f) continue;
-                if (!(Style == FightStyle.Knife && p.kind == FightStyle.Knife) && Style != FightStyle.Fists) continue;
-                if (PickUpV4(p)) return;                                  // the new body bends down for it
+                if (!CanTake(p) || Mathf.Abs(p.transform.position.y - transform.position.y) > 0.8f) continue;
+                if (MovesV4)
+                {
+                    if (PickUpV4(p, false)) return;                       // the new body bends down for it (or scoops it on the run)
+                    continue;
+                }
+                if (Mathf.Abs(p.transform.position.x - transform.position.x) > 0.9f) continue;
                 DoPickup(p);
                 return;
             }
@@ -975,14 +994,23 @@ namespace ProjectInk
         {
             if (p == null) return;
             if (carried != null && Style == FightStyle.Fists) DropCarried();      // the bottle down, the weapon up
+            bool lift = false;
+            LastPickupAt = Time.time;
             if (Style == FightStyle.Knife && p.kind == FightStyle.Knife) Knives = Mathf.Min(6, Knives + p.uses);
-            else if (Style == FightStyle.Fists) Equip(p.kind, p.uses);
+            else if (Style == FightStyle.Fists || SwapsPipe(p)) { Equip(p.kind, p.uses); lift = true; }
             else return;
+            // the copy in his hand starts where this one lay, and comes up into his grip
+            if (lift && MovesV4)
+            {
+                var held = p.kind == FightStyle.Sword ? sword : p.kind == FightStyle.Pipe ? pipe : p.kind == FightStyle.Knife ? knife : p.kind == FightStyle.Gun ? pistol : null;
+                WeaponLift.Begin(held, p.Model, p.Scale, p.kind == FightStyle.Sword ? 0.3f : 0.24f);
+            }
             if (p.kind == FightStyle.Sword) OnKatanaTaken();          // the katana: Voss's first lesson (HeroKatanaV4)
             if (p.kind == FightStyle.Pipe) OnPipeTaken();             // the pipe: how it works, in a line (HeroPipeV4)
-            if (InkFx.Instance != null) InkFx.Instance.Burst(p.transform.position, 1.6f);
             Tell("pickup");
-            Sound.Play(p.kind == FightStyle.Sword ? Sfx.SwordClash : Sfx.Pickup, p.kind == FightStyle.Sword ? 0.5f : 1f, p.transform.position);
+            if (p.kind == FightStyle.Sword) { Sound.Play(Sfx.Cloth, 0.6f, p.transform.position); Sound.PlayLater(Sfx.Glint, 0.18f, 0.5f, p.transform.position); }
+            else if (p.kind == FightStyle.Pipe) { Sound.Play(Sfx.MetalClang, 0.32f, p.transform.position, 0.7f); }   // the far end scraping as it comes up
+            else Sound.Play(Sfx.Pickup, 1f, p.transform.position);
             Destroy(p.gameObject);
         }
 

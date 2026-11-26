@@ -2167,3 +2167,25 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **The sword:** crouched and creeping in gedan, the point at the knees (`katana_crouch`, `katana_sneak`). Tap his back: the **SILENT CUT** (`katana_takedown`), up from the crouch and one rising cut. He's cut down.
   - **Both:** from behind only, a hand's depth back so the heads never merge, a touch of slow motion. The training ground's SILENT TAKEDOWN counts them.
   - **Build:** the FBX is rebuilt.
+- **Picking up the pipe and the sword, reviewed and rebuilt.**
+  - **The problems:**
+    - Weapons hovered 35 cm up, bobbing and spinning like arcade items, while his hand went to the floor under them.
+    - At the grab the floor copy vanished and the held one appeared, lined up with his forearm, which pointed into the floor.
+    - The clip's second half held the pipe or sword out in one hand, then snapped into the guard.
+    - At a run he braked dead to squat.
+    - Every weapon vanished after 14 s, including the pipe test's pipes.
+  - **On the floor** (`WeaponPickup`):
+    - They lie flat and still, with a glint along them every couple of seconds.
+    - A dropped one (from a man, or the bent pipe tossed aside) falls from hand height, clangs, bounces once and settles.
+    - Placed ones never go; dropped ones fade after 20 s.
+  - **The grab:**
+    - His hand goes to the grip end: either end of a pipe, always the hilt of a sword.
+    - He settles into place during the clip's step.
+    - From the grab the held copy starts exactly where the floor one lay and comes up into his grip, turning over the top (`WeaponLift`).
+  - **The new clips:**
+    - `rod_pick_up`: the squat, the near end up with the far end scraping, both hands, the heave onto the shoulder, ending in `rod_guard` exactly.
+    - `katana_pick_up`: one knee, the hilt, the blade rising edge up with a glint, into `katana_guard`.
+    - `rod_scoop` / `katana_scoop`: on the run, a dip on the stride without stopping, into the weapon's run.
+  - **The swap:** with a bent pipe (4 or fewer left), walking over a fresh one tosses the bent one aside. A different kind is never taken on top of the one he holds.
+  - **The test:** a new chapter 1 checkpoint, TEST · picking up the pipe and the sword.
+  - **Build:** the FBX is rebuilt (315 clips).

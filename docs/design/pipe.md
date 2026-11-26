@@ -72,6 +72,22 @@ A pipe doesn't parry; it breaks.
 
 **Landing:** the knees take it with the pipe still in hand.
 
+## Picking it up
+
+**On the floor:** a pipe lies flat and still on the concrete, and a faint glint runs along it now and then. One dropped by a man falls from his hand, clangs, bounces once and settles. Pipes placed by the level never go; dropped ones fade after 20 s.
+
+**Standing** (`rod_pick_up`): walk over it.
+- He squats with his back straight, his left hand on his knee.
+- His right hand closes on the near end (either end of a pipe will do). He settles into place during the step, so the hand meets it.
+- The near end comes up first, with the far end scraping the floor.
+- The left hand joins, he heaves from the legs, and the pipe swings back onto his right shoulder. He finishes exactly in the guard, with nothing to snap into.
+
+**On the run** (`rod_scoop`): run at it. He dips on the stride, takes it off the floor and swings it onto his shoulder without stopping, straight into the pipe run.
+
+**The lift:** from the grab, the pipe in his hand starts exactly where the floor one lay (its place, its angle, its size) and comes up into his grip. It's lifted, never swapped (`WeaponLift`).
+
+**The swap:** holding a bent pipe (4 swings or fewer left) and walking over a fresh one, he tosses the bent one aside (it clangs down behind him) and takes the new one. He never picks up a different kind of weapon on top of the one he holds.
+
 ## Wear
 
 **14 hits**, counted once per swing however many it catches. Misses don't count.
@@ -96,4 +112,6 @@ A pipe doesn't parry; it breaks.
 
 ## Test
 
-Main menu → test checkpoints → **CHAPTER 1 · TEST · the pipe** (crane bay, three pipes on the floor, ordinary men).
+Main menu → test checkpoints:
+- **CHAPTER 1 · TEST · the pipe** (crane bay, three pipes on the floor, ordinary men).
+- **CHAPTER 1 · TEST · picking up the pipe and the sword**: the swap, the heave, the scoop, drops.

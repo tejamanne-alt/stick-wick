@@ -23,9 +23,20 @@ namespace ProjectInk
         public static bool PipeTest;
         /// <summary>TEST · the katana against ordinary men (debana, cutting them off, in one breath).</summary>
         public static bool KatanaMen;
+        /// <summary>The pick-up test (chapter 1, crane bay): he starts with a BENT pipe, a fresh one lies ahead
+        /// (the swap), a katana and another pipe further on; pipe men and swordsmen who drop theirs; and
+        /// whatever he takes falls out of his hands 4 s later (nobody near) so it can be taken again.</summary>
+        public static bool PickupTest;
+
+        bool EnemyNear(float r)
+        {
+            foreach (var e in Enemy.All)
+                if (e != null && e.Alive && Mathf.Abs(e.transform.position.x - hero.transform.position.x) < r) return true;
+            return false;
+        }
 
         /// <summary>From the menu: the chapter from the top (no checkpoint, no retry state).</summary>
-        public static void NewRun() { KatanaTest = false; PipeTest = false; KatanaMen = false; HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
+        public static void NewRun() { KatanaTest = false; PipeTest = false; KatanaMen = false; PickupTest = false; HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
 
         struct Spawn { public EnemyType type; public SpawnKind kind; public Spawn(EnemyType t, SpawnKind k) { type = t; kind = k; } }
 
@@ -195,6 +206,14 @@ namespace ProjectInk
                 if ((KatanaTest || KatanaMen) && director != null) WeaponPickup.Spawn(FightStyle.Sword, 999, new Vector3(ZoneX0(z) + 3.0f, 0f, 0f), director.weaponMaterial);
                 else if (PipeTest && director != null)
                     for (int k = 0; k < 3; k++) WeaponPickup.Spawn(FightStyle.Pipe, 14, new Vector3(ZoneX0(z) + 3.0f + k * 2.5f, 0f, 0f), director.weaponMaterial);
+                else if (PickupTest && director != null)
+                {
+                    if (hero.Style == FightStyle.Fists) hero.GiveWeapon(FightStyle.Pipe, 4);        // bent: swap it at the first one
+                    WeaponPickup.Spawn(FightStyle.Pipe, 14, new Vector3(ZoneX0(z) + 2.6f, 0f, 0f), director.weaponMaterial);
+                    WeaponPickup.Spawn(FightStyle.Sword, 999, new Vector3(ZoneX0(z) + 6.0f, 0f, 0f), director.weaponMaterial);
+                    WeaponPickup.Spawn(FightStyle.Pipe, 14, new Vector3(ZoneX0(z) + 10.5f, 0f, 0f), director.weaponMaterial);
+                    director.ShowBanner("PICK-UP TEST  ·  WALK OVER IT, OR RUN AT IT  ·  IT DROPS AFTER 4 S", 4f);
+                }
                 else if (hero.Style == FightStyle.Fists) hero.GiveWeapon(FightStyle.Knife, 3);
                 var sh = Find("InnerShutter");
                 if (sh != null) foreach (var r in sh.GetComponentsInChildren<Renderer>()) r.enabled = false;
@@ -238,6 +257,9 @@ namespace ProjectInk
             if (bossT >= 0f) { UpdateBoss(); return; }                // the Foreman's floor: no more waves
             hallMen.RemoveAll(e => e == null || !e.Alive);
             var waves = Waves[zone];
+            // the pick-up test: what he took drops out of his hands again (not a bent pipe: that one's for swapping)
+            if (PickupTest && hero != null && hero.Style != FightStyle.Fists && Time.time - hero.LastPickupAt > 4f &&
+                !(hero.Style == FightStyle.Pipe && hero.PipeUses <= 4) && !EnemyNear(4f)) hero.PutDownForTest();
             if (zoneState == ZoneState.Fighting)
             {
                 var list = waves[wave];
@@ -248,7 +270,7 @@ namespace ProjectInk
                 if (queued < list.Length && hallMen.Count < cap + watching.Count && Time.time >= nextSpawnAt && director != null)
                 {
                     var sp = list[queued];
-                    var e = director.SpawnScripted(KatanaTest ? EnemyType.Swordsman : sp.type, sp.kind);
+                    var e = director.SpawnScripted(KatanaTest ? EnemyType.Swordsman : PickupTest ? (queued % 2 == 0 ? EnemyType.Piper : EnemyType.Swordsman) : sp.type, sp.kind);
                     if (e != null) { hallMen.Add(e); if (phase == Phase.ToHall) e.Passive = true; }
                     queued++;
                     nextSpawnAt = Time.time + Random.Range(0.6f, 1.3f);

@@ -66,6 +66,21 @@ Each man cut down within 1.3 s of the last builds a chain: **TWO IN ONE BREATH**
 - **Early swipes are held** and taken the moment the blade lands, so they're never lost (same as the pipe).
 - **A man cut by a rising line** (kiriage, gyaku) falls on his back (`cut_down_back`); the rest fall on their face.
 
+## Picking it up
+
+**On the floor:** a katana lies flat and still; a glint runs down the blade now and then. One dropped by a swordsman falls, rings off the floor, bounces once and settles.
+
+**Standing** (`katana_pick_up`): walk over it.
+- Always by the hilt: he goes to the hilt end, even if he came from the point.
+- He goes down on his right knee, and his right hand closes on the hilt.
+- The blade rises across him with the edge turning up, and a glint runs down it.
+- He stands, the left hand meets the end of the hilt, and he is in chudan.
+- Calm and deliberate: the opposite of the pipe's heave.
+
+**On the run** (`katana_scoop`): run at it. He dips on the stride and takes the hilt, and the blade wheels up past his face and over into the trailing carry of the sword run. He doesn't break stride.
+
+**The lift:** the blade in his hand starts exactly where it lay and comes up into his grip. A blade lying with its point towards him comes up and over in an arc.
+
 ## In the air
 
 **The leap:** swipe up while running. Standing still, swipe up stays the rising cut, and the swallow combo is untouched. The blade is raised overhead (jodan) for the leap.
@@ -78,4 +93,5 @@ Each man cut down within 1.3 s of the last builds a chain: **TWO IN ONE BREATH**
 
 Main menu → test checkpoints:
 - **TEST · the katana** (swordsmen): the parry, the read, the kata.
+- **TEST · picking up the pipe and the sword**: the kneel, the scoop, swordsmen who drop theirs.
 - **TEST · the katana vs ordinary men**: debana, cut him off, saya no uchi, in one breath, the edge.

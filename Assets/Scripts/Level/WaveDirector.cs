@@ -515,10 +515,10 @@ namespace ProjectInk
         public void OnEnemyDied(Enemy e)
         {
             // armed enemies drop their weapons for the hero to take
-            if (e.Type == EnemyType.Swordsman) WeaponPickup.Spawn(FightStyle.Sword, 10, e.transform.position, weaponMaterial);
-            else if (e.Type == EnemyType.Gunner) WeaponPickup.Spawn(FightStyle.Gun, 8, e.transform.position, weaponMaterial);
-            else if (e.Type == EnemyType.Thrower) WeaponPickup.Spawn(FightStyle.Knife, 3, e.transform.position, weaponMaterial);
-            else if (e.Type == EnemyType.Piper) WeaponPickup.Spawn(FightStyle.Pipe, 14, e.transform.position, weaponMaterial);
+            if (e.Type == EnemyType.Swordsman) WeaponPickup.Spawn(FightStyle.Sword, 10, e.transform.position, weaponMaterial, true, 0f);
+            else if (e.Type == EnemyType.Gunner) WeaponPickup.Spawn(FightStyle.Gun, 8, e.transform.position, weaponMaterial, true, 0f);
+            else if (e.Type == EnemyType.Thrower) WeaponPickup.Spawn(FightStyle.Knife, 3, e.transform.position, weaponMaterial, true, 0f);
+            else if (e.Type == EnemyType.Piper) WeaponPickup.Spawn(FightStyle.Pipe, 14, e.transform.position, weaponMaterial, true, 0f);
             else if (e.Type == EnemyType.Brute) AddScore(800);
         }
 

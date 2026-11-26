@@ -389,3 +389,35 @@ CLIPS["katana_takedown"] = clip(22, [
     (11, P(_CROUCH, hx=0.15, hz=0.6, spine=178, chest=180, tw_chest=30, fL=(0.38, 0), fR=(-0.06, 50), **grip(0.36, 1.26, 192)), "out"),
     (22, at(KATANA_CROUCH, 0.15), "smooth"),
 ], hit=7, reach=0.6, striker="R", shift=True, note="from behind: up from the crouch, one rising cut, silent")
+
+
+# ---------------------------------------------------------------- picking it up (docs/design/sword.md)
+# A katana on the floor is taken with respect: down on the right knee, the right hand closes on the
+# hilt, the blade rises across him turning its edge up (a glint runs down it), the left hand meets the
+# pommel as he stands, and he's in chudan. Calm, the opposite of the pipe's heave.
+from v4_clinch import KNEEL as _KNEEL
+_KDOWN = P(_KNEEL, hx=0.06, hz=0.38, spine=156, spine_mid=150, chest=146, neck=146, head=150, hL=(0.28, 0.42), fiL=50)
+CLIPS["katana_pick_up"] = clip(36, [
+    (0, LOOSE, "smooth"),
+    (5, P(LOOSE, hx=0.05, fL=(0.3, 0), liftL=0.03, head=166, neck=162), "smooth"),                     # a step to it, eyes on it
+    (13, P(_KDOWN, hR=(0.4, 0.12), haR=96, fiR=30), "in"),                                             # down on one knee, the hand open over the hilt
+    (16, P(_KDOWN, hR=(0.42, 0.05), haR=90, fiR=165), "out"),                                          # it closes on the hilt
+    (22, P(_KDOWN, hz=0.4, spine=170, spine_mid=168, chest=166, neck=164, head=166,
+           hR=(0.34, 0.5), haR=122, fiR=165), "smooth"),                                               # the blade rises across him, the edge turning up
+    (28, K(hz=0.58, spine=168, chest=164, gx=0.32, gz=0.78, a=126, fR=(-0.12, 30)), "out"),           # up off the knee, the left hand meets the pommel
+    (32, K(hz=0.615, gx=0.31, gz=0.83, a=133), "out"),
+    (36, KG, "smooth"),
+], hit=16, striker="R", note="picking up the katana: one knee, the hilt, the blade rising edge up, both hands, chudan")
+
+from v4_moves import scoop as _scoop, SCOOP_LEGS as _RUNLEGS
+_KRUN = {k: v for k, v in grip(-0.04, 0.58, -62).items() if k not in ("hL", "haL", "fiL")}
+CLIPS["katana_scoop"] = clip(14, _scoop(_RUNLEGS, [0, 3, 5, 8, 11, 14], {
+    0: {},
+    3: dict(dip_hz=-0.12, spine=150, spine_mid=146, chest=142, neck=146, head=156, hR=(0.34, 0.2), haR=84, fiR=30,
+            hL=(0.2, 0.78), fiL=100),                                                                  # dipping on the stride, the hand low
+    5: dict(dip_hz=-0.15, spine=146, spine_mid=142, chest=138, neck=144, head=154, hR=(0.42, 0.05), haR=90, fiR=165,
+            hL=(0.18, 0.72), fiL=100),                                                                 # the hilt in his hand
+    8: dict(dip_hz=-0.06, spine=162, chest=158, neck=158, head=166, hR=(0.28, 0.7), haR=178, fiR=165,
+            hL=(0.06, 0.9), fiL=110),                                                                  # the blade wheels up past his face
+    11: dict(dip_hz=-0.01, spine=168, chest=164, hR=(0.02, 0.66), haR=250, fiR=165),                  # over, and down behind him
+}, _katana_run()), hit=5, striker="R", note="on the run: a dip on the stride, the hilt off the floor, the blade wheels over into the trailing carry")
