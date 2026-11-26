@@ -215,6 +215,9 @@ namespace ProjectInk
             SetStreetDoors(z);
             if (!cut && z > 0 && director != null) director.ShowBanner($"{z + 1}  ·  {StreetPlan.ZoneName[z]}", 2.2f);
             if (z == 2) { nextTrainAt = Time.time + (cut ? 2.5f : 1.0f); }
+            // under the arches: one on watch, his back to the way the hero comes (StoryLookouts)
+            if (z == 2) PostLookout(SZ0(z) + 8.5f, 0f, 1, streetMen, "ONE ON WATCH UNDER THE ARCHES");
+            else lookout = null;
             if (cut)
             {
                 if (z == 0) streetMen.Clear();
@@ -265,7 +268,8 @@ namespace ProjectInk
             {
                 var list = waves[sWave];
                 int cap = StreetCaps[sZone][sWave];
-                if (sQueued < list.Length && streetMen.Count < cap && Time.time >= sNextSpawn && director != null)
+                if (LookoutHolds) sNextSpawn = Mathf.Max(sNextSpawn, Time.time + 0.6f);      // the rest wait on the lookout
+                if (sQueued < list.Length && streetMen.Count < cap + (lookout != null && lookout.Alive ? 1 : 0) && Time.time >= sNextSpawn && director != null)
                 {
                     var sp = list[sQueued];
                     var e = director.SpawnScripted(sp.type, sp.kind);
@@ -341,6 +345,7 @@ namespace ProjectInk
             }
             float u = (Time.time - trainAt) / 5.5f;
             trainT.position = trainHome + Vector3.right * Mathf.Lerp(70f, -95f, u);
+            if (u > 0.2f && u < 0.6f) Enemy.CoverUntil = Time.time + 0.3f;      // its roar covers footsteps: the lookout hears nothing
             if (u > 0.36f && u - Time.deltaTime / 5.5f <= 0.36f)
             {
                 // right overhead: everyone flinches; he moves first

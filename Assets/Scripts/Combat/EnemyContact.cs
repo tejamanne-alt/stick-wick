@@ -146,6 +146,7 @@ namespace ProjectInk
         public void Startle(float seconds)
         {
             if (state == State.Scripted || state == State.Down || state == State.GetUp || state == State.Dead || !Alive) return;
+            if (state == State.Unaware) return;                         // a man on watch flinches but keeps his post (the noise covers the hero)
             ReleaseToken();
             chain.Clear(); chained = false; feinting = false;
             state = State.Hurt;

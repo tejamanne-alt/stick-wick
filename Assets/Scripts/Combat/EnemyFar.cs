@@ -24,6 +24,9 @@ namespace ProjectInk
         public static Vector3 NoisePos;
 
         public static void Noise(Vector3 at) { NoiseAt = Time.time; NoisePos = at; }
+        /// <summary>Something loud enough to cover footsteps (a train overhead): until then, a man on watch
+        /// hears nothing behind him.</summary>
+        public static float CoverUntil = -10f;
         /// <summary>A man above (the upper road, the gatehouse) who throws down at the hero below.</summary>
         public bool ThrowsDown;
         /// <summary>One of Voss's best (the observatory): faster lines, more feints.</summary>
@@ -62,7 +65,7 @@ namespace ProjectInk
             bool sameFloor = Mathf.Abs(hero.transform.position.y - transform.position.y) < 1.4f;
             bool inFront = Mathf.Sign(dx) == Facing;
             bool seen = sameFloor && inFront && d < 7f && !(hero.Crouching && d > 4f);
-            bool heard = sameFloor && !inFront && ((d < 1.6f && !hero.Crouching) || (d < 5f && hero.RunningFast));
+            bool heard = sameFloor && !inFront && Time.time > CoverUntil && ((d < 1.6f && !hero.Crouching) || (d < 5f && hero.RunningFast));
             bool noise = Time.time - NoiseAt < 0.3f && Vector3.Distance(NoisePos, transform.position) < 9f;
             if (seen || heard || noise) Alert();
         }

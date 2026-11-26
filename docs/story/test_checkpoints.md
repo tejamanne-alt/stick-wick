@@ -16,14 +16,16 @@
 | | The vault | Mr. Pell: six years, the standing instruction (the box goes to the lawyer); HOLD the palm on the glass. |
 | | The box | The family's passports (him, Elena, Maya), the ring and the wedding memory, "I have a daughter", TAP the black book and DRAG to turn its page (41 names, every order signed V.), his own letter ("They'll come for E. and M. 14 Alder Lane. Get them out."). |
 | | Walk out | Past the counter: "Yes, Mr. V. He took it with him." / "...Mr. V." |
-| 2 · The Street | Start · after the Driver | "The book. Hand it over." The Driver drove him for eleven years; at the end, CHOOSE "Who is V?" or "What's waiting at home?" |
+| 2 · The Street | The railway (zone 3) | One on watch under the arches, his back to you; the rest wait on him. Swipe down and hold to crouch, creep up, tap his back (the silent takedown). When the train passes overhead its roar covers your footsteps: you can close in standing. Seen or heard, the fight starts. |
+| | Start · after the Driver | "The book. Hand it over." The Driver drove him for eleven years; at the end, CHOOSE "Who is V?" or "What's waiting at home?" |
 | 3 · Home | Arrival | TAP the hall table: Harrow's card and Elena's note. |
 | | The study | DRAG to turn the family photo over: the old photo of V, the young hero and the boy; flash 2 "I'm out, Voss."; "You raised me." |
 | | The kitchen | The bleach and plastic; HOLD to close her eyes; WHAT HAPPENED HERE; "Silas wants this place spotless." |
-| | The house fight | ...then her room: TAP her shelf, one walkie gone, he keeps the other. |
+| | The house fight | The living room: one man searching it, his back to the kitchen door (crouch, creep, tap his back); the rest wait on him. More to throw: bottles in the kitchen, a houseplant by the window, a wrench under the stairs, a plant on the landing. The landing: one man carries a pipe (he drops it). ...then her room: TAP her shelf, one walkie gone, he keeps the other. |
 | | Silas | "You're early. I wasn't finished." "They always come home." His lines in the fight. |
 | | The kitchen chair | CHOOSE three of four questions; the phone rings (V.), SWIPE up to answer; Voss: "Hello, son."; SWIPE right for the reflex; "...Silas? Silas!" "Bring me the book. Then we're even." |
 | 4 · The Backyard | Find her | Footprints; DRAG the ribbon free; the walkie crackles; HOLD to talk; Maya tells last night over the stills; CHOOSE what to ask; the van at the far end, her face in its window. |
+| | The car park (zone 4) | One watching the van, his back to the park; the rest wait on him: crouch, creep, tap his back. |
 | | Reach her, lose her | The torches; three stretches, her voice between them (count to three; "did you find Mama?" CHOOSE; "they're starting the van!"); the car park: MASH to run after the van; it gets away. |
 | | The Handler · the address | The slow clap, his three phases, "He pulled you off the street at nineteen... and you just killed Silas." "I'm not his son. I'm hers." The car keys. |
 | 5 · The Road | 0–4 | `RoadFrom`: the drive and her voice; counting the thunder (tap each flash); "Are you a bad man?" (CHOOSE) and HOLD to hum; the battery ("Over and out"); the last hairpin ("It was never a trade"). |

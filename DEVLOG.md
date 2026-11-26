@@ -2075,3 +2075,10 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **During a skip:** `Sound.Skipping` starts no one-shots, and the score's crossfades land at once.
   - **When it ends:** `Sound.SkipEnd` stops every sound still ringing and cancels queued `PlayLater` sounds. The score jumps forward by the story time skipped: loops wrap, and a cue that would have ended has ended. Volumes snap to where the fades would be.
   - **The opening's own jump to the walk** also stops the opening's sounds.
+- **Every trained move has somewhere to happen.**
+  - **Lookouts** (`StoryLookouts.cs`): a man on watch with his back to the hero, posted at the start of three fight zones. While he's unaware, the zone's other men wait. Take him quietly (crouch, creep, tap his back) or he turns and the fight starts.
+    - **The Street**, under the railway: when the train passes overhead, its roar covers footsteps (`Enemy.CoverUntil`), and the train's flinch no longer breaks a man's watch.
+    - **The Home**: a man searching the living room.
+    - **The Park**: a man watching the van in the car park.
+  - **The Home** gets a pipe man on the landing (he drops it) and four more things to throw: a kitchen bottle, a houseplant, a wrench under the stairs, a plant on the landing.
+  - **The silent takedown** can now happen in five of the six fight chapters, and the pipe in all of them.

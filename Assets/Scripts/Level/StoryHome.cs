@@ -31,7 +31,7 @@ namespace ProjectInk
             new[] { S(Br, Rt), S(Br, Rt), S(Ru, Bg) },
             new[] { S(Br, Lt), S(Gr, Rt), S(Br, Bg), S(Ru, Lt) },
             new[] { S(Br, Up), S(Dm, Lt), S(Br, Up) },
-            new[] { S(Br, Rt), S(Ru, Bg), S(Br, Rt), S(Gr, Rt) },
+            new[] { S(Br, Rt), S(Ru, Bg), S(Pi, Rt), S(Gr, Rt) },          // the landing: one with a pipe (drops it)
         };
         static readonly int[] HomeCaps = { 3, 3, 3, 3 };
         static readonly float[] MayaDur = { 2.8f, 2.6f, 2.6f, 2.6f, 2.6f, 3.4f };
@@ -402,6 +402,9 @@ namespace ProjectInk
             SetArena(R.x0 + 0.3f, R.x1 - 0.3f);
             SetHomeDoors(r);
             if (director != null) director.ShowBanner($"{r + 1}  ·  {R.name}", 2.0f);
+            // the living room: one turning it over, his back to the kitchen door (StoryLookouts)
+            if (r == 1) PostLookout(R.x0 + 3.6f, R.y, -1, homeMen, "ONE SEARCHING THE LIVING ROOM");
+            else lookout = null;
             if (cut || hero.CinematicLock)
             {
                 if (cut) hero.CinePose(new Vector3(R.x1 - 1.4f, R.y, 0f));
@@ -439,7 +442,8 @@ namespace ProjectInk
             if (!hClear)
             {
                 var list = HomeWaves[hRoom];
-                if (hQueued < list.Length && homeMen.Count < HomeCaps[hRoom] && Time.time >= hNextSpawn && director != null)
+                if (LookoutHolds) hNextSpawn = Mathf.Max(hNextSpawn, Time.time + 0.6f);      // the rest wait on the lookout
+                if (hQueued < list.Length && homeMen.Count < HomeCaps[hRoom] + (lookout != null && lookout.Alive ? 1 : 0) && Time.time >= hNextSpawn && director != null)
                 {
                     var sp = list[hQueued];
                     var e = director.SpawnScripted(sp.type, sp.kind);

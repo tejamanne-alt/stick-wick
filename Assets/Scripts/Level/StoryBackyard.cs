@@ -326,6 +326,9 @@ namespace ProjectInk
                 At(SpawnKind.Ceiling, new Vector3(mid, 0f, 4f));
                 director.ShowBanner($"{z + 1}  ·  {ParkPlan.ZoneName[z]}", 2.0f);
             }
+            // the car park: one watching the van, his back to the park (StoryLookouts)
+            if (z == 3) PostLookout(PZ0(z) + 9f, 0f, 1, parkMen, "ONE WATCHING THE VAN");
+            else lookout = null;
             if (cut || hero.CinematicLock)
             {
                 if (cut) hero.CinePose(new Vector3(PZ0(z) + 1.6f, 0f, 0f));
@@ -353,7 +356,8 @@ namespace ProjectInk
             if (!pClear)
             {
                 var list = waves[pWave];
-                if (pQueued < list.Length && parkMen.Count < ParkCaps[pZone][pWave] && Time.time >= pNextSpawn && director != null)
+                if (LookoutHolds) pNextSpawn = Mathf.Max(pNextSpawn, Time.time + 0.6f);      // the rest wait on the lookout
+                if (pQueued < list.Length && parkMen.Count < ParkCaps[pZone][pWave] + (lookout != null && lookout.Alive ? 1 : 0) && Time.time >= pNextSpawn && director != null)
                 {
                     var sp = list[pQueued];
                     var e = director.SpawnScripted(sp.type, sp.kind);

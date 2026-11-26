@@ -229,7 +229,11 @@ namespace ProjectInk
                     kit = new[]
                     {
                         (PropKind.Bleach, 28.6f, 0f),                                  // the Cleaner's, in the kitchen
+                        (PropKind.Bottle, 31.4f, 0f),                                  // the kitchen's, by the back door
                         (PropKind.Bottle, HomePlan.CoffeeTableX + 0.6f, 0f),           // wine, the living room
+                        (PropKind.Pot, 16.4f, 0f),                                     // a houseplant by the living room window
+                        (PropKind.Wrench, 6.2f, 0f),                                   // the toolbox under the stairs, the hall
+                        (PropKind.Pot, 12.6f, HomePlan.Floor2),                        // a plant on the landing
                     };
                     break;
                 case "Story_Backyard":
