@@ -96,6 +96,9 @@ def preview(only, every):
         n = spec["frames"]
         show = sorted(set(range(0, n + 1, every)) | {n} | ({spec["hit"]} if spec.get("hit") is not None else set()))
         D = spec.get("reach")
+        # the blade only in his hand for the moves made with one (a sword, the pipe); everything else bare-handed
+        armed = name.startswith(("katana", "k_", "iai", "tsuki", "rod_")) or name in ("kesa", "gyaku", "oroshi", "kiriage", "yoko", "ushiro", "chiburi")
+        bpy.data.objects["HeroBlade"].hide_render = not armed
         vic = c4.CLIPS.get(spec.get("victim") or "")
         vfr = vp.frames(vic) if vic else None
         for o in (tgt, bpy.data.objects["TargetBody"]):
