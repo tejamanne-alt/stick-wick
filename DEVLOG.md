@@ -2238,3 +2238,7 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **The training ground:** four CROSSFIRE lessons with two-finger demos. Saved lesson progress is reset (new key) because the lesson list changed.
   - **The test:** a new chapter 1 checkpoint, TEST · CROSSFIRE: pairs of men, no cooldown.
   - **Build:** the FBX is rebuilt (326 clips).
+- **CROSSFIRE in every chapter.**
+  - **The move:** it already worked in every chapter's fights (every chapter runs on the V4 body and the story combat), bare-handed or with the knife.
+  - **The pincer** (`StoryCrossfire.cs`): men mostly come from one side, so in any fight, in any chapter, they now box him in deliberately. With two or more on him, one is told to go round (`Enemy.PincerNext`), and his mates call it ("Get behind him!", "Box him in!"...). The first time is about 5 s into a fight, then every ~25 s of fighting, and only while CROSSFIRE is his to use.
+  - **Armed:** with a pipe or sword there is still no CROSSFIRE; the four moves need both hands.

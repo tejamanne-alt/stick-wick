@@ -399,6 +399,11 @@ namespace ProjectInk
             return true;
         }
 
+        /// <summary>The story wants him boxed in (StoryCrossfire): the next man who can go round, goes, whatever his habit.</summary>
+        public static bool PincerNext;
+        /// <summary>A man has been sent round (his mates' call: "Get behind him!").</summary>
+        public static event System.Action<Enemy> PincerStarted;
+
         /// <summary>Two men on the same side: one works round to the hero's other side.</summary>
         bool ContactFlank(float dt, float dx)
         {
@@ -415,7 +420,9 @@ namespace ProjectInk
                     if (Mathf.Abs(ex) > 6f) continue;
                     if (Mathf.Sign(ex) == mySide) same++; else other++;
                 }
-                flankSide = same >= 1 && other == 0 && flankParity ? -mySide : 0;
+                bool told = PincerNext && same >= 1 && other == 0;
+                flankSide = same >= 1 && other == 0 && (flankParity || told) ? -mySide : 0;
+                if (told) { PincerNext = false; PincerStarted?.Invoke(this); }
             }
             if (flankSide == 0) return false;
             float goal = hero.transform.position.x + flankSide * Ring;

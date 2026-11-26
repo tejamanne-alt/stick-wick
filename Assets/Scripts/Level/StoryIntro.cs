@@ -79,6 +79,7 @@ namespace ProjectInk
             if (Instance == this) Instance = null;
             HeroController.Did -= OnFortHit;
             TrainingUnhook();
+            CrossfireUnhook();
             if (fastForward || toNextLine) { fastForward = false; toNextLine = false; AudioListener.volume = ffVolume; }
             Sound.Skipping = false;
         }
@@ -140,6 +141,7 @@ namespace ProjectInk
                 float pd = Time.unscaledDeltaTime;
                 subAt += pd; subUntil += pd;
             }
+            CrossfireDirector();                                      // boxing him in, every chapter (StoryCrossfire)
             if (!setUp && chapter == 2) { setUp = true; BeginBank(); }
             if (!setUp && chapter == 3) { setUp = true; BeginStreet(); }
             if (!setUp && chapter == 4) { setUp = true; BeginHome(); }

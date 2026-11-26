@@ -47,6 +47,19 @@ When one man is close in front of him and one close behind, **tap both thumbs at
 - **The rule:** each move rests on a different idea (they hit each other / precise brutality / both at once / one into the other) and has a distinct silhouette (a duck, kicks low then high, a frozen star, a man over the hip).
 - **The taps say what happens to each man:** the thumb on a man's side picks where he's hit.
 
+## In every chapter
+
+**The move itself** works wherever the story's combat runs: every chapter runs on the V4 body and the story's combat, so CROSSFIRE is available in every fight while his hands are bare or he's holding the knife.
+
+**The pincer** (`Level/StoryCrossfire.cs`):
+- **The problem:** CROSSFIRE needs a man in front and one behind, but in most fights the men come at him from one side. Only about half of them ever go round on their own.
+- **The fix:** in any fight, in any chapter, the men now box him in deliberately. With two or more on him, one is told to go round, and his mates call it: "Get behind him!", "Box him in!", "Take his back!"
+- **How often:** the first time about 5 s into a fight, then every 25 s or so of fighting.
+- **When:** only while CROSSFIRE is his to use (bare hands or the knife).
+- **The cue:** the "TWO ON YOU · BOTH THUMBS" cue over him shows in every chapter.
+
+**Not yet:** with a pipe or a sword in hand there is no CROSSFIRE. These four moves need both hands free (grabbing heads, the hip throw); armed versions would be separate moves.
+
 ## Test
 
 - **Main menu → test checkpoints → CHAPTER 1 · TEST · CROSSFIRE:** the first hall. Men come in pairs, one each side of him, and there is no cooldown.
