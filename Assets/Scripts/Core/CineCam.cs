@@ -103,7 +103,7 @@ namespace ProjectInk
         public static Shot LowAngleArc(Vector3 subject, float u, float r = 3f, float a0 = -50f, float a1 = 10f, float fov = 36f)
         {
             var p = Around(subject, Mathf.Lerp(a0, a1, Ease(u)), r, 0f);
-            p.y = 0.25f;
+            p.y = Mathf.Max(0.25f, subject.y - 0.95f);      // a lens just off the subject's floor (on a raised floor too)
             return new Shot(p, subject + Vector3.up * 0.4f, fov);
         }
 

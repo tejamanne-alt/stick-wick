@@ -373,13 +373,25 @@ namespace ProjectInk
             {
                 case SpawnKind.Background:
                 case SpawnKind.UpperDoor:
-                    // step out of a back doorway (ground or deck) into the fight lane
-                    var p = transform.position;
-                    p.z = Mathf.MoveTowards(p.z, 0f, walkSpeed * Time.deltaTime);
-                    transform.position = p;
-                    velocity.x = Mathf.Sign(dx) * walkSpeed * 0.3f;
-                    if (Mathf.Abs(p.z) < 0.02f) state = State.Approach;
-                    break;
+                    {
+                        // step out of a back doorway (ground or deck) into the fight lane. Facing the way he walks
+                        // (towards the lane), turning side-on to the hero as he reaches it (he used to crab sideways
+                        // all the way); no sideways drift until he's nearly there (the drift walked men into set
+                        // pieces); the run's stride matched to his pace (it skated at 0.85).
+                        var p = transform.position;
+                        float toward = p.z > 0f ? -1f : 1f;
+                        p.z = Mathf.MoveTowards(p.z, 0f, walkSpeed * Time.deltaTime);
+                        transform.position = p;
+                        bool near = Mathf.Abs(p.z) < 0.5f;
+                        velocity.x = near ? Mathf.Sign(dx) * walkSpeed * 0.3f : 0f;
+                        if (Mathf.Abs(p.z) < 0.02f) { SetFacing(dx > 0f ? 1 : -1); state = State.Approach; break; }
+                        float side = Mathf.Clamp01(1f - Mathf.Abs(p.z) / 0.8f);
+                        var path = new Vector3(velocity.x / Mathf.Max(0.1f, walkSpeed), 0f, toward).normalized;
+                        var dir = Vector3.Lerp(path, new Vector3(dx > 0f ? 1f : -1f, 0f, 0f), side);
+                        LookAtXZ(p + dir);
+                        body.SetSpeed(Mathf.Clamp(walkSpeed / 4.0f, 0.45f, 1.2f));      // the run clip is made at 4 m/s
+                        break;
+                    }
                 case SpawnKind.Ceiling:
                     if (Grounded) { body.Play(IdleClip, 0.1f); GoWait(); }
                     break;

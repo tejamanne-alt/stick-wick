@@ -245,7 +245,11 @@ namespace ProjectInk
         public static float LedgeX = 0f, LedgeY = 3.2f;
         float ledgeX, ledgeY;
         int ledgeDir = -1;                          // which way the floor lies from the hanging fighter
-        const float HangDrop = 1.43f;               // hands above the feet with the arms straight up
+        const float HangDrop = 1.43f;               // hands above the feet with the arms straight up (the old body)
+        // the V4 body's hang (v4_hang.py: EDGE_X, H_TOP; HeroHangV4): root 0.22 off the edge, 1.6 under its top;
+        // its climb (hang_climb) ends standing 0.26 past the edge. With the old numbers a V4 man's hands floated
+        // 0.17 above the lip.
+        bool V4Hang => body != null && body.Has("hang_climb");
         protected enum LedgeStage { None, Jump, Hang, Climb }
         protected LedgeStage ledge = LedgeStage.None;
         float ledgeTime, hangSeconds;
@@ -277,7 +281,8 @@ namespace ProjectInk
         {
             if (ledge == LedgeStage.None) return false;
             ledgeTime += dt;
-            var hangPos = new Vector3(ledgeX - ledgeDir * 0.2f, ledgeY - HangDrop, 0f);
+            var hangPos = V4Hang ? new Vector3(ledgeX - ledgeDir * 0.22f, ledgeY - 1.6f, 0f)
+                                 : new Vector3(ledgeX - ledgeDir * 0.2f, ledgeY - HangDrop, 0f);
             switch (ledge)
             {
                 case LedgeStage.Jump:
@@ -293,14 +298,19 @@ namespace ProjectInk
                     {
                         ledge = LedgeStage.Climb;
                         ledgeTime = 0f;
-                        // the climb clip starts from the hanging offset and ends standing here
-                        transform.position = new Vector3(ledgeX + ledgeDir * 0.24f, ledgeY, 0f);
-                        body.Play("climb_up", 0.02f);
+                        if (V4Hang) body.Play("hang_climb", 0.06f);         // (from where he hangs; placed on top when it ends)
+                        else
+                        {
+                            // the climb clip starts from the hanging offset and ends standing here
+                            transform.position = new Vector3(ledgeX + ledgeDir * 0.24f, ledgeY, 0f);
+                            body.Play("climb_up", 0.02f);
+                        }
                     }
                     break;
                 case LedgeStage.Climb:
                     if (body.Finished)
                     {
+                        if (V4Hang) transform.position = new Vector3(ledgeX + ledgeDir * 0.26f, ledgeY, 0f);
                         ledge = LedgeStage.None;
                         Grounded = true;
                         velocity = Vector3.zero;

@@ -311,7 +311,10 @@ namespace ProjectInk
         {
             var point = spawnPoints[(int)inc.kind];
             if (point == null || enemyModel == null) return null;
-            Vector3 pos = point.position + new Vector3(Random.Range(-0.4f, 0.4f), 0f, 0f);
+            // (a little spread at the side doors; none for men coming from the back or from up top: their doors
+            // are placed between set pieces, and a random step put them inside one)
+            bool back = inc.kind == SpawnKind.Background || inc.kind == SpawnKind.UpperDoor;
+            Vector3 pos = point.position + new Vector3(back ? 0f : Random.Range(-0.4f, 0.4f), 0f, 0f);
             if (inc.kind == SpawnKind.Ceiling && hero != null)
                 pos.x = Mathf.Clamp(hero.transform.position.x + Random.Range(-2.5f, 2.5f), hero.arenaMinX + 1.5f, hero.arenaMaxX - 1.5f);
             var weapon = inc.type switch
