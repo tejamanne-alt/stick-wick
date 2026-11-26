@@ -1995,3 +1995,7 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
 - **The guard only under a real threat.** That means someone attacking, winding up or charging within 6 m; a man up and fighting within about 3 m; or he has just struck or been hit (1.6 s). Otherwise he stands easy (`idle_alone`: loose hands, weight shifting, looking about).
 - **Who doesn't count:** men who are down, unaware, held, standing off or sparring with orders not to swing. Before, any enemy within 6 m, whatever he was doing, kept the hero in a boxing guard.
 - **The guard idle no longer looks like stepping in place.** The rear heel's rise and fall and the weight rock are gone. Both feet stay planted; only the breathing and the hands settle.
+
+## SKIP in the intro, and from beginning to end
+- **The intro had no visible SKIP.** The buttons were drawn early, and the opening's cinema bars and fades were drawn over them. They're now drawn last, over everything, in every chapter.
+- **Scene phases always count as scenes,** whatever the hero's lock says: the opening, the breach until the men are let go, the memory, the walk to the hall and chapter 1's ending. So SKIP ›, TO PLAY » and the right-half tap work from the first frame of the game to the last. They still step aside for every prompt the player has to make.

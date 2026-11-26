@@ -936,7 +936,6 @@ namespace ProjectInk
             if (phase == Phase.Duel || Time.unscaledTime - okAt < 0.4f) DuelGUI(w, h);
             if (phase == Phase.Training) TrainingGUI(w, h);
             HallGUI(w, h);
-            SkipGUI(w, h);
 
             // lightning: two white frames, then a blue afterglow
             if (flashFrames > 0) { Fill(new Rect(0, 0, w, h), Color.white); if (repaint) flashFrames--; }
@@ -1003,6 +1002,7 @@ namespace ProjectInk
             if (phase != Phase.End && (cardAt < 0f)) DrawSubtitle(w, h, bh);
             if (phase == Phase.End) EndCard(w, h);
             RecapGUI(w, h);
+            SkipGUI(w, h);                                  // over everything (the opening's bars, the fades)
             GUI.matrix = Matrix4x4.identity;
         }
 

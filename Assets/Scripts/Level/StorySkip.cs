@@ -28,8 +28,14 @@ namespace ProjectInk
         static float NextBeat(float clock, float beat, float best) => beat > clock && beat < best ? beat : best;
 
         /// <summary>The player has the controls: a prompt is waiting for them, or the hero is free.</summary>
-        bool PlayerHasControl => scAsk != ScAsk.None || hero == null || hero.IsDead || !hero.CinematicLock
-                                 || !string.IsNullOrEmpty(tapTitle) || kGapAwait || carPrompt;      // the chapters' own tap moments
+        bool PlayerHasControl => scAsk != ScAsk.None || hero == null || hero.IsDead
+                                 || !string.IsNullOrEmpty(tapTitle) || kGapAwait || carPrompt       // the chapters' own tap moments
+                                 || (!hero.CinematicLock && !SceneByItself);
+
+        /// <summary>Phases that are scenes from first frame to last (whatever the hero's lock says): the
+        /// opening, the breach until the men are let go, the memory, the walk to the hall, the ending.</summary>
+        bool SceneByItself => phase == Phase.Cinematic || phase == Phase.Memory || phase == Phase.ToHall || phase == Phase.Ending
+                              || (phase == Phase.Breach && b < ReleaseAt);
 
         /// <summary>A scene playing by itself, that SKIP may cut.</summary>
         bool AutoPlaying => hero != null && !PlayerHasControl && phase != Phase.End && !recapOn && !TimeController.Paused && blackout < 0.98f;
