@@ -2268,3 +2268,10 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **When hit anyway:** `rod_hit` / `katana_hit`, both hands kept on the weapon.
   - **Training:** PIPE · THE BLOCK and SWORD · THE BLOCK lessons. Lesson progress reset (new key).
   - **Build:** the FBX is rebuilt.
+- **Every move in every chapter** (docs/design/moves_by_chapter.md).
+  - **Audit:** nothing in the combat code is per chapter. Every chapter runs the V4 body and the story's combat, so every move works in every chapter's fights.
+  - **What differed was the weapons on offer.** The pipe came only from one pipe man late in chapters 2–4. Now a pipe lies in the set early in each:
+    - a scaffold pipe in the street market;
+    - a pipe from under the kitchen sink at home;
+    - a railing bar in the park.
+  - **The katana stays in the fortress,** where the story gives it.

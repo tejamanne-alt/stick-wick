@@ -217,6 +217,8 @@ namespace ProjectInk
             if (z == 2) { nextTrainAt = Time.time + (cut ? 2.5f : 1.0f); }
             // under the arches: one on watch, his back to the way the hero comes (StoryLookouts)
             if (z == 2) PostLookout(SZ0(z) + 8.5f, 0f, 1, streetMen, "ONE ON WATCH UNDER THE ARCHES");
+            // the market: a length of scaffold pipe off a stall's frame, lying in the road (the pipe, early)
+            if (z == 1) PlaceWeapon(FightStyle.Pipe, 14, new Vector3(SZ0(z) + 5.5f, 0f, 0f));
             else lookout = null;
             if (cut)
             {

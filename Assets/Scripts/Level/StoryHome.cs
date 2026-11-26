@@ -404,6 +404,8 @@ namespace ProjectInk
             if (director != null) director.ShowBanner($"{r + 1}  ·  {R.name}", 2.0f);
             // the living room: one turning it over, his back to the kitchen door (StoryLookouts)
             if (r == 1) PostLookout(R.x0 + 3.6f, R.y, -1, homeMen, "ONE SEARCHING THE LIVING ROOM");
+            // the kitchen, torn apart in the search: a length of pipe pulled from under the sink
+            if (r == 0) PlaceWeapon(FightStyle.Pipe, 12, new Vector3(R.x0 + 2.2f, R.y, 0f));
             else lookout = null;
             if (cut || hero.CinematicLock)
             {

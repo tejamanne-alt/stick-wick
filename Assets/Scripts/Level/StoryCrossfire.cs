@@ -49,6 +49,16 @@ namespace ProjectInk
             Say("THUG", PincerLines[cfLine++ % PincerLines.Length], 1.4f, HeadOf(e));
         }
 
+        /// <summary>A weapon lying in the set for the taking (placed: it never fades). Not if one of that kind
+        /// already lies near (a zone started again after a defeat).</summary>
+        void PlaceWeapon(FightStyle kind, int uses, Vector3 at)
+        {
+            if (director == null) return;
+            foreach (var w in WeaponPickup.All)
+                if (w != null && w.kind == kind && Mathf.Abs(w.transform.position.x - at.x) < 3f) return;
+            WeaponPickup.Spawn(kind, uses, at, director.weaponMaterial);
+        }
+
         void CrossfireUnhook() { if (cfHooked) { Enemy.PincerStarted -= OnPincer; cfHooked = false; } Enemy.PincerNext = false; }
     }
 }

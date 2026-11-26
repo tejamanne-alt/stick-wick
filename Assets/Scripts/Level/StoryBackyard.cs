@@ -328,6 +328,8 @@ namespace ProjectInk
             }
             // the car park: one watching the van, his back to the park (StoryLookouts)
             if (z == 3) PostLookout(PZ0(z) + 9f, 0f, 1, parkMen, "ONE WATCHING THE VAN");
+            // a railing bar wrenched off the park fence, lying in the grass
+            if (z == 1) PlaceWeapon(FightStyle.Pipe, 14, new Vector3(PZ0(z) + 5f, 0f, 0f));
             else lookout = null;
             if (cut || hero.CinematicLock)
             {
