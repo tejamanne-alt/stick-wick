@@ -2135,3 +2135,4 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **Momentum:** a swing made running (over 2.6 m/s) carries the run into him, ×1.2. The pipe's is CHARGING SWING, the sword's RUNNING CUT.
   - **Stops and turns:** armed runs don't use the bare-handed run_stop or run_turn, so the grip never jumps.
   - **Build:** the FBX is rebuilt (295 clips).
+- **Landing bug fixed.** `land_soft` and `land_heavy` (landing from a drop over 1 m) ended on the ledge-top standing pose, with the hips 1.6 m up. Every such landing finished with the body shooting up 1.6 m before snapping back to idle. Both now stand up on the floor. The FBX is rebuilt.

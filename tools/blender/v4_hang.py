@@ -112,7 +112,7 @@ CLIPS["land_soft"] = clip(12, [
     (2, P(STAND_TOP, hx=0.0, hz=0.5, spine=164, chest=156, neck=156, head=166, uaL=40, faL=70, uaR=30, faR=60,
           fL=(0.12, 0), fR=(-0.06, 0)), "out3"),                                                         # the knees soak it
     (7, P(STAND_TOP, hx=0.0, hz=0.62, spine=174, chest=170, fL=(0.12, 0), fR=(-0.06, 0)), "out"),
-    (12, P(STAND_TOP, hx=0.0, fL=(0.12, 0), fR=(-0.04, 0)), "smooth"),
+    (12, P(STAND_TOP, hx=0.0, hz=0.676, fL=(0.12, 0), fR=(-0.04, 0)), "smooth"),        # stood up on the floor (not on a ledge top)
 ], note="landing from a short drop: the knees soak it, up")
 
 CLIPS["land_heavy"] = clip(26, [
@@ -123,5 +123,5 @@ CLIPS["land_heavy"] = clip(26, [
     (10, P(STAND_TOP, hx=0.04, hz=0.38, spine=154, chest=146, neck=146, head=160, hR=(0.32, 0.06), fiR=20, uaL=40, faL=60,
            fL=(0.2, 0), fR=(-0.12, 50)), "smooth"),                                                      # a breath
     (18, P(STAND_TOP, hx=0.02, hz=0.6, spine=170, chest=164, head=170, uaR=20, faR=40, fL=(0.18, 0), fR=(-0.08, 20)), "out"),
-    (26, P(STAND_TOP, hx=0.0, fL=(0.12, 0), fR=(-0.04, 0)), "smooth"),
+    (26, P(STAND_TOP, hx=0.0, hz=0.676, fL=(0.12, 0), fR=(-0.04, 0)), "smooth"),        # stood up on the floor (not on a ledge top)
 ], note="landing from high: down onto a knee and a hand, a breath, up")
