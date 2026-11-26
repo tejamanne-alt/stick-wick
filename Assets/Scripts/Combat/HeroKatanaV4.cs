@@ -105,6 +105,7 @@ namespace ProjectInk
             if (state != State.Idle && state != State.Traverse) return;
             if (sheathed) { IaiDraw(v); return; }
             lastStroke = InkStroke.Draw(GestureInput.CutStart, GestureInput.CutEnd, 0.16f, transform.position.z);
+            ReadEdge(speed);                                                  // hasuji: the swipe's line is the edge's (HeroSwordV4)
 
             // a swordsman's line coming: mirror it (the parry)
             if (TryMirrorParry(v)) return;
@@ -137,7 +138,8 @@ namespace ProjectInk
             float gap = kataLog.Count > 0 ? now - kataLog[kataLog.Count - 1].t : 9f;
             if (prev == "oroshi" && cut == "kiriage" && gap < 0.75f) { katanaMul = 1.6f; katanaLabel = "TSUBAME-GAESHI"; }
             else if (prev == "kesa" && cut == "gyaku" && gap < 0.75f) { katanaMul = 1.5f; katanaLabel = "JŪJI"; }
-            if (kataLog.Count >= 2 && gap < 0.65f && now - kataLog[kataLog.Count - 2].t < 1.3f)
+            string prev2 = kataLog.Count >= 2 ? kataLog[kataLog.Count - 2].cut : null;
+            if (kataLog.Count >= 2 && gap < 0.65f && now - kataLog[kataLog.Count - 2].t < 1.3f && cut != prev && cut != prev2 && prev != prev2)   // three lines, none the same
             {
                 katanaMul = 2f; katanaLabel = "KATA OF THREE";
                 InkStroke.HoldAll(0.5f);
@@ -159,6 +161,7 @@ namespace ProjectInk
         {
             if (RodMode && body.Has("rod_jab")) { PipeTap(side, low); return; }
             if (sheathed) { IaiDraw(new Vector2(side, 0f)); return; }
+            EdgeNeutral();                                                    // the point: no edge to turn
             if (side != Facing) SetFacing(side);
             var t = PickTarget(Facing, 3.4f, false);
             katanaMul = Time.time < kaeshiUntil ? 1.6f : 1f;
@@ -187,21 +190,43 @@ namespace ProjectInk
                 if (!inReach) continue;
                 if (e != farFoe && cut != "yoko" && farFoe != null) continue;           // one man, except the level cut
                 any = true;
-                if (e.ReadsCut(cut))
+                int timing = Timing(e);                                       // caught deciding (debana) or swinging (HeroSwordV4)
+                if (timing == 0 && e.ReadsCut(cut))
                 {
                     // he read it: blade on blade
                     Clash(e.Chest + Vector3.up * 0.2f, false);
                     if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, "HE READ YOUR LINE: CHANGE IT");
                     continue;
                 }
-                if (e.Health <= dmg && !e.Boss && e.CanBeHeld) { CutDown(e); continue; }
-                e.TakeHit(new HitInfo { damage = dmg, direction = reach > 0f ? Facing : -Facing, knockback = 2.5f, heavy = true,
+                float d = dmg * EdgeMul;
+                if (edgeTurned)
+                {
+                    // the edge wandered off the line: it glances, it never cuts a man down
+                    e.TakeHit(new HitInfo { damage = d, direction = reach > 0f ? Facing : -Facing, knockback = 1.5f, react = "guard_hit", attacker = this });
+                    Sound.Play(Sfx.SwordClash, 0.6f, e.Chest, 0.7f);
+                    if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(0, "THE EDGE TURNED: ONE STRAIGHT LINE");
+                    Lesson("edge", "Your edge wandered. A cut is one line.");
+                    continue;
+                }
+                if (timing == 2)
+                {
+                    // debana: cut as he decides; his blow never exists
+                    if (katanaLabel != "SAYA NO UCHI") katanaLabel = "DEBANA";
+                    Lesson("debana", "Cut him as he decides. Not after.");
+                    if (!e.Boss && e.CanBeHeld) { CutDown(e); continue; }
+                    d *= 2f;
+                }
+                else if (timing == 1) { d *= 1.3f; katanaLabel = katanaLabel ?? "CUT HIM OFF"; }
+                if (e.Health <= d && !e.Boss && e.CanBeHeld) { CutDown(e); continue; }
+                e.TakeHit(new HitInfo { damage = d, direction = reach > 0f ? Facing : -Facing, knockback = 2.5f, heavy = true,
                                         react = cut == "kiriage" ? "head_back" : cut == "tsuki_low" ? "fold" : "hit_chin", attacker = this });
-                Sound.Play(Sfx.SwordHit, 1f, e.Chest);
-                if (InkFx.Instance != null) InkFx.Instance.Splash(e.Chest, new Vector3(Facing, 0.3f, 0f), 18, e.InkColor);
-                if (TimeController.Instance != null) TimeController.Instance.HitStop(5);
+                if (timing > 0 && e.Alive) e.Stagger(timing == 2 ? 1.6f : 1.2f);
+                Sound.Play(Sfx.SwordHit, 1f, e.Chest, edgeClean ? 1.08f : 1f);
+                if (InkFx.Instance != null) InkFx.Instance.Splash(e.Chest, new Vector3(Facing, 0.3f, 0f), edgeClean ? 24 : 18, e.InkColor);
+                if (TimeController.Instance != null) TimeController.Instance.HitStop(timing > 0 ? 8 : edgeClean ? 6 : 5);
+                if (edgeClean && lastStroke != null) lastStroke.Linger(0.35f);
             }
-            if (any && katanaLabel != null && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(katanaLabel == "KATA OF THREE" ? 400 : 180, katanaLabel);
+            if (any && katanaLabel != null && !killedThisCut && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(katanaLabel == "KATA OF THREE" ? 400 : 180, katanaLabel);
             if (!any) Sound.Play(Sfx.Whoosh, 0.6f, transform.position);
         }
 
@@ -265,14 +290,19 @@ namespace ProjectInk
             if (swordFx != null) swordFx.Glint();
             if (CameraDirector.Instance != null) CameraDirector.Instance.ZoomPunch(-3f, 0.5f);
             e.BeginHeld(this);
-            e.HeldPlay("cut_down", 0.04f);
+            // a rising line lifts him: he falls on his back; every other cut, on his face
+            bool rising = katanaCut == "kiriage" || katanaCut == "gyaku";
+            e.HeldPlay(rising && e.body.Has("cut_down_back") ? "cut_down_back" : "cut_down", 0.04f);
             e.HeldDamage(e.Health + 1f);
             if (lastStroke != null) lastStroke.Linger(0.7f);
             Sound.Play(Sfx.SwordHit, 1.1f, e.Chest);
             Sound.Play(Sfx.FlashCut, 0.8f, e.Chest);
-            if (TimeController.Instance != null) { TimeController.Instance.HitStop(6); TimeController.Instance.SlowMo(0.3f, 0.45f); }
+            // in one breath: men cut down one after another (HeroSwordV4)
+            string bl = CutDownLabel(out int pts, out float slow);
+            if (TimeController.Instance != null) { TimeController.Instance.HitStop(6 + Mathf.Min(breath, 4)); TimeController.Instance.SlowMo(0.3f - 0.03f * Mathf.Min(breath - 1, 3), slow); }
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.1f, 0.12f);
-            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(150, katanaLabel ?? "CUT DOWN");
+            if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(pts, bl ?? katanaLabel ?? (edgeClean ? "CLEAN CUT" : "CUT DOWN"));
+            if (breath >= 2) Haptics.Vibrate();
             StartCoroutine(LayDown(e, 1.5f));
         }
 
@@ -371,7 +401,16 @@ namespace ProjectInk
             katanaCut = "iai";
             katanaMul = 1.9f;
             katanaLabel = "NUKITSUKE";
+            EdgeNeutral();
             var t = line.Count > 0 ? line[0] : PickTarget(dir, 3f, false);
+            if (t != null && (t.Telegraphing || t.MidSwing))
+            {
+                // saya no uchi: he came, he swung, and the draw was already through him
+                katanaMul = t.Boss ? 3f : 9f;
+                katanaLabel = "SAYA NO UCHI";
+                Lesson("saya", "Win before the blade is out.");
+                if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.25f, 0.6f);
+            }
             if (t != null) BeginFar("iai_draw", t, "katana", 1.45f); else BeginFarClip("iai_draw", "katana");
             Sound.Play(Sfx.FlashCut, 1f, transform.position);
             Sound.Play(Sfx.SwordSwing, 1.2f, transform.position, 0.9f);

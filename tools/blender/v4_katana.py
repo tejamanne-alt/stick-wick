@@ -30,7 +30,7 @@ from v4_pose import P
 from v4_clips import GUARD
 from v4_moves import clip, LOOSE
 import v4_far
-from v4_clinch import PRONE
+from v4_clinch import PRONE, LIE
 
 CLIPS = {}
 
@@ -291,3 +291,15 @@ CLIPS["cut_down"] = clip(46, [
     (34, P(PRONE, hx=0.5, hz=0.14), "in"),                                                                          # down on his face
     (46, P(PRONE, hx=0.5), "smooth"),
 ], shift=True, note="cut: he stands a beat, the knees go, he falls on his face")
+
+# a rising line (kiri-age, gyaku-kesa) lifts him: he stands a beat, the head goes back, the knees give,
+# and he falls back, onto his back (the line it was cut along carries him)
+CLIPS["cut_down_back"] = clip(46, [
+    (0, P(LOOSE, hz=0.66, head=184, neck=180, uaL=10, faL=20, uaR=6, faR=14, fiL=50, fiR=50), "lin"),
+    (12, P(LOOSE, hz=0.665, spine=182, chest=184, neck=186, head=192, uaL=16, faL=24, uaR=12, faR=20, fiL=30, fiR=30), "smooth"),   # he stands a beat, the head back
+    (22, P(LOOSE, hx=-0.16, hz=0.46, hips=200, spine=205, spine_mid=207, chest=210, neck=212, head=215,
+           thL=30, shL=40, thR=20, shR=30, uaL=60, faL=70, uaR=50, faR=60), "in"),                                   # the knees go, falling back
+    (30, P(LIE, hx=-0.62, hz=0.12, thL=80, shL=60, thR=70, shR=50, uaL=150, faL=170, uaR=140, faR=160), "in3"),   # down on his back
+    (38, P(LIE, hx=-0.64, hz=0.08), "out"),
+    (46, P(LIE, hx=-0.64), "smooth"),
+], shift=True, note="cut by a rising line: he stands a beat, the head goes back, he falls on his back")

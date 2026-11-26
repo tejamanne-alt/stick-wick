@@ -92,6 +92,9 @@ namespace ProjectInk
         /// <summary>The last cut's line on screen (pixels), its unit direction and its speed (px / s).</summary>
         public static Vector2 CutStart, CutEnd, CutVector;
         public static float CutSpeed;
+        /// <summary>How far the last swipe wandered off its own straight line (its widest bulge over its
+        /// length): 0 a ruler-straight stroke, 0.3+ a wobbly curve. The katana's edge follows it (hasuji).</summary>
+        public static float CutWobble;
         public static bool IaiHolding;
         int iaiId = int.MinValue;
         Vector2 iaiFrom;
@@ -247,6 +250,14 @@ namespace ProjectInk
                 float dur = 0.15f;
                 foreach (var kv in touchTime) if (touchStart.TryGetValue(kv.Key, out var s0) && s0 == start) dur = Mathf.Max(0.04f, UnityEngine.Time.unscaledTime - kv.Value);
                 CutSpeed = d.magnitude / dur;
+                CutWobble = 0f;
+                if (LivePath.Count >= 3 && (LivePath[0] - start).sqrMagnitude < 4f)
+                {
+                    var n = new Vector2(-d.y, d.x) / d.magnitude;
+                    float dev = 0f;
+                    foreach (var q in LivePath) dev = Mathf.Max(dev, Mathf.Abs(Vector2.Dot(q - start, n)));
+                    CutWobble = dev / d.magnitude;
+                }
                 return Command.Cut;
             }
             // up and to the side (between about 28 and 62 degrees): a jump that way
@@ -402,7 +413,7 @@ namespace ProjectInk
             int f = hero != null && hero.localScale.x < 0f ? -1 : 1;
             var hc = hero != null ? hero.GetComponent<HeroController>() : null;
             if (hc != null) f = hc.Facing;
-            void K(Vector2 v) { CutVector = new Vector2(v.x * f, v.y).normalized; CutStart = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f); CutEnd = CutStart + CutVector * Screen.height * 0.25f; CutSpeed = 3000f; Push(Command.Cut); }
+            void K(Vector2 v) { CutVector = new Vector2(v.x * f, v.y).normalized; CutStart = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f); CutEnd = CutStart + CutVector * Screen.height * 0.25f; CutSpeed = 3000f; CutWobble = 0f; Push(Command.Cut); }
             if (kb.uKey.wasPressedThisFrame) K(new Vector2(1f, -1f));
             if (kb.iKey.wasPressedThisFrame) K(new Vector2(0.05f, -1f));
             if (kb.oKey.wasPressedThisFrame) K(new Vector2(1f, 1f));

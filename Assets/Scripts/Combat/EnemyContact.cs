@@ -23,6 +23,8 @@ namespace ProjectInk
         public bool Puppeted => heldBy == null && state == State.Scripted;
         /// <summary>Mid-blow: swinging, the hit not landed yet (a pipe can meet the arm).</summary>
         public bool MidSwing => state == State.Attack && !hitDone;
+        /// <summary>How far into his wind-up (0 just begun, 1 about to swing); −1 not winding up.</summary>
+        public float WindupProgress => state == State.Windup ? stateTime / Mathf.Max(0.05f, windupSeconds) : -1f;
         /// <summary>Out on his feet for a moment (a blunt blow: his guard arm dropped, a knee gone, the wind out of him).</summary>
         public void Stagger(float seconds)
         {

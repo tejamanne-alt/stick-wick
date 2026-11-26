@@ -286,11 +286,8 @@ namespace ProjectInk
             // the pipe: early swipes held, taken as the pipe comes through (HeroPipeV4)
             if (farMove == "rod" && PipeFlowUpdate()) return true;
             // a katana cut flows into the next: once the blade has landed, a new line cancels the follow-through
-            if (farMove == "katana" && farHit && gi != null && body.Time > farHitAt + 0.12f)
-            {
-                var nc = gi.Next();
-                if (nc != Command.None) { killedThisCut = false; EndTraverse(); HandleCommand(nc); return true; }
-            }
+            // (a swipe made before that is held, not lost: HeroSwordV4)
+            if (farMove == "katana" && KatanaFlowUpdate()) return true;
             if (farMove == null) return false;
             if (farMove == "crossfire") { UpdateCrossfire(); if (body.Finished) EndTraverse(); return true; }
             // slide the root so the hit lands on him

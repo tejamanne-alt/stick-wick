@@ -2057,3 +2057,17 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - **Pickup:** picking one up shows a one-line banner explaining it.
   - **Clips:** five new (`rod_backhand`, which starts exactly where the forehand leaves the pipe; `rod_chop`; `rod_evade`; `rod_coil`; `rod_unwind`). The FBX is rebuilt (292 clips).
   - **Test checkpoint:** TEST · the pipe.
+- **The katana, v2** (`HeroSwordV4.cs`, `docs/design/sword.md`). The sword is precision and lethality, where the pipe is momentum.
+  - **Hasuji (the edge).** The swipe's straightness (`GestureInput.CutWobble`) is the edge's alignment.
+    - **Straight and fast:** CLEAN, ×1.25. A kill reads CLEAN CUT.
+    - **Wobbly:** THE EDGE TURNED. It glances (×0.6) and never kills.
+    - **Slow:** ×0.85.
+  - **Debana.** A cut in the first 45% of his wind-up cuts an ordinary man down outright (a boss: ×2). Later, or mid-swing: CUT HIM OFF (×1.3, he reels). This gives the sword a real skill against ordinary men.
+  - **Saya no uchi.** Drawing from the sheath as he winds up or swings cuts him down (a boss: ×3). The draw becomes a counter-stance.
+  - **In one breath.** Cut-downs within 1.3 s of each other chain: TWO / THREE IN ONE BREATH, more points, deeper slow motion.
+  - **Also:**
+    - The Kata of Three needs three different lines; repeating a line is what swordsmen punish.
+    - Early swipes are held until the blade lands, never lost.
+    - Rising-line kills fall on their back (new `cut_down_back`).
+    - Voss memory lines teach the edge, debana and saya no uchi the first time.
+  - **Build and test:** the FBX is rebuilt (293 clips). New test checkpoint: TEST · the katana vs ordinary men.
