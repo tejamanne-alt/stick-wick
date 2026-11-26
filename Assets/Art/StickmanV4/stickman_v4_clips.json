@@ -1911,6 +1911,28 @@
       "v4": true
     },
     {
+      "name": "guard_stalk",
+      "frames": 24,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "guard_back",
+      "frames": 14,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
       "name": "rush_in",
       "frames": 18,
       "fps": 30,

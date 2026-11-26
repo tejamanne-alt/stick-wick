@@ -2189,3 +2189,21 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **The swap:** with a bent pipe (4 or fewer left), walking over a fresh one tosses the bent one aside. A different kind is never taken on top of the one he holds.
   - **The test:** a new chapter 1 checkpoint, TEST · picking up the pipe and the sword.
   - **Build:** the FBX is rebuilt (315 clips).
+- **Moving on guard near a man (bare hands), reviewed and rebuilt.**
+  - **The problems:**
+    - The step-drag loops (`advance` / `retreat`, made for 0.7 m/s) were played at 1.5 m/s, more than 2× speed: seven twitchy shuffles a second.
+    - The hips surged 12 cm and dipped inside every step; backing off, with the rear foot reaching far, it read as being knocked back by a hit.
+    - After 0.9 s of holding he dropped into the casual walk mid-approach, so the hands fell.
+    - The fists were frozen against the face, which looked like flinching.
+  - **The stalk** (`guard_stalk`, towards him, 1.0 m/s):
+    - He walks his man down: a real walk, shortened, knees soft, no bounce, the head level, chin down, the chest leading a touch.
+    - The guard is held on the line: the lead fist out at chin height a forearm ahead of the face, the rear fist at the jaw, elbows in.
+    - The shoulders turn a little with the stride; every second step the lead hand paws out for the range.
+    - It lasts as long as it's held: the guard never drops on the way in.
+  - **Giving ground** (`guard_back`, away, still facing him, 0.8 m/s):
+    - The body glides back evenly (no lurch, knees kept bent); only the feet work.
+    - The rear foot goes back low and short on its ball, and the lead follows as it lands: one flowing step.
+    - The lead hand is further out to keep him off.
+    - After 1.2 s he turns and walks away.
+  - **Smoothing:** both clips play near 1× with eased acceleration and 0.2 s blends. The old `advance` / `retreat` remain for the far-range advance.
+  - **Build:** the FBX is rebuilt (317 clips).

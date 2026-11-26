@@ -106,6 +106,101 @@ def _retreat():
 CLIPS["retreat"] = clip(18, _retreat(), loop=True, speed=round(2 * STEP * 30 / 18, 3),
                         note="backing off behind the guard: the rear foot back, the lead draws after it, still facing him")
 
+# ---------------------------------------------------------------- moving on guard (the hero's footwork near a man)
+# Reviewed: the step-drag loops above, played at twice their speed, were seven twitchy shuffles a second,
+# the hips lurching 12 cm inside every step (backing off it read as being knocked back), and the fists
+# frozen at the face. A fighter moving on a man does two different things:
+#
+#   THE STALK (towards him): he walks his man down. A real walk, shortened and low (knees bent, no bounce,
+#   the head level), the chest leading a touch, chin down; the guard held on the line: the lead fist out
+#   at chin height a forearm in front, the rear at the jaw, elbows in; the shoulders turn a little with the
+#   stride but the fists stay on him; every second step the lead hand paws out a few centimetres (feeling
+#   for the range). 1.0 m/s.
+#
+#   GIVING GROUND (away, still facing him): the back-step. The body GLIDES back at an even speed (the
+#   hips never lurch), only the feet work: the rear foot reaches back low and short on its ball, the lead
+#   draws back after it the same distance, heel-light; the stance never splays; the lead hand a little
+#   further out to keep him off. 0.75 m/s.
+import math as _m
+from v4_clips import GUARD as _G
+from v4_moves import gait as _gait
+
+STALK_SPEED = 1.0
+_GARM = dict((k, _G[k]) for k in ("clL", "clR", "uaL", "faL", "haL", "yw_uaL", "yw_faL", "twL", "fiL",
+                                  "uaR", "faR", "haR", "yw_uaR", "yw_faR", "twR", "fiR") if k in _G)
+
+
+def _guard_arms(lead_out=0.0, paw=0.0, sway=0.0):
+    """The guard's arms, the lead fist `lead_out` further from the face (0..1), pawing out by `paw` (0..1)."""
+    a = dict(_GARM)
+    lerp = lambda x, y, k: x + (y - x) * k
+    # the lead fist out in front at chin height (a forearm ahead of the face), not jammed against it
+    a["uaL"] = lerp(_G["uaL"], 44, lead_out) + 10 * paw
+    a["faL"] = lerp(_G["faL"], 104, lead_out) - 12 * paw
+    a["haL"] = a["faL"] + 6
+    a["twL"] = -40
+    # the rear fist at the jaw, the elbow in over the ribs
+    a["uaR"] = 20 + 2 * sway
+    a["faR"] = 158
+    a["haR"] = 164
+    return a
+
+
+def _stalk():
+    n = 24
+    keys = []
+    for f, p, e in _gait(n, STALK_SPEED, duty=0.62, lift=0.04, hz=0.64, bounce=0.005, bounce_low_at_mid=False,
+                         spine=173, chest=165, neck=158, head=171, arm_base=0, arm_amp=0, elbow=0, fist=165,
+                         twist=6, strike=-10, push=30):
+        ph = f / n
+        # the paw: on the second step (the lead foot landing), out and back
+        paw = max(0.0, _m.sin(_m.pi * (ph - 0.5) / 0.3)) if 0.5 <= ph <= 0.8 else 0.0
+        sway = _m.sin(2 * _m.pi * ph)
+        q = P(p, tw_hips=p["tw_hips"] - 8, tw_spine=p["tw_spine"] - 6, spine_mid=169, tw_chest=p["tw_chest"] * 0.5 - 6,
+              tw_head=-p["tw_chest"] * 0.4, **_guard_arms(0.85, paw, sway))
+        keys.append((f, q, e))
+    return keys
+
+
+CLIPS["guard_stalk"] = clip(24, _stalk(), loop=True, speed=STALK_SPEED,
+                            note="walking his man down: a low real walk behind the guard, head level, the lead hand pawing for range")
+
+GIVE_STEP = 0.15
+
+
+def _give_ground():
+    n, S = 14, -GIVE_STEP
+    GL0, GR0 = _G["fL"][0], _G["fR"][0]
+    keys = []
+
+    def move(f, a, b):
+        return min(1.0, max(0.0, (f - a) / (b - a)))
+
+    for f in range(n + 1):
+        # the rear foot: back over frames 1-4 and 9-12; the lead after it: 5-8 and 13-16
+        kr1, kr2 = move(f, 0.5, 3.5), move(f, 7.5, 10.5)      # the lead follows as the rear lands: one flowing step
+        kl1, kl2 = move(f, 3.0, 6.5), move(f, 10.0, 13.5)
+        sm = lambda k: k * k * (3 - 2 * k)
+        rx = GR0 + S * (sm(kr1) + sm(kr2))
+        lx = GL0 + S * (sm(kl1) + sm(kl2))
+        r_air = (0 < kr1 < 1) or (0 < kr2 < 1)
+        l_air = (0 < kl1 < 1) or (0 < kl2 < 1)
+        kr = kr1 if 0 < kr1 < 1 else kr2
+        kl = kl1 if 0 < kl1 < 1 else kl2
+        fR = (rx, 0.022 * _m.sin(_m.pi * kr), 26) if r_air else (rx, 40)
+        fL = (lx, 0.016 * _m.sin(_m.pi * kl), -3) if l_air else (lx, 0)
+        travel = 2 * S * f / n                                     # the hips glide back evenly
+        step = (f % 7) / 7.0
+        hx = travel - 0.006 * _m.sin(_m.pi * step)                # (a few millimetres of give as the rear foot takes him)
+        hz = 0.628 - 0.003 * _m.sin(_m.pi * step)                 # knees kept bent: never a straight leg reaching back
+        p = P(_G, hx=hx, hz=hz, fL=fL, fR=fR, head=171, tw_head=0.0, **_guard_arms(1.0, 0.0, 0.0))
+        keys.append((f, at(p, -travel), "lin"))                    # in place: the game carries the root
+    return keys
+
+
+CLIPS["guard_back"] = clip(14, _give_ground(), loop=True, speed=round(2 * GIVE_STEP * 30 / 14, 3),
+                           note="giving ground: the body glides back, the rear foot back low, the lead after it; the lead hand out")
+
 # ---------------------------------------------------------------- the rush in (two explosive step-drags)
 CLIPS["rush_in"] = clip(18, [
     (0, GUARD, "lin"),

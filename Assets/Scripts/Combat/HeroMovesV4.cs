@@ -83,9 +83,16 @@ namespace ProjectInk
         string IdleClipV4 => MovesV4 && Style == FightStyle.Fists && !Threatened ? "idle_alone" : "idle";
 
         // ------------------------------------------------------------------ footwork on guard
-        const float GuardStepSpeed = 1.5f;      // m/s: quick, short step-drags
+        const float GuardStepSpeed = 1.5f;      // m/s: quick, short step-drags (the old advance / retreat loops)
         const float GuardClipSpeed = 0.7f;      // the advance / retreat clips' own ground speed
-        const float GuardStepTime = 0.9f;       // held longer than this, he runs
+        const float GuardStepTime = 0.9f;       // held longer than this, he walks
+        // bare-handed on guard (reviewed: the step-drags above played at 2x were seven twitchy shuffles a
+        // second, the hips lurching inside every step): towards him, THE STALK, a low real walk behind the
+        // guard; away, GIVING GROUND, the body gliding back while the feet step. Each at its own pace,
+        // played near 1x. Walking him down never drops the guard; backing off, after a while he turns and goes.
+        const float StalkSpeed = 1.0f, StalkClip = 1.0f;
+        const float GiveSpeed = 0.8f, GiveClip = 0.643f;
+        const float GiveTime = 1.2f;            // backing off longer than this: he turns and walks away
         const float RodStepSpeed = 1.2f;        // the pipe's step-drags (heavier, a touch slower)
         const float RodStepClip = 0.667f;       // rod_step / rod_back ground speed
         const float RodWalkSpeed = 1.4f;        // rod_walk: a real walk with the pipe on the shoulder
@@ -112,7 +119,7 @@ namespace ProjectInk
         // Whatever put it there (input let go, a wall, a scene that started a walk and stopped moving him),
         // a walk or run cycle on a hero who isn't going anywhere is wrong: after a moment of standing
         // still he simply stands. Checked last thing every frame, against where he really is.
-        static readonly string[] Gaits = { "walk_alone", "walk", "run", "sprint", "katana_walk", "rod_walk", "advance", "retreat", "rod_step", "rod_back", "katana_step", "katana_back", "rod_run", "katana_run" };
+        static readonly string[] Gaits = { "walk_alone", "walk", "run", "sprint", "katana_walk", "rod_walk", "advance", "retreat", "guard_stalk", "guard_back", "rod_step", "rod_back", "katana_step", "katana_back", "rod_run", "katana_run" };
         Vector3 gaitLastPos;
         float gaitStill;
 
@@ -206,20 +213,29 @@ namespace ProjectInk
                 bool swordSteps = KatanaMode && !RodMode && !sheathed && body.Has("katana_back");
                 var giNow = GestureInput.Instance;
                 bool runHeld = giNow != null && giNow.RunHeld && float.IsNaN(stepGoal);
-                bool footwork = !runHeld && Contact && (rodSteps || swordSteps || (Style == FightStyle.Fists && !KatanaMode && carried == null && body.Has("retreat"))) &&
-                                float.IsNaN(stepGoal) && holdTime < GuardStepTime && Threatened;
+                bool bareSteps = Style == FightStyle.Fists && !KatanaMode && carried == null && body.Has("retreat");
+                bool stalk = bareSteps && body.Has("guard_stalk");
+                // how long he may keep it up: the weapons' steps a moment; bare-handed walking him down, as long
+                // as it's held; backing off, a little longer, then he turns and goes
+                bool towards = false;
+                if (stalk) { var near = NearestThreat(4.5f); towards = near == null || (near.transform.position.x > transform.position.x ? 1 : -1) == dir; }
+                float keepUp = stalk ? (towards ? float.MaxValue : GiveTime) : GuardStepTime;
+                bool footwork = !runHeld && Contact && (rodSteps || swordSteps || bareSteps) &&
+                                float.IsNaN(stepGoal) && holdTime < keepUp && Threatened;
                 if (footwork)
                 {
                     var man = NearestThreat(4.5f);
                     int face = man != null ? (man.transform.position.x > transform.position.x ? 1 : -1) : dir;
                     SetFacing(face);
                     if (dir == face && WalkIntoClinch(dir)) return;               // stepping into him: take hold
-                    float stepSpeed = rodSteps ? RodStepSpeed : swordSteps ? SwordStepSpeed : GuardStepSpeed;
-                    velocity.x = Mathf.MoveTowards(velocity.x, dir * stepSpeed, 10f * dt);
+                    float stepSpeed = rodSteps ? RodStepSpeed : swordSteps ? SwordStepSpeed : stalk ? (dir == face ? StalkSpeed : GiveSpeed) : GuardStepSpeed;
+                    velocity.x = Mathf.MoveTowards(velocity.x, dir * stepSpeed, (stalk ? 6f : 10f) * dt);   // (bare: eased in, no lurch)
                     string step = rodSteps ? (dir == face ? "rod_step" : "rod_back") : swordSteps ? (dir == face ? "katana_step" : "katana_back")
+                                : stalk ? (dir == face ? "guard_stalk" : "guard_back")
                                 : dir == face ? "advance" : "retreat";
-                    float stepPlay = Mathf.Clamp(Mathf.Abs(velocity.x) / (rodSteps ? RodStepClip : swordSteps ? SwordStepClip : GuardClipSpeed), 0.6f, 2.6f);
-                    if (body.CurrentName != step) body.Play(step, 0.12f, false, stepPlay);
+                    float stepClip = rodSteps ? RodStepClip : swordSteps ? SwordStepClip : stalk ? (dir == face ? StalkClip : GiveClip) : GuardClipSpeed;
+                    float stepPlay = Mathf.Clamp(Mathf.Abs(velocity.x) / stepClip, stalk ? 0.5f : 0.6f, stalk ? 1.5f : 2.6f);
+                    if (body.CurrentName != step) body.Play(step, stalk ? 0.2f : 0.12f, false, stepPlay);
                     else body.SetSpeed(stepPlay);
                     walkLastX = transform.position.x;
                     walkBlocked = 0f;
