@@ -606,7 +606,9 @@ namespace ProjectInk
                 SetFacing(side);
                 crouching = false;
                 e.BeginHeld(this);
-                e.HeldAt(new Vector3(transform.position.x + side * 0.42f, e.transform.position.y, e.transform.position.z), transform.position.x + side * 10f);
+                // a hand's depth behind him: side-on, the hero's head draws cleanly in front of the man's (the two
+                // heads never flicker through each other as one); he drifts back to the lane when he's up again
+                e.HeldAt(new Vector3(transform.position.x + side * 0.42f, e.transform.position.y, transform.position.z + 0.16f), transform.position.x + side * 10f);
                 e.HeldPlay("takedown_choke_v", 0.06f);
                 farFoe = e;
                 invulnerableUntil = Time.time + 1.2f;

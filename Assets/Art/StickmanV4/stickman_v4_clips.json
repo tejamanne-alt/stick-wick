@@ -1648,7 +1648,7 @@
     },
     {
       "name": "sneak",
-      "frames": 40,
+      "frames": 30,
       "fps": 30,
       "loop": true,
       "hitFrame": -1,

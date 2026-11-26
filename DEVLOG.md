@@ -2155,3 +2155,8 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **Landings:** `rod_land` / `katana_land`, the knees taking it with the weapon kept in hand. Drops over 1 m use them too.
   - **Keyboard:** W jumps standing or running with the same weapon jumps.
   - **Build:** the FBX is rebuilt (305 clips).
+- **Crouch, sneak, silent takedown, reviewed.**
+  - **Crouch:** the hands were held out flat in front. Now one hand is low for balance and the other close to the chest: ready, and reads as stealth.
+  - **Sneak:** it was 0.55 m/s, which made creeping up on a man tedious on a phone. Now 0.8 m/s, a real crouch-walk: low and level with almost no bob, each foot set down toes first, the hands low and close.
+  - **The silent takedown:** the hero's head no longer sits level with the man's. He works lower with his head tucked behind the man's shoulder, and the man's head isn't yanked so far back. The man is also held 16 cm further back in depth, so the two heads never flicker through each other as one half-black, half-white head.
+  - **Build:** the FBX is rebuilt.

@@ -567,13 +567,13 @@ CLIPS["takedown_choke"] = dict(frames=64, hit=12, load=None, loop=False, aim=Non
                                note="the rear naked choke from a crouch: up, the arm round the throat, sat back, laid down",
                                keys=[
     (0, CROUCH, "lin"),
-    (5, P(LOOSE, hx=0.1, hz=0.62, spine=176, spine_mid=174, chest=170, neck=164, head=170, fL=(0.32, 0), fR=(0.0, 40),
+    (5, P(LOOSE, hx=0.1, hz=0.56, spine=176, spine_mid=174, chest=170, neck=156, head=164, fL=(0.32, 0), fR=(0.0, 40),
           hR=(0.52, 1.02), hL=(0.4, 1.12), fiR=60, fiL=40), "out3"),                                             # up and in: the arm snakes round
-    (9, P(LOOSE, hx=0.12, hz=0.63, spine=184, chest=186, neck=172, head=168, fL=(0.32, 0), fR=(0.0, 30),
+    (9, P(LOOSE, hx=0.12, hz=0.56, spine=180, chest=180, neck=158, head=162, fL=(0.32, 0), fR=(0.0, 30),
           hR=(0.48, 1.0), hL=(0.36, 1.1), fiR=165, fiL=90, tw_chest=-6), "in3"),
-    (12, P(LOOSE, hx=0.1, hz=0.62, spine=190, chest=194, neck=176, head=170, fL=(0.32, 0), fR=(-0.02, 20),
+    (12, P(LOOSE, hx=0.1, hz=0.56, spine=186, chest=188, neck=160, head=162, fL=(0.32, 0), fR=(-0.02, 20),
            hR=(0.44, 0.99), hL=(0.34, 1.08), fiR=165, fiL=120, clR=(10, 4), clL=(14, 8)), "in"),                  # LOCKED: the chest on his back, squeezing
-    (22, P(LOOSE, hx=-0.02, hz=0.56, spine=198, spine_mid=200, chest=202, neck=180, head=172, fL=(0.34, 0), fR=(-0.26, 10),
+    (22, P(LOOSE, hx=-0.02, hz=0.52, spine=196, spine_mid=198, chest=198, neck=164, head=164, fL=(0.34, 0), fR=(-0.26, 10),
            hR=(0.36, 0.92), hL=(0.26, 1.0), fiR=165, fiL=120, tw_chest=8), "smooth"),                            # sitting back: his heels come off
     (30, P(LOOSE, hx=-0.06, hz=0.44, spine=192, chest=194, neck=178, head=170, thL=84, shL=4, fpL=0, thR=10, shR=-82, fpR=-70,
            hR=(0.3, 0.76), hL=(0.22, 0.84), fiR=165, fiL=120, tw_chest=-6), "smooth"),                            # down onto a knee with him; he's fading
@@ -587,11 +587,11 @@ CLIPS["takedown_choke_v"] = dict(frames=64, hit=None, load=None, loop=False, aim
                                  striker=None, shift=True, breath=False, breaths=2, lag=True, note="choked from behind (held)",
                                  keys=[
     (0, P(LOOSE), "lin"),
-    (5, P(LOOSE, hx=-0.02, spine=184, chest=186, neck=192, head=204, hL=(0.18, 0.98), hR=(0.2, 0.94), fiL=120, fiR=120,
+    (5, P(LOOSE, hx=-0.02, spine=184, chest=186, neck=188, head=196, hL=(0.18, 0.98), hR=(0.2, 0.94), fiL=120, fiR=120,
           fL=(0.12, 20), fR=(-0.04, 30)), "out3"),                                                              # yanked back, the hands fly to the arm
-    (12, P(LOOSE, hx=-0.04, hz=0.66, spine=188, chest=192, neck=196, head=208, hL=(0.1, 0.96), hR=(0.12, 0.92), fiL=140, fiR=140,
+    (12, P(LOOSE, hx=-0.04, hz=0.66, spine=188, chest=192, neck=190, head=198, hL=(0.1, 0.96), hR=(0.12, 0.92), fiL=140, fiR=140,
            fL=(0.3, 0.2, 20), fR=(-0.02, 40), tw_chest=12), "out"),                                              # a leg kicks up
-    (18, P(LOOSE, hx=-0.06, hz=0.66, spine=190, chest=194, neck=196, head=206, hL=(0.08, 0.94), hR=(0.1, 0.9), fiL=150, fiR=150,
+    (18, P(LOOSE, hx=-0.06, hz=0.66, spine=190, chest=194, neck=190, head=198, hL=(0.08, 0.94), hR=(0.1, 0.9), fiL=150, fiR=150,
            fL=(0.12, 30), fR=(0.24, 0.16, 20), tw_chest=-10), "out"),                                            # the other
     (22, P(LOOSE, hx=-0.18, hz=0.56, spine=200, spine_mid=200, chest=202, neck=200, head=210, hL=(-0.02, 0.86), hR=(0.0, 0.82),
            fiL=120, fiR=120, fL=(0.34, -10), fR=(0.22, 0.12, -10)), "smooth"),                                   # the heels off: the weight on the hero

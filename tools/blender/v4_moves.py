@@ -92,7 +92,7 @@ CLIPS = {}
 
 # ---------------------------------------------------------------- the gaits
 # walking alone: loose, the hands relaxed and swinging low, heel first, a gentle rise over each foot
-WALK_SPEED, JOG_SPEED, RUN_SPEED, SNEAK_SPEED = 1.25, 4.0, 4.8, 0.55
+WALK_SPEED, JOG_SPEED, RUN_SPEED, SNEAK_SPEED = 1.25, 4.0, 4.8, 0.8
 # THE WICK WALK (the hero's walk, HOLD): composed and purposeful, made for the speed it's played at.
 # Brisk, never hurried (a step every 0.43 s on his short legs); the heel planted firmly, rolling through
 # to a push off the toes; a visible rise over each foot; the chest leading a touch, the chin a little down,
@@ -115,10 +115,10 @@ CLIPS["sprint"] = clip(16, gait(16, RUN_SPEED, duty=0.31, lift=0.2, hz=0.635, bo
                                 twist=16, lean_pump=2.5, strike=8, push=58),
                        loop=True, speed=RUN_SPEED, note="flat out: leaning in, knees high, arms driving")
 # sneaking: crouched low, long slow steps, the feet placed (rolled heel to toe without a sound)
-CLIPS["sneak"] = clip(40, gait(40, SNEAK_SPEED, duty=0.72, lift=0.06, hz=0.47, bounce=0.006, bounce_low_at_mid=False,
-                               spine=158, chest=150, neck=148, head=168, arm_base=40, arm_amp=8, elbow=70, fist=90,
-                               twist=6, strike=-10, push=26),
-                      loop=True, speed=SNEAK_SPEED, note="sneaking: crouched, slow placed steps, hands ready")
+CLIPS["sneak"] = clip(30, gait(30, SNEAK_SPEED, duty=0.7, lift=0.07, hz=0.48, bounce=0.004, bounce_low_at_mid=False,
+                               spine=160, chest=152, neck=150, head=170, arm_base=28, arm_amp=9, elbow=42, fist=80,
+                               twist=5, strike=8, push=20),
+                      loop=True, speed=SNEAK_SPEED, note="creeping: low and level, each foot set down toes first, the hands low and close")
 
 # ---------------------------------------------------------------- standing alone
 # simply standing: both feet planted, the weight even, the hands hanging still (half open), the
@@ -137,7 +137,7 @@ CLIPS["idle_alone"] = clip(150, [
 ], loop=True, breath=True, breaths=4, note="standing alone: feet planted, hands still, breathing, the head looking about a little")
 
 CROUCH = P(hx=0.0, hz=0.47, hips=180, spine=158, spine_mid=154, chest=150, neck=148, head=168,
-           clL=(10, 6), clR=(10, 6), uaL=44, faL=110, uaR=36, faR=104, fiL=90, fiR=90,
+           clL=(8, 4), clR=(8, 4), uaL=34, faL=70, uaR=18, faR=98, fiL=70, fiR=90,     # one hand low for balance, one close
            fL=(0.2, 0), fR=(-0.12, 30))
 CLIPS["crouch_idle"] = clip(60, [
     (0, CROUCH, "smooth"),

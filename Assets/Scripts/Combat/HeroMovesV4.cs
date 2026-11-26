@@ -17,7 +17,7 @@ namespace ProjectInk
     {
         // HOLD walks (the Wick walk); TAP, THEN HOLD runs: off at RunStart (quicker than an ordinary man's
         // 2.6), building to RunSpeedV4 over RunBuild seconds (the barge needs 4.0: half a second's run-up)
-        const float WalkSpeed = 1.25f, JogSpeed = 3.4f, RunSpeedV4 = 4.6f, SneakSpeed = 0.55f, RunBuild = 0.9f;
+        const float WalkSpeed = 1.25f, JogSpeed = 3.4f, RunSpeedV4 = 4.6f, SneakSpeed = 0.8f, RunBuild = 0.9f;
         const float RunClipSpeed = 4.0f;          // the run clip's own ground speed (played 0.85-1.15 across the range)
         /// <summary>A directed story walk's pace (StoryBank.PlayerWalk): a hold there moves at it, walking or running
         /// by how fast it is (the walk to the bank doors walks; the chase after the van runs). 0: none.</summary>
