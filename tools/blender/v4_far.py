@@ -25,7 +25,7 @@ from v4_pose import P
 import v4_pose as vp
 from v4_clips import GUARD, G
 from v4_moves import CLIPS as MOVES, LOOSE, CROUCH, clip
-from v4_clinch import HOLD, HELD, LIE, pair
+from v4_clinch import HOLD, HELD, LIE, PRONE, KNEEL, pair
 
 CLIPS = {}
 RUN0 = vp.solve(MOVES["run"]["keys"][4][1])
@@ -246,6 +246,164 @@ _HS_MAN = [
 ]
 CLIPS.update(pair("head_scissors", 34, _HS_HERO, _HS_MAN, hit=17, vshift=True, hshift=True,
                   note="head scissors: onto his shoulders, legs locked, the walkover whips him over and down behind"))
+
+# ---------------------------------------------------------------- ARM BREAKER (catch his punch) and TAKE HIS BACK
+# Both start from his swing. The arm breaker is in the clinch's space (the man GAP in front, facing the
+# hero). Taking his back ends with the hero behind him: the back hold's space has the man BG in front,
+# FACING AWAY (his clips keyed in his own frame, the hero BG behind him).
+BG = 0.5
+
+# --- the wrist hold: turned side-on, his wrist in the lead hand, the rear hand on his elbow, the man bent
+ARM_H = G(hx=0.0, hz=0.6, chest=164, spine=170, tw_hips=-50, tw_spine=-55, tw_chest=-60, neck=158, head=166,
+          hL=(0.3, 0.95), hR=(0.42, 1.0), fiL=150, fiR=110, fL=(GL[0], 0), fR=(GR[0] - 0.05, 40))
+ARM_V = P(HELD, hx=-0.04, hz=0.6, spine=160, spine_mid=148, chest=136, neck=128, head=132,
+          hR=(GAP - 0.3, 0.95), hL=(0.22, 0.88), fiR=60, fiL=90, fL=(0.2, 0), fR=(-0.24, 26))
+
+CLIPS.update(pair("arm_catch", 12, [
+    (0, GUARD, "smooth"),
+    (3, G(hx=0.02, tw_hips=-20, tw_chest=-30, hL=(0.32, 1.12), hR=(0.24, 1.06), fiL=40, fiR=40, fL=(GL[0] + 0.04, 0)), "in"),   # hands shoot out, open
+    (5, G(hx=0.04, hz=0.62, tw_hips=-35, tw_spine=-35, tw_chest=-45, chest=168, hL=(0.15, 1.1), hR=(0.3, 1.14),
+          fiL=150, fiR=150, fR=(GR[0] - 0.05, 30)), "in3"),                                                                   # CAUGHT: the wrist, the elbow
+    (8, P(ARM_H, hx=0.01, tw_chest=-66), "in"),                                                                               # turned, the arm pulled across
+    (12, ARM_H, "smooth"),
+], [
+    (0, G(), "smooth"),
+    (3, G(hx=0.06, tw_hips=24, tw_chest=30, uaR=60, faR=120, hR=(0.35, 1.12)), "in"),                                         # the punch comes
+    (5, G(hx=0.1, tw_hips=32, tw_chest=40, chest=154, neck=150, head=162, hR=(GAP - 0.15, 1.1)), "in3"),                       # into his hands
+    (8, P(ARM_V, hx=0.0, chest=142, head=140), "in"),                                                                         # jerked forward and down
+    (12, ARM_V, "smooth"),
+], hit=5, note="the catch: his punch taken at the wrist mid-flight, the arm pulled across, him folded over it"))
+
+CLIPS.update(pair("arm_hold", 24, [
+    (0, ARM_H, "smooth"),
+    (8, P(ARM_H, hx=0.02, tw_chest=-66, hR=(0.43, 0.97)), "smooth"),
+    (16, P(ARM_H, hx=-0.01, tw_chest=-56, hL=(0.29, 0.97)), "smooth"),
+    (24, ARM_H, "smooth"),
+], [
+    (0, ARM_V, "smooth"),
+    (8, P(ARM_V, hx=-0.06, chest=140, hL=(0.3, 0.92)), "smooth"),                                                              # pulling, prying at the hand
+    (16, P(ARM_V, hx=-0.02, chest=132, head=126, hL=(0.18, 0.84)), "smooth"),
+    (24, ARM_V, "smooth"),
+], loop=True, breath=True, note="the wrist hold: his arm locked straight, him fighting it"))
+
+CLIPS.update(pair("armbar_drop", 26, [
+    (0, ARM_H, "smooth"),
+    (4, P(ARM_H, hx=0.12, hz=0.55, spine=160, chest=150, hL=(0.38, 0.75), hR=(0.46, 0.72), fL=(GL[0] + 0.2, 0)), "in"),     # the weight onto his elbow
+    (8, P(ARM_H, hx=0.22, hz=0.42, spine=140, chest=130, neck=140, head=150, hL=(0.5, 0.42), hR=(0.55, 0.44),
+          fL=(GL[0] + 0.3, 0), fR=(GR[0] + 0.1, 70)), "in"),                                                                   # driving him down
+    (12, P(ARM_H, hx=0.3, hz=0.36, spine=150, chest=140, neck=146, head=155, thL=84, shL=4, fpL=0, thR=4, shR=-86, fpR=-70,
+           hL=(0.62, 0.12), hR=(0.7, 0.14), fiL=150, fiR=150), "in3"),                                                        # SLAM: a knee on him, the arm pinned straight
+    (18, P(ARM_H, hx=0.3, hz=0.38, spine=152, chest=142, head=150, thL=84, shL=4, fpL=0, thR=4, shR=-86, fpR=-70,
+           hL=(0.64, 0.12), hR=(0.68, 0.18)), "out"),
+    (26, at(GUARD, 0.3), "smooth"),
+], [
+    (0, ARM_V, "smooth"),
+    (4, P(ARM_V, hx=0.0, hz=0.5, spine=140, chest=120, neck=110, head=112, hR=(GAP - 0.38, 0.75)), "in"),
+    (8, P(ARM_V, hx=0.06, hz=0.34, hips=124, spine=112, spine_mid=106, chest=100, neck=98, head=98,
+          thL=60, shL=-40, thR=50, shR=-50, hR=(GAP - 0.5, 0.45)), "in"),                                                     # folding, face first
+    (12, P(PRONE, hx=-0.15, hz=0.08, uaR=170, faR=176), "in3"),                                                              # SLAM: flat on his face, the arm up straight
+    (14, P(PRONE, hx=-0.15, hz=0.12, head=94, uaR=168, faR=174), "out"),
+    (26, P(PRONE, hx=-0.15), "smooth"),
+], hit=12, vshift=True, hshift=True, note="the arm bar: the weight on his locked elbow drives him face first; a knee on his back"))
+
+CLIPS.update(pair("arm_break", 16, [
+    (0, ARM_H, "smooth"),
+    (3, P(ARM_H, hR=(0.38, 0.7), tw_chest=-72, chest=158), "in"),                                                              # the rear forearm drops under his elbow
+    (5, P(ARM_H, hR=(0.44, 1.14), tw_chest=-40, chest=166, spine=176, fiR=165), "in3"),                                        # CRACK: driven up through it
+    (8, P(ARM_H, hR=(0.44, 1.1), tw_chest=-36, fiL=60), "out"),
+    (16, GUARD, "smooth"),
+], [
+    (0, ARM_V, "smooth"),
+    (5, P(ARM_V, hR=(GAP - 0.44, 1.2), chest=150, neck=160, head=172), "in3"),                                                 # the elbow goes the wrong way
+    (9, G(hx=-0.25, hz=0.58, spine=166, chest=150, neck=148, head=150, hL=(0.12, 0.92), hR=(0.08, 0.82), fiL=140, fiR=40), "out"),  # clutching it, reeling
+    (16, G(hx=-0.32, hz=0.6, spine=168, chest=156, head=152, hL=(0.12, 0.95), hR=(0.1, 0.86), fiL=140, fiR=40), "smooth"),
+], hit=5, vshift=True, note="the arm break: the forearm driven up through his locked elbow; he reels away clutching it"))
+
+# --- taking his back: under the swing, past his armpit, out behind him, turning to face his back
+BACK_H = G(hx=0.08, hz=0.6, chest=164, spine=172, neck=160, head=166, hL=(BG + 0.12, 0.82), hR=(BG + 0.1, 0.8),
+           fiL=130, fiR=130, fL=(0.26, 0), fR=(-0.1, 40))
+BACK_V = G(hx=0.0, hz=0.62, spine=172, chest=164, neck=160, head=166, hL=(0.12, 0.82), hR=(0.1, 0.8), fiL=100, fiR=100,
+           fL=(0.2, 0), fR=(-0.2, 20))
+
+_db_h = [
+    (0, GUARD, "smooth"),
+    (3, G(hx=0.18, hz=0.45, spine=150, chest=140, neck=150, head=160, fL=(GL[0] + 0.3, 0), fR=(GR[0], 60)), "in"),               # ducks under the hook
+    (6, G(hx=0.55, hz=0.42, spine=146, chest=138, neck=146, head=156, tw_hips=30, tw_chest=40,
+          fL=(0.85, 0), fR=(GR[0] + 0.3, 0.05, 30)), "lin"),                                                                   # under his arm
+    (9, G(hx=0.95, hz=0.5, spine=160, chest=152, tw_hips=-50, tw_spine=-60, tw_chest=-70, fL=(1.15, 0), fR=(0.8, 40)), "out"),  # through, turning
+    (12, G(hx=1.08, hz=0.58, spine=168, chest=160, tw_hips=-80, tw_spine=-85, tw_chest=-90, neck=156, head=164,
+           fL=(1.2, 0), fR=(1.0, 30)), "smooth"),
+    (16, at(G(hz=0.6, spine=170, chest=162, tw_hips=-90, tw_spine=-90, tw_chest=-90, neck=158, head=164), GAP + BG), "smooth"),  # facing the camera: the pivot
+]
+_db_v = [
+    (0, G(), "smooth"),
+    (3, G(hx=0.1, tw_hips=30, tw_chest=45, uaR=100, faR=110, hR=(0.55, 1.15)), "in"),                                         # the big hook
+    (6, G(hx=0.2, hz=0.6, spine=164, chest=150, neck=150, head=160, tw_chest=70, hR=(0.62, 1.0)), "in3"),                      # through air: he ducked
+    (9, G(hx=0.22, spine=160, chest=148, head=160, fL=(GL[0] + 0.26, 0), fR=(GR[0] + 0.1, 0.06, 30)), "out"),                 # stumbling after it
+    (16, G(hx=0.05, hz=0.62, spine=170, chest=160, head=164), "smooth"),
+]
+CLIPS.update(pair("duck_behind", 16, _db_h, _db_v, hshift=True,
+                  note="take his back: under his hook, past his armpit, out behind him, turning to face his back"))
+
+_bh = pair("back_hold", 24, [
+    (0, BACK_H, "smooth"),
+    (8, P(BACK_H, hx=0.1, chest=160, hR=(BG + 0.13, 0.84)), "smooth"),
+    (16, P(BACK_H, hx=0.06, chest=166, hL=(BG + 0.1, 0.8)), "smooth"),
+    (24, BACK_H, "smooth"),
+], [
+    (0, BACK_V, "smooth"),
+    (8, P(BACK_V, hx=0.04, chest=158, tw_chest=12, hL=(0.16, 0.84)), "smooth"),                                                # prying at the hands
+    (16, P(BACK_V, hx=-0.02, chest=168, tw_chest=-10, head=160), "smooth"),
+    (24, BACK_V, "smooth"),
+], loop=True, breath=True, note="the rear waist lock: his back to the hero, prying at the hands")
+_bh["back_hold"].update(vat=BG, vface=1)
+CLIPS.update(_bh)
+
+_bk = pair("back_kidney", 14, [
+    (0, BACK_H, "smooth"),
+    (3, P(BACK_H, hR=(0.3, 0.95), tw_chest=-25), "in"),
+    (5, P(BACK_H, hR=(BG + 0.05, 0.84), tw_chest=15, chest=160), "in3"),                                                       # into his kidney
+    (9, P(BACK_H, hR=(BG + 0.08, 0.82)), "out"),
+    (14, BACK_H, "smooth"),
+], [
+    (0, BACK_V, "smooth"),
+    (5, P(BACK_V, hx=0.05, spine=160, chest=150, head=158, tw_chest=20, hL=(0.04, 0.76)), "in3"),
+    (14, BACK_V, "smooth"),
+], hit=5, note="from behind: a short hook into his kidney, the hold kept")
+_bk["back_kidney"].update(vat=BG, vface=1)
+CLIPS.update(_bk)
+
+_gs = pair("german_suplex", 40, [
+    (0, BACK_H, "smooth"),
+    (4, P(BACK_H, hx=0.06, hz=0.5, spine=168, chest=160, hL=(BG + 0.08, 0.7), hR=(BG + 0.06, 0.68)), "in"),                    # hips drop under him
+    (8, P(BACK_H, hx=0.02, hz=0.66, hips=190, spine=196, spine_mid=200, chest=204, neck=206, head=212,
+          hL=(0.4, 1.1), hR=(0.38, 1.08), fL=(0.26, 30), fR=(-0.1, 50)), "in"),                                                # up on his toes, lifting
+    (12, P(BACK_H, hx=-0.1, hz=0.6, hips=220, spine=232, spine_mid=238, chest=246, neck=252, head=262,
+           hL=(0.05, 1.35), hR=(0.03, 1.32), fL=(0.3, 0), fR=(0.0, 0)), "lin"),                                                 # arching back, him over the top
+    (16, P(BACK_H, hx=-0.12, hz=0.45, hips=250, spine=266, spine_mid=280, chest=300, neck=318, head=330,
+           hL=(-0.35, 0.3), hR=(-0.37, 0.28), fL=(0.32, 0), fR=(0.02, 0)), "in3"),                                             # SLAM: the bridge
+    (21, P(BACK_H, hx=-0.12, hz=0.44, hips=252, spine=268, spine_mid=282, chest=302, neck=320, head=332,
+           hL=(-0.4, 0.2), hR=(-0.42, 0.18), fL=(0.32, 0), fR=(0.02, 0)), "out"),                                              # held, the bridge
+    (27, P(KNEEL, hx=-0.06, hz=0.34, hips=200, spine=196, spine_mid=190, chest=180, neck=172, head=168,
+           thL=90, shL=10, thR=40, shR=-60), "in"),                                                                            # rolls up off it
+    (33, P(KNEEL, hx=-0.06), "smooth"),
+    (40, at(GUARD, -0.06), "smooth"),
+], [
+    (0, BACK_V, "smooth"),
+    (4, P(BACK_V, hx=-0.02, hz=0.6, spine=176, chest=172), "in"),
+    (8, P(BACK_V, hx=-0.15, hz=0.95, hips=200, spine=205, spine_mid=207, chest=210, neck=212, head=215,
+          thL=30, shL=20, thR=20, shR=10, uaL=100, faL=120, uaR=110, faR=130), "in"),                                         # lifted off his feet
+    (12, P(BACK_V, hx=-0.5, hz=1.25, hips=260, spine=270, spine_mid=274, chest=280, neck=285, head=290,
+           thL=150, shL=160, thR=140, shR=150, uaL=200, faL=210, uaR=190, faR=200), "lin"),                                    # over the top, upside down
+    (16, P(BACK_V, hx=-0.9, hz=0.35, hips=300, spine=310, spine_mid=316, chest=320, neck=325, head=330,
+           thL=200, shL=210, thR=190, shR=200, uaL=240, faL=250, uaR=230, faR=240), "in3"),                                    # SLAM: onto his shoulders and neck
+    (20, P(BACK_V, hx=-1.0, hz=0.12, hips=280, spine=285, spine_mid=286, chest=288, neck=289, head=290,
+           thL=120, shL=100, thR=110, shR=90), "out"),                                                                         # the legs come over
+    (26, P(LIE, hx=-1.05), "in"),
+    (40, P(LIE, hx=-1.05), "smooth"),
+], hit=16, vshift=True, hshift=True, note="the German suplex: lifted from the waist lock, the bridge, him over the top onto his neck behind")
+_gs["german_suplex"].update(vat=BG, vface=1)
+CLIPS.update(_gs)
 
 # ---------------------------------------------------------------- running attacks
 CLIPS["flying_knee"] = clip(24, [

@@ -1955,3 +1955,26 @@ Two independent passes (story, gameplay flow), each finding checked against the 
 - The demo and your turn use the same positions, so they look identical.
 
 **Gone:** the ghost replay on your turn (it looked like playing while you were watching).
+
+## ARM BREAKER and TAKE HIS BACK
+These two lessons replace SLIP AND COUNTER in the training ground. The slip itself still works in fights.
+
+**ARM BREAKER:** as he swings, **hold on him**. His punch is caught at the wrist, his arm pulled across, and he folds over it. Then:
+- **flick down:** ARM BAR. The weight goes onto his locked elbow and drives him face-first into the floor, a knee on his back.
+- **swipe:** ARM THROW. Over the shoulder with the arm locked, landing behind you.
+- **tap:** ARM BREAK. A forearm driven up through his locked elbow, and he reels away clutching it, dazed.
+- Hold too long without a move and he twists free.
+
+**TAKE HIS BACK:** as he swings, **swipe at him**. This replaces the old slide under his swing. You duck under his hook, pass his armpit and come out behind him, pivoting into a rear waist lock. Then:
+- **swipe up:** GERMAN SUPLEX. Lifted, the bridge, and he goes over the top onto his neck behind you.
+- **tap:** a kidney shot, keeping the hold.
+- **swipe:** shoved away.
+
+**Animations:** all hand-keyed V4 pairs, in `tools/blender/v4_far.py`. That covers arm_catch, arm_hold (a loop), armbar_drop and arm_break. It also covers duck_behind, back_hold (a loop), back_kidney and german_suplex. The arm throw reuses the shoulder throw.
+
+**Runtime:**
+- The clinch gains hold kinds: Neck, Wrist and Back. In the back hold, the man is pinned half a step in front, **facing away**.
+- A press held 0.12 s on a man who is swinging sends HoldOn, and the hero catches if he can.
+- While holding a man, a slow swipe down never becomes a crouch (`GestureInput.HeroHolding`).
+
+**Training:** both lessons freeze at his swing for the first control, then again for the finish.

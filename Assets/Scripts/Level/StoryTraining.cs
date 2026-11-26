@@ -31,7 +31,7 @@ namespace ProjectInk
         public static bool TrainedThisRun;
 
         /// <summary>Where on the screen a step is made (drawn as a little phone screen).</summary>
-        enum Gest { TapHigh, TapLow, TapMan, SwipeAt, SwipeAway, SwipeUp, SwipeUpAt, Hold, CrouchHold, Creep }
+        enum Gest { TapHigh, TapLow, TapMan, SwipeAt, SwipeAway, SwipeUp, SwipeUpAt, Hold, CrouchHold, Creep, HoldMan, SwipeDown }
 
         class Step
         {
@@ -90,7 +90,7 @@ namespace ProjectInk
         float stepAt, frozenAt = -9f, tWrongAt = -9f, stepDoneAt = -9f, seqDoneAt = -1f, turnAt = -9f, watchK;
         Vector2 okFrom, okTo; float tOkAt = -9f; bool okSwipe;
 
-        const string PrefMask = "training_mask_v2", PrefSeen = "training_seen";
+        const string PrefMask = "training_mask_v3", PrefSeen = "training_seen";
 
         // ================================================================ start and end
 
@@ -271,8 +271,6 @@ namespace ProjectInk
         static Step Timed(Step s, Func<float, bool> due) { s.due = due; s.timing = true; return s; }
         static Step Held(Step s, Func<bool> cond) { s.cond = cond; return s; }
         static Step Who(Step s, int who) { s.who = who; return s; }
-        /// <summary>The slip's moment: he has fallen in after the miss (read as open) and the hero is back on his feet.</summary>
-        bool Overreached() { var a = Man(0); return a != null && a.Read == Opening.Overreach && hero.Free; }
         bool Swinging() { var a = Man(0); return a != null && a.Alive && a.Telegraphing && Gap(a) < 2.4f; }
 
         // ================================================================ the lessons
@@ -336,11 +334,18 @@ namespace ProjectInk
                     stage = () => Spar(1.3f, false, true),
                     demo = () => DemoParry(),
                     match = (k, a, l, low) => k == 'd' && a == "parry" },
-                new Lesson { title = "SLIP AND COUNTER", guard = -1,
-                    steps = new[] { Timed(S(Gest.SwipeAway, "HE SWINGS: SWIPE AWAY"), _ => Swinging()), Timed(S(Gest.TapHigh, "HE FELL IN: HIT BACK"), t => Overreached() || t > 1.1f) },
-                    stage = () => Spar(1.4f, false, true),
-                    demo = () => DemoSlip(),
-                    match = (k, a, l, low) => k == 't' && a == "slip" },
+                new Lesson { title = "ARM BREAKER", guard = -1, restage = true,
+                    steps = new[] { Timed(Who(S(Gest.HoldMan, "HE SWINGS: HOLD ON HIM"), 0), _ => Swinging()),
+                                    Due(S(Gest.SwipeDown, "FLICK DOWN: ARM BAR"), After(0.4f)) },
+                    stage = () => Spar(1.3f, false, true),
+                    demo = () => DemoArmBreaker(),
+                    match = (k, a, l, low) => k == 's' && l != null && (l.StartsWith("ARM BAR") || l.StartsWith("ARM THROW") || l.StartsWith("ARM BREAK")) },
+                new Lesson { title = "TAKE HIS BACK", guard = -1, restage = true,
+                    steps = new[] { Timed(S(Gest.SwipeAt, "HE SWINGS: SWIPE AT HIM"), _ => Swinging()),
+                                    Due(S(Gest.SwipeUp, "SWIPE UP: GERMAN SUPLEX"), After(0.45f)) },
+                    stage = () => Spar(1.3f, false, true),
+                    demo = () => DemoTakeBack(),
+                    match = (k, a, l, low) => k == 's' && l != null && l.StartsWith("GERMAN SUPLEX") },
                 new Lesson { title = "GRAB HIM",
                     steps = new[] { S(Gest.SwipeAt, "CLOSE: SWIPE AT HIM") },
                     stage = () => Spar(0.9f, true, false), restage = true,
@@ -456,6 +461,8 @@ namespace ProjectInk
                 case Gest.Hold: return new Vector2(side > 0 ? W * 0.78f : W * 0.22f, H * 0.4f);
                 case Gest.CrouchHold: return new Vector2(side > 0 ? W * 0.7f : W * 0.3f, H * 0.62f);
                 case Gest.Creep: return new Vector2(side > 0 ? W * 0.7f : W * 0.3f, H * 0.46f);
+                case Gest.HoldMan: { var m = st.who >= 0 ? Man(st.who) : Focus(); return ManPx(m); }
+                case Gest.SwipeDown: return c + new Vector2(side * W * 0.14f, H * 0.12f);
             }
             return c;
         }
@@ -476,6 +483,7 @@ namespace ProjectInk
                 case Gest.Hold: return a + new Vector2(side * W * 0.12f, 0f);
                 case Gest.CrouchHold: return a + new Vector2(0f, -H * 0.16f);
                 case Gest.Creep: return a + new Vector2(side * W * 0.07f, 0f);
+                case Gest.SwipeDown: return a + new Vector2(0f, -H * 0.26f);
             }
             return a;
         }
@@ -618,18 +626,35 @@ namespace ProjectInk
             yield return WaitU(0.8f);
         }
 
-        IEnumerator DemoSlip()
+        /// <summary>He swings: the finger presses and holds on him (the catch), then flicks down (the arm bar).</summary>
+        IEnumerator DemoArmBreaker()
+        {
+            demoStep = 0;
+            yield return Glide(0, From(0) + new Vector2(W * 0.04f, H * 0.04f));
+            float t = 0f;
+            while (t < 6f && !Swinging()) { t += UDt; yield return null; }
+            var at = From(0);
+            SetF(0, at, true);
+            for (float k = 0f; k < 0.24f; k += UDt) { SetF(0, at, true); yield return null; }
+            SetF(0, at, false);
+            rippleAt = Time.unscaledTime; rippleAtPos = at;
+            yield return WaitU(0.45f);
+            // the flick: fast, so it's a swipe, not a crouch
+            yield return Swipe(From(1), To(1), 1, 0.12f);
+            yield return WaitU(1.4f);
+        }
+
+        /// <summary>He swings: the finger swipes at him (under his arm, out behind him), then swipes up (the suplex).</summary>
+        IEnumerator DemoTakeBack()
         {
             demoStep = 0;
             yield return Glide(0, From(0));
             float t = 0f;
             while (t < 6f && !Swinging()) { t += UDt; yield return null; }
             yield return Swipe(From(0), To(0), 0, 0.16f, 0, true);
-            demoStep = 1;
-            yield return Glide(0, From(1));
-            t = 0f;
-            while (t < 1.1f && !Overreached()) { t += UDt; yield return null; }
-            yield return Tap(From(1), 1, 0, 0.02f);
+            yield return WaitU(0.55f);
+            yield return Swipe(From(1), To(1), 1, 0.2f);
+            yield return WaitU(1.8f);
         }
 
         IEnumerator DemoGrab(bool throwHim)
@@ -837,6 +862,8 @@ namespace ProjectInk
                 case Gest.SwipeAway: return c == (side > 0 ? Command.DodgeLeft : Command.DodgeRight);
                 case Gest.SwipeUp: return c == Command.JumpKick;
                 case Gest.SwipeUpAt: return c == (side > 0 ? Command.JumpRight : Command.JumpLeft);
+                case Gest.HoldMan: return c == Command.HoldOn;
+                case Gest.SwipeDown: return c == Command.ThrowWeapon || c == Command.DropDown;
             }
             return false;
         }
@@ -1239,6 +1266,20 @@ namespace ProjectInk
                 case Gest.Creep:
                     Arrow(new Vector2(rx - 14, r.yMax - 12), new Vector2(rx + 6, r.yMax - 12), 3f, ink);
                     Dot(new Vector2(rx - 14, r.yMax - 12), red); break;
+                case Gest.HoldMan:
+                {
+                    Fill(new Rect(rx - 2, r.y + r.height * 0.3f, 4, r.height * 0.45f), new Color(0.9f, 0.3f, 0.3f, 0.7f * a));
+                    var p = new Vector2(rx, r.y + r.height * 0.42f);
+                    var o2 = GUI.color;
+                    float k2 = Mathf.Repeat(Time.unscaledTime, 1f);
+                    GUI.color = new Color(1f, 1f, 1f, 0.6f * a * (1f - k2));
+                    float rr2 = 8f + 10f * k2;
+                    GUI.DrawTexture(new Rect(p.x - rr2, p.y - rr2, rr2 * 2f, rr2 * 2f), ring);
+                    GUI.color = o2;
+                    Dot(p, red);
+                    break;
+                }
+                case Gest.SwipeDown: Arrow(new Vector2(rx, r.y + 8), new Vector2(rx, r.yMax - 8), 3f, ink); break;
             }
         }
 
@@ -1554,9 +1595,18 @@ namespace ProjectInk
         {
             switch (st.g)
             {
-                case Gest.SwipeAt: case Gest.SwipeAway: case Gest.SwipeUp: case Gest.SwipeUpAt:
+                case Gest.SwipeAt: case Gest.SwipeAway: case Gest.SwipeUp: case Gest.SwipeUpAt: case Gest.SwipeDown:
                     SwipeGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, false);
                     break;
+                case Gest.HoldMan:
+                    {
+                        var m = st.who >= 0 ? Man(st.who) : Focus();
+                        if (m == null) break;
+                        var c = Gui(ManPx(m)) + shift;
+                        Reticle(c, a);
+                        HoldGuide(c, c + new Vector2(0f, -40f), a * 0.9f, "HOLD");
+                        break;
+                    }
                 case Gest.CrouchHold:
                     SwipeGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, true);
                     break;

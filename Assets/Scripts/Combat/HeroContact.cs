@@ -73,6 +73,21 @@ namespace ProjectInk
         static readonly GrappleMove Spear = new GrappleMove { clip = "spear", victim = "spear_v", damage = 24, throwDown = true, fromRange = true, closeAt = 0.2f, label = "SPEAR" };
         /// <summary>Swipe up and across at a man 0.8-2.3 m off: onto his shoulders, the walkover, he lands behind.</summary>
         static readonly GrappleMove HeadScissors = new GrappleMove { clip = "head_scissors", victim = "head_scissors_v", damage = 28, throwDown = true, behind = true, fromRange = true, closeAt = 0.23f, label = "HEAD SCISSORS" };
+        // ---- ARM BREAKER: his punch caught at the wrist (hold on him as he swings), then
+        //      flick down: the arm bar, face first · swipe: the arm throw over the shoulder · tap: the arm break
+        // ---- TAKE HIS BACK: under his swing and out behind him (swipe at him as he swings), then
+        //      swipe up: the German suplex · tap: a kidney shot, the hold kept · swipe: shoved away
+        enum HoldKind { Neck, Wrist, Back }
+        HoldKind holdKind;
+        const float BackGap = 0.5f;
+        static readonly GrappleMove ArmCatch = new GrappleMove { clip = "arm_catch", victim = "arm_catch_v", damage = 0, keepHold = true, fromRange = true, closeAt = 0.12f, label = "CAUGHT" };
+        static readonly GrappleMove ArmbarDrop = new GrappleMove { clip = "armbar_drop", victim = "armbar_drop_v", damage = 26, throwDown = true, faceDown = true, label = "ARM BAR" };
+        static readonly GrappleMove ArmThrow = new GrappleMove { clip = "shoulder_throw", victim = "shoulder_throw_v", damage = 28, throwDown = true, behind = true, label = "ARM THROW" };
+        static readonly GrappleMove ArmBreak = new GrappleMove { clip = "arm_break", victim = "arm_break_v", damage = 20, daze = 1.4f, label = "ARM BREAK" };
+        static readonly GrappleMove DuckBehind = new GrappleMove { clip = "duck_behind", victim = "duck_behind_v", damage = 0, keepHold = true, fromRange = true, closeAt = 0.1f, label = "" };
+        static readonly GrappleMove BackKidney = new GrappleMove { clip = "back_kidney", victim = "back_kidney_v", damage = 10, keepHold = true, label = "KIDNEY" };
+        static readonly GrappleMove GermanSuplex = new GrappleMove { clip = "german_suplex", victim = "german_suplex_v", damage = 34, throwDown = true, behind = true, label = "GERMAN SUPLEX" };
+
         static readonly GrappleMove ClotheslineMove = new GrappleMove { clip = "clothesline", victim = "clothesline_v", damage = 20, throwDown = true, fromRange = true, label = "CLOTHESLINE" };
 
         // ------------------------------------------------------------------ strings
@@ -172,6 +187,67 @@ namespace ProjectInk
             return true;
         }
 
+        /// <summary>Hold on a man as he swings: his punch caught at the wrist (the ARM BREAKER).</summary>
+        bool TryArmCatch(Enemy e)
+        {
+            if (e == null || !Contact || !ContactBare || !Grounded || !body.Has("arm_catch")) return false;
+            if (!e.Parryable || !e.CanBeHeld || e.TooHeavy || e.Boss) return false;
+            float dx = e.transform.position.x - transform.position.x;
+            if (Mathf.Abs(dx) > 2.0f || Mathf.Abs(e.transform.position.y - transform.position.y) > 0.6f) return false;
+            holdKind = HoldKind.Wrist;
+            BeginGrapple(ArmCatch, e, dx >= 0f ? 1 : -1);
+            invulnerableUntil = Time.time + 0.4f;
+            Sound.Play(Sfx.Bone, 0.5f, e.Chest, 1.4f);
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.35f, 0.4f, 0.02f, 0.2f);
+            Tell("catch");
+            return true;
+        }
+
+        /// <summary>A swipe at a man as he swings: under his arm and out behind him (TAKE HIS BACK).</summary>
+        bool TryTakeBack(Enemy e, int dir)
+        {
+            if (e == null || !body.Has("duck_behind") || !e.CanBeHeld || e.TooHeavy || e.Boss) return false;
+            float beyond = e.transform.position.x + dir * BackGap;
+            if (beyond < arenaMinX + 0.3f || beyond > arenaMaxX - 0.3f) return false;
+            holdKind = HoldKind.Neck;                  // he faces the hero until the hero is through
+            BeginGrapple(DuckBehind, e, dir);
+            invulnerableUntil = Time.time + 0.6f;
+            Sound.Play(Sfx.WhooshBig, 0.8f, transform.position);
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.4f, 0.35f, 0.02f, 0.2f);
+            Tell("takeback");
+            return true;
+        }
+
+        /// <summary>The wrist hold and the back hold: their own gestures; let go too long and he twists free.</summary>
+        void UpdateHoldSpecial(float dt)
+        {
+            var gi = GestureInput.Instance;
+            var cmd = gi != null ? gi.Next() : Command.None;
+            int toward = Facing;
+            bool strike = cmd == Command.StrikeLeft || cmd == Command.StrikeRight || cmd == Command.StrikeForward;
+            bool kick = cmd == Command.KickLeft || cmd == Command.KickRight || cmd == Command.KickForward;
+            bool dodge = cmd == Command.DodgeLeft || cmd == Command.DodgeRight || cmd == Command.DodgeForward;
+            if (holdKind == HoldKind.Wrist)
+            {
+                if (cmd == Command.ThrowWeapon || cmd == Command.DropDown) { BeginGrapple(ArmbarDrop, clinchFoe, Facing); return; }
+                if (dodge || cmd == Command.JumpKick) { BeginGrapple(ArmThrow, clinchFoe, Facing); return; }
+                if (strike || kick) { BeginGrapple(ArmBreak, clinchFoe, Facing); return; }
+            }
+            else
+            {
+                if (cmd == Command.JumpKick || cmd == Command.JumpLeft || cmd == Command.JumpRight)
+                {
+                    if (clinchFoe.TooHeavy) { BrokenOff(); return; }
+                    BeginGrapple(GermanSuplex, clinchFoe, Facing);
+                    return;
+                }
+                if (strike || kick) { BeginGrapple(BackKidney, clinchFoe, Facing); return; }
+                if (dodge) { ShoveOff(); return; }
+            }
+            clinchIdle += dt;
+            if (clinchIdle > (holdKind == HoldKind.Wrist ? 1.8f : 2.2f)) BrokenOff();
+        }
+
         /// <summary>A swipe in story mode: under a swing (slide), into a hold, a spear, or a step back.</summary>
         void ContactDodge(int dir)
         {
@@ -192,6 +268,7 @@ namespace ProjectInk
             SetTrails(false);
             if (swinging != null && Grounded && ContactBare)
             {
+                if (TryTakeBack(swinging, dir)) return;                  // under his arm and out behind him
                 // the slide under his swing (the duel's lesson)
                 SetFacing(dir);
                 StartAttack(AttackData.SlideKick, swinging, dir, false);
@@ -288,6 +365,12 @@ namespace ProjectInk
         {
             if (clinchFoe == null) return;
             var p = transform.position;
+            if (holdKind == HoldKind.Back)
+            {
+                // his back to the hero, a half step in front, facing away
+                clinchFoe.HeldAt(new Vector3(p.x + Facing * BackGap, p.y, clinchFoe.transform.position.z), p.x + Facing * 10f);
+                return;
+            }
             clinchFoe.HeldAt(new Vector3(p.x + Facing * FoeGap, p.y, clinchFoe.transform.position.z), p.x);
         }
 
@@ -302,6 +385,7 @@ namespace ProjectInk
         void UpdateHold(float dt)
         {
             PinFoe();
+            if (holdKind != HoldKind.Neck) { UpdateHoldSpecial(dt); return; }
             if (body.CurrentName == "clinch_enter" && body.Finished)
             {
                 body.Play("clinch", 0.1f);
@@ -402,9 +486,26 @@ namespace ProjectInk
                 {
                     clinchMove = null;
                     clinchIdle = 0f;
-                    body.Play("clinch", 0.12f);
-                    clinchFoe.HeldPlay("clinch_v", 0.12f);
-                    if (NewClinch) RunQueuedV4();
+                    if (grapple.clip == "duck_behind")
+                    {
+                        // out behind him: where the clip carried him, then the pivot to face his back
+                        var mine = body.Current;
+                        if (mine != null)
+                        {
+                            var p = transform.position;
+                            p.x = Mathf.Clamp(p.x + Facing * mine.endShift, arenaMinX, arenaMaxX);
+                            transform.position = p;
+                        }
+                        SetFacing(-Facing);
+                        holdKind = HoldKind.Back;
+                        PinFoe();
+                        Sound.Play(Sfx.Cloth, 1f, transform.position);
+                        if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(40, "BEHIND HIM");
+                    }
+                    string idle = holdKind == HoldKind.Wrist ? "arm_hold" : holdKind == HoldKind.Back ? "back_hold" : "clinch";
+                    body.Play(idle, holdKind == HoldKind.Back ? 0.16f : 0.12f);
+                    clinchFoe.HeldPlay(idle + "_v", 0.12f);
+                    if (NewClinch && holdKind == HoldKind.Neck) RunQueuedV4();
                     return;
                 }
                 FinishGrapple();
@@ -459,6 +560,7 @@ namespace ProjectInk
             if (grapple.behind && foe != null && foe.Alive) SetFacing(-Facing);
             clinchFoe = null;
             clinchMove = null;
+            holdKind = HoldKind.Neck;
             lastAttackEnd = Time.time;
             state = State.Idle;
             stateTime = 0f;
@@ -471,6 +573,7 @@ namespace ProjectInk
             var foe = clinchFoe;
             clinchFoe = null;
             clinchMove = null;
+            holdKind = HoldKind.Neck;
             state = State.Attack;
             stateTime = 0f;
             currentAttack = new AttackData { clip = "shove", damage = 0, reach = 1f };
@@ -490,6 +593,7 @@ namespace ProjectInk
             var foe = clinchFoe;
             clinchFoe = null;
             clinchMove = null;
+            holdKind = HoldKind.Neck;
             if (foe != null) { foe.ReleaseHeld("shove"); }
             state = State.Hurt;
             stateTime = 0f;
@@ -517,6 +621,7 @@ namespace ProjectInk
             }
             clinchFoe = null;
             clinchMove = null;
+            holdKind = HoldKind.Neck;
             if (state == State.Clinch) EnterIdle();
         }
 

@@ -176,6 +176,8 @@ namespace ProjectInk
         public static readonly System.Collections.Generic.List<Vector2> LivePath = new System.Collections.Generic.List<Vector2>();
         public static float LiveEndAt = -9f;
         public static float RealPressAt = -9f;
+        /// <summary>The hero has a man held (no crouch from a slow swipe down: it's the arm bar, the DDT).</summary>
+        public static bool HeroHolding;
         static int liveId = int.MinValue;
 
         void Push(Command c)
@@ -447,7 +449,13 @@ namespace ProjectInk
                 if (!touchStart.TryGetValue(id, out var s0) || !touchTime.TryGetValue(id, out var t0)) return;
                 // a swipe down that stays held: the crouch (no swipe fires when it is let go)
                 var dd0 = pos - s0;
-                if (Grammar == WeaponGrammar.Fists && crouchId == int.MinValue && -dd0.y > Screen.height * swipeFraction && -dd0.y > Mathf.Abs(dd0.x) * 1.2f &&
+                // a press held on a man who is swinging: catch his punch (the hero decides if he can)
+                if (Grammar == WeaponGrammar.Fists && !HeroHolding && UnityEngine.Time.unscaledTime - t0 > 0.12f && dd0.magnitude < Screen.height * swipeFraction)
+                {
+                    var swinger = EnemyAt(s0);
+                    if (swinger != null && (swinger.Telegraphing || swinger.Engaged)) { HeldEnemy = swinger; consumed.Add(id); Push(Command.HoldOn); return; }
+                }
+                if (Grammar == WeaponGrammar.Fists && !HeroHolding && crouchId == int.MinValue && -dd0.y > Screen.height * swipeFraction && -dd0.y > Mathf.Abs(dd0.x) * 1.2f &&
                     UnityEngine.Time.unscaledTime - t0 > 0.16f)
                 {
                     crouchId = id;

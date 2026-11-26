@@ -861,6 +861,7 @@ namespace ProjectInk
 
         void Update()
         {
+            GestureInput.HeroHolding = state == State.Clinch;
             float dt = Time.deltaTime;
             stateTime += dt;
             V3Always();
@@ -1130,7 +1131,7 @@ namespace ProjectInk
                 case Command.Interact:
                     if (GestureInput.InteractTarget is Throwable tp && !MovesV4) { if (carried == null && Mathf.Abs(tp.transform.position.x - transform.position.x) < 1.2f) PickProp(tp); break; }
                     InteractV4(GestureInput.InteractTarget); break;
-                case Command.HoldOn: TryChainDrag(GestureInput.HeldEnemy); break;
+                case Command.HoldOn: if (!TryArmCatch(GestureInput.HeldEnemy)) TryChainDrag(GestureInput.HeldEnemy); break;
                 case Command.JumpLeft: if (!TryScissorsLeap(-1)) JumpTowards(-1); break;
                 case Command.JumpRight: if (!TryScissorsLeap(1)) JumpTowards(1); break;
                 case Command.Rampage: StartRampage(); break;
