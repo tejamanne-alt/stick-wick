@@ -170,7 +170,7 @@ namespace ProjectInk
         bool CrossfirePair(out Enemy front, out Enemy back, int side)
         {
             front = back = null;
-            if (!MovesV4 || !ContactBare || !Grounded || (Time.time < crossfireReadyAt && !Sparring) || !body.Has("crossfire")) return false;
+            if (!MovesV4 || !ContactBare || !Grounded || (Time.time < crossfireReadyAt && !Sparring && !CrossfireAnytime) || !body.Has("crossfire")) return false;
             float bf = 1.8f, bb = 1.8f;
             foreach (var e in Enemy.All)
             {
@@ -183,38 +183,93 @@ namespace ProjectInk
             return front != null && back != null;
         }
 
+        /// <summary>No cooldown (the chapter 1 CROSSFIRE test).</summary>
+        public bool CrossfireAnytime;
+
         public bool CrossfireReady => (CrossfirePair(out _, out _, Facing) || CrossfirePair(out _, out _, -Facing)) && state == State.Idle;
 
-        bool TryCrossfire(int side)
+        // CROSSFIRE (docs/design/crossfire.md): two men on him, and the two-thumb tap, one thumb each side of
+        // him; each thumb high (his head) or low (his legs / body). The four:
+        //   HIGH + HIGH            crossfire   THE CROSSING: under both punches, they land on each other
+        //   LOW + LOW              cf_knees    BOTH KNEES: stamp, mule kick; the knee, the heel
+        //   front HIGH, back LOW   cf_split    BOTH AT ONCE: the cross and the back kick on the same frame
+        //   front LOW, back HIGH   cf_into     ONE INTO THE OTHER: back elbow, liver hook, over the hip into him
+        struct CfHit { public int f; public int who; public float dmg; public Sfx sfx; public int stop; public string label; }
+        static readonly System.Collections.Generic.Dictionary<string, CfHit[]> CfHits = new System.Collections.Generic.Dictionary<string, CfHit[]>
         {
-            if (!CrossfirePair(out var a, out var b, side) && !CrossfirePair(out a, out b, -side)) return false;
+            // who: 1 the man in front, 2 the one behind, 3 both
+            { "crossfire", new[] { new CfHit { f = 7, who = 3, dmg = 8, sfx = Sfx.PunchHeavy, stop = 5, label = "THEY HIT EACH OTHER" },
+                                   new CfHit { f = 13, who = 3, dmg = 10, sfx = Sfx.Bone, stop = 6 },
+                                   new CfHit { f = 26, who = 1, dmg = 30, sfx = Sfx.Kick, stop = 7 },
+                                   new CfHit { f = 38, who = 2, dmg = 30, sfx = Sfx.Kick, stop = 8, label = "THE CROSSING" } } },
+            { "cf_knees", new[] { new CfHit { f = 6, who = 1, dmg = 10, sfx = Sfx.Bone, stop = 5 },
+                                  new CfHit { f = 12, who = 2, dmg = 10, sfx = Sfx.Bone, stop = 5, label = "BOTH KNEES" },
+                                  new CfHit { f = 23, who = 1, dmg = 30, sfx = Sfx.PunchHeavy, stop = 7 },
+                                  new CfHit { f = 33, who = 2, dmg = 30, sfx = Sfx.Kick, stop = 8, label = "BOTH KNEES" } } },
+            { "cf_split", new[] { new CfHit { f = 8, who = 3, dmg = 40, sfx = Sfx.CineHit, stop = 16, label = "BOTH AT ONCE" } } },
+            { "cf_into", new[] { new CfHit { f = 5, who = 2, dmg = 12, sfx = Sfx.PunchHeavy, stop = 5 },
+                                 new CfHit { f = 11, who = 1, dmg = 14, sfx = Sfx.Bone, stop = 6 },
+                                 new CfHit { f = 23, who = 3, dmg = 30, sfx = Sfx.BodyFall, stop = 9, label = "ONE INTO THE OTHER" } } },
+        };
+
+        /// <summary>The two-thumb tap: CROSSFIRE if two men are on him (the thumbs pick the move); otherwise
+        /// it's a tap at the nearer man, at that thumb's height.</summary>
+        void CrossfireCommand()
+        {
+            bool l = GestureInput.PairLeftLow, r = GestureInput.PairRightLow;
+            if (TryCrossfire(l, r)) return;
+            Enemy best = null;
+            float bd = float.MaxValue;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.Alive) continue;
+                float d = Mathf.Abs(e.transform.position.x - transform.position.x);
+                if (d < bd) { bd = d; best = e; }
+            }
+            int side = best != null ? (best.transform.position.x >= transform.position.x ? 1 : -1) : Facing;
+            Strike(side, side < 0 ? l : r);
+        }
+
+        bool TryCrossfire(bool leftLow, bool rightLow)
+        {
+            if (!CrossfirePair(out var a, out var b, Facing) && !CrossfirePair(out a, out b, -Facing)) return false;
             int dir = a.transform.position.x >= transform.position.x ? 1 : -1;
+            // the thumb on each man's side: the one in front is on the `dir` side of the screen
+            bool frontLow = dir > 0 ? rightLow : leftLow, backLow = dir > 0 ? leftLow : rightLow;
+            string move = !frontLow && !backLow ? "crossfire" : frontLow && backLow ? "cf_knees" : !frontLow ? "cf_split" : "cf_into";
+            if (!body.Has(move) || !a.body.Has(move + "_a_v") || !b.body.Has(move + "_b_v"))
+                move = "crossfire";
+            string va = move == "crossfire" ? "crossfire_a_v" : move + "_a_v", vb = move == "crossfire" ? "crossfire_b_v" : move + "_b_v";
             SetFacing(dir);
             var me = transform.position;
             a.BeginHeld(this);
             b.BeginHeld(this);
             a.HeldAt(new Vector3(me.x + dir * 0.6f, a.transform.position.y, a.transform.position.z), me.x);
             b.HeldAt(new Vector3(me.x - dir * 0.6f, b.transform.position.y, b.transform.position.z), me.x);
-            a.HeldPlay("crossfire_a_v", 0.06f);
-            b.HeldPlay("crossfire_b_v", 0.06f);
+            a.HeldPlay(va, 0.06f);
+            b.HeldPlay(vb, 0.06f);
             farFoe = a;
             crossA = a;
             crossB = b;
             crossStep = 0;
-            invulnerableUntil = Time.time + 2.4f;
-            crossfireReadyAt = Time.time + 16f;
-            BeginFarClip("crossfire", "crossfire");
-            if (CameraDirector.Instance != null) { CameraDirector.Instance.Focus(transform, 2.2f); CameraDirector.Instance.ZoomPunch(-6f, 2.0f); }
+            crossMove = move;
+            BeginFarClip(move, "crossfire");
+            float len = body.Current != null ? body.Current.Length : 2f;
+            invulnerableUntil = Time.time + len + 0.3f;
+            crossfireReadyAt = Time.time + 10f;
+            if (CameraDirector.Instance != null) { CameraDirector.Instance.Focus(transform, len); CameraDirector.Instance.ZoomPunch(-6f, Mathf.Min(2f, len)); }
             if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.35f, 0.45f);
             Sound.Play(Sfx.Riser, 0.8f, transform.position);
             Tell("crossfire");
+            Tell("cf:" + move);                                        // which of the four (the training ground's lessons)
             return true;
         }
 
         Enemy crossA, crossB;
         int crossStep;
+        string crossMove = "crossfire";
 
-        /// <summary>Every frame of the cinematic: the four impacts on their frames.</summary>
+        /// <summary>Every frame of the cinematic: each move's impacts on their frames.</summary>
         void UpdateCrossfire()
         {
             float f = body.Time * 30f;
@@ -222,43 +277,34 @@ namespace ProjectInk
             int dir = Facing;
             if (crossA != null && crossA.Held) crossA.HeldAt(crossA.transform.position, me.x);
             if (crossB != null && crossB.Held) crossB.HeldAt(crossB.transform.position, me.x);
-            if (crossStep == 0 && f >= 7f)
+            if (!CfHits.TryGetValue(crossMove, out var hits)) return;
+            while (crossStep < hits.Length && f >= hits[crossStep].f)
             {
-                // their punches cross over him: each one lands on the other man
-                crossStep = 1;
-                Hurt(crossA, 8f); Hurt(crossB, 8f);
-                Sound.Play(Sfx.PunchHeavy, 1f, me + Vector3.up * 1.1f);
-                Sound.Play(Sfx.PunchHeavy, 0.9f, me + Vector3.up * 1.1f, 0.9f);
-                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.12f, 0.15f);
-                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(150, "THEY HIT EACH OTHER");
-                if (TimeController.Instance != null) TimeController.Instance.HitStop(5);
-            }
-            if (crossStep == 1 && f >= 13f)
-            {
-                crossStep = 2;                                    // up between them: the palm, the elbow
-                Hurt(crossA, 10f); Hurt(crossB, 10f);
-                Sound.Play(Sfx.PunchHeavy, 1f, me + Vector3.right * dir * 0.6f + Vector3.up);
-                Sound.Play(Sfx.Bone, 0.8f, me - Vector3.right * dir * 0.6f + Vector3.up);
-                if (TimeController.Instance != null) TimeController.Instance.HitStop(6);
-            }
-            if (crossStep == 2 && f >= 26f)
-            {
-                crossStep = 3;                                    // the push kick: the front man flies
-                Hurt(crossA, 30f);
-                Sound.Play(Sfx.Kick, 1.2f, me + Vector3.right * dir * 0.8f);
-                Sound.Play(Sfx.BodyFall, 1f, me + Vector3.right * dir * 1.6f);
-                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.2f, 0.2f);
-                if (TimeController.Instance != null) TimeController.Instance.HitStop(7);
-            }
-            if (crossStep == 3 && f >= 38f)
-            {
-                crossStep = 4;                                    // the back kick: the other one
-                Hurt(crossB, 30f);
-                Sound.Play(Sfx.Kick, 1.3f, me - Vector3.right * dir * 0.8f);
-                Sound.Play(Sfx.CineHit, 0.9f, me);
-                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.26f, 0.25f);
-                if (TimeController.Instance != null) { TimeController.Instance.HitStop(8); TimeController.Instance.SlowMo(0.3f, 0.7f); }
-                if (WaveDirector.Instance != null) { WaveDirector.Instance.AddStyle(400, "CROSSFIRE"); WaveDirector.Instance.ShowBanner("CROSSFIRE", 1.6f); }
+                var h = hits[crossStep++];
+                bool last = crossStep == hits.Length;
+                if ((h.who & 1) != 0) { Hurt(crossA, h.dmg); Sound.Play(h.sfx, 1.1f, me + Vector3.right * dir * 0.6f + Vector3.up * 0.9f); }
+                if ((h.who & 2) != 0) { Hurt(crossB, h.dmg); Sound.Play(h.sfx == Sfx.CineHit ? Sfx.Kick : h.sfx, 1.1f, me - Vector3.right * dir * 0.6f + Vector3.up * 0.9f, 0.92f); }
+                var cam = CameraDirector.Instance;
+                if (cam != null) cam.Shake(last ? 0.26f : 0.14f, last ? 0.25f : 0.15f);
+                var tc = TimeController.Instance;
+                if (tc != null)
+                {
+                    tc.HitStop(h.stop);
+                    if (crossMove == "cf_split") tc.SlowMo(0.22f, 0.9f);                     // the frame frozen on both at once
+                    else if (last) tc.SlowMo(0.3f, 0.7f);
+                }
+                if (crossMove == "cf_split" && InkFx.Instance != null)
+                {
+                    // white ink at both impacts
+                    if (crossA != null) InkFx.Instance.Splash(crossA.Chest + Vector3.up * 0.3f, Vector3.right * dir, 12, Color.white);
+                    if (crossB != null) InkFx.Instance.Splash(crossB.Chest, -Vector3.right * dir, 12, Color.white);
+                }
+                if (crossMove == "cf_into" && crossStep == 2 && tc != null) tc.SlowMo(0.3f, 0.5f);   // up over the hip: slow at the top
+                if (!string.IsNullOrEmpty(h.label) && WaveDirector.Instance != null)
+                {
+                    WaveDirector.Instance.AddStyle(last ? 400 : 150, h.label);
+                    if (last) WaveDirector.Instance.ShowBanner(h.label, 1.6f);
+                }
             }
         }
 
@@ -276,7 +322,7 @@ namespace ProjectInk
             {
                 if (e == null || !e.Held) continue;
                 float sh = e.body != null && e.body.Current != null ? e.body.Current.endShift : 0f;
-                e.LandThrown(sh, false);
+                e.LandThrown(sh, crossMove == "cf_split" && e == crossB);       // folded round the heel: on his face
             }
             crossA = crossB = null;
         }
@@ -336,7 +382,7 @@ namespace ProjectInk
                 }
                 Draw(cam, best.transform.position + Vector3.up * h * best.transform.localScale.y, text);
             }
-            if (hero.CrossfireReady) Draw(cam, hero.transform.position + Vector3.up * 1.9f, "TWO ON YOU · TAP: CROSSFIRE");
+            if (hero.CrossfireReady) Draw(cam, hero.transform.position + Vector3.up * 1.9f, "TWO ON YOU · BOTH THUMBS");
         }
 
         void Draw(Camera cam, Vector3 world, string text)

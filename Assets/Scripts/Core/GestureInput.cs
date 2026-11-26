@@ -20,7 +20,8 @@ namespace ProjectInk
         IaiHold,              // katana: a press held on the hero himself: sheathe, settle
         IaiDraw,              // katana: the held press dragged out and let go: the draw cut along the drag
         IaiCancel,            // katana: the held press let go without a drag
-        JumpLeft, JumpRight   // a swipe up and to the side: a jump that way
+        JumpLeft, JumpRight,  // a swipe up and to the side: a jump that way
+        Crossfire             // two thumbs at once, one each side of him: CROSSFIRE (PairLeftLow / PairRightLow say which)
     }
 
     public enum ControlScheme { Classic, TwoThumb }
@@ -195,6 +196,74 @@ namespace ProjectInk
         /// <summary>The hero has a man held (no crouch from a slow swipe down: it's the arm bar, the DDT).</summary>
         public static bool HeroHolding;
         static int liveId = int.MinValue;
+
+        // ---------------------------------------------------------------- CROSSFIRE: two thumbs at once
+        /// <summary>The last two-thumb tap: was the thumb on his left low (legs / body) or high (head)? The right?</summary>
+        public static bool PairLeftLow, PairRightLow;
+        const float PairWindow = 0.15f;         // the two thumbs land within this of each other
+        struct PairTap { public bool on; public Command cmd; public int side; public bool low; public float start, endedAt; public int other; }
+        PairTap pend;
+        Command lastKeyTap = Command.None;
+        float lastKeyTapAt = -9f;
+
+        static bool IsTap(Command c) => c == Command.StrikeLeft || c == Command.StrikeRight || c == Command.KickLeft || c == Command.KickRight;
+        static int TapSide(Command c) => c == Command.StrikeLeft || c == Command.KickLeft ? -1 : 1;
+        static bool TapLow(Command c) => c == Command.KickLeft || c == Command.KickRight;
+
+        void PushPair(Command a, Command b)
+        {
+            bool aLeft = TapSide(a) < 0;
+            PairLeftLow = TapLow(aLeft ? a : b);
+            PairRightLow = TapLow(aLeft ? b : a);
+            Push(Command.Crossfire);
+        }
+
+        /// <summary>A tap just ended. If another thumb landed with it on his other side, they're one CROSSFIRE:
+        /// held here until that one lifts (a tap counts on the lift, so a lone tap is never delayed: a pair is
+        /// only waited for when the second thumb is already down). True if taken.</summary>
+        bool TryPair(int id, Command c)
+        {
+            if (!IsTap(c) || !touchTime.TryGetValue(id, out var st)) return false;
+            int side = TapSide(c);
+            float now = UnityEngine.Time.unscaledTime;
+            if (pend.on && pend.side == -side && Mathf.Abs(pend.start - st) < PairWindow)
+            {
+                pend.on = false;
+                PushPair(pend.cmd, c);
+                return true;
+            }
+            foreach (var kv in touchStart)
+            {
+                int o = kv.Key;
+                if (o == id || o == stickId || o == crouchId || o == iaiId || consumed.Contains(o) || holding.ContainsKey(o)) continue;
+                if (!touchTime.TryGetValue(o, out var ot) || Mathf.Abs(ot - st) > PairWindow) continue;
+                if (SideOf(kv.Value) != -side) continue;
+                pend = new PairTap { on = true, cmd = c, side = side, low = TapLow(c), start = st, endedAt = now, other = o };
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>The other thumb didn't make a tap of it (or never lifted): the held tap goes on its own.</summary>
+        void FlushPair()
+        {
+            if (!pend.on) return;
+            if (UnityEngine.Time.unscaledTime - pend.endedAt > 0.3f || !touchStart.ContainsKey(pend.other)) { pend.on = false; Push(pend.cmd); }
+        }
+
+        /// <summary>A tap from the keys: a key each side pressed together is the two-thumb tap.</summary>
+        void KeyTap(Command c)
+        {
+            float now = UnityEngine.Time.unscaledTime;
+            if (IsTap(lastKeyTap) && now - lastKeyTapAt < 0.12f && TapSide(lastKeyTap) == -TapSide(c))
+            {
+                PushPair(lastKeyTap, c);
+                lastKeyTap = Command.None;
+                return;
+            }
+            lastKeyTap = c; lastKeyTapAt = now;
+            Push(c);
+        }
 
         void Push(Command c)
         {
@@ -540,7 +609,7 @@ namespace ProjectInk
             if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s))
             {
                 var c = Classify(s, pos);
-                Push(c);
+                if (!TryPair(id, c)) Push(c);
                 // a tap: held again on the same side straight after, it's a run
                 if (c == Command.StrikeLeft || c == Command.StrikeRight || c == Command.KickLeft || c == Command.KickRight || c == Command.StrikeForward || c == Command.KickForward)
                 { lastTapAt = UnityEngine.Time.unscaledTime; lastTapHalf = s.x < Screen.width * 0.5f ? -1 : 1; }
@@ -559,7 +628,7 @@ namespace ProjectInk
                 if (!down) continue;
                 keySide = side;
                 keyRun = now - keyUpAt < RunGap && keyUpSide == side;          // the second press: held, it's a run
-                Push(side < 0 ? Command.StrikeLeft : Command.StrikeRight);
+                KeyTap(side < 0 ? Command.StrikeLeft : Command.StrikeRight);
                 keyDownAt = now;
             }
             if (!left && !right)
@@ -630,6 +699,7 @@ namespace ProjectInk
         {
             AnyPressThisFrame = false;
             keyAxis = 0f;
+            FlushPair();
             UpdateSim();
 #if ENABLE_INPUT_SYSTEM
             if (Demo)
@@ -675,8 +745,8 @@ namespace ProjectInk
                 {
                     if (keyCrouch) { left = right = leftDown = rightDown = false; }
                     ClassicKeys(left, right, leftDown, rightDown);
-                    if (kb.zKey.wasPressedThisFrame) Push(Command.KickLeft);
-                    if (kb.xKey.wasPressedThisFrame) Push(Command.KickRight);
+                    if (kb.zKey.wasPressedThisFrame) KeyTap(Command.KickLeft);
+                    if (kb.xKey.wasPressedThisFrame) KeyTap(Command.KickRight);
                     bool lowHeld = kb.zKey.isPressed || kb.xKey.isPressed;
                     if (kb.zKey.wasPressedThisFrame || kb.xKey.wasPressedThisFrame) lowKeyAt = UnityEngine.Time.unscaledTime;
                     else if (!lowHeld) lowKeyAt = -1f;
@@ -733,8 +803,8 @@ namespace ProjectInk
             if (Classic)
             {
                 ClassicKeys(left, right, leftDown, rightDown);
-                if (Input.GetKeyDown(KeyCode.Z)) Push(Command.KickLeft);
-                if (Input.GetKeyDown(KeyCode.X)) Push(Command.KickRight);
+                if (Input.GetKeyDown(KeyCode.Z)) KeyTap(Command.KickLeft);
+                if (Input.GetKeyDown(KeyCode.X)) KeyTap(Command.KickRight);
                 if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) Push(Command.JumpKick);
                 if (Input.GetKeyDown(KeyCode.Q)) Push(Command.DodgeLeft);
                 if (Input.GetKeyDown(KeyCode.E)) Push(Command.DodgeRight);

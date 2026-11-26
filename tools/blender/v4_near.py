@@ -259,3 +259,184 @@ CLIPS["crossfire_a_v"] = dict(frames=64, hit=None, load=None, loop=False, aim=No
 CLIPS["crossfire_b_v"] = dict(frames=64, hit=None, load=None, loop=False, aim=None, reach=None, react=None, striker=None,
                               shift=True, breath=False, breaths=2, lag=True, note="crossfire: the man behind",
                               keys=_crossfire_man(38, 1.2))
+
+
+# ---------------------------------------------------------------- CROSSFIRE, the four (docs/design/crossfire.md)
+# Two men on him, one in front (A, +D) and one behind (B, -D). A two-thumb tap picks the move: each thumb
+# on its man's side, HIGH = his head, LOW = his legs / body. The game mirrors front / back to the screen.
+#   HIGH + HIGH          crossfire      THE CROSSING (above): they hit each other
+#   LOW + LOW            cf_knees       BOTH KNEES: the stamp, the mule kick, the knee, the heel
+#   front HIGH, back LOW cf_split       BOTH AT ONCE: the cross and the back kick on the same frame
+#   front LOW, back HIGH cf_into        ONE INTO THE OTHER: the back elbow, the liver hook, over the hip into him
+from v4_clinch import KNEEL, PRONE
+
+
+def _cf(name, frames, hero, a, b, hit, note):
+    """The hero's clip and his two men's (name_a_v in front, name_b_v behind), each in his own frame."""
+    CLIPS[name] = dict(frames=frames, hit=hit, load=None, loop=False, aim=None, reach=D, react=None, striker=None, shift=False,
+                       breath=False, breaths=2, lag=True, victim=name + "_a_v", vat=D, note=note, keys=hero)
+    for tag, keys, who in (("_a_v", a, "the man in front"), ("_b_v", b, "the man behind")):
+        CLIPS[name + tag] = dict(frames=frames, hit=None, load=None, loop=False, aim=None, reach=None, react=None, striker=None,
+                                 shift=True, breath=False, breaths=2, lag=True, note=note.split(":")[0] + ": " + who, keys=keys)
+
+
+WIND = G(uaR=10, faR=200, haR=200, tw_chest=-24, tw_hips=-14, fR=(GR[0], 30))          # a man winding up on him
+LUNGE = G(hx=0.08, spine=168, chest=160, head=166, tw_hips=16, tw_chest=24, uaR=60, faR=110, fiR=170,
+          fL=(GL[0] + 0.1, 0), fR=(GR[0], 60))                                          # coming in with it
+KNEEL_L = P(KNEEL, hx=0.02, spine=160, spine_mid=150, chest=144, neck=142, head=150, hL=(0.24, 0.42), fiL=60, uaR=30, faR=70)
+
+
+# ---- BOTH KNEES (LOW + LOW): Wick's stamp through the front man's knee; the same leg re-chambered and a
+# mule kick back into the other's; both drop to a knee, their heads now at his hip; the front man's head
+# pulled down onto the knee; and the back heel into the other one's face.
+_cf("cf_knees", 54, [
+    (0, GUARD, "lin"),
+    (3, G(hz=0.63, spine=178, chest=172, thL=72, shL=8, fpL=10, fR=(GR[0], 24)), "in"),                         # the lead knee comes up
+    (6, G(hx=0.06, hz=0.61, spine=184, chest=182, head=168, fL=(0.5, 0.26, -20), fR=(GR[0], 30)), "in3"),     # HIT 1: the stamp through his knee
+    (9, G(hx=0.04, fL=(0.28, 0), fR=(GR[0], 34), spine=168, chest=160, head=160, tw_head=30), "out"),         # down, a look back over the shoulder
+    (12, G(hx=0.06, hz=0.6, spine=146, spine_mid=140, chest=134, neck=136, head=144, tw_head=46, fL=(0.28, 20),
+           thR=-52, shR=-64, fpR=-30, uaL=50, faL=140, uaR=40, faR=150), "in3"),                               # HIT 2: the mule kick into the other knee
+    (15, G(hx=0.04, spine=166, chest=160, head=162, tw_head=20, fL=(0.28, 0), fR=(GR[0] + 0.02, 30)), "out"),
+    (18, G(hx=0.1, hz=0.62, spine=160, chest=150, neck=148, head=156, fL=(0.32, 0), fR=(GR[0] + 0.04, 40),
+           hL=(0.46, 0.74), hR=(0.44, 0.72), fiL=110, fiR=110), "in"),                                         # both hands on the kneeling man's head
+    (20, G(hx=0.12, hz=0.63, spine=164, chest=154, neck=150, head=158, fL=(0.32, 10), thR=40, shR=-70, fpR=20,
+           hL=(0.42, 0.66), hR=(0.4, 0.64), fiL=120, fiR=120), "in"),                                         # pulled down, the knee loading
+    (23, G(hx=0.16, hz=0.65, spine=172, chest=166, neck=160, head=164, fL=(0.32, 34), thR=104, shR=-16, fpR=40,
+           hL=(0.38, 0.62), hR=(0.36, 0.6), fiL=130, fiR=130), "in3"),                                         # HIT 3: the knee into his face
+    (27, G(hx=0.1, spine=170, chest=164, fL=(0.32, 0), fR=(GR[0] + 0.04, 30), uaL=60, faL=140, uaR=30, faR=160), "out"),
+    (30, G(hx=0.08, spine=162, chest=154, neck=150, head=150, tw_head=60, fL=(0.3, 30), thR=40, shR=-60, fpR=20), "in"),   # the other one: eyes back, the knee chambered
+    (33, G(hx=0.08, hz=0.62, spine=138, spine_mid=132, chest=126, neck=128, head=138, tw_head=66, fL=(0.3, 50),
+           thR=-76, shR=-86, fpR=-20, uaL=40, faL=120, uaR=60, faR=140), "in3"),                               # HIT 4: the heel straight back into his face
+    (37, G(hx=0.06, spine=160, chest=152, head=160, tw_head=30, fL=(0.3, 30), fR=(GR[0] + 0.02, 0.1, 20)), "out"),
+    (44, G(hx=0.04, uaL=40, faL=100, uaR=20, faR=90, fiL=90, fiR=90, head=174, fL=(0.28, 0), fR=(GR[0], 24)), "smooth"),   # between them, the hands low a beat
+    (54, P(GUARD, fL=(0.28, 0), fR=(GR[0], 38)), "smooth"),
+], [
+    (0, WIND, "smooth"),
+    (4, LUNGE, "in"),
+    (6, G(hx=0.06, hz=0.52, spine=164, chest=158, neck=150, head=150, uaR=50, faR=90, fiR=60, uaL=60, faL=90,
+          fL=(GL[0] + 0.08, 30), fR=(GR[0], 40)), "out3"),                                                    # STAMPED: the lead knee bends the wrong way
+    (10, P(KNEEL_L, hx=0.0, head=144), "out"),                                                               # down on a knee
+    (17, P(KNEEL_L, hx=0.0, head=156, uaL=60, faL=110, uaR=50, faR=100), "smooth"),                         # trying to get up ...
+    (20, P(KNEEL_L, hx=0.05, spine=150, chest=136, neck=130, head=132, uaL=70, faL=120, uaR=60, faR=110), "in"),   # ... his head pulled down
+    (23, P(KNEEL_L, hx=0.0, spine=186, spine_mid=192, chest=198, neck=210, head=232, uaL=120, faL=160, uaR=110, faR=150,
+           fiL=30, fiR=30), "out3"),                                                                          # KNEED: the head snapped back
+    (28, P(LIE, hx=-0.36, hz=0.3, hips=220, spine=228, chest=234, head=240, thL=60, shL=-20, thR=40, shR=-40), "in"),
+    (32, P(LIE, hx=-0.7, hz=0.08), "in3"),                                                                   # on his back
+    (35, P(LIE, hx=-0.72, hz=0.12, chest=262, head=258), "out"),
+    (54, P(LIE, hx=-0.72), "smooth"),
+], [
+    (0, WIND, "smooth"),
+    (6, LUNGE, "in"),
+    (9, P(LUNGE, hx=0.1, spine=162, chest=152), "smooth"),
+    (12, G(hx=0.08, hz=0.5, spine=160, chest=152, neck=148, head=150, uaR=40, faR=80, fiR=60, uaL=50, faL=80,
+           fL=(GL[0] + 0.1, 30), fR=(GR[0], 40)), "out3"),                                                   # MULE-KICKED: the knee goes
+    (16, P(KNEEL_L, hx=0.0, head=146), "out"),                                                                # down on a knee
+    (28, P(KNEEL_L, hx=0.0, head=164, spine=168, chest=160, uaL=60, faL=120, uaR=50, faR=110), "smooth"),    # looking up, getting a foot under him
+    (33, P(KNEEL_L, hx=-0.02, spine=190, spine_mid=196, chest=204, neck=214, head=236, uaL=120, faL=160, uaR=110, faR=150,
+           fiL=30, fiR=30), "out3"),                                                                          # HEELED in the face
+    (38, P(LIE, hx=-0.4, hz=0.3, hips=220, spine=228, chest=234, head=240, thL=60, shL=-20, thR=40, shR=-40), "in"),
+    (42, P(LIE, hx=-0.75, hz=0.08), "in3"),
+    (45, P(LIE, hx=-0.77, hz=0.12, chest=262, head=258), "out"),
+    (54, P(LIE, hx=-0.77), "smooth"),
+], 6, "BOTH KNEES: the stamp through the front man's knee, the mule kick into the other's; the knee to one face, the heel to the other")
+
+
+# ---- BOTH AT ONCE (front HIGH, back LOW): the straight right to the front man's jaw and the back kick
+# into the other man's gut on the same frame: a star frozen in the air. The front man goes over stiff like
+# a felled tree; the other folds round the heel and goes down on his face.
+_STAR = G(hx=0.06, hz=0.62, spine=146, spine_mid=140, chest=136, neck=140, head=154, tw_hips=16, tw_chest=24,
+          hR=(0.64, 1.0), twR=90, fiR=170, uaL=44, faL=150, fiL=165,
+          fL=(0.3, 40), thR=-82, shR=-88, fpR=-20)
+_cf("cf_split", 50, [
+    (0, GUARD, "lin"),
+    (3, G(hx=0.04, hz=0.62, spine=170, chest=164, head=166, tw_head=24, fL=(0.3, 20), thR=30, shR=-70, fpR=20,
+          tw_chest=-18, uaR=16, faR=170), "in"),                                                              # the weight onto the lead, the heel chambered, the right cocked
+    (6, P(_STAR, spine=156, chest=150, thR=-50, shR=-70, hR=(0.5, 1.0)), "in"),
+    (8, _STAR, "in3"),                                                                                         # HIT: both at once
+    (13, P(_STAR, hR=(0.63, 1.0), thR=-80, shR=-87), "lin"),                                                   # held: the frame frozen on it
+    (17, G(hx=0.04, spine=164, chest=158, head=164, fL=(0.3, 30), thR=30, shR=-70, fpR=20, uaR=40, faR=150), "out"),
+    (21, G(hx=0.04, fL=(0.3, 10), fR=(GR[0] + 0.02, 30), head=170, tw_head=-30), "out"),                     # down, watching the one behind go
+    (34, G(hx=0.04, fL=(0.3, 0), fR=(GR[0] + 0.02, 34), head=172, tw_head=10, uaL=50, faL=120, uaR=20, faR=120), "smooth"),
+    (50, P(GUARD, fL=(0.3, 0), fR=(GR[0] + 0.02, 38)), "smooth"),
+], [
+    (0, WIND, "smooth"),
+    (5, LUNGE, "in"),
+    (8, G(hx=0.06, spine=180, spine_mid=186, chest=190, neck=204, head=226, uaL=80, faL=110, uaR=60, faR=100,
+          fiL=60, fiR=60, fL=(GL[0] + 0.1, 0), fR=(GR[0], 40)), "out3"),                                    # ON THE JAW: the head snaps round
+    (13, G(hx=0.04, spine=182, spine_mid=184, chest=186, neck=190, head=196, uaL=12, faL=14, uaR=8, faR=10,
+           fiL=30, fiR=30, fL=(GL[0] + 0.1, 0), fR=(GR[0], 20)), "out"),                                    # out on his feet: the arms drop dead
+    (20, G(hx=-0.08, hz=0.6, hips=204, spine=206, spine_mid=206, chest=206, neck=208, head=210, uaL=14, faL=16, uaR=10, faR=12,
+           fiL=30, fiR=30, fL=(GL[0] + 0.1, 0), fR=(GR[0], 0)), "in"),                                       # and over, stiff, like a felled tree
+    (26, P(LIE, hx=-0.4, hz=0.36, hips=236, spine=238, chest=240, neck=240, head=242, uaL=20, faL=24, uaR=14, faR=18,
+           thL=120, shL=120, thR=116, shR=116), "in"),
+    (30, P(LIE, hx=-0.66, hz=0.074, uaL=40, faL=44, uaR=30, faR=34, thL=94, shL=94, thR=90, shR=90), "in3"),   # flat out, the back of his head bouncing
+    (33, P(LIE, hx=-0.66, hz=0.11, head=262, chest=264), "out"),
+    (50, P(LIE, hx=-0.66), "smooth"),
+], [
+    (0, WIND, "smooth"),
+    (5, LUNGE, "in"),
+    (8, P(FOLD, hx=-0.06, hz=0.56, spine=140, chest=118, head=120), "out3"),                                  # THE HEEL IN HIS GUT: folded round it
+    (14, P(FOLD, hx=-0.2, hz=0.5, fL=(0.08, 0), fR=(-0.34, 20)), "out"),                                      # staggering back, doubled
+    (22, P(FOLD, hx=-0.2, hz=0.36, spine=136, chest=112, head=110, thL=40, shL=-90, fpL=-60, thR=20, shR=-100, fpR=-60), "in"),   # the knees go
+    (28, P(PRONE, hx=-0.1, hz=0.2, hips=120, spine=110, chest=104, head=104, thL=-40, shL=-90, thR=-40, shR=-90), "in"),
+    (31, P(PRONE, hx=-0.06, hz=0.08), "in3"),                                                                 # on his face
+    (50, P(PRONE, hx=-0.06), "smooth"),
+], 8, "BOTH AT ONCE: the cross to the front man's jaw and the back kick into the other's gut, on the same frame")
+
+
+# ---- ONE INTO THE OTHER (front LOW, back HIGH): the back elbow into the face behind; the liver hook in
+# front; the front man folds into him, loaded on the hip (o-goshi) and thrown backwards, over, into the
+# other man: both down in a heap.
+_cf("cf_into", 56, [
+    (0, GUARD, "lin"),
+    (3, G(hx=0.02, spine=172, chest=166, head=166, tw_head=40, tw_chest=12, uaR=30, faR=150, fR=(GR[0], 30)), "in"),   # eyes back
+    (5, G(hx=-0.04, spine=176, chest=172, head=168, tw_head=46, tw_chest=-20, tw_hips=-10, uaR=-86, faR=96, fiR=170, yw_uaR=10,
+          fL=(GL[0], 10), fR=(GR[0] - 0.04, 40)), "in3"),                                                      # HIT 1: the rear elbow back into his face
+    (8, G(hz=0.585, spine=170, spine_mid=164, chest=158, neck=150, head=164, tw_hips=-20, tw_chest=-22, uaL=40, faL=120,
+          fL=(GL[0], 10), fR=(GR[0], 44)), "in"),                                                              # round, the level drops
+    (11, G(hz=0.57, spine=166, spine_mid=160, chest=154, neck=148, head=162, tw_hips=12, tw_spine=10, tw_chest=26,
+           hL=(0.6, 0.76), yw_uaL=-34, yw_faL=-50, twL=-10, fiL=170, fL=(GL[0], 34), fR=(GR[0], 40)), "in3"),  # HIT 2: the liver hook
+    (14, G(hx=0.1, hz=0.6, tw_hips=-60, tw_spine=-70, tw_chest=-80, chest=160, fL=(0.36, 20), fR=(0.16, 30), liftR=0.04,
+           hL=(0.5, 0.86), hR=(0.46, 0.8), fiL=110, fiR=110), "in"),                                         # he folds into him: in, turning his back
+    (17, G(hx=0.18, hz=0.56, tw_hips=-150, tw_spine=-160, tw_chest=-170, spine=150, spine_mid=140, chest=126, neck=130, head=140,
+           fL=(0.32, 10), fR=(0.12, 10), hL=(0.44, 0.88), hR=(0.38, 0.78), fiL=120, fiR=120), "in"),         # loaded on the hip
+    (20, G(hx=0.16, hz=0.52, tw_hips=-160, tw_chest=-178, spine=128, spine_mid=118, chest=104, neck=104, head=116,
+           hL=(0.2, 0.6), hR=(0.14, 0.5), fL=(0.32, 0), fR=(0.12, 0)), "in3"),                                  # the pull over, bent double
+    (23, G(hx=0.12, hz=0.56, tw_hips=-150, tw_chest=-170, spine=134, chest=112, neck=110, head=122, hL=(-0.24, 0.32), hR=(-0.28, 0.28),
+           fiL=60, fiR=60, fL=(0.32, 0), fR=(0.12, 0)), "out"),                                                # HIT 3: down onto the other one
+    (30, G(hx=0.1, hz=0.6, tw_hips=-90, tw_chest=-100, spine=160, chest=146, neck=144, head=152, uaL=40, faL=110, uaR=30, faR=100,
+           fL=(0.32, 0), fR=(0.12, 0)), "out"),
+    (42, G(hx=0.08, hz=0.63, tw_hips=-30, tw_chest=-20, head=170, tw_head=-20, uaL=50, faL=120, uaR=20, faR=110,
+           fL=(0.3, 0), fR=(GR[0] + 0.04, 30)), "smooth"),                                                     # turning back round, looking down at them
+    (56, P(GUARD, fL=(0.3, 0), fR=(GR[0] + 0.04, 38)), "smooth"),
+], [
+    (0, WIND, "smooth"),
+    (6, LUNGE, "in"),
+    (11, P(FOLD, hx=0.1, hz=0.56, spine=140, chest=118, head=118), "out3"),                                   # THE LIVER: folded, falling in on him
+    (14, P(FOLD, hx=0.16, hz=0.58, spine=146, chest=126, head=126, uaL=60, faL=80, uaR=60, faR=80), "in"),
+    (17, G(hx=0.26, hz=0.72, spine=150, spine_mid=140, chest=128, neck=124, head=130, fL=(0.44, 0.14, 40), fR=(0.04, 0.1, 40),
+           uaL=60, faL=80, uaR=70, faR=90), "in"),                                                            # loaded, his feet leaving the floor
+    (20, G(hx=0.72, hz=1.12, hips=60, spine=50, spine_mid=40, chest=30, neck=24, head=20, thL=190, shL=200, thR=170, shR=190,
+           uaL=40, faL=20, uaR=20, faR=0, fiL=30, fiR=30), "in3"),                                            # over the top, upside down
+    (22, G(hx=1.16, hz=0.62, hips=-40, spine=-48, spine_mid=-54, chest=-60, neck=-66, head=-70, thL=170, shL=160, thR=150, shR=140,
+           uaL=150, faL=160, uaR=130, faR=150), "in"),                                                        # down onto the other man
+    (24, P(LIE, hx=1.34, hz=0.12, thL=110, shL=100, thR=96, shR=90), "in3"),
+    (27, P(LIE, hx=1.36, hz=0.16, chest=262, head=256, thL=100, shL=84), "out"),
+    (56, P(LIE, hx=1.36), "smooth"),
+], [
+    (0, WIND, "smooth"),
+    (3, LUNGE, "in"),
+    (5, G(hx=0.02, spine=188, spine_mid=192, chest=198, neck=210, head=234, tw_head=10, uaL=104, faL=170, uaR=76, faR=150,
+          fiL=30, fiR=30, fL=(GL[0] + 0.06, 0), fR=(GR[0], 30)), "out3"),                                    # ELBOWED: the head snapped back
+    (10, G(hx=-0.1, spine=172, chest=166, neck=168, head=184, hL=(0.14, 1.0), hR=(0.16, 0.98), fiL=60, fiR=60,
+           fL=(GL[0] - 0.02, 0), fR=(GR[0] - 0.08, 30)), "out"),                                             # reeling, the hands to his face
+    (17, G(hx=-0.12, spine=170, chest=164, head=172, hL=(0.18, 1.0), hR=(0.2, 0.98), fiL=80, fiR=80,
+           fL=(GL[0] - 0.04, 0), fR=(GR[0] - 0.1, 30)), "smooth"),
+    (21, G(hx=-0.12, spine=182, chest=186, head=180, uaL=120, faL=150, uaR=110, faR=140, fiL=30, fiR=30,
+           fL=(GL[0] - 0.04, 0), fR=(GR[0] - 0.1, 30)), "in"),                                               # the other man coming over at him: hands up
+    (23, G(hx=-0.34, hz=0.42, hips=206, spine=214, chest=224, neck=226, head=232, uaL=130, faL=160, uaR=120, faR=150,
+           fL=(GL[0] - 0.2, 0.1, 30), fR=(GR[0] - 0.3, 0.1, 30)), "out3"),                                   # FLATTENED under him
+    (26, P(LIE, hx=-0.62, hz=0.074), "in3"),
+    (29, P(LIE, hx=-0.64, hz=0.11, chest=262, head=258), "out"),
+    (56, P(LIE, hx=-0.64), "smooth"),
+], 5, "ONE INTO THE OTHER: the back elbow behind, the liver hook in front, over the hip and thrown into the other man")

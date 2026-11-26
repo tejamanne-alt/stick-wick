@@ -115,7 +115,6 @@ namespace ProjectInk
         bool FarStrike(int side, bool kick)
         {
             if (TrySwat()) return true;
-            if (TryCrossfire(side)) return true;                    // two men on him: CROSSFIRE (HeroNearV4)
             if (TryTakedown(side)) return true;
             Enemy.Noise(transform.position);                         // anything else is heard
 

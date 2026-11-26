@@ -2222,3 +2222,19 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - At the inner shutter he needs both hands to heave it up, so the knife goes into his belt (`PutAwayKnife`).
   - Hall checkpoints, a retry after a defeat in the hall, and the boss test no longer hand him 3 knives.
   - Knives dropped by throwers in the hall can still be picked up.
+- **CROSSFIRE redesigned: a two-thumb tap and four moves** (docs/design/crossfire.md).
+  - **The control:**
+    - Two men on him (one in front, one behind): both thumbs at once, one each side, each HIGH (head) or LOW (legs / body). One tap, not a double.
+    - A lone tap is never delayed: the first thumb is held only while the second, already down, lifts.
+    - Single taps are plain strikes now (before, any tap with two men near fired the cinematic).
+    - Keys: A/D/Z/X pairs.
+    - The cooldown is 16 → 10 s.
+  - **The four moves:**
+    - **HIGH + HIGH, THE CROSSING** (kept).
+    - **LOW + LOW, BOTH KNEES** (new): stamp and mule kick to the knees, then the knee to one face and the heel to the other.
+    - **front HIGH + back LOW, BOTH AT ONCE** (new): the cross and the back kick on the same frozen frame; one falls like a tree, the other folds onto his face.
+    - **front LOW + back HIGH, ONE INTO THE OTHER** (new): back elbow, liver hook, o-goshi throw into the other man.
+  - **Debated and dropped:** a 360° floor sweep (kung fu, not Wick, a blur at phone size); banging their heads together (impossible with him between them).
+  - **The training ground:** four CROSSFIRE lessons with two-finger demos. Saved lesson progress is reset (new key) because the lesson list changed.
+  - **The test:** a new chapter 1 checkpoint, TEST · CROSSFIRE: pairs of men, no cooldown.
+  - **Build:** the FBX is rebuilt (326 clips).

@@ -2505,6 +2505,105 @@
       "v4": true
     },
     {
+      "name": "cf_knees",
+      "frames": 54,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 0.6,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "cf_knees_a_v",
+      "frames": 54,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.72,
+      "v4": true
+    },
+    {
+      "name": "cf_knees_b_v",
+      "frames": 54,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.77,
+      "v4": true
+    },
+    {
+      "name": "cf_split",
+      "frames": 50,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 8,
+      "loadFrame": -1,
+      "reach": 0.6,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "cf_split_a_v",
+      "frames": 50,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.66,
+      "v4": true
+    },
+    {
+      "name": "cf_split_b_v",
+      "frames": 50,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.06,
+      "v4": true
+    },
+    {
+      "name": "cf_into",
+      "frames": 56,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 5,
+      "loadFrame": -1,
+      "reach": 0.6,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "cf_into_a_v",
+      "frames": 56,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 1.36,
+      "v4": true
+    },
+    {
+      "name": "cf_into_b_v",
+      "frames": 56,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": -0.64,
+      "v4": true
+    },
+    {
       "name": "katana_guard",
       "frames": 60,
       "fps": 30,

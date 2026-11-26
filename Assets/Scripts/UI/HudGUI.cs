@@ -1370,7 +1370,7 @@ namespace ProjectInk
                 { "TAP HIGH", "Punches (up close: hooks and elbows) · a man far off: close in, then strike" },
                 { "TAP LOW", "Up close: to the body · further: kicks · running: high = flying knee, low = slide" },
                 { "READ HIM", "Follow the words over him: guard up = go low, folded = knee, head back = body..." },
-                { "TWO ON YOU", "One in front, one behind: tap = CROSSFIRE" },
+                { "TWO ON YOU", "One in front, one behind: BOTH THUMBS AT ONCE, one each side = CROSSFIRE · each thumb high (head) or low (legs): high+high THE CROSSING · low+low BOTH KNEES · high at him, low behind BOTH AT ONCE · low at him, high behind ONE INTO THE OTHER" },
                 { "KATANA", "Swipe = a cut along that line · tap = thrust · swipe his red line = parry · hold on yourself, drag = the draw" },
                 { "HOLD", "Walk that way · keep holding: jog, then run · swipe down and hold: crouch (slide to creep)" },
                 { "SWIPE UP", "Jump · up-left / up-right: that way (at a man close by: HEAD SCISSORS) · vault · climb · rope" },

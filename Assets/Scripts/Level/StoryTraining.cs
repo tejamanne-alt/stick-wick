@@ -95,7 +95,7 @@ namespace ProjectInk
         float stepAt, frozenAt = -9f, tWrongAt = -9f, stepDoneAt = -9f, seqDoneAt = -1f, turnAt = -9f, watchK;
         Vector2 okFrom, okTo; float tOkAt = -9f; bool okSwipe;
 
-        const string PrefMask = "training_mask_v3", PrefMask2 = "training_mask_v3b", PrefSeen = "training_seen";
+        const string PrefMask = "training_mask_v4", PrefMask2 = "training_mask_v4b", PrefSeen = "training_seen";
 
         // ================================================================ start and end
 
@@ -394,11 +394,27 @@ namespace ProjectInk
                     stage = () => { HeroAt(-2f); Mark(0, 3.8f, true, false); chargeAt = Time.time + 1.2f; }, restage = true,
                     demo = () => DemoSidestep(),
                     match = (k, a, l, low) => k == 'd' && a == "sidestep" },
-                new Lesson { title = "CROSSFIRE",
-                    steps = new[] { S(Gest.TapHigh, "ONE EACH SIDE: TAP") },
+                // CROSSFIRE: two men on you, both thumbs at once, one each side; each high (his head) or low
+                new Lesson { title = "CROSSFIRE: THE CROSSING",
+                    steps = new[] { S(Gest.TapHigh, "BOTH THUMBS AT ONCE, BOTH HIGH") },
                     cast = new[] { 0, 1 }, stage = () => { HeroAt(0f); Mark(0, 1.0f, true, false); Mark(1, -1.0f, true, false); }, restage = true,
-                    demo = () => DemoTaps(true, 1, 0.3f),
-                    match = (k, a, l, low) => k == 'd' && a == "crossfire" },
+                    demo = () => DemoPair(true, true),
+                    match = (k, a, l, low) => k == 'd' && a == "cf:crossfire" },
+                new Lesson { title = "CROSSFIRE: BOTH KNEES",
+                    steps = new[] { S(Gest.TapLow, "BOTH THUMBS AT ONCE, BOTH LOW") },
+                    cast = new[] { 0, 1 }, stage = () => { HeroAt(0f); Mark(0, 1.0f, true, false); Mark(1, -1.0f, true, false); }, restage = true,
+                    demo = () => DemoPair(false, false),
+                    match = (k, a, l, low) => k == 'd' && a == "cf:cf_knees" },
+                new Lesson { title = "CROSSFIRE: BOTH AT ONCE",
+                    steps = new[] { S(Gest.TapHigh, "AT ONCE: HIGH ON HIS SIDE, LOW BEHIND YOU") },
+                    cast = new[] { 0, 1 }, stage = () => { HeroAt(0f); Mark(0, 1.0f, true, false); Mark(1, -1.0f, true, false); }, restage = true,
+                    demo = () => DemoPair(false, true),
+                    match = (k, a, l, low) => k == 'd' && a == "cf:cf_split" },
+                new Lesson { title = "CROSSFIRE: ONE INTO THE OTHER",
+                    steps = new[] { S(Gest.TapLow, "AT ONCE: LOW ON HIS SIDE, HIGH BEHIND YOU") },
+                    cast = new[] { 0, 1 }, stage = () => { HeroAt(0f); Mark(0, 1.0f, true, false); Mark(1, -1.0f, true, false); }, restage = true,
+                    demo = () => DemoPair(true, false),
+                    match = (k, a, l, low) => k == 'd' && a == "cf:cf_into" },
                 new Lesson { title = "SILENT TAKEDOWN",
                     steps = new[] { Held(S(Gest.CrouchHold, "SWIPE DOWN, KEEP HOLDING"), () => hero.Crouching),
                                     Held(S(Gest.Creep, "SLIDE: CREEP UP"), () => { var e = Man(2); return e != null && e.transform.position.x - hero.transform.position.x < 0.95f; }),
@@ -604,6 +620,22 @@ namespace ProjectInk
         IEnumerator DemoTapMan(int who)
         {
             yield return Tap(ManPx(Man(who)), 0);
+        }
+
+        /// <summary>CROSSFIRE: both demo fingers at once, one each side of the screen, each high or low.</summary>
+        IEnumerator DemoPair(bool leftHigh, bool rightHigh)
+        {
+            demoStep = 0;
+            var l = PadPos(-1, leftHigh);
+            var r = PadPos(1, rightHigh);
+            StartCoroutine(Glide(1, l));
+            yield return Glide(0, r);
+            yield return WaitU(0.25f);
+            SetF(0, r, true); SetF(1, l, true);                       // together
+            yield return WaitU(0.08f);
+            SetF(0, r, false); SetF(1, l, false);
+            rippleAt = Time.unscaledTime; rippleAtPos = r;
+            yield return WaitU(0.8f);
         }
 
         IEnumerator DemoTaps(bool high, int n, float every)

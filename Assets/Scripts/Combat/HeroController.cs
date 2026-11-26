@@ -1143,6 +1143,7 @@ namespace ProjectInk
             if (TryShovePushKick(cmd)) return;
             switch (cmd)
             {
+                case Command.Crossfire: CrossfireCommand(); break;          // two thumbs at once (HeroNearV4)
                 case Command.StrikeLeft: Strike(-1); break;
                 case Command.StrikeRight: Strike(1); break;
                 case Command.StrikeForward: Strike(AxisDir != 0 ? AxisDir : Facing); break;
@@ -2190,6 +2191,9 @@ namespace ProjectInk
                 else ResolveHit();
             }
 
+            // the second key of a two-key CROSSFIRE arriving just after the first key's strike began: it takes over
+            if (stateTime < 0.25f && GestureInput.Instance != null && GestureInput.Instance.Peek() == Command.Crossfire)
+            { GestureInput.Instance.Next(); if (TryCrossfire(GestureInput.PairLeftLow, GestureInput.PairRightLow)) return; }
             if (CanCancel())
             {
                 var next = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;

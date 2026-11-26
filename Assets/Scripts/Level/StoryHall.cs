@@ -27,6 +27,26 @@ namespace ProjectInk
         /// (the swap), a katana and another pipe further on; pipe men and swordsmen who drop theirs; and
         /// whatever he takes falls out of his hands 4 s later (nobody near) so it can be taken again.</summary>
         public static bool PickupTest;
+        /// <summary>The CROSSFIRE test (chapter 1, the first hall): men come in pairs, one each side of him, and
+        /// CROSSFIRE has no cooldown, so all four can be tried again and again.</summary>
+        public static bool CrossfireTest;
+        float cfNextAt;
+
+        void CrossfireTestTick()
+        {
+            hallMen.RemoveAll(e => e == null || !e.Alive);
+            if (hallMen.Count > 0 || director == null) { cfNextAt = Time.time + 1.2f; return; }
+            if (Time.time < cfNextAt) return;
+            float hx = hero.transform.position.x;
+            foreach (int side in new[] { 1, -1 })
+            {
+                var e = director.SpawnScripted(EnemyType.Brawler, side > 0 ? SpawnKind.RightDoor : SpawnKind.LeftDoor);
+                if (e == null) continue;
+                float x = Mathf.Clamp(hx + side * 2.6f, ZoneX0(zone) + 0.6f, ZoneX0(zone + 1) - 0.6f);
+                e.ResetTo(new Vector3(x, hero.transform.position.y, 0f), hx);
+                hallMen.Add(e);
+            }
+        }
 
         bool EnemyNear(float r)
         {
@@ -36,7 +56,7 @@ namespace ProjectInk
         }
 
         /// <summary>From the menu: the chapter from the top (no checkpoint, no retry state).</summary>
-        public static void NewRun() { KatanaTest = false; PipeTest = false; KatanaMen = false; PickupTest = false; HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
+        public static void NewRun() { KatanaTest = false; PipeTest = false; KatanaMen = false; PickupTest = false; CrossfireTest = false; HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
 
         struct Spawn { public EnemyType type; public SpawnKind kind; public Spawn(EnemyType t, SpawnKind k) { type = t; kind = k; } }
 
@@ -209,6 +229,11 @@ namespace ProjectInk
                 if ((KatanaTest || KatanaMen) && director != null) WeaponPickup.Spawn(FightStyle.Sword, 999, new Vector3(ZoneX0(z) + 3.0f, 0f, 0f), director.weaponMaterial);
                 else if (PipeTest && director != null)
                     for (int k = 0; k < 3; k++) WeaponPickup.Spawn(FightStyle.Pipe, 14, new Vector3(ZoneX0(z) + 3.0f + k * 2.5f, 0f, 0f), director.weaponMaterial);
+                else if (CrossfireTest && director != null)
+                {
+                    hero.CrossfireAnytime = true;
+                    director.ShowBanner("CROSSFIRE TEST  ·  TWO ON YOU: BOTH THUMBS AT ONCE  ·  EACH HIGH OR LOW", 4f);
+                }
                 else if (PickupTest && director != null)
                 {
                     if (hero.Style == FightStyle.Fists) hero.GiveWeapon(FightStyle.Pipe, 4);        // bent: swap it at the first one
@@ -259,6 +284,7 @@ namespace ProjectInk
             if (bossT >= 0f) { UpdateBoss(); return; }                // the Foreman's floor: no more waves
             hallMen.RemoveAll(e => e == null || !e.Alive);
             var waves = Waves[zone];
+            if (CrossfireTest) { CrossfireTestTick(); return; }       // pairs of men, nothing else
             // the pick-up test: what he took drops out of his hands again (not a bent pipe: that one's for swapping)
             if (PickupTest && hero != null && hero.Style != FightStyle.Fists && Time.time - hero.LastPickupAt > 4f &&
                 !(hero.Style == FightStyle.Pipe && hero.PipeUses <= 4) && !EnemyNear(4f)) hero.PutDownForTest();
