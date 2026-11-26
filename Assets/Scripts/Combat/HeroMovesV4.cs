@@ -358,7 +358,8 @@ namespace ProjectInk
             velocity.y = fast ? ContactJump * 0.85f : ContactJump;
             velocity.x = fast ? velocity.x : dir * 2.6f;              // a standing jump that way carries 2.6 m/s
             Grounded = false;
-            body.Play("jump_run", 0.06f, true, fast ? 1f : 0.9f);
+            airStrikeOn = false;
+            body.Play(ArmedJump("jump_run"), 0.06f, true, fast ? 1f : 0.9f);
             Sound.Play(Sfx.Footstep, 1.4f, transform.position);
             Sound.Play(Sfx.Cloth, 0.8f, transform.position);
             return true;

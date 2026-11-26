@@ -101,6 +101,7 @@ namespace ProjectInk
 
         void KatanaCut(Vector2 v, float speed)
         {
+            if (ArmedLeapSwipe(v)) return;                                    // at a run, swipe up: the leap (HeroArmedAir)
             if (RodMode && body.Has("rod_swing")) { var gi0 = GestureInput.Instance; PipeSwipe(v, speed, gi0 == null || gi0.LastSwipeHigh); return; }   // the pipe (HeroPipeV4)
             if (state != State.Idle && state != State.Traverse) return;
             if (sheathed) { IaiDraw(v); return; }

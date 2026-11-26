@@ -2791,6 +2791,50 @@
       "v4": true
     },
     {
+      "name": "katana_jump",
+      "frames": 15,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_jump_run",
+      "frames": 13,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_land",
+      "frames": 9,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_air_cut",
+      "frames": 10,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 1.35,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
       "name": "rod_guard",
       "frames": 60,
       "fps": 30,
@@ -2963,6 +3007,50 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_jump",
+      "frames": 15,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_jump_run",
+      "frames": 13,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_land",
+      "frames": 9,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_air_smash",
+      "frames": 10,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 6,
+      "loadFrame": -1,
+      "reach": 1.4,
       "endShift": 0.0,
       "v4": true
     }

@@ -1668,9 +1668,10 @@ namespace ProjectInk
             // a plain jump
             state = State.Air;
             stateTime = 0f;
+            airStrikeOn = false;
             velocity.y = Contact ? ContactJump : jumpSpeed;           // story: a short, heavy hop
             Grounded = false;
-            body.Play("jump", 0.05f);
+            body.Play(ArmedJump("jump"), 0.05f);                      // (armed: the weapon held through it, HeroArmedAir)
             Sound.Play(Sfx.Footstep, 1.4f, transform.position);
             Sound.Play(Sfx.Cloth, 0.8f, transform.position);
         }
@@ -1714,6 +1715,7 @@ namespace ProjectInk
             }
             // strike in the air: a flying kick at whoever is near
             var cmd = GestureInput.Instance != null ? GestureInput.Instance.Next() : Command.None;
+            if (ArmedAirStrike(cmd)) return;                                 // armed: the weapon down with the fall (HeroArmedAir)
             if (cmd == Command.StrikeLeft || cmd == Command.StrikeRight || cmd == Command.StrikeForward)
             {
                 int side = cmd == Command.StrikeLeft ? -1 : cmd == Command.StrikeRight ? 1 : (AxisDir != 0 ? AxisDir : Facing);

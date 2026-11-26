@@ -328,3 +328,32 @@ def _katana_run():
 
 CLIPS["katana_run"] = clip(16, _katana_run(), loop=True, speed=KATANA_RUN_SPEED,
                            note="running with the blade trailing low behind, one hand; the other arm pumping")
+
+
+# ---------------------------------------------------------------- jumping with the blade (a running leap: swipe up at a run)
+# Both hands on the hilt, the blade raised to jodan for the leap (the cut it promises comes down with him).
+from v4_moves import CLIPS as _MOVES
+JODAN = grip(-0.05, 1.44, 202)
+
+
+def _armed(keys, g):
+    return [(f, P(p, **g), e) for f, p, e in keys]
+
+
+CLIPS["katana_jump"] = clip(15, _armed(_MOVES["jump"]["keys"], JODAN), note="jumping with the blade raised (jodan)")
+CLIPS["katana_jump_run"] = clip(13, _armed(_MOVES["jump_run"]["keys"], JODAN), note="a running leap, the blade raised")
+_JAPEX = _MOVES["jump"]["keys"][3][1]
+_JREACH = _MOVES["jump"]["keys"][-1][1]
+CLIPS["katana_land"] = clip(9, [
+    (0, P(_JREACH, **JODAN), "lin"),
+    (2, P(_JREACH, hz=0.55, spine=164, chest=156, neck=156, head=166, fL=(0.14, 0), fR=(-0.08, 0), **grip(0.3, 0.72, 118)), "out3"),   # the knees take it, the blade low
+    (5, K(hz=0.6), "out"),
+    (9, KG, "smooth"),
+], note="landing with the blade: the knees take it, the point comes up into the guard")
+# THE FALLING CUT: in the air, swipe down (or tap): the blade comes down with him
+CLIPS["katana_air_cut"] = clip(10, [
+    (0, P(_JAPEX, **JODAN), "lin"),
+    (3, P(_JAPEX, spine=182, spine_mid=184, chest=186, neck=176, head=172, **grip(-0.08, 1.5, 198)), "out"),
+    (6, P(_JREACH, spine=160, spine_mid=156, chest=152, neck=154, head=164, **grip(0.54, 0.84, 78)), "in3"),      # HIT: down through him with the fall
+    (10, P(_JREACH, spine=158, chest=150, neck=152, head=162, **grip(0.44, 0.58, 48)), "out"),
+], hit=6, reach=1.35, react="hit_body", striker="R", note="the falling cut: the blade down through him with the fall")

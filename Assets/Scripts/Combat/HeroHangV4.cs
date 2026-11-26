@@ -234,7 +234,9 @@ namespace ProjectInk
         /// the run, the lead foot takes it and he runs straight on (no stop). Armed: as before (the grip holds).</summary>
         bool LandLightV4()
         {
-            if (!MovesV4 || KatanaMode || !body.Has("land_light")) return false;
+            if (!MovesV4) return false;
+            if (KatanaMode) return ArmedLand();                               // the weapon kept in hand (HeroArmedAir)
+            if (!body.Has("land_light")) return false;
             var gi = GestureInput.Instance;
             bool runOn = gi != null && gi.RunHeld && Mathf.Abs(Axis) > 0.3f && Mathf.Abs(velocity.x) > 2.4f && body.Has("land_run");
             Sound.Play(Sfx.Land, runOn ? 0.45f : 0.6f, transform.position);
@@ -258,6 +260,7 @@ namespace ProjectInk
             fromHang = false;
             dropTarget = null;
             if (!fell) return false;
+            if (KatanaMode && ArmedLand()) return true;                       // armed: the weapon kept in hand
             BeginTraverse(fallHeight > 1.9f ? "land_heavy" : "land_soft", 0f);
             Sound.Play(Sfx.Land, fallHeight > 1.9f ? 1.2f : 0.8f, transform.position);
             if (fallHeight > 1.9f && CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.08f, 0.12f);

@@ -66,6 +66,14 @@ Each man cut down within 1.3 s of the last builds a chain: **TWO IN ONE BREATH**
 - **Early swipes are held** and taken the moment the blade lands, so they're never lost (same as the pipe).
 - **A man cut by a rising line** (kiriage, gyaku) falls on his back (`cut_down_back`); the rest fall on their face.
 
+## In the air
+
+**The leap:** swipe up while running. Standing still, swipe up stays the rising cut, and the swallow combo is untouched. The blade is raised overhead (jodan) for the leap.
+
+**THE FALLING CUT:** in the air, swipe down (or tap). The blade comes down through him with the fall as he lands: 30 damage, and an ordinary man it would finish is cut down.
+
+**Landing:** the knees take it, the point rising back into the guard.
+
 ## Test
 
 Main menu → test checkpoints:

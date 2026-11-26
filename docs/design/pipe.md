@@ -64,6 +64,14 @@ A pipe doesn't parry; it breaks.
 - **Why:** this is the pipe's defence. Watch his wind-up and beat him to it. The butt-end tap is the quickest interceptor.
 - **Swordsmen:** the mirror parry still works against their red line.
 
+## In the air
+
+**The leap:** swipe up while running. Standing still, swipe up stays the rising swing. Both hands keep the pipe cocked on the shoulder through the leap.
+
+**FROM ABOVE:** in the air, swipe down (or tap). The pipe goes up overhead and comes down with the fall as he lands: 34 damage, always a knockdown, ringing off the floor.
+
+**Landing:** the knees take it with the pipe still in hand.
+
 ## Wear
 
 **14 hits**, counted once per swing however many it catches. Misses don't count.

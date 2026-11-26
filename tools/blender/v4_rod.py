@@ -267,3 +267,32 @@ def _rod_run():
 
 CLIPS["rod_run"] = clip(16, _rod_run(), loop=True, speed=ROD_RUN_SPEED,
                         note="running with the pipe cocked on the shoulder, one hand; the other arm pumping")
+
+
+# ---------------------------------------------------------------- jumping with it (a running leap: swipe up at a run)
+# Both hands stay on the pipe, cocked on the shoulder, through the jump; the legs are the jump's own.
+from v4_moves import CLIPS as _MOVES
+ROD_HOLD = grip(-0.02, 1.04, 205)
+
+
+def _armed(keys, g):
+    return [(f, P(p, **g), e) for f, p, e in keys]
+
+
+CLIPS["rod_jump"] = clip(15, _armed(_MOVES["jump"]["keys"], ROD_HOLD), note="jumping with the pipe cocked on the shoulder")
+CLIPS["rod_jump_run"] = clip(13, _armed(_MOVES["jump_run"]["keys"], ROD_HOLD), note="a running leap, the pipe cocked")
+_JAPEX = _MOVES["jump"]["keys"][3][1]           # the top of the jump: knees up
+_JREACH = _MOVES["jump"]["keys"][-1][1]         # the legs reaching for the floor
+CLIPS["rod_land"] = clip(9, [
+    (0, P(_JREACH, **ROD_HOLD), "lin"),
+    (2, P(_JREACH, hz=0.55, spine=164, chest=156, neck=156, head=166, fL=(0.14, 0), fR=(-0.08, 0), **grip(-0.02, 0.92, 208)), "out3"),   # the knees take it, the pipe held
+    (5, P(RG, hz=0.6), "out"),
+    (9, RG, "smooth"),
+], note="landing with the pipe: the knees take it, back to the guard")
+# FROM ABOVE: in the air, swipe down (or tap): the pipe up over the head and down with the fall, as he lands
+CLIPS["rod_air_smash"] = clip(10, [
+    (0, P(_JAPEX, **ROD_HOLD), "lin"),
+    (3, P(_JAPEX, spine=182, spine_mid=184, chest=186, neck=176, head=172, **grip(0.0, 1.46, 196)), "out"),        # up over the head
+    (6, P(_JREACH, spine=152, spine_mid=148, chest=142, neck=146, head=158, **grip(0.52, 0.72, 72)), "in3"),       # down with the whole fall
+    (10, P(_JREACH, spine=150, spine_mid=146, chest=140, neck=144, head=156, **grip(0.5, 0.52, 48)), "out"),
+], hit=6, reach=1.4, react="hit_body", striker="R", note="from above: the pipe overhead and down with the fall")

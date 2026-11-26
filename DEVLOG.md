@@ -2145,3 +2145,13 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - **Armed:** the bare-hand landing is skipped so the grip holds.
     - Drops over 1 m keep `land_soft` / `land_heavy` (fixed earlier).
   - **Build:** the FBX is rebuilt.
+- **Jumping armed** (`HeroArmedAir.cs`).
+  - **The problem:** with a pipe or sword every swipe is a strike, so on a phone there was no armed jump at all. A keyboard jump played the bare-hand clips, so the weapon hand flailed and the other let go.
+  - **The leap:** swipe up while running (standing still, swipe up stays the rising strike, so the swallow combo is safe). Both hands stay on the weapon through it: `rod_jump` / `rod_jump_run` with the pipe cocked on the shoulder, `katana_jump` / `katana_jump_run` with the blade raised to jodan.
+  - **The air strike:** in the air, swipe down or tap.
+    - **FROM ABOVE** (`rod_air_smash`): the pipe overhead and down with the fall. 34 damage, always a knockdown, it rings off the floor, and it wears the pipe.
+    - **THE FALLING CUT** (`katana_air_cut`): the blade down through him with the fall. 30 damage, and it cuts an ordinary man down if that finishes him.
+    - Either way he's driven down into it and the hit lands with him.
+  - **Landings:** `rod_land` / `katana_land`, the knees taking it with the weapon kept in hand. Drops over 1 m use them too.
+  - **Keyboard:** W jumps standing or running with the same weapon jumps.
+  - **Build:** the FBX is rebuilt (305 clips).
