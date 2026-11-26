@@ -2619,6 +2619,7 @@ namespace ProjectInk
                 HangHit();
                 return;
             }
+            if (TryArmedBlock(hit)) return;                  // on guard with a pipe or a katana: the weapon takes it (HeroSwordV4)
             if (state == State.Clinch) EndClinch();          // hit from behind: he lets go
             ReleaseFarFoe();
             lastHurtAt = Time.time;
@@ -2656,7 +2657,9 @@ namespace ProjectInk
             state = State.Hurt;
             stateTime = 0f;
             invulnerableUntil = Time.time + 0.45f;
-            if (Contact && fromFront && !string.IsNullOrEmpty(hit.react) && body.Has(hit.react)) body.Play(hit.react, 0.04f);   // the blow's own reaction
+            string armedHit = KatanaMode && !sheathed ? (RodMode ? "rod_hit" : "katana_hit") : null;
+            if (armedHit != null && body.Has(armedHit)) body.Play(armedHit, 0.04f);                                              // rocked, both hands kept on it
+            else if (Contact && fromFront && !string.IsNullOrEmpty(hit.react) && body.Has(hit.react)) body.Play(hit.react, 0.04f);   // the blow's own reaction
             else body.Play(fromFront ? "hit_front" : "hit_back", 0.04f);
         }
 

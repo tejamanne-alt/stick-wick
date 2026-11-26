@@ -545,3 +545,8 @@ def meta(name, spec):
 import v4_cf_armed  # noqa: E402
 
 CLIPS.update(v4_cf_armed.CLIPS)
+
+# the weapon's own defence: the blocks, the armed hit reactions, the man who hit steel
+import v4_armed_def  # noqa: E402
+
+CLIPS.update(v4_armed_def.CLIPS)

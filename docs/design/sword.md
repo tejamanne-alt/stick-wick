@@ -87,6 +87,19 @@ Each man cut down within 1.3 s of the last builds a chain: **TWO IN ONE BREATH**
 - **NUKI-WAZA:** retreat as he winds up or swings, and his blade hits nothing (slow motion, OUT OF DISTANCE). Your next cut within 1.1 s comes as his blow falls through empty air: ×1.5 damage, and an ordinary man it would finish is cut down.
 - **Not DEBANA:** DEBANA is cutting as he starts; NUKI-WAZA is cutting after he has missed.
 
+## The block
+
+On guard (standing or stepping, facing him, not mid-swing, not running, crouched or sheathed), a blow from the front lands on the weapon.
+- **High** (a punch, a swing): jōdan uke: the blade raised before his face, its back taking the blow.
+- **Low** (a kick, a low swing): gedan barai: the blade swept down, knocking the kick aside.
+- **A fist or a shin into steel hurts the man:** HE HIT THE BLADE. He shakes out his hand or hops on one foot, and takes a little damage.
+- **A pipe or a blade on it:** a clang and sparks, and both are pushed apart.
+- **Not a free shield:**
+  - A third block within 2 s is **GUARD BROKEN**: he staggers, and the next blow lands.
+  - A Brute's blow drives 40% through.
+  - Timing still pays far more (DEBANA, NUKI-WAZA); the block only saves him when he does nothing.
+- **When a blow does land:** he's rocked back with both hands kept on the weapon (`katana_hit`), not the bare-hand flail.
+
 ## In the air
 
 **The leap:** swipe up while running. Standing still, swipe up stays the rising cut, and the swallow combo is untouched. The blade is raised overhead (jodan) for the leap.

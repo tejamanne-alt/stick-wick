@@ -30,6 +30,11 @@ namespace ProjectInk
                 stage = () => Spar(1.4f, true, false), restage = true,
                 demo = () => DemoCuts(0.42f),
                 match = (k, a, l, low) => k == 's' && (Named(l, "FIGURE EIGHT") || Named(l, "WINDMILL")) },
+            new Lesson { title = "PIPE · THE BLOCK", weapon = FightStyle.Pipe, reps = 2, guard = -1,
+                steps = new[] { S(Gest.TapHigh, "DO NOTHING: STAND ON GUARD, LET HIM HIT THE PIPE") },
+                stage = () => Spar(1.1f, false, true),
+                demo = () => DemoBlock(),
+                match = (k, a, l, low) => k == 'd' && a == "block" },
             new Lesson { title = "PIPE · INTERCEPT", weapon = FightStyle.Pipe, reps = 2, guard = -1,
                 steps = new[] { Timed(S(Gest.TapHigh, "HE WINDS UP: HIT HIM NOW"), _ => Swinging()) },
                 stage = () => Spar(1.3f, false, true),
@@ -72,6 +77,11 @@ namespace ProjectInk
                 stage = () => Spar(1.3f, true, false), restage = true,
                 demo = () => DemoCuts(0.35f),
                 match = (k, a, l, low) => k == 's' && Named(l, "TSUBAME-GAESHI") },
+            new Lesson { title = "SWORD · THE BLOCK", weapon = FightStyle.Sword, reps = 2, guard = -1,
+                steps = new[] { S(Gest.TapHigh, "DO NOTHING: STAND ON GUARD, LET HIM HIT THE BLADE") },
+                stage = () => Spar(1.1f, false, true),
+                demo = () => DemoBlock(),
+                match = (k, a, l, low) => k == 'd' && a == "block" },
             new Lesson { title = "SWORD · DEBANA", weapon = FightStyle.Sword, reps = 2, guard = -1,
                 steps = new[] { Timed(S(Gest.CutAt, "HE STARTS: CUT NOW"), _ => EarlyWindup()) },
                 stage = () => Spar(1.3f, false, true), restage = true,
@@ -211,6 +221,14 @@ namespace ProjectInk
         // ---------------------------------------------------------------- the demonstrations
 
         /// <summary>The lesson's swipes in order, fast and straight (a clean edge), `gap` seconds apart.</summary>
+        /// <summary>The block: the fingers stay off the glass; he swings, the weapon takes it.</summary>
+        IEnumerator DemoBlock()
+        {
+            demoStep = 0;
+            float t = 0f;
+            while (t < 5f) { t += UDt; yield return null; }
+        }
+
         IEnumerator DemoCuts(float gap)
         {
             var L = lessons[li];

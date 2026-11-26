@@ -3548,6 +3548,94 @@
       "reach": 0.0,
       "endShift": -0.47,
       "v4": true
+    },
+    {
+      "name": "rod_block_high",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_block_low",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_hit",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_block_high",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_block_low",
+      "frames": 16,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 4,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_hit",
+      "frames": 18,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "hand_shake",
+      "frames": 36,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "shin_hurt",
+      "frames": 38,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
     }
   ]
 }

@@ -2257,3 +2257,14 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - **Katana:** retreat as he swings: OUT OF DISTANCE; the next cut within 1.1 s is NUKI-WAZA (×1.5, an ordinary man it would finish is cut down).
   - **Keys:** Q / E with a weapon is now the weapon's evasion, still facing him, instead of the bare-hand dodge.
   - **Build:** the FBX is rebuilt.
+- **The block with the pipe and the katana** (there was none).
+  - **Before:** a blow passed through the weapon as if it weren't there, and the hit reaction broke the two-handed grip.
+  - **The block:** on guard, a blow from the front lands on the weapon.
+    - **Pipe:** high, the pipe stood up before his face (`rod_block_high`); low, dropped before his shins (`rod_block_low`).
+    - **Katana:** jodan uke (`katana_block_high`); gedan barai (`katana_block_low`).
+  - **The man who hit steel:** a fist or shin into steel hurts him (HE HIT THE PIPE / THE BLADE; `hand_shake`, `shin_hurt`).
+  - **Steel on steel:** a clang, sparks, both pushed apart; the pipe wears.
+  - **Limits:** three blocks inside 2 s is GUARD BROKEN; a Brute drives 40% through.
+  - **When hit anyway:** `rod_hit` / `katana_hit`, both hands kept on the weapon.
+  - **Training:** PIPE · THE BLOCK and SWORD · THE BLOCK lessons. Lesson progress reset (new key).
+  - **Build:** the FBX is rebuilt.

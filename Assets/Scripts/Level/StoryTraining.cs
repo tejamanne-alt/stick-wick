@@ -95,7 +95,7 @@ namespace ProjectInk
         float stepAt, frozenAt = -9f, tWrongAt = -9f, stepDoneAt = -9f, seqDoneAt = -1f, turnAt = -9f, watchK;
         Vector2 okFrom, okTo; float tOkAt = -9f; bool okSwipe;
 
-        const string PrefMask = "training_mask_v5", PrefMask2 = "training_mask_v5b", PrefSeen = "training_seen";
+        const string PrefMask = "training_mask_v6", PrefMask2 = "training_mask_v6b", PrefSeen = "training_seen";
 
         // ================================================================ start and end
 

@@ -69,6 +69,19 @@ A pipe doesn't parry; it breaks.
 - **The back-hop:** swipe ← with nothing to return to, or Q / E on the keys. One skip out of his reach with the pipe kept cocked; swing within 0.6 s for STEP AND SWING (×1.3).
 - **SLIPPED:** hop as his swing starts and it whiffs past your nose, with a beat of slow motion. Your next swing within 1.2 s is **MAKE HIM PAY** (×1.5).
 
+## The block
+
+On guard (standing or stepping, facing him, not mid-swing, not running, crouched or sheathed), a blow from the front lands on the weapon.
+- **High** (a punch, a swing): the pipe stood up before his face.
+- **Low** (a kick, a low swing): the pipe dropped point-down before his shins.
+- **A fist or a shin into steel hurts the man:** HE HIT THE PIPE. He shakes out his hand or hops on one foot, and takes a little damage.
+- **A pipe or a blade on it:** a clang and sparks, and both are pushed apart. The pipe wears by one.
+- **Not a free shield:**
+  - A third block within 2 s is **GUARD BROKEN**: he staggers, and the next blow lands.
+  - A Brute's blow drives 40% through.
+  - Timing still pays far more (INTERCEPTED, SLIPPED); the block only saves him when he does nothing.
+- **When a blow does land:** he's rocked back with both hands kept on the weapon (`rod_hit`), not the bare-hand flail.
+
 ## In the air
 
 **The leap:** swipe up while running. Standing still, swipe up stays the rising swing. Both hands keep the pipe cocked on the shoulder through the leap.

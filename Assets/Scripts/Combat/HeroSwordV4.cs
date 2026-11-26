@@ -85,6 +85,84 @@ namespace ProjectInk
             }
         }
 
+        // ------------------------------------------------------------------ the weapon's block
+        // On guard (standing or stepping, facing him, not mid-swing, not running, crouched or sheathed), a blow
+        // from the front lands on the weapon: high (a punch, a swing) on the pipe stood up before his face / the
+        // blade raised (jodan uke); low (a kick, a low swing) on the pipe dropped before his shins / the blade
+        // swept down (gedan barai). A fist or a shin into steel hurts the man; a pipe or a blade on it clangs
+        // and both are pushed apart (the pipe wears). Not a free shield: three blocks inside 2 s and the guard
+        // breaks (he staggers, the next blow lands); a Brute's blow drives through for 40%. Timing still pays
+        // far more (INTERCEPTED, SLIPPED, NUKI-WAZA, DEBANA): the block only saves him when he does nothing.
+        float[] blockTimes = { -9f, -9f };
+        float guardBrokenUntil = -9f;
+
+        bool OnArmedGuard =>
+            KatanaMode && !sheathed && Grounded && !crouching && Time.time >= guardBrokenUntil &&
+            (state == State.Idle || (state == State.Traverse && (traverse == "rod_block_high" || traverse == "rod_block_low" ||
+                                                                  traverse == "katana_block_high" || traverse == "katana_block_low"))) &&
+            Mathf.Abs(velocity.x) < 2.2f;
+
+        /// <summary>Called first thing in TakeHit: true if the weapon took it (and how much still got through is dealt here).</summary>
+        bool TryArmedBlock(HitInfo hit)
+        {
+            if (!OnArmedGuard || hit.direction != -Facing || !(hit.attacker is Enemy man)) return false;
+            bool low = hit.low || hit.react == "hit_legs" || hit.react == "leg_buckle";
+            bool armedBlow = man.Type == EnemyType.Swordsman || man.Type == EnemyType.Piper;
+            string pre = RodMode ? "rod_" : "katana_";
+            string clip = pre + (low ? "block_low" : "block_high");
+            if (!body.Has(clip)) return false;
+            float now = Time.time;
+            // the guard: the third block inside 2 s breaks it
+            if (now - blockTimes[0] < 2f && now - blockTimes[1] < 2f)
+            {
+                guardBrokenUntil = now + 1.4f;
+                blockTimes[0] = blockTimes[1] = -9f;
+                state = State.Hurt;
+                stateTime = 0f;
+                invulnerableUntil = now + 0.35f;
+                velocity.x = hit.direction * 2.2f;
+                string hurt = pre + "hit";
+                body.Play(body.Has(hurt) ? hurt : "hit_front", 0.04f);
+                Sound.Play(RodMode ? Sfx.MetalClang : Sfx.SwordClash, 1f, Chest, 0.8f);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.ShowBanner("GUARD BROKEN", 1.0f);
+                Tell("guard_broken");
+                return true;
+            }
+            blockTimes[0] = blockTimes[1];
+            blockTimes[1] = now;
+            BeginTraverse(clip, 0f);                                          // (the clip itself rocks him back on it)
+            invulnerableUntil = now + 0.25f;
+            var at = Chest + Vector3.right * Facing * 0.35f + Vector3.up * (low ? -0.45f : 0.1f);
+            if (man.Type == EnemyType.Brute)
+            {
+                // too much to stop: 40% drives through the guard
+                Health = Mathf.Max(Sparring ? 1f : 0f, Health - hit.damage * 0.4f);
+                if (WaveDirector.Instance != null) WaveDirector.Instance.OnHeroDamaged(hit.damage * 0.4f);
+                Sound.Play(Sfx.PunchHeavy, 1f, at);
+                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.14f, 0.18f);
+            }
+            else if (armedBlow)
+            {
+                // steel on steel: a clang, sparks, both pushed apart
+                Sound.Play(RodMode && man.Type == EnemyType.Piper ? Sfx.MetalClang : Sfx.SwordClash, 1.1f, at);
+                if (InkFx.Instance != null) InkFx.Instance.Burst(at, 1.6f);
+                man.Stagger(0.5f);
+                if (RodMode) PipeWear();
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(60, "BLOCKED");
+            }
+            else
+            {
+                // a fist, a shin, into steel: it hurts him
+                Sound.Play(RodMode ? Sfx.MetalClang : Sfx.SwordClash, 0.6f, at, 1.2f);
+                Sound.Play(Sfx.Bone, 0.6f, at, 1.3f);
+                man.TakeHit(new HitInfo { damage = 5f, direction = Facing, knockback = 1.2f, react = low ? "shin_hurt" : "hand_shake", attacker = this });
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(80, RodMode ? "HE HIT THE PIPE" : "HE HIT THE BLADE");
+            }
+            if (TimeController.Instance != null) TimeController.Instance.HitStop(armedBlow ? 5 : 3);
+            Tell("block");
+            return true;
+        }
+
         /// <summary>A dodge key with a weapon in hand (Q / E): the weapon's own evasion, still facing him.</summary>
         bool ArmedDodge()
         {
