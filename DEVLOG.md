@@ -2136,3 +2136,12 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **Stops and turns:** armed runs don't use the bare-handed run_stop or run_turn, so the grip never jumps.
   - **Build:** the FBX is rebuilt (295 clips).
 - **Landing bug fixed.** `land_soft` and `land_heavy` (landing from a drop over 1 m) ended on the ledge-top standing pose, with the hips 1.6 m up. Every such landing finished with the body shooting up 1.6 m before snapping back to idle. Both now stand up on the floor. The FBX is rebuilt.
+- **Jumping, rebuilt for the game.**
+  - **The standing jump** (`jump`, new on the V4 body): it replaces the first stick figure's clip, which had arms flung overhead and knees to the chest. Now there's a quick dip, a drive with the arms up to the chest, a compact tuck at the top, and the legs reaching for the floor. It's timed to the physics: 15 frames for the 0.51 s in the air.
+  - **The running jump** (`jump_run`): retimed from 20 frames to 13, the real 0.43 s, so he no longer lands still in the hang. The arms are opposed as the legs reach.
+  - **Landings:** every ordinary jump now lands with weight.
+    - **`land_light`:** a short knee soak, then up.
+    - **`land_run`:** still holding the run, the lead foot takes it and he runs straight on.
+    - **Armed:** the bare-hand landing is skipped so the grip holds.
+    - Drops over 1 m keep `land_soft` / `land_heavy` (fixed earlier).
+  - **Build:** the FBX is rebuilt.

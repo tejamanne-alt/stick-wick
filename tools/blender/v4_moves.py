@@ -169,18 +169,53 @@ CLIPS["run_turn"] = clip(14, [
 ], note="turning while running: plant, pivot, push off the other way")
 
 # ---------------------------------------------------------------- the running jump
-CLIPS["jump_run"] = clip(20, [
+# ---------------------------------------------------------------- jumping (swipe up), timed to the physics
+# The game launches him at once (5.6 m/s up: 0.25 s to the top, 0.51 s in the air), so the clip is the
+# body's part of it: a quick dip and drive (the arms swinging up to the chest, never flung overhead),
+# a compact tuck at the top, the legs reaching for the floor as he comes down. It holds its last frame if
+# he falls further; the landing is its own clip (land_light, or land_soft / land_heavy from higher).
+JUMP_REACH = P(LOOSE, hz=0.70, spine=176, chest=174, neck=170, head=174, uaL=22, faL=58, uaR=18, faR=52, fiL=100, fiR=100,
+               fL=(0.12, 0.035, -12), fR=(-0.06, 0.025, -4))
+CLIPS["jump"] = clip(15, [
+    (0, P(LOOSE), "lin"),
+    (1, P(LOOSE, hz=0.58, spine=168, chest=160, neck=160, head=168, uaL=-22, faL=-8, uaR=-18, faR=-6,
+          fL=(0.1, 0), fR=(-0.06, 0)), "out"),                                                          # the dip, the arms back
+    (3, P(LOOSE, hz=0.71, spine=178, chest=177, neck=172, head=175, uaL=44, faL=128, uaR=38, faR=122, fiL=120, fiR=120,
+          fL=(0.05, 0.03, 42), fR=(-0.05, 0.02, 46)), "out"),                                           # the drive: up off the toes, the arms up to the chest
+    (7, P(LOOSE, hz=0.70, spine=174, chest=170, neck=168, head=172, uaL=38, faL=118, uaR=34, faR=112, fiL=120, fiR=120,
+          fL=(0.13, 0.27, 6), fR=(-0.02, 0.21, 14)), "smooth"),                                         # the top: knees up, compact
+    (11, P(LOOSE, hz=0.70, spine=175, chest=172, neck=169, head=173, uaL=28, faL=80, uaR=24, faR=74, fiL=110, fiR=110,
+           fL=(0.12, 0.09, -8), fR=(-0.06, 0.07, 2)), "smooth"),                                        # coming down: the legs open
+    (15, JUMP_REACH, "smooth"),                                                                         # reaching for the floor
+], note="the jump: a quick dip, the drive (arms to the chest), a compact tuck, the legs reaching down")
+
+# a running jump: off the back foot, the lead knee driven, a short hang, the legs reaching (0.43 s in the air)
+RUN_REACH = P(LOOSE, hz=0.68, spine=176, chest=172, uaL=32, faL=104, uaR=-10, faR=56, fiL=120, fiR=120,
+              fL=(0.46, 0.06, -14), fR=(0.1, 0.1, 10))
+CLIPS["jump_run"] = clip(13, [
     (0, P(RUN0, fR=(-0.2, 60), fL=(0.3, 0.3, 20)), "lin"),                                              # take-off off the ball of the back foot
-    (3, P(LOOSE, hz=0.7, spine=170, chest=164, head=172, uaL=-30, faL=40, uaR=80, faR=150, fiL=120, fiR=120,
+    (2, P(LOOSE, hz=0.7, spine=170, chest=164, head=172, uaL=-30, faL=40, uaR=80, faR=150, fiL=120, fiR=120,
           fL=(0.38, 0.36, 10), fR=(-0.36, 0.2, 60)), "out"),                                            # the lead knee driven up, the trail leg long
-    (8, P(LOOSE, hz=0.7, spine=172, chest=168, head=174, uaL=20, faL=80, uaR=60, faR=120,
+    (6, P(LOOSE, hz=0.7, spine=172, chest=168, head=174, uaL=20, faL=80, uaR=60, faR=120,
           fL=(0.42, 0.3, 0), fR=(-0.2, 0.3, 40)), "smooth"),                                            # hanging in the air
-    (13, P(LOOSE, hz=0.68, spine=176, chest=172, uaL=50, faL=90, uaR=40, faR=90,
-           fL=(0.46, 0.14, -14), fR=(0.1, 0.2, 10)), "smooth"),                                         # legs reach for the floor
-    (15, P(LOOSE, hz=0.52, spine=160, chest=150, neck=150, head=166, uaL=60, faL=100, uaR=50, faR=96,
-           fL=(0.46, 0), fR=(0.12, 20)), "in3"),                                                        # landing: the knees soak it up
-    (20, P(RUN0), "smooth"),
-], note="a running jump: off the back foot, the lead knee driven, hang, land soft and run on")
+    (10, P(LOOSE, hz=0.69, spine=175, chest=171, uaL=36, faL=104, uaR=-4, faR=62,
+           fL=(0.46, 0.12, -14), fR=(0.06, 0.16, 12)), "smooth"),                                       # the legs reach for the floor
+    (13, RUN_REACH, "smooth"),
+], note="a running jump: off the back foot, the lead knee driven, a hang, the legs reaching")
+
+# landing a jump: the knees take it (a short soak), then up (standing) or straight on (running)
+CLIPS["land_light"] = clip(8, [
+    (0, JUMP_REACH, "lin"),
+    (2, P(LOOSE, hz=0.55, spine=164, chest=156, neck=156, head=166, uaL=30, faL=52, uaR=26, faR=48, fiL=100, fiR=100,
+          fL=(0.12, 0), fR=(-0.06, 0)), "out3"),                                                        # the knees take it
+    (5, P(LOOSE, hz=0.64, spine=174, chest=170, neck=168, head=174, fL=(0.12, 0), fR=(-0.06, 0)), "out"),
+    (8, P(LOOSE), "smooth"),
+], note="landing a jump: the knees take it, up")
+CLIPS["land_run"] = clip(6, [
+    (0, RUN_REACH, "lin"),
+    (2, P(RUN0, hz=0.56, spine=162, chest=156, neck=156, head=166, fL=(0.3, 0), fR=(-0.08, 0.05, 40)), "out3"),   # the lead foot takes it, knees soak
+    (6, P(RUN0), "smooth"),                                                                              # and straight on into the run
+], note="landing a running jump: the lead foot takes it and he runs straight on")
 
 # ---------------------------------------------------------------- the vault (an oil drum, 0.88 m)
 # the drum stands 0.55 ahead of where he starts. Both hands plant on its lid and stay there while the

@@ -228,6 +228,28 @@ namespace ProjectInk
             return true;
         }
 
+        float landLockUntil;
+
+        /// <summary>Landing an ordinary jump (under 1 m): the knees take it, a short soak, then up; still holding
+        /// the run, the lead foot takes it and he runs straight on (no stop). Armed: as before (the grip holds).</summary>
+        bool LandLightV4()
+        {
+            if (!MovesV4 || KatanaMode || !body.Has("land_light")) return false;
+            var gi = GestureInput.Instance;
+            bool runOn = gi != null && gi.RunHeld && Mathf.Abs(Axis) > 0.3f && Mathf.Abs(velocity.x) > 2.4f && body.Has("land_run");
+            Sound.Play(Sfx.Land, runOn ? 0.45f : 0.6f, transform.position);
+            if (runOn)
+            {
+                EnterIdle();
+                body.Play("land_run", 0.04f);
+                running = true;
+                landLockUntil = Time.time + 0.18f;                // the run clip waits for the landing to play out
+                return true;
+            }
+            BeginTraverse("land_light", 0f);
+            return true;
+        }
+
         /// <summary>Landing on the V4 body: the knees soak a short drop; from high, a knee and a hand.</summary>
         bool LandV4(float fallHeight)
         {

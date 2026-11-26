@@ -259,7 +259,8 @@ namespace ProjectInk
                                 : clip == "katana_walk" || clip == "rod_walk" ? 0.7f
                                 : clip == "walk_alone" ? WalkSpeed : RunClipSpeed;
                 float play = Mathf.Clamp(sp / clipSpeed, 0.55f, 1.5f);
-                if (body.CurrentName != clip) body.Play(clip, clip == "rod_walk" || clip == "katana_walk" ? 0.25f : 0.15f, false, play);   // the pipe: out of its stance into the walk, eased
+                if (Time.time < landLockUntil) { }                       // a running landing playing out (land_run), then the run
+                else if (body.CurrentName != clip) body.Play(clip, clip == "rod_walk" || clip == "katana_walk" ? 0.25f : 0.15f, false, play);   // the pipe: out of its stance into the walk, eased
                 else body.SetSpeed(play);
                 running = true;
                 return;

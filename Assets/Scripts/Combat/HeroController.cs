@@ -1736,7 +1736,7 @@ namespace ProjectInk
                 return;
             }
             if (cmd == Command.ThrowWeapon && Style != FightStyle.Fists) { ThrowWeapon(); return; }
-            if (Grounded && stateTime > 0.1f) EnterIdle();
+            if (Grounded && stateTime > 0.1f && !LandLightV4()) EnterIdle();     // the knees take every landing (HeroHangV4)
         }
 
         // ---- rope: a pendulum the hero pumps; feet sweep enemies; let go into a flying kick
