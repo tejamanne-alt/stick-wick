@@ -32,7 +32,9 @@ namespace ProjectInk
         public bool InTraining => phase == Phase.Training;
 
         /// <summary>Where on the screen a step is made (drawn as a little phone screen).</summary>
-        enum Gest { TapHigh, TapLow, TapMan, SwipeAt, SwipeAway, SwipeUp, SwipeUpAt, Hold, CrouchHold, Creep, HoldMan, SwipeDown }
+        enum Gest { TapHigh, TapLow, TapMan, SwipeAt, SwipeAway, SwipeUp, SwipeUpAt, Hold, CrouchHold, Creep, HoldMan, SwipeDown,
+                    // with a pipe or a sword in hand (the swipe is the line: TrainingWeapons)
+                    CutAt, CutAway, CutDown, CutUp, CutAtDown, CutLow, CutLine, HoldSelf, DrawOut }
 
         class Step
         {
@@ -57,6 +59,8 @@ namespace ProjectInk
             public Action stage;                      // the marks: where the men stand, who swings
             public Func<IEnumerator> demo;            // the demonstration, made with the virtual fingers
             public Func<char, string, string, bool, bool> match;   // (kind, what, label, low tap)
+            public FightStyle weapon = FightStyle.Fists;            // what's in his hands for it
+            public bool fencer;                                     // man 0 fences (a blade, the red line: the parry)
         }
 
         enum TS { Title, Demo, Try, Free }
@@ -91,7 +95,7 @@ namespace ProjectInk
         float stepAt, frozenAt = -9f, tWrongAt = -9f, stepDoneAt = -9f, seqDoneAt = -1f, turnAt = -9f, watchK;
         Vector2 okFrom, okTo; float tOkAt = -9f; bool okSwipe;
 
-        const string PrefMask = "training_mask_v3", PrefSeen = "training_seen";
+        const string PrefMask = "training_mask_v3", PrefMask2 = "training_mask_v3b", PrefSeen = "training_seen";
 
         // ================================================================ start and end
 
@@ -126,7 +130,8 @@ namespace ProjectInk
             BuildLessons();
             learned = new bool[lessons.Length];
             int mask = PlayerPrefs.GetInt(PrefMask, 0);
-            for (int i = 0; i < lessons.Length && i < 31; i++) learned[i] = (mask & (1 << i)) != 0;
+            int mask2 = PlayerPrefs.GetInt(PrefMask2, 0);
+            for (int i = 0; i < lessons.Length && i < 62; i++) learned[i] = i < 31 ? (mask & (1 << i)) != 0 : (mask2 & (1 << (i - 31))) != 0;
             lastTapAt = GestureInput.TappedAt;
             GestureInput.Tapped += OnPadTap;
             GestureInput.Pushed += OnPushed;
@@ -172,6 +177,8 @@ namespace ProjectInk
                     e.Sparring = false; e.HoldFire = false; e.Keep = false; e.HealFull();
                 }
             hero.HealFull();
+            hero.TrainWith(FightStyle.Fists);
+            SetFencer(false);
             if (EscapeSeen) { hero.GiveWeapon(FightStyle.Knife, 4); Sound.Play(Sfx.KnifeGrab, 1f); if (floorKnife != null) floorKnife.gameObject.SetActive(false); }
             Sound.Tension(true);
             Sound.Play(Sfx.CineHit, 0.7f);
@@ -404,7 +411,7 @@ namespace ProjectInk
                     stage = () => { HeroAt(-3f); Mark(0, 3.5f, true, false); Bottle(-2f); }, restage = true,
                     demo = () => DemoBottle(),
                     match = (k, a, l, low) => k == 'd' && (a == "far_throw" || a == "far_smash") },
-            };
+            }.Concat(WeaponLessons()).ToArray();
         }
 
         // ================================================================ the demonstrations (real input, made by a visible finger)
@@ -464,8 +471,8 @@ namespace ProjectInk
                 case Gest.Creep: return new Vector2(side > 0 ? W * 0.7f : W * 0.3f, H * 0.46f);
                 case Gest.HoldMan: { var m = st.who >= 0 ? Man(st.who) : Focus(); return ManPx(m); }
                 case Gest.SwipeDown: return c + new Vector2(side * W * 0.14f, H * 0.12f);
+                default: return WeaponFrom(st.g, side, c);
             }
-            return c;
         }
 
         /// <summary>Where a step ends (pixels): the far end of a swipe, the way he goes for a hold.</summary>
@@ -485,8 +492,8 @@ namespace ProjectInk
                 case Gest.CrouchHold: return a + new Vector2(0f, -H * 0.16f);
                 case Gest.Creep: return a + new Vector2(side * W * 0.07f, 0f);
                 case Gest.SwipeDown: return a + new Vector2(0f, -H * 0.26f);
+                default: return WeaponTo(st.g, side, a);
             }
-            return a;
         }
 
         Vector2 ManPx(Enemy e) => e != null ? ScreenPx(e.Chest) : Px(0.75f, 0.55f);
@@ -865,8 +872,8 @@ namespace ProjectInk
                 case Gest.SwipeUpAt: return c == (side > 0 ? Command.JumpRight : Command.JumpLeft);
                 case Gest.HoldMan: return c == Command.HoldOn;
                 case Gest.SwipeDown: return c == Command.ThrowWeapon || c == Command.DropDown;
+                default: return WeaponMatches(st, c, side);
             }
-            return false;
         }
 
         void OnPushed(Command c)
@@ -945,7 +952,8 @@ namespace ProjectInk
         {
             ClearFreeze();
             if (ts == TS.Try) { tryStep = ResetStep(); seqDoneAt = -1f; }
-            Dip(lessons[li].stage, lessons[li].cast);
+            var L = lessons[li];
+            Dip(() => { ArmFor(L); L.stage(); }, L.cast);
         }
 
         int ResetStep() => lessons[li].stepPerRep ? Mathf.Min(lreps, lessons[li].steps.Length - 1) : 0;
@@ -1011,9 +1019,10 @@ namespace ProjectInk
         {
             if (learned[i]) return;
             learned[i] = true;
-            int mask = 0;
-            for (int k = 0; k < learned.Length && k < 31; k++) if (learned[k]) mask |= 1 << k;
+            int mask = 0, mask2 = 0;
+            for (int k = 0; k < learned.Length && k < 62; k++) if (learned[k]) { if (k < 31) mask |= 1 << k; else mask2 |= 1 << (k - 31); }
             PlayerPrefs.SetInt(PrefMask, mask);
+            PlayerPrefs.SetInt(PrefMask2, mask2);
             PlayerPrefs.Save();
         }
 
@@ -1035,6 +1044,8 @@ namespace ProjectInk
             lessonAt = Time.unscaledTime;
             PlayerPrefs.SetInt(PrefSeen, 1);
             PlayerPrefs.Save();
+            hero.TrainWith(trainWeapon);                    // what free play has in his hands (TrainingWeapons)
+            SetFencer(false);
             Dip(() => { HeroAt(0f); Mark(0, 2.6f, false, true); Mark(1, -2.8f, false, true); Mark(2, 4.6f, false, true); Bottle(-4f); }, All3);
             if (graduated)
             {
@@ -1281,6 +1292,30 @@ namespace ProjectInk
                     break;
                 }
                 case Gest.SwipeDown: Arrow(new Vector2(rx, r.y + 8), new Vector2(rx, r.yMax - 8), 3f, ink); break;
+                case Gest.CutAt: Arrow(new Vector2(r.center.x + 6, midY - 6), new Vector2(r.xMax - 10, midY - 6), 3f, ink); break;
+                case Gest.CutAway: Arrow(new Vector2(r.xMax - 10, midY - 6), new Vector2(r.center.x - 6, midY - 6), 3f, ink); break;
+                case Gest.CutDown: Arrow(new Vector2(rx, r.y + 8), new Vector2(rx, r.yMax - 8), 3f, ink); break;
+                case Gest.CutUp: Arrow(new Vector2(rx, r.yMax - 8), new Vector2(rx, r.y + 8), 3f, ink); break;
+                case Gest.CutAtDown: Arrow(new Vector2(r.center.x + 4, r.y + 8), new Vector2(r.xMax - 10, r.yMax - 10), 3f, ink); break;
+                case Gest.CutLow:
+                    Fill(new Rect(r.x + 2, midY, r.width - 4, 1), new Color(1f, 1f, 1f, 0.3f * a));
+                    Arrow(new Vector2(r.center.x + 6, r.yMax - 10), new Vector2(r.xMax - 10, r.yMax - 10), 3f, ink); break;
+                case Gest.CutLine:
+                    Fill(new Rect(r.center.x + 4, midY - 1, r.width * 0.4f, 3), new Color(0.9f, 0.12f, 0.1f, 0.8f * a));
+                    Arrow(new Vector2(r.center.x + 6, midY + 8), new Vector2(r.xMax - 10, midY + 8), 3f, ink); break;
+                case Gest.HoldSelf:
+                {
+                    var p = h0 + new Vector2(0f, -8f);
+                    var o3 = GUI.color;
+                    float k3 = Mathf.Repeat(Time.unscaledTime, 1f);
+                    GUI.color = new Color(1f, 1f, 1f, 0.6f * a * (1f - k3));
+                    float rr3 = 8f + 10f * k3;
+                    GUI.DrawTexture(new Rect(p.x - rr3, p.y - rr3, rr3 * 2f, rr3 * 2f), ring);
+                    GUI.color = o3;
+                    Dot(p, red);
+                    break;
+                }
+                case Gest.DrawOut: Arrow(h0 + new Vector2(0f, -8f), new Vector2(r.xMax - 10, h0.y - 8f), 3f, ink); Dot(h0 + new Vector2(0f, -8f), red); break;
             }
         }
 
@@ -1623,6 +1658,12 @@ namespace ProjectInk
                         if (m != null) Reticle(Gui(ManPx(m)) + shift, a);
                         break;
                     }
+                case Gest.CutAt: case Gest.CutAway: case Gest.CutDown: case Gest.CutUp: case Gest.CutAtDown: case Gest.CutLow: case Gest.CutLine: case Gest.DrawOut:
+                    SwipeGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, false);
+                    break;
+                case Gest.HoldSelf:
+                    HoldGuide(Gui(From(i)) + shift, Gui(From(i)) + shift + new Vector2(0f, -40f), a, "HOLD ON YOURSELF");
+                    break;
             }
         }
 
@@ -1863,28 +1904,35 @@ namespace ProjectInk
             tTitle.normal.textColor = new Color(1f, 1f, 1f, a);
             GUI.Label(new Rect(head.x, head.y + 2, head.width, 36), Spaced("FREE PLAY"), tTitle);
             tCap.normal.textColor = new Color(1f, 1f, 1f, 0.6f * a);
-            int got = 0;
-            foreach (var b in learned) if (b) got++;
-            GUI.Label(new Rect(head.x, head.y + 38, head.width, 22), got + " / " + lessons.Length + " moves  ·  they keep getting up", tCap);
+            int got = 0, of = 0;
+            for (int i = 0; i < lessons.Length; i++) if (ForWeapon(i)) { of++; if (learned[i]) got++; }
+            GUI.Label(new Rect(head.x, head.y + 38, head.width, 22), got + " / " + of + " moves  ·  they keep getting up", tCap);
             float bw = Mathf.Min(260f, cw * 0.5f - 6), by = head.yMax + 8;
             if (TrainButton(new Rect(w * 0.5f + 6, by, bw, 44), Spaced("CONTINUE STORY") + "  ›", true)) { EndTraining(); return; }
             if (TrainButton(new Rect(w * 0.5f - 6 - bw, by, bw, 44), Spaced("LESSONS")))
             {
-                int first = Array.IndexOf(learned, false);
-                StartLesson(first < 0 ? 0 : first);
+                // the first one not yet learned, for what's in his hands
+                int first = -1, any = -1;
+                for (int i = 0; i < lessons.Length; i++) if (ForWeapon(i)) { if (any < 0) any = i; if (!learned[i] && first < 0) first = i; }
+                StartLesson(first >= 0 ? first : Mathf.Max(0, any));
                 return;
             }
+            // what's in his hands: FISTS · PIPE · SWORD (TrainingWeapons)
+            WeaponChips(w * 0.5f, by + 52f);
 
             // the checklist: lit when landed; a row tapped plays its lesson (watch, then your turn)
-            float rw = Mathf.Min(240f, w * 0.24f), rh = Mathf.Min(24f, (h - 150f) / (lessons.Length + 1));
+            int rows = 0;
+            for (int i = 0; i < lessons.Length; i++) if (ForWeapon(i)) rows++;
+            float rw = Mathf.Min(240f, w * 0.24f), rh = Mathf.Min(24f, (h - 150f) / (rows + 1));
             var tog = new Rect(w - rw - 12, 12, rw, 30);
             if (TrainButton(tog, (listOpen ? "▾  " : "▸  ") + Spaced("MOVES"))) listOpen = !listOpen;
             if (!listOpen) return;
             float y = tog.yMax + 4;
-            Fill(new Rect(tog.x, y, rw, rh * lessons.Length + 8), new Color(0f, 0f, 0f, 0.5f));
+            Fill(new Rect(tog.x, y, rw, rh * rows + 8), new Color(0f, 0f, 0f, 0.5f));
             y += 4;
             for (int i = 0; i < lessons.Length; i++)
             {
+                if (!ForWeapon(i)) continue;
                 var row = new Rect(tog.x, y, rw, rh);
                 float fl = i == flashRow ? Mathf.Clamp01(1f - (now - flashRowAt) / 0.8f) : 0f;
                 if (fl > 0f) Fill(row, new Color(0.8f, 0.06f, 0.07f, 0.55f * fl));

@@ -27,6 +27,18 @@ namespace ProjectInk
     /// rising line falls on his back (cut_down_back).</summary>
     public partial class HeroController
     {
+        /// <summary>The training ground: put this in his hands (FISTS puts it away). Never wears out there.</summary>
+        public void TrainWith(FightStyle s)
+        {
+            if (Style == s) return;
+            if (carried != null) DropCarried();
+            rodWound = false; sheathed = false;
+            Equip(s, s == FightStyle.Fists ? 0 : 999);
+            if (s == FightStyle.Sword) OnKatanaTaken();
+            if (s == FightStyle.Pipe) { pipeFlow = 0; pipeLast = null; pipeFlowUntil = -9f; }
+            Sound.Play(s == FightStyle.Sword ? Sfx.SwordClash : Sfx.Pickup, 0.6f, transform.position);
+        }
+
         bool edgeClean, edgeTurned, edgeSlow;
         int breath;
         float lastCutDownAt = -9f;
@@ -49,12 +61,25 @@ namespace ProjectInk
 
         float EdgeMul => edgeTurned ? 0.6f : edgeClean ? 1.25f : edgeSlow ? 0.85f : 1f;
 
-        /// <summary>A man struck while attacking: DEBANA (early in his wind-up), or cut off (late, or mid-swing).</summary>
-        static int Timing(Enemy e)
+        /// <summary>The man whose wind-up had only just begun when this cut was started (debana is judged
+        /// by when the cut is begun, not when it lands: the blade takes a quarter of a second to get there).</summary>
+        Enemy debanaFoe;
+
+        /// <summary>At the start of a cut: is the man it's going for just deciding (the first 45% of his wind-up)?</summary>
+        void ReadDebana(Enemy t)
         {
-            float wp = e.WindupProgress;
-            if (wp >= 0f && wp < 0.45f) return 2;                                     // debana
-            if (e.Telegraphing || e.MidSwing) return 1;                               // cut him off
+            debanaFoe = null;
+            if (t == null) return;
+            float wp = t.WindupProgress;
+            if (wp >= 0f && wp < 0.45f) debanaFoe = t;
+        }
+
+        /// <summary>A man struck while attacking: DEBANA (the cut was begun as he decided), or cut off (later).</summary>
+        int Timing(Enemy e)
+        {
+            bool attacking = e.Telegraphing || e.MidSwing;
+            if (attacking && e == debanaFoe) return 2;                                // debana
+            if (attacking) return 1;                                                  // cut him off
             return 0;
         }
 

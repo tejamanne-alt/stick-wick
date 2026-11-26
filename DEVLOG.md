@@ -2087,3 +2087,12 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - walking away from him for over 1.2 s. The first steps of a back-step while still facing him don't count, so a tactical retreat keeps the pick.
 
   His red brackets open out and fade (0.35 s), so it's seen to go. Tapping another man still switches straight to him.
+- **Weapon training (chapter 1's ground, for testing)** (`TrainingWeapons.cs`).
+  - **Lessons:** 9 new, in the same WATCH / YOUR TURN form, after the 24 bare-hand ones.
+    - **Pipe:** THE SWINGS, FIGURE EIGHT, INTERCEPT, THE FULL TURN.
+    - **Sword:** ONE LINE, THE SWALLOW, DEBANA, SAYA NO UCHI, THE PARRY. For the parry, partner 0 fences: a blade in hand, his cuts as red lines.
+    - **Gestures and demos:** new gesture kinds for weapon swipes (at, away, down, up, diagonal, drawn low, along his line), holding on yourself and drawing out. Each has its phone icon, big guide, match and demo.
+  - **Free play:** FISTS · PIPE · SWORD chips put the weapon in his hands (`HeroController.TrainWith`). The MOVES list and LESSONS button follow what he holds.
+  - **Training rules:** the pipe doesn't wear while sparring. CONTINUE STORY returns him to bare hands.
+  - **Saved progress:** a second slot (`training_mask_v3b`) for lessons past 31. Bare-hand progress is untouched.
+  - **Debana fix:** debana is now judged when the cut is begun, not when it lands. The blade takes a quarter of a second to arrive, longer than the first half of most wind-ups, so the old rule was nearly impossible in the chapters too.

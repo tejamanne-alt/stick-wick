@@ -148,6 +148,7 @@ namespace ProjectInk
             else kataLog.Add((cut, now));
             if (Time.time < kaeshiUntil) { katanaMul *= 1.6f; katanaLabel = katanaLabel ?? "KAESHI"; kaeshiUntil = 0f; }
             katanaCut = cut;
+            ReadDebana(t);                                                    // is he only just deciding? (HeroSwordV4)
             if (cut == "ushiro") { farFoe = t; BeginFarClip("ushiro", "katana"); }
             else if (t != null) BeginFar(cut, t, "katana", reach);
             else BeginFarClip(cut, "katana");
@@ -168,6 +169,7 @@ namespace ProjectInk
             katanaLabel = Time.time < kaeshiUntil ? "KAESHI" : null;
             kaeshiUntil = 0f;
             katanaCut = low ? "tsuki_low" : "tsuki";
+            ReadDebana(t);
             if (t != null) BeginFar(katanaCut, t, "katana", 1.5f); else BeginFarClip(katanaCut, "katana");
             Sound.Play(Sfx.Whoosh, 1f, transform.position, 1.2f);
             Lesson("thrust", "Point first. The edge is for after.");
@@ -225,6 +227,7 @@ namespace ProjectInk
                 if (InkFx.Instance != null) InkFx.Instance.Splash(e.Chest, new Vector3(Facing, 0.3f, 0f), edgeClean ? 24 : 18, e.InkColor);
                 if (TimeController.Instance != null) TimeController.Instance.HitStop(timing > 0 ? 8 : edgeClean ? 6 : 5);
                 if (edgeClean && lastStroke != null) lastStroke.Linger(0.35f);
+                if (edgeClean) Tell("cut_clean");                                 // (the training ground listens)
             }
             if (any && katanaLabel != null && !killedThisCut && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(katanaLabel == "KATA OF THREE" ? 400 : 180, katanaLabel);
             if (!any) Sound.Play(Sfx.Whoosh, 0.6f, transform.position);
@@ -303,6 +306,7 @@ namespace ProjectInk
             if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.1f, 0.12f);
             if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(pts, bl ?? katanaLabel ?? (edgeClean ? "CLEAN CUT" : "CUT DOWN"));
             if (breath >= 2) Haptics.Vibrate();
+            if (edgeClean) Tell("cut_clean");
             StartCoroutine(LayDown(e, 1.5f));
         }
 

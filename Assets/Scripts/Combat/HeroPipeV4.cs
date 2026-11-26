@@ -328,6 +328,7 @@ namespace ProjectInk
                     else if (katanaLabel != null) wd.AddStyle(150, katanaLabel);
                 }
                 if (intercepted) Tell("intercept");
+                Tell(spin ? "pipe_spin" : "pipe_" + c);                           // (the training ground listens)
                 PipeWear();
             }
             else
@@ -341,6 +342,7 @@ namespace ProjectInk
         /// <summary>Hits wear it, misses don't. Bending near the end; then it gives out.</summary>
         void PipeWear()
         {
+            if (Sparring) return;                                             // the training ground: it never wears
             PipeUses--;
             var wd = WaveDirector.Instance;
             if (PipeUses == 4 && !pipeBendWarned)
