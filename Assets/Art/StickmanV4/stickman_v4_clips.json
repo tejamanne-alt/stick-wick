@@ -1779,6 +1779,50 @@
       "v4": true
     },
     {
+      "name": "sentry",
+      "frames": 150,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "unlock",
+      "frames": 40,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "carry_stand",
+      "frames": 60,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "carry_walk",
+      "frames": 26,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
       "name": "lower_down",
       "frames": 30,
       "fps": 30,

@@ -96,6 +96,17 @@ namespace ProjectInk
         /// <summary>A shove from the world (a gust of wind on the wall walk, a rolling barrel).</summary>
         public void Push(float vx) { velocity.x += vx; }
 
+        /// <summary>Turned to face a point in the room, depth included (a clerk across his counter, a man at a
+        /// table): not only left or right. A later SetFacing / FaceTowards turns him back to the side view.</summary>
+        public void LookAtXZ(Vector3 at)
+        {
+            float dx = at.x - transform.position.x, dz = at.z - transform.position.z;
+            if (dx * dx + dz * dz < 0.0004f) return;
+            Facing = dx >= 0f ? 1 : -1;
+            facingSet = true;
+            transform.rotation = Quaternion.Euler(0f, Mathf.Atan2(-dz, dx) * Mathf.Rad2Deg, 0f);
+        }
+
         public void FaceTowards(float x)
         {
             if (Mathf.Abs(x - transform.position.x) > 0.05f) SetFacing(x > transform.position.x ? 1 : -1);

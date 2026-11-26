@@ -18,12 +18,62 @@ namespace ProjectInk
         // the bank's plan (BankBuilder / build_bank_set.py)
         const float BankDoorX = -0.4f, TellerX = 16.1f, ClerkZ = 3.25f, GateX = 28.5f, VaultX = 33f, TableX = 39.5f, TableY = 0.93f, TableZ = 0.75f;
         static readonly Vector3 Box417 = new Vector3(37.25f, 1.45f, 2.72f);
+        // the viewing table (build_bank_set.py TABLE): 2.0 long (x 38.5..40.5), 0.9 deep (z 0.3..1.2), a chair
+        // behind it at x 39.7, z 1.6. Nobody walks through it: Harrow sets the box down from its right-hand end
+        // and the hero stands at its front; the box sits towards that end, in his reach.
+        static readonly Vector3 BoxOnTable = new Vector3(TableX + 0.45f, TableY + 0.13f, TableZ);
+        const float HeroAtTable = TableX - 0.4f;
 
         Enemy clerk, harrow, guard, waitA, waitB;
         Transform depositBox, boxLid, pouch, ringOnHand, phoneProp, carDoor, doorL, doorR, bankKey, hisKey, emptySlot;
 
         /// <summary>Where a box is when a man carries it in both hands before him.</summary>
-        static Vector3 CarriedBy(Enemy e) => e.transform.position + new Vector3(e.Facing * 0.36f, 0.95f, -0.08f);
+        static Vector3 CarriedBy(Enemy e) => e.transform.position + e.transform.rotation * new Vector3(0.36f, 0f, 0f) + new Vector3(0f, 0.95f, 0f);
+
+        /// <summary>A walk along waypoints (through a doorway, round a table): the point a fraction k of the way
+        /// along, by distance; `ahead` is the direction he's walking there (to face it).</summary>
+        static Vector3 AlongPath(Vector3[] pts, float k, out Vector3 ahead)
+        {
+            float total = 0f;
+            for (int i = 1; i < pts.Length; i++) total += Vector3.Distance(pts[i - 1], pts[i]);
+            float d = Mathf.Clamp01(k) * total;
+            for (int i = 1; i < pts.Length; i++)
+            {
+                float seg = Vector3.Distance(pts[i - 1], pts[i]);
+                if (d <= seg || i == pts.Length - 1)
+                {
+                    ahead = pts[i] - pts[i - 1];
+                    return Vector3.Lerp(pts[i - 1], pts[i], seg > 0.0001f ? Mathf.Clamp01(d / seg) : 1f);
+                }
+                d -= seg;
+            }
+            ahead = Vector3.right;
+            return pts[pts.Length - 1];
+        }
+
+        static float PathLength(Vector3[] pts)
+        {
+            float total = 0f;
+            for (int i = 1; i < pts.Length; i++) total += Vector3.Distance(pts[i - 1], pts[i]);
+            return total;
+        }
+
+        /// <summary>A man walked along waypoints over `seconds` (facing the way he walks), each frame calling `shot`.</summary>
+        IEnumerator WalkPath(Enemy e, Vector3[] pts, float seconds, string clip, System.Action shot)
+        {
+            if (e == null) yield break;
+            e.PuppetPlay(clip, 0.1f, 0.85f);
+            float t = 0f;
+            while (t < seconds)
+            {
+                t += StoryDt;
+                var at = AlongPath(pts, Mathf.SmoothStep(0f, 1f, t / seconds), out var ahead);
+                e.PuppetPose(at);
+                if (ahead.sqrMagnitude > 0.0001f) e.LookAtXZ(at + ahead);
+                if (shot != null) shot();
+                yield return null;
+            }
+        }
         string tapTitle, tapHow;
         float tapAt = -1f;
         string walkTitle;
@@ -49,7 +99,7 @@ namespace ProjectInk
             barsPx = 92f;
             SpawnBankPeople();
             BuildBankProps();
-            var tableAt = new Vector3(TableX, TableY + 0.13f, TableZ);
+            var tableAt = BoxOnTable;
             int startAt = BankFrom;
             BankFrom = 0;
 
@@ -111,7 +161,7 @@ namespace ProjectInk
                 guard.PuppetPlay("idle_loose", 0.15f);
                 // keys from his belt, into the lock: the key turns, the bolt drops
                 Sound.Play(Sfx.KnifeGrab, 0.3f, new Vector3(-0.6f, 1.1f, 0f), 1.6f);
-                guard.PuppetPlay("cross", 0.12f, 0.3f);
+                guard.PuppetPlay("unlock", 0.12f, 1f);                     // the key in the lock (his hand, not a punch)
                 yield return Hold(0.7f, doorsShot);
                 Sound.Play(Sfx.Latch, 0.8f, new Vector3(-0.6f, 1.1f, 0f), 1.3f);
                 yield return Hold(0.5f, doorsShot);
@@ -132,7 +182,7 @@ namespace ProjectInk
                     yield return null;
                 }
                 guard.SetFacing(-1);
-                guard.PuppetPlay("idle", 0.2f);
+                guard.PuppetPlay("sentry", 0.2f);                         // on his post: a guard's stand, not a fighter's
             }
             Say("YOU", "If I've been here before... someone in there knows my face.", 2.8f);
             yield return Hold(3.0f, () => EndShot(HeadC() + new Vector3(0.5f, 0.0f, -1.2f), HeadC(), 32f));
@@ -157,22 +207,29 @@ namespace ProjectInk
                 });
             }
             hero.CinePuppet();
+            if (guard != null) guard.LookAtXZ(hero.transform.position);
             Say("GUARD", "Morning, sir.", 1.6f, HeadT(guard));
             yield return Hold(1.7f, () => EndShot(new Vector3(-2.6f, 1.6f, -2.0f), new Vector3(-1.5f, 1.3f, 0.8f), 36f));
             // in through the open doors: the street's air gives way to the hush of marble
             Sound.Play(Sfx.Footstep, 0.5f, null, 1.0f);
             Sound.Ambience(0f, 0.75f, 5000f);
+            // the guard follows him back in: round the open leaf, through the doorway (z -1.2..1.2: never the
+            // stone beside it), to his post by the lectern
+            var guardIn = new[] { new Vector3(-1.25f, 0f, 1.55f), new Vector3(-1.0f, 0f, 0.7f), new Vector3(0.5f, 0f, 0.7f), new Vector3(1.8f, 0f, 1.4f) };
+            float guardS = 0f, guardLen = PathLength(guardIn);
             yield return PuppetWalk(2.2f, 2.2f, () =>
             {
-                if (guard != null && hero.transform.position.x > 0.2f)
+                if (guard != null && hero.transform.position.x > 0.2f && guardS < guardLen)
                 {
-                    guard.SetFacing(1);
                     if (guard.body.CurrentName != "walk") guard.PuppetPlay("walk", 0.1f, 0.8f);
-                    guard.PuppetPose(Vector3.MoveTowards(guard.transform.position, new Vector3(1.8f, 0f, 1.4f), StoryDt * 1.6f));
+                    guardS = Mathf.Min(guardLen, guardS + StoryDt * 1.6f);
+                    var at = AlongPath(guardIn, guardS / guardLen, out var ahead);
+                    guard.PuppetPose(at);
+                    guard.LookAtXZ(at + ahead);
                 }
                 EndShot(new Vector3(3.6f, 1.7f, -1.4f), hero.transform.position + Vector3.up * 1.2f, 40f);
             });
-            if (guard != null) { guard.PuppetPose(new Vector3(1.8f, 0f, 1.4f)); guard.PuppetPlay("idle", 0.2f); }
+            if (guard != null) { guard.PuppetPose(new Vector3(1.8f, 0f, 1.4f)); guard.PuppetPlay("sentry", 0.2f); }
 
             // ------------------------------------------------------------ B5 the lobby, wide; the guard watches him pass
             if (guard != null) guard.FaceTowards(hero.transform.position.x);
@@ -197,6 +254,7 @@ namespace ProjectInk
             if (startAt == 1) TestState(1);
             // ------------------------------------------------------------ B7 through the glass
             System.Action overShoulder = () => EndShot(new Vector3(TellerX - 0.9f, 1.75f, -0.9f), Head(clerk, new Vector3(TellerX, 1.5f, ClerkZ)), 32f);
+            if (clerk != null) clerk.LookAtXZ(hero.transform.position);       // across the counter, at him (not off to one side)
             Say("CLERK", "Good morning. How can I help you?", 2.4f, HeadT(clerk));
             yield return Hold(2.6f, overShoulder);
             Sound.Play(Sfx.KnifeGrab, 0.35f, null, 1.5f);                  // the key, slid under the glass
@@ -229,7 +287,7 @@ namespace ProjectInk
                     EndShot(new Vector3(TellerX + 0.6f, 1.6f, -3.6f), new Vector3(TellerX + 1.6f, 1.3f, 0.3f), 38f);
                     yield return null;
                 }
-                harrow.PuppetPlay("idle", 0.2f);
+                harrow.PuppetPlay("idle_loose", 0.2f);
             }
             Say("MR. PELL", "This way, sir.", 1.6f, HeadT(harrow));
             yield return Hold(1.6f, () => EndShot(new Vector3(TellerX + 0.6f, 1.6f, -3.6f), new Vector3(TellerX + 1.0f, 1.3f, 0.3f), 38f));
@@ -361,20 +419,24 @@ namespace ProjectInk
             if (harrow != null)
             {
                 harrow.SetFacing(1);
-                harrow.PuppetPlay("walk", 0.1f, 0.7f);
+                harrow.PuppetPlay("carry_walk", 0.1f, 0.85f);               // the box in both hands before him
                 var mFrom = harrow.transform.position;
-                var mTo = new Vector3(TableX - 0.62f, 0f, TableZ);
-                float tc = 0f;
-                while (tc < 2.0f)
+                // behind the table (clear of its chair at z 1.6), round its right-hand end, to set it down from there
+                var carry = new[] { mFrom, new Vector3(TableX + 1.4f, 0f, 2.2f), new Vector3(TableX + 1.35f, 0f, TableZ) };
+                float tc = 0f, dur = 2.6f;
+                while (tc < dur)
                 {
                     tc += StoryDt;
-                    float k = Mathf.SmoothStep(0f, 1f, tc / 1.9f);
-                    harrow.PuppetPose(Vector3.Lerp(mFrom, mTo, k));
+                    float k = Mathf.SmoothStep(0f, 1f, tc / (dur - 0.1f));
+                    var at = AlongPath(carry, k, out var ahead);
+                    harrow.PuppetPose(at);
+                    if (ahead.sqrMagnitude > 0.0001f) harrow.LookAtXZ(at + ahead);
                     if (depositBox != null) depositBox.position = Vector3.Lerp(slotOut, CarriedBy(harrow), Mathf.Clamp01(tc / 0.4f));
                     EndShot(new Vector3(TableX - 1.4f, 1.7f, -1.9f), harrow.transform.position + new Vector3(0.4f, 1.0f, 0f), 40f);
                     yield return null;
                 }
-                harrow.PuppetPlay("idle_loose", 0.15f);
+                harrow.SetFacing(-1);                                          // facing along the table, the box before him over its end
+                harrow.PuppetPlay("carry_stand", 0.15f);
                 var held = depositBox != null ? depositBox.position : tableAt;
                 float td = 0f;
                 while (td < 0.7f)
@@ -384,6 +446,7 @@ namespace ProjectInk
                     EndShot(new Vector3(TableX - 1.4f, 1.7f, -1.9f), tableAt + Vector3.up * 0.2f, 38f);
                     yield return null;
                 }
+                harrow.PuppetPlay("idle_loose", 0.2f);
             }
             else if (depositBox != null) depositBox.position = tableAt;
             Sound.Play(Sfx.Crate, 0.35f, tableAt, 1.4f);
@@ -398,8 +461,10 @@ namespace ProjectInk
                 {
                     tw2 += StoryDt;
                     float k = Mathf.SmoothStep(0f, 1f, tw2 / 1.3f);
-                    hero.CinePose(Vector3.Lerp(hFrom, new Vector3(TableX - 0.85f, 0f, 0f), k));
-                    if (harrow != null) harrow.PuppetPose(Vector3.Lerp(mFrom, new Vector3(TableX + 1.1f, 0f, 0.6f), k));
+                    // (out from the wall to the front of the table first: its corner is at x 38.5, z 0.3)
+                    var heroTo = new[] { hFrom, new Vector3(TableX - 1.3f, 0f, 0f), new Vector3(HeroAtTable, 0f, 0f) };
+                    hero.CinePose(AlongPath(heroTo, k, out _));
+                    if (harrow != null) harrow.PuppetPose(Vector3.Lerp(mFrom, new Vector3(TableX + 1.8f, 0f, 0.9f), k));
                     EndShot(new Vector3(TableX - 1.6f, 1.8f, -1.6f), tableAt + Vector3.up * 0.3f, 40f);
                     yield return null;
                 }
@@ -412,17 +477,12 @@ namespace ProjectInk
             yield return Hold(1.2f, () => EndShot(new Vector3(TableX - 1.6f, 1.8f, -1.6f), tableAt + Vector3.up * 0.3f, 40f));
             if (harrow != null)
             {
-                harrow.SetFacing(-1);
-                harrow.PuppetPlay("walk", 0.1f, 0.9f);
-                var from = harrow.transform.position;
-                float tl = 0f;
-                while (tl < 2.2f)
-                {
-                    tl += StoryDt;
-                    harrow.PuppetPose(Vector3.Lerp(from, new Vector3(VaultX - 1.5f, 0f, 1.0f), tl / 2.2f));
-                    EndShot(new Vector3(TableX + 1.4f, 1.6f, -1.8f), new Vector3(VaultX + 1f, 1.4f, 0.4f), 44f);
-                    yield return null;
-                }
+                // behind the table (clear of the chair), then out through the round door where its opening is
+                // widest at the floor (z 0.3: its centre), not through the steel beside it
+                var leave = new[] { harrow.transform.position, new Vector3(TableX + 1.8f, 0f, 2.3f), new Vector3(TableX - 2.0f, 0f, 2.3f),
+                                    new Vector3(TableX - 3.0f, 0f, 0.3f), new Vector3(VaultX - 1.5f, 0f, 0.3f) };
+                yield return WalkPath(harrow, leave, 3.6f, "walk",
+                    () => EndShot(new Vector3(TableX + 1.4f, 1.6f, -1.8f), new Vector3(VaultX + 1f, 1.4f, 0.4f), 44f));
                 harrow.gameObject.SetActive(false);
             }
             Sound.Play(Sfx.Door, 0.5f, new Vector3(VaultX, 1f, 0f), 0.7f);
@@ -443,7 +503,7 @@ namespace ProjectInk
             {
             if (startAt == 3) TestState(3);
             // ------------------------------------------------------------ B13 alone. Play: open it
-            hero.CinePose(new Vector3(TableX - 0.85f, 0f, 0f));
+            hero.CinePose(new Vector3(HeroAtTable, 0f, 0f));
             hero.SetFacing(1);
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.2f);
             Sound.Ambience(0.0f, 0.4f, 3000f);
@@ -587,7 +647,7 @@ namespace ProjectInk
             hero.SetFacing(-1);
             Sound.Ambience(0f, 0.75f, 5000f);
             if (clerk != null) clerk.SetFacing(1);                      // she won't meet his eyes
-            if (guard != null) { guard.PuppetPose(new Vector3(3.2f, 0f, 1.3f)); guard.SetFacing(1); }
+            if (guard != null) { guard.PuppetPose(new Vector3(3.2f, 0f, 1.3f)); guard.SetFacing(1); guard.PuppetPlay("sentry", 0f); }
             Sound.Play(Sfx.Heartbeat, 0.35f);
             yield return PlayerWalk(TellerX + 0.4f, 1.0f, 2.4f, Application.isMobilePlatform ? "HOLD THE LEFT SIDE TO WALK OUT" : "HOLD  A  OR  LEFT ARROW  TO WALK OUT", -1);
             // past the counter: she's on the phone again, low, her back to him
@@ -636,7 +696,7 @@ namespace ProjectInk
             Sound.Ambience(0f, 0.75f, 5000f);
             if (doorL != null) doorL.localRotation = Quaternion.Euler(0f, -78f, 0f);
             if (doorR != null) doorR.localRotation = Quaternion.Euler(0f, 78f, 0f);
-            if (guard != null) { guard.PuppetPose(new Vector3(1.8f, 0f, 1.4f)); guard.SetFacing(-1); guard.PuppetPlay("idle", 0f); }
+            if (guard != null) { guard.PuppetPose(new Vector3(1.8f, 0f, 1.4f)); guard.SetFacing(-1); guard.PuppetPlay("sentry", 0f); }
             hero.SetFacing(1);
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0f);
             switch (at)
@@ -644,12 +704,12 @@ namespace ProjectInk
                 case 1: hero.CinePose(new Vector3(TellerX - 0.3f, 0f, 0f)); break;
                 case 2:
                     hero.CinePose(new Vector3(TableX - 1.2f, 0f, 0f));
-                    if (harrow != null) { harrow.PuppetPose(new Vector3(TableX + 0.1f, 0f, 0.35f)); harrow.SetFacing(-1); harrow.PuppetPlay("idle_loose", 0f); }
+                    if (harrow != null) { harrow.PuppetPose(new Vector3(TableX + 1.35f, 0f, TableZ)); harrow.SetFacing(-1); harrow.PuppetPlay("idle_loose", 0f); }
                     break;
                 case 3:
-                    hero.CinePose(new Vector3(TableX - 0.85f, 0f, 0f));
+                    hero.CinePose(new Vector3(HeroAtTable, 0f, 0f));
                     if (harrow != null) harrow.gameObject.SetActive(false);
-                    if (depositBox != null) depositBox.position = new Vector3(TableX, TableY + 0.13f, TableZ);
+                    if (depositBox != null) depositBox.position = BoxOnTable;
                     if (emptySlot != null) emptySlot.gameObject.SetActive(true);
                     Sound.Ambience(0.0f, 0.4f, 3000f);
                     break;
@@ -681,8 +741,9 @@ namespace ProjectInk
             // civilians are greys (only fighters carry colour in this world)
             clerk = Person(new Vector3(TellerX, 0f, ClerkZ), -1, new Color(0.2f, 0.2f, 0.22f), "idle_loose");
             if (clerk != null) Dress(clerk.body, Look.Clerk);
+            if (clerk != null) clerk.LookAtXZ(new Vector3(TellerX - 0.3f, 0f, 0f));   // facing her window, where customers stand
             harrow = Person(new Vector3(24.5f, 0f, 0.3f), -1, new Color(0.3f, 0.3f, 0.32f), "idle_loose");
-            guard = Person(new Vector3(3.2f, 0f, 0.4f), -1, new Color(0.08f, 0.08f, 0.1f), "idle");
+            guard = Person(new Vector3(3.2f, 0f, 0.4f), -1, new Color(0.08f, 0.08f, 0.1f), "sentry");     // a security guard, not a fighter
             waitA = Person(new Vector3(3.0f, 0f, 7.6f), 1, new Color(0.24f, 0.24f, 0.26f), "idle_loose");
             waitB = Person(new Vector3(8.6f, 0f, 7.7f), -1, new Color(0.34f, 0.34f, 0.36f), "idle_loose");
         }

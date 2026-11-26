@@ -281,3 +281,52 @@ CLIPS["push"] = clip(20, [
     (15, P(LOOSE, hx=0.14, hz=0.64, spine=170, chest=164, uaL=40, faL=70, uaR=30, faR=60, fiL=60, fiR=60, fL=(0.3, 0), fR=(0.0, 20), liftR=0.03), "out"),
     (20, P(LOOSE, hx=0.0, fL=(0.12, 0), fR=(-0.04, 0), liftL=0.02), "smooth"),
 ], hit=9, note="pushing: both hands on it, the legs drive with the back flat, it goes")
+
+
+# ---------------------------------------------------------------- the people who aren't fighting (story)
+# A security guard on his post: feet a shoulder apart, weight even, the hands clasped in front at the belt,
+# the chin up, the eyes moving; breathing. Not a fighter's guard (that was what he used to stand in).
+SENTRY = P(LOOSE, hz=0.672, spine=180, spine_mid=180, chest=180, neck=176, head=180, clL=(6, 0), clR=(6, 0),
+           hL=(0.13, 0.66), hR=(0.15, 0.68), fiL=90, fiR=120, fL=(0.13, 0), fR=(-0.07, 0))
+CLIPS["sentry"] = clip(150, [
+    (0, SENTRY, "smooth"),
+    (40, P(SENTRY, head=179, tw_head=-12), "smooth"),           # a look along the street
+    (75, P(SENTRY, head=180, tw_head=-12), "smooth"),
+    (110, P(SENTRY, head=181, tw_head=8), "smooth"),            # and back the other way
+    (150, SENTRY, "smooth"),
+], loop=True, breath=True, breaths=4, note="a security guard on his post: hands clasped at the belt, chin up, watching")
+
+# a key in a lock at hand height: the hand goes to it, the wrist turns twice (the lock, the bolt), stays
+CLIPS["unlock"] = clip(40, [
+    (0, LOOSE, "smooth"),
+    (8, P(LOOSE, spine=176, chest=174, head=172, hR=(0.32, 1.0), haR=90, fiR=150, twR=0), "out"),         # the key into the lock
+    (14, P(LOOSE, spine=176, chest=174, head=172, hR=(0.33, 1.0), haR=90, fiR=150, twR=80), "in"),        # turned
+    (18, P(LOOSE, spine=176, chest=174, head=172, hR=(0.33, 1.0), haR=90, fiR=150, twR=0), "out"),
+    (24, P(LOOSE, spine=176, chest=174, head=172, hR=(0.33, 1.0), haR=90, fiR=150, twR=85), "in"),        # and again: the bolt
+    (32, P(LOOSE, spine=177, chest=175, head=174, hR=(0.3, 0.98), haR=90, fiR=150, twR=85), "smooth"),
+    (40, P(LOOSE, spine=177, chest=175, head=174, hR=(0.3, 0.98), haR=90, fiR=150, twR=85), "smooth"),
+], note="a key in a lock at hand height: in, turned twice, held")
+
+# carrying a box in both hands before him, at the waist (StoryBank.CarriedBy: 0.36 forward, 0.95 up)
+CARRY = dict(hL=(0.3, 0.93), hR=(0.33, 0.95), fiL=110, fiR=110, haL=96, haR=96, clL=(10, 2), clR=(10, 2))
+CLIPS["carry_stand"] = clip(60, [
+    (0, P(LOOSE, spine=178, chest=176, **CARRY), "smooth"),
+    (30, P(LOOSE, spine=178, chest=176, hz=0.674, **CARRY), "smooth"),
+    (60, P(LOOSE, spine=178, chest=176, **CARRY), "smooth"),
+], loop=True, breath=True, breaths=2, note="holding a box in both hands before him")
+
+
+def _carry_walk():
+    keys = []
+    for f, p, e in gait(26, WALK_SPEED, duty=0.6, lift=0.05, hz=0.664, bounce=0.016, bounce_low_at_mid=False,
+                        spine=178, chest=176, neck=170, head=174, arm_base=0, arm_amp=0, elbow=10, fist=110,
+                        twist=4, strike=-16, push=34):
+        bob = p["hz"] - 0.664
+        c = dict(CARRY)
+        c["hL"] = (0.3, 0.93 + bob)
+        c["hR"] = (0.33, 0.95 + bob)
+        keys.append((f, P(p, **c), e))
+    return keys
+
+
+CLIPS["carry_walk"] = clip(26, _carry_walk(), loop=True, speed=WALK_SPEED, note="walking with a box held in both hands before him")
