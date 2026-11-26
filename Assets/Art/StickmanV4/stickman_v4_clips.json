@@ -2754,6 +2754,17 @@
       "v4": true
     },
     {
+      "name": "katana_run",
+      "frames": 16,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
       "name": "rod_guard",
       "frames": 60,
       "fps": 30,
@@ -2916,6 +2927,17 @@
       "loadFrame": -1,
       "reach": 1.6,
       "endShift": 0.26,
+      "v4": true
+    },
+    {
+      "name": "rod_run",
+      "frames": 16,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
       "v4": true
     }
   ]

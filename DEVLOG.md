@@ -2129,3 +2129,9 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **Camera:** it leads a run by up to 1.8 m, so what he runs into is on screen in time, and settles back when he stops.
   - **Training ground:** RUN, FLYING KNEE and SLIDE TACKLE now teach tap-then-hold. Their demos show it, and the hold guide reads TAP, THEN HOLD.
   - **Preview tool:** the blade shows only for sword and pipe moves. The FBX is rebuilt.
+- **Running armed.** With a pipe or sword, tap-then-hold used to only walk: there was no armed run at all. Now:
+  - **The pipe run** (`rod_run`, 3.2 → 4.0 m/s; the pipe is heavy): the pipe stays cocked back on the right shoulder in that hand, where every forehand starts, so a swipe mid-run goes straight into the swing. The left arm pumps, the body leans in, and there's a flight phase.
+  - **The katana run** (`katana_run`, 3.4 → 4.4 m/s; it's light): the blade trails low behind in the right hand, its point a hand above the floor, and the left arm pumps. A rising cut comes straight out of it.
+  - **Momentum:** a swing made running (over 2.6 m/s) carries the run into him, ×1.2. The pipe's is CHARGING SWING, the sword's RUNNING CUT.
+  - **Stops and turns:** armed runs don't use the bare-handed run_stop or run_turn, so the grip never jumps.
+  - **Build:** the FBX is rebuilt (295 clips).

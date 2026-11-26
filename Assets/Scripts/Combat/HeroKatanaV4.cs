@@ -149,6 +149,8 @@ namespace ProjectInk
             if (Time.time < kaeshiUntil) { katanaMul *= 1.6f; katanaLabel = katanaLabel ?? "KAESHI"; kaeshiUntil = 0f; }
             katanaCut = cut;
             ReadDebana(t);                                                    // is he only just deciding? (HeroSwordV4)
+            // out of a run: the cut carries the run into him
+            if (running && Mathf.Abs(velocity.x) > 2.6f) { katanaMul *= 1.2f; katanaLabel = katanaLabel ?? "RUNNING CUT"; }
             if (cut == "ushiro") { farFoe = t; BeginFarClip("ushiro", "katana"); }
             else if (t != null) BeginFar(cut, t, "katana", reach);
             else BeginFarClip(cut, "katana");

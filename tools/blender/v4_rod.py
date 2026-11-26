@@ -243,3 +243,27 @@ _spin = CLIPS["rod_spin"]["keys"]
 CLIPS["rod_unwind"] = clip(29, [(0, COIL, "lin")] + [(f - 7, p, e) for f, p, e in _spin if f > 7], hit=9, reach=1.6,
                            react="stumble_back", striker="R", shift=True,
                            note="let go: the full turn out of the coil, level, round through everyone in reach")
+
+
+# ---------------------------------------------------------------- running with it (TAP, THEN HOLD)
+# The pipe stays cocked on the right shoulder in that hand (where every forehand starts, so a swipe mid-run
+# goes straight into the swing), riding the stride; the left arm, free, pumps; leaning in, a flight phase.
+ROD_RUN_SPEED = 3.6
+
+
+def _rod_run():
+    n = 16
+    keys = []
+    for f, p, e in gait(n, ROD_RUN_SPEED, duty=0.38, lift=0.13, hz=0.645, bounce=0.03, bounce_low_at_mid=True,
+                        spine=171, chest=167, neck=164, head=172, arm_base=-3, arm_amp=40, elbow=70, fist=125,
+                        twist=9, lean_pump=1.2, strike=6, push=48):
+        bob = p["hz"] - 0.645
+        g = grip(-0.14, 0.95 + bob, 218)
+        for k in ("hL", "haL", "fiL"):
+            g.pop(k, None)                                            # the left hand is free: it pumps
+        keys.append((f, P(p, tw_chest=p.get("tw_chest", 0.0) - 12, **g), e))
+    return keys
+
+
+CLIPS["rod_run"] = clip(16, _rod_run(), loop=True, speed=ROD_RUN_SPEED,
+                        note="running with the pipe cocked on the shoulder, one hand; the other arm pumping")

@@ -112,7 +112,7 @@ namespace ProjectInk
         // Whatever put it there (input let go, a wall, a scene that started a walk and stopped moving him),
         // a walk or run cycle on a hero who isn't going anywhere is wrong: after a moment of standing
         // still he simply stands. Checked last thing every frame, against where he really is.
-        static readonly string[] Gaits = { "walk_alone", "walk", "run", "sprint", "katana_walk", "rod_walk", "advance", "retreat", "rod_step", "rod_back", "katana_step", "katana_back" };
+        static readonly string[] Gaits = { "walk_alone", "walk", "run", "sprint", "katana_walk", "rod_walk", "advance", "retreat", "rod_step", "rod_back", "katana_step", "katana_back", "rod_run", "katana_run" };
         Vector3 gaitLastPos;
         float gaitStill;
 
@@ -188,7 +188,7 @@ namespace ProjectInk
             {
                 holdTime += dt;
                 // running hard the other way: a real turn
-                if (velocity.x * dir < -2.2f) { BeginTraverse("run_turn", 0f); SetFacing(dir); return; }
+                if (velocity.x * dir < -2.2f && !KatanaMode) { BeginTraverse("run_turn", 0f); SetFacing(dir); return; }   // (armed: the weapon's run just turns)
                 if (TryLowerDown(dir)) return;                          // a raised floor's edge: lower himself down
                 // in a fight, on his guard: a boxer's footwork for the first steps (step-drag in, or the
                 // back-step out still facing his man), never the street walk with the guard dropping;
@@ -229,7 +229,12 @@ namespace ProjectInk
                 if (KatanaMode)
                 {
                     if (sheathed && !GestureInput.IaiHolding) { sheathed = false; body.Play("katana_guard", 0.15f); }   // walking off: the blade comes out
-                    want = sheathed ? 0f : Mathf.Min(want, RodMode && body.Has("rod_step") ? RodWalkSpeed : !RodMode && body.Has("katana_back") ? SwordWalkSpeed : 1.4f);   // the katana: suri-ashi; the pipe: a walk, never a run
+                    // armed: the weapon's own walk; tap, then hold: its own run (the pipe heavy, the katana light)
+                    bool armedRun = runHeld && body.Has(RodMode ? "rod_run" : "katana_run") && ScriptedPace <= 0f;
+                    float runK = Mathf.Clamp01(holdTime / RunBuild);
+                    want = sheathed ? 0f
+                         : armedRun ? (RodMode ? Mathf.Lerp(3.2f, 4.0f, runK) : Mathf.Lerp(3.4f, 4.4f, runK))
+                         : Mathf.Min(want, RodMode && body.Has("rod_step") ? RodWalkSpeed : !RodMode && body.Has("katana_back") ? SwordWalkSpeed : 1.4f);
                 }
                 float accel = Mathf.Abs(velocity.x) < want ? 9f : 12f;
                 velocity.x = Mathf.MoveTowards(velocity.x, dir * want, accel * dt);
@@ -246,8 +251,11 @@ namespace ProjectInk
                     return;
                 }
                 float sp = Mathf.Abs(velocity.x);
-                string clip = KatanaMode ? (RodMode && body.Has("rod_walk") ? "rod_walk" : "katana_walk") : sp < 1.9f ? "walk_alone" : "run";
-                float clipSpeed = clip == "rod_walk" && body.Has("rod_step") ? RodWalkSpeed : clip == "katana_walk" && body.Has("katana_back") ? SwordWalkSpeed
+                string clip = KatanaMode ? (sp >= 2.2f && body.Has(RodMode ? "rod_run" : "katana_run") ? (RodMode ? "rod_run" : "katana_run")
+                                            : RodMode && body.Has("rod_walk") ? "rod_walk" : "katana_walk")
+                            : sp < 1.9f ? "walk_alone" : "run";
+                float clipSpeed = clip == "rod_run" ? 3.6f : clip == "katana_run" ? 3.9f
+                                : clip == "rod_walk" && body.Has("rod_step") ? RodWalkSpeed : clip == "katana_walk" && body.Has("katana_back") ? SwordWalkSpeed
                                 : clip == "katana_walk" || clip == "rod_walk" ? 0.7f
                                 : clip == "walk_alone" ? WalkSpeed : RunClipSpeed;
                 float play = Mathf.Clamp(sp / clipSpeed, 0.55f, 1.5f);
@@ -262,7 +270,7 @@ namespace ProjectInk
             if (running)
             {
                 running = false;
-                if (Mathf.Abs(velocity.x) > 2.4f && Grounded) { NoteRunStop(); BeginTraverse("run_stop", 0f); velocity.x = 0f; return; }
+                if (Mathf.Abs(velocity.x) > 2.4f && Grounded && !KatanaMode) { NoteRunStop(); BeginTraverse("run_stop", 0f); velocity.x = 0f; return; }
                 velocity.x = 0f;
                 body.Play(IdleClip, KatanaMode ? 0.3f : 0.2f);         // the blade comes up from the carry into the guard, not snapped
                 return;

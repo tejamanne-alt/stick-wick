@@ -118,6 +118,8 @@ namespace ProjectInk
                 else if (pipeLast == "rod_jab" && clip == "rod_overhead") { pipeCombo = "FOLD AND DROP"; pipeComboMul = 1.4f; }
             }
             if (Time.time - pipeEvadeAt < 0.6f && clip != "rod_jab") { pipeCombo = "STEP AND SWING"; pipeComboMul = 1.3f; pipeEvadeAt = -9f; }
+            // out of a run: the pipe arrives with all his weight behind it
+            if (running && Mathf.Abs(velocity.x) > 2.6f) { pipeComboMul *= 1.2f; pipeCombo = pipeCombo ?? "CHARGING SWING"; }
             pipeLast = clip;
             pipeFlowUntil = -9f;                                              // closed until this one comes through
 

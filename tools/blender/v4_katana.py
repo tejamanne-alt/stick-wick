@@ -303,3 +303,28 @@ CLIPS["cut_down_back"] = clip(46, [
     (38, P(LIE, hx=-0.64, hz=0.08), "out"),
     (46, P(LIE, hx=-0.64), "smooth"),
 ], shift=True, note="cut by a rising line: he stands a beat, the head goes back, he falls on his back")
+
+
+# ---------------------------------------------------------------- running with the blade (TAP, THEN HOLD)
+# The blade trails low behind in the right hand, its point a hand above the floor (the swordsman's carry,
+# at a run), the left arm free and pumping; leaning in, the head level. A rising cut comes out of it.
+KATANA_RUN_SPEED = 3.9
+
+
+def _katana_run():
+    n = 16
+    keys = []
+    for f, p, e in gait(n, KATANA_RUN_SPEED, duty=0.37, lift=0.14, hz=0.645, bounce=0.03, bounce_low_at_mid=True,
+                        spine=169, chest=165, neck=162, head=171, arm_base=-3, arm_amp=42, elbow=72, fist=125,
+                        twist=10, lean_pump=1.3, strike=6, push=50):
+        bob = p["hz"] - 0.645
+        sway = math.sin(2 * math.pi * f / n)
+        g = grip(-0.04, 0.58 + bob, -62 + 4 * sway)
+        for k in ("hL", "haL", "fiL"):
+            g.pop(k, None)
+        keys.append((f, P(p, **g), e))
+    return keys
+
+
+CLIPS["katana_run"] = clip(16, _katana_run(), loop=True, speed=KATANA_RUN_SPEED,
+                           note="running with the blade trailing low behind, one hand; the other arm pumping")
