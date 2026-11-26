@@ -163,6 +163,7 @@ namespace ProjectInk
         /// <summary>A tap with the katana: the thrust, high (throat) or low (belly).</summary>
         void KatanaThrust(int side, bool low)
         {
+            if (TryArmedTakedown(side)) return;                              // crouched behind him: silent (HeroArmedAir)
             if (RodMode && body.Has("rod_jab")) { PipeTap(side, low); return; }
             if (sheathed) { IaiDraw(new Vector2(side, 0f)); return; }
             EdgeNeutral();                                                    // the point: no edge to turn

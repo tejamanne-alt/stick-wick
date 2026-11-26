@@ -151,6 +151,13 @@ namespace ProjectInk
                 if (Mathf.Abs(c) > 0.05f) SetFacing(c > 0 ? 1 : -1);
                 bool moving = Mathf.Abs(velocity.x) > 0.06f;
                 string clip = moving ? "sneak" : "crouch_idle";
+                if (KatanaMode)
+                {
+                    // armed: low with it (the pipe at the hip, the blade in gedan)
+                    string pre = RodMode ? "rod_" : "katana_";
+                    string armed = pre + (moving ? "sneak" : "crouch");
+                    if (body.Has(armed)) clip = armed;
+                }
                 if (body.CurrentName != clip) body.Play(clip, crouching ? 0.15f : 0.2f, true, 1f);
                 if (moving) body.SetSpeed(Mathf.Clamp(Mathf.Abs(velocity.x) / SneakSpeed, 0.4f, 1.4f));
                 crouching = true;

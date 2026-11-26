@@ -2160,3 +2160,10 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **Sneak:** it was 0.55 m/s, which made creeping up on a man tedious on a phone. Now 0.8 m/s, a real crouch-walk: low and level with almost no bob, each foot set down toes first, the hands low and close.
   - **The silent takedown:** the hero's head no longer sits level with the man's. He works lower with his head tucked behind the man's shoulder, and the man's head isn't yanked so far back. The man is also held 16 cm further back in depth, so the two heads never flicker through each other as one half-black, half-white head.
   - **Build:** the FBX is rebuilt.
+- **Stealth, armed.**
+  - **The problem:** with a pipe or sword there was no crouch on a phone (every swipe is a strike). The keyboard crouch played bare-hand clips, and the silent takedown refused weapons.
+  - **The crouch:** a swipe down whose finger then rests a moment (0.2 s) is the crouch; a swipe down that lifts stays the overhead. Slide to creep, as bare-handed.
+  - **The pipe:** crouched and creeping with it low at the hip, pointing back (`rod_crouch`, `rod_sneak`). Tap his back: **LIGHTS OUT** (`rod_takedown`), up from the crouch and one short chop to the back of the head. He drops on his face. It counts as a pipe hit.
+  - **The sword:** crouched and creeping in gedan, the point at the knees (`katana_crouch`, `katana_sneak`). Tap his back: the **SILENT CUT** (`katana_takedown`), up from the crouch and one rising cut. He's cut down.
+  - **Both:** from behind only, a hand's depth back so the heads never merge, a touch of slow motion. The training ground's SILENT TAKEDOWN counts them.
+  - **Build:** the FBX is rebuilt.

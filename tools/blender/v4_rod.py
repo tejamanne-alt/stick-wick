@@ -296,3 +296,35 @@ CLIPS["rod_air_smash"] = clip(10, [
     (6, P(_JREACH, spine=152, spine_mid=148, chest=142, neck=146, head=158, **grip(0.52, 0.72, 72)), "in3"),       # down with the whole fall
     (10, P(_JREACH, spine=150, spine_mid=146, chest=140, neck=144, head=156, **grip(0.5, 0.52, 48)), "out"),
 ], hit=6, reach=1.4, react="hit_body", striker="R", note="from above: the pipe overhead and down with the fall")
+
+
+# ---------------------------------------------------------------- low with it: crouched, creeping, the takedown
+# The pipe held low at the hip in both hands, pointing back and up (it comes up from there in one move).
+from v4_moves import CROUCH as _CROUCH, SNEAK_SPEED as _SNEAK
+ROD_LOW = grip(0.08, 0.6, 245)
+ROD_CROUCH = P(_CROUCH, **ROD_LOW)
+CLIPS["rod_crouch"] = clip(60, [
+    (0, ROD_CROUCH, "smooth"),
+    (30, P(ROD_CROUCH, hz=0.465, head=171, tw_head=-8), "smooth"),
+    (60, ROD_CROUCH, "smooth"),
+], loop=True, breath=True, breaths=3, note="crouched with the pipe low at the hip, listening")
+
+
+def _rod_sneak():
+    keys = []
+    for f, p, e in gait(30, _SNEAK, duty=0.7, lift=0.07, hz=0.48, bounce=0.004, bounce_low_at_mid=False,
+                        spine=160, chest=152, neck=150, head=170, arm_base=28, arm_amp=9, elbow=42, fist=80,
+                        twist=4, strike=8, push=20):
+        keys.append((f, P(p, **grip(0.08, 0.6 + (p["hz"] - 0.48), 245)), e))
+    return keys
+
+
+CLIPS["rod_sneak"] = clip(30, _rod_sneak(), loop=True, speed=_SNEAK, note="creeping with the pipe low")
+# LIGHTS OUT: from behind, up out of the crouch and one short chop to the back of his head
+CLIPS["rod_takedown"] = clip(24, [
+    (0, ROD_CROUCH, "lin"),
+    (4, P(_CROUCH, hz=0.6, spine=178, chest=178, neck=170, head=172, fL=(0.24, 0), fR=(-0.1, 40), **grip(-0.06, 1.3, 200)), "out"),   # up, the pipe up behind the head
+    (8, P(_CROUCH, hx=0.12, hz=0.58, spine=160, chest=150, neck=152, head=162, fL=(0.34, 0), fR=(-0.08, 50), **grip(0.46, 0.96, 80)), "in3"),   # HIT: short, down, the back of his head
+    (12, P(_CROUCH, hx=0.12, hz=0.56, spine=158, chest=148, fL=(0.34, 0), fR=(-0.06, 46), **grip(0.4, 0.7, 52)), "out"),
+    (24, at(ROD_CROUCH, 0.12), "smooth"),
+], hit=8, reach=0.6, striker="R", shift=True, note="lights out: up from behind, one short chop to the back of the head, back down low")

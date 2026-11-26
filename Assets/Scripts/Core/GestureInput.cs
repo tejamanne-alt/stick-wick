@@ -74,6 +74,9 @@ namespace ProjectInk
         int runId = int.MinValue;
         bool keyRun; int keySide; float keyUpAt = -9f; int keyUpSide;
         readonly HashSet<int> runMaybe = new HashSet<int>();     // presses that follow a tap: a run if held
+        // where each press last came to rest (armed, a swipe down that rests there is the crouch)
+        readonly Dictionary<int, Vector2> restPos = new Dictionary<int, Vector2>();
+        readonly Dictionary<int, float> restAt = new Dictionary<int, float>();
         const float RunHold = 0.14f;                             // held this long after a tap, it's a run
 
         /// <summary>The held press is a RUN (tap, then hold the same side): the hero runs, not walks.</summary>
@@ -480,8 +483,12 @@ namespace ProjectInk
                     var swinger = EnemyAt(s0);
                     if (swinger != null && (swinger.Telegraphing || swinger.Engaged)) { HeldEnemy = swinger; consumed.Add(id); Push(Command.HoldOn); return; }
                 }
-                if (Grammar == WeaponGrammar.Fists && !HeroHolding && crouchId == int.MinValue && -dd0.y > Screen.height * swipeFraction && -dd0.y > Mathf.Abs(dd0.x) * 1.2f &&
-                    UnityEngine.Time.unscaledTime - t0 > 0.16f)
+                // (armed, every swipe is a strike, so the crouch is a swipe down whose finger then comes to rest
+                // for a moment: a swipe down that lifts stays the overhead)
+                if (!restPos.TryGetValue(id, out var rp) || (pos - rp).sqrMagnitude > 100f) { restPos[id] = pos; restAt[id] = UnityEngine.Time.unscaledTime; }
+                bool rested = UnityEngine.Time.unscaledTime - restAt[id] > 0.2f;
+                if ((Grammar == WeaponGrammar.Fists || (Grammar == WeaponGrammar.Katana && rested)) && !HeroHolding && crouchId == int.MinValue
+                    && -dd0.y > Screen.height * swipeFraction && -dd0.y > Mathf.Abs(dd0.x) * 1.2f && UnityEngine.Time.unscaledTime - t0 > 0.16f)
                 {
                     crouchId = id;
                     crouchAnchor = crouchNow = pos;
@@ -528,7 +535,7 @@ namespace ProjectInk
                     return;
                 }
             }
-            runMaybe.Remove(id);
+            runMaybe.Remove(id); restPos.Remove(id); restAt.Remove(id);
             if (holding.Remove(id)) { if (id == runId) runId = int.MinValue; consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
             if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s))
             {

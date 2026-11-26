@@ -357,3 +357,35 @@ CLIPS["katana_air_cut"] = clip(10, [
     (6, P(_JREACH, spine=160, spine_mid=156, chest=152, neck=154, head=164, **grip(0.54, 0.84, 78)), "in3"),      # HIT: down through him with the fall
     (10, P(_JREACH, spine=158, chest=150, neck=152, head=162, **grip(0.44, 0.58, 48)), "out"),
 ], hit=6, reach=1.35, react="hit_body", striker="R", note="the falling cut: the blade down through him with the fall")
+
+
+# ---------------------------------------------------------------- low with the blade: crouched, creeping, the takedown
+# Gedan: the blade low in both hands, its point at the knees of whoever's ahead.
+from v4_moves import CROUCH as _CROUCH, SNEAK_SPEED as _SNEAK
+GEDAN = grip(0.3, 0.6, 62)
+KATANA_CROUCH = P(_CROUCH, **GEDAN)
+CLIPS["katana_crouch"] = clip(60, [
+    (0, KATANA_CROUCH, "smooth"),
+    (30, P(KATANA_CROUCH, hz=0.465, head=171, tw_head=-8, **grip(0.31, 0.61, 64)), "smooth"),
+    (60, KATANA_CROUCH, "smooth"),
+], loop=True, breath=True, breaths=3, note="crouched in gedan, the point low, listening")
+
+
+def _katana_sneak():
+    keys = []
+    for f, p, e in gait(30, _SNEAK, duty=0.7, lift=0.07, hz=0.48, bounce=0.004, bounce_low_at_mid=False,
+                        spine=160, chest=152, neck=150, head=170, arm_base=28, arm_amp=9, elbow=42, fist=80,
+                        twist=4, strike=8, push=20):
+        keys.append((f, P(p, **grip(0.3, 0.6 + (p["hz"] - 0.48), 62)), e))
+    return keys
+
+
+CLIPS["katana_sneak"] = clip(30, _katana_sneak(), loop=True, speed=_SNEAK, note="creeping in gedan, the point low")
+# from behind: up out of the crouch and one rising cut, silent
+CLIPS["katana_takedown"] = clip(22, [
+    (0, KATANA_CROUCH, "lin"),
+    (4, P(_CROUCH, hz=0.6, spine=172, chest=168, neck=166, head=170, fL=(0.24, 0), fR=(-0.1, 40), **grip(0.12, 0.62, 330)), "out"),   # up, the blade low behind the hip
+    (7, P(_CROUCH, hx=0.15, hz=0.6, spine=176, chest=176, neck=170, head=170, tw_chest=24, fL=(0.38, 0), fR=(-0.08, 54), **grip(0.5, 1.04, 150)), "in3"),   # HIT: rising through him
+    (11, P(_CROUCH, hx=0.15, hz=0.6, spine=178, chest=180, tw_chest=30, fL=(0.38, 0), fR=(-0.06, 50), **grip(0.36, 1.26, 192)), "out"),
+    (22, at(KATANA_CROUCH, 0.15), "smooth"),
+], hit=7, reach=0.6, striker="R", shift=True, note="from behind: up from the crouch, one rising cut, silent")

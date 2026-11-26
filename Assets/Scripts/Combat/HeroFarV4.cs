@@ -390,6 +390,7 @@ namespace ProjectInk
                 case "takedown":
                     if (e != null) { e.TakenDown(); Sound.Play(Sfx.Struggle, 0.7f, e.Chest); }
                     break;
+                case "armed_takedown": ArmedTakedownImpact(); break;
                 case "drag":
                     Sound.Play(Sfx.Chain, 1f, transform.position);
                     break;

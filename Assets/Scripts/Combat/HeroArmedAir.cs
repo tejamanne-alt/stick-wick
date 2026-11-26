@@ -94,5 +94,60 @@ namespace ProjectInk
             if (RodMode) PipeWear();
             Tell("air_strike");
         }
+
+        // ------------------------------------------------------------------ armed stealth
+        /// <summary>Crouched behind a man with a weapon, a tap on his side: the pipe's LIGHTS OUT (up from the
+        /// crouch, one short chop to the back of the head) or the blade's rising cut. Silent, from behind only.</summary>
+        bool TryArmedTakedown(int side)
+        {
+            if (!KatanaMode || !crouching) return false;
+            string clip = RodMode ? "rod_takedown" : "katana_takedown";
+            if (!body.Has(clip)) return false;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.CanBeHeld) continue;
+                float dx = (e.transform.position.x - transform.position.x) * side;
+                if (dx < 0.15f || dx > 1.15f || Mathf.Abs(e.transform.position.y - transform.position.y) > 0.4f) continue;
+                if (e.Facing != side) continue;                              // only from behind
+                SetFacing(side);
+                crouching = false;
+                e.BeginHeld(this);
+                // just out of the strike's reach in front of him, a hand's depth back (the heads never merge)
+                e.HeldAt(new Vector3(transform.position.x + side * 0.62f, e.transform.position.y, transform.position.z + 0.16f), transform.position.x + side * 10f);
+                farFoe = e;
+                invulnerableUntil = Time.time + 1.0f;
+                BeginFarClip(clip, "armed_takedown");
+                Sound.Play(Sfx.Cloth, 0.8f, transform.position);
+                if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.3f, 0.5f);
+                Tell("takedown");
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>The armed takedown lands: he drops where he stands, on his face.</summary>
+        void ArmedTakedownImpact()
+        {
+            var e = farFoe;
+            if (e == null || !e.Held) return;
+            if (RodMode)
+            {
+                e.HeldPlay("cut_down", 0.04f);
+                e.HeldDamage(e.Health + 1f);
+                Sound.Play(Sfx.PipeHit, 0.8f, e.Chest, 0.8f);
+                Sound.Play(Sfx.BodyFall, 0.7f, e.Chest);
+                StartCoroutine(LayDown(e, 1.3f));
+                if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(200, "LIGHTS OUT");
+                PipeWear();
+            }
+            else
+            {
+                katanaCut = "kiriage";
+                katanaLabel = "SILENT CUT";
+                EdgeNeutral();
+                CutDown(e);
+            }
+            if (TimeController.Instance != null) TimeController.Instance.HitStop(5);
+        }
     }
 }

@@ -2835,6 +2835,39 @@
       "v4": true
     },
     {
+      "name": "katana_crouch",
+      "frames": 60,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_sneak",
+      "frames": 30,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_takedown",
+      "frames": 22,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 7,
+      "loadFrame": -1,
+      "reach": 0.6,
+      "endShift": 0.15,
+      "v4": true
+    },
+    {
       "name": "rod_guard",
       "frames": 60,
       "fps": 30,
@@ -3052,6 +3085,39 @@
       "loadFrame": -1,
       "reach": 1.4,
       "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_crouch",
+      "frames": 60,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_sneak",
+      "frames": 30,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "rod_takedown",
+      "frames": 24,
+      "fps": 30,
+      "loop": false,
+      "hitFrame": 8,
+      "loadFrame": -1,
+      "reach": 0.6,
+      "endShift": 0.12,
       "v4": true
     }
   ]
