@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -723,6 +724,7 @@ namespace ProjectInk
         {
             chairScene = false;
             TipChair(1f);
+            SettleRopes();
             hero.transform.rotation = Quaternion.identity;
             hero.SetFacing(1);
             hero.CinePose(new Vector3(home.x + 4.2f, home.y, 0f));
@@ -1599,27 +1601,77 @@ namespace ProjectInk
             {
                 for (int i = 0; i < 4; i++) Line(end, end + Quaternion.Euler(0f, i * 90f, 25f) * dir * 0.05f, 0.003f);
             }
-            // round his chest and upper arms and the chair back: three turns, crossing the back posts
-            Wrap(new Vector3(-0.07f, 0f, 0f), 0.27f, 0.25f, 0.66f, 0.84f, 3f);
+            // the rope itself: real lines (StoryRope), one per run, that hold their shape on the chair until they
+            // give. Knots and frayed tails stay as they are, part of the chair.
+            List<Vector3> WrapPts(Vector3 c, float rx, float rz, float y0, float y1, float turns, float phase = Mathf.PI)
+            {
+                var pts = new List<Vector3>();
+                int n = Mathf.RoundToInt(48 * turns);
+                for (int i = 0; i <= n; i++)
+                {
+                    float u = i / (float)n, a = phase + u * turns * Mathf.PI * 2f;
+                    pts.Add(c + new Vector3(Mathf.Cos(a) * rx, Mathf.Lerp(y0, y1, u), Mathf.Sin(a) * rz));
+                }
+                return pts;
+            }
+            foreach (var r0 in chairRopes) if (r0 != null) Destroy(r0.gameObject);
+            chairRopes.Clear();
+            // round his chest and upper arms and the chair back: three turns, from the back post round and
+            // back to it, the knot on the post and its tail hanging
+            var chest = WrapPts(new Vector3(-0.07f, 0f, 0f), 0.27f, 0.25f, 0.66f, 0.84f, 3f);
+            chest.Add(new Vector3(-0.26f, 0.83f, 0.04f)); chest.Add(new Vector3(-0.3f, 0.62f, 0.09f));
+            chestRope = StoryRope.Make("RopeChest", chairRig, chest, 0.011f);
+            chestRope.Keep(0f, 0.02f); chestRope.Keep(0.94f, 1f);
+            chairRopes.Add(chestRope);
             Knot(new Vector3(-0.25f, 0.83f, 0.03f));
-            Line(new Vector3(-0.26f, 0.83f, 0.04f), new Vector3(-0.3f, 0.62f, 0.09f)); Fray(new Vector3(-0.3f, 0.62f, 0.09f), Vector3.down);
-            // his wrists behind the chair back: a figure-eight and a tie to the mid rail
-            Wrap(new Vector3(-0.29f, 0f, -0.035f), 0.04f, 0.045f, 0.52f, 0.56f, 2f, 0.008f);
-            Wrap(new Vector3(-0.29f, 0f, 0.035f), 0.04f, 0.045f, 0.52f, 0.56f, 2f, 0.008f);
+            Fray(new Vector3(-0.3f, 0.62f, 0.09f), Vector3.down);
+            // his wrists behind the chair back: a figure-eight and a tie up to the mid rail
+            var wrists = WrapPts(new Vector3(-0.29f, 0f, -0.035f), 0.04f, 0.045f, 0.52f, 0.56f, 2f);
+            wrists.AddRange(WrapPts(new Vector3(-0.29f, 0f, 0.035f), 0.04f, 0.045f, 0.52f, 0.56f, 2f));
+            wrists.Add(new Vector3(-0.3f, 0.56f, 0f)); wrists.Add(new Vector3(-0.23f, 0.77f, 0f));
+            var wr = StoryRope.Make("RopeWrists", chairRig, wrists, 0.008f);
+            wr.Keep(0.9f, 1f);
+            chairRopes.Add(wr);
             Knot(new Vector3(-0.3f, 0.54f, 0f));
-            Line(new Vector3(-0.3f, 0.56f, 0f), new Vector3(-0.23f, 0.77f, 0f), 0.008f);
-            // each ankle lashed to a front leg
+            // each ankle lashed to a front leg (they stay on the legs: his feet slip out of them)
             foreach (var z in new[] { -0.12f, 0.12f })
             {
-                Wrap(new Vector3(0.18f, 0f, z), 0.06f, 0.05f, 0.1f, 0.16f, 3f, 0.009f);
+                var ank = WrapPts(new Vector3(0.18f, 0f, z), 0.06f, 0.05f, 0.1f, 0.16f, 3f, 0f);
+                ank.Add(new Vector3(0.24f, 0.13f, z)); ank.Add(new Vector3(0.28f, 0.03f, z + 0.04f));
+                var ar = StoryRope.Make("RopeAnkle", chairRig, ank, 0.009f);
+                ar.Keep(0f, 1f);
+                chairRopes.Add(ar);
                 Knot(new Vector3(0.24f, 0.13f, z));
-                Line(new Vector3(0.24f, 0.13f, z), new Vector3(0.28f, 0.03f, z + 0.04f), 0.008f);
                 Fray(new Vector3(0.28f, 0.03f, z + 0.04f), Vector3.right);
             }
-            // the rest of the line in a loose coil on the wet floor
-            Wrap(new Vector3(-0.55f, 0f, -0.25f), 0.12f, 0.1f, 0.012f, 0.03f, 2.5f, 0.011f);
-            Line(new Vector3(-0.43f, 0.02f, -0.25f), new Vector3(-0.3f, 0.6f, -0.05f));
+            // the rest of the line in a loose coil on the wet floor, its lead up to the chair back
+            var coil = WrapPts(new Vector3(-0.55f, 0f, -0.25f), 0.12f, 0.1f, 0.012f, 0.03f, 2.5f, 0f);
+            coil.Add(new Vector3(-0.43f, 0.02f, -0.25f)); coil.Add(new Vector3(-0.3f, 0.6f, -0.05f));
+            var cr = StoryRope.Make("RopeCoil", chairRig, coil, 0.011f);
+            cr.Keep(0f, 0.86f); cr.Keep(0.99f, 1f);
+            chairRopes.Add(cr);
+            // what a freed rope slides round: his chest and hips, the seat, the chair back
+            StoryRope.Bodies.Clear();
+            StoryRope.Bodies.Add(() => (hero.Chest, 0.17f));
+            StoryRope.Bodies.Add(() => (hero.transform.position + Vector3.up * 0.5f, 0.15f));
+            StoryRope.Bodies.Add(() => (chairRig.TransformPoint(new Vector3(0f, 0.47f, 0f)), 0.2f));
+            StoryRope.Bodies.Add(() => (chairRig.TransformPoint(new Vector3(-0.22f, 0.85f, 0f)), 0.07f));
         }
+
+        /// <summary>A strand gives: a sharp tick, a twang, the rope thins there, fibres spring out.</summary>
+        void StrandPops(float u, int strands)
+        {
+            if (chestRope == null) return;
+            chestRope.StrandGives(u, strands);
+            var at = chestRope.PointAt(u);
+            Sound.Play(Sfx.Cloth, 0.9f, at, 1.8f);
+            Sound.Play(Sfx.Bone, 0.4f, at, 2.2f);
+            if (cam != null) cam.Shake(0.05f, 0.15f);
+            Haptics.Vibrate();
+        }
+
+        readonly List<StoryRope> chairRopes = new List<StoryRope>();
+        StoryRope chestRope;
 
         float chairTip = -1f;
 
@@ -1630,23 +1682,17 @@ namespace ProjectInk
             chairTip = u;
             chairRig.rotation = Quaternion.Euler(0f, 0f, 82f * Mathf.SmoothStep(0f, 1f, u));
             chairRig.position = home + new Vector3(-0.04f - 0.5f * u, 0.0f, 0f);
-            if (ropes != null && u > 0.05f)
-            {
-                if (ropes.parent != null)
-                {
-                    ropes.SetParent(null, true);
-                    ropeVel = new Vector3[ropes.childCount];
-                    for (int i = 0; i < ropeVel.Length; i++) ropeVel[i] = new Vector3(Random.Range(-0.6f, 0.6f), Random.Range(0.2f, 1.2f), Random.Range(-0.5f, 0.5f));
-                }
-                for (int i = 0; i < ropes.childCount && ropeVel != null && i < ropeVel.Length; i++)
-                {
-                    var r = ropes.GetChild(i);
-                    if (r.position.y <= 0.012f) continue;
-                    ropeVel[i] += Vector3.down * 9.8f * StoryDt;
-                    r.position += ropeVel[i] * StoryDt;
-                    if (r.position.y < 0.012f) { r.position = new Vector3(r.position.x, 0.012f, r.position.z); r.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 90f); }
-                }
-            }
+            // (the ropes, freed, fall by themselves: StoryRope)
+        }
+
+        bool ropesSettled;
+
+        /// <summary>Past the scene at once (a skip): the ropes freed and lying where they'd have fallen.</summary>
+        void SettleRopes()
+        {
+            if (ropesSettled) return;
+            ropesSettled = true;
+            foreach (var r in chairRopes) if (r != null) r.Settle();
         }
 
         Vector3[] ropeVel;
@@ -1680,23 +1726,58 @@ namespace ProjectInk
             System.Action low = () => { if (cam != null) cam.Scripted(home + new Vector3(-1.1f, 0.55f, -0.9f), home + new Vector3(-0.2f, 0.62f, 0f), 1f, 40f); };
             Say("YOU", "Rope...", 1.4f);
             for (float t0 = 0f; t0 < 1.6f; t0 += StoryDt) { low(); yield return null; }
-            // BREAK FREE: the chair rocks with every pull
-            float rock = 0f;
+            // BREAK FREE: every pull rocks the chair, the rope creaks, the camera leans in on the one place
+            // it's going to give (where it bites over the chair post, nearest us); a strand goes at 40%, a
+            // second at 75%, the rope visibly thinning there with fibres springing out; then it parts
+            var wideEye = home + new Vector3(0.2f, 1.1f, -2.4f);
+            float failU = chestRope != null ? chestRope.FailPoint(wideEye) : 0.5f;
+            Vector3 FailPos() => chestRope != null ? chestRope.PointAt(failU) : home + Vector3.up * 0.75f;
+            float rock = 0f, rockSign = 1f, lastP = 0f, kick = 0f;
+            int strands = 0;
             StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () =>
             {
-                rock = Mathf.MoveTowards(rock, 0f, StoryDt * 30f);
+                rock = Mathf.MoveTowards(rock, 0f, StoryDt * 22f);
+                kick = Mathf.MoveTowards(kick, 0f, StoryDt * 3f);
                 if (chairRig != null) chairRig.rotation = Quaternion.Euler(0f, 0f, rock);
                 hero.transform.rotation = Quaternion.Euler(0f, 0f, rock * 0.6f);
-                if (cam != null) cam.Scripted(home + new Vector3(0.2f, 1.1f, -2.4f) + Sway(0.02f, 1.5f, 9f) * Mathf.Abs(rock), home + Vector3.up * 0.7f, 1f, 44f);
+                float lean = Mathf.SmoothStep(0f, 0.55f, scProgress);
+                var fp = FailPos();
+                var eye = Vector3.Lerp(wideEye, fp + new Vector3(0.35f, 0.25f, -1.05f), lean) + Sway(0.012f, 1.5f, 9f) * (Mathf.Abs(rock) + kick * 6f);
+                var at = Vector3.Lerp(home + Vector3.up * 0.7f, fp, lean);
+                if (cam != null) cam.Scripted(eye, at, 1f, Mathf.Lerp(44f, 36f, lean));
             }));
-            yield return MashTo("BREAK FREE", 8, p => { });
-            // the ropes give; the chair goes over; he lands on his hands and knees
+            yield return MashTo("BREAK FREE", 8, p =>
+            {
+                if (p > lastP + 0.01f)
+                {
+                    // a pull: the chair rocks over the other way, the rope creaks under it
+                    rockSign = -rockSign;
+                    rock = rockSign * (3f + 7f * p);
+                    kick = 1f;
+                    Sound.Play(Sfx.Creak, 0.3f + 0.45f * p, home + Vector3.up * 0.7f, Random.Range(0.85f, 1.15f));
+                    if (strands < 1 && p >= 0.4f) { strands = 1; StrandPops(failU, 1); }
+                    else if (strands < 2 && p >= 0.75f) { strands = 2; StrandPops(failU, 2); }
+                }
+                lastP = p;
+            });
+            // the last strand: the rope parts at the post. Slow motion, close on it: the ends whip back
+            // from the break, frayed; the turns round his chest go slack and slide off him
+            var snapAt = FailPos();
             hero.transform.rotation = Quaternion.identity;
-            Sound.Play(Sfx.Bone, 0.8f, null, 1.5f);
-            Sound.Play(Sfx.Crate, 0.8f, home);
+            if (chestRope != null) chairRopes.Add(chestRope.Part(failU, 7f));
+            foreach (var r in chairRopes) if (r != null && r != chestRope) r.Release();
+            Sound.Play(Sfx.Bone, 0.9f, snapAt, 1.9f);                       // the crack of it parting
+            Sound.Play(Sfx.Whoosh, 0.7f, snapAt, 1.6f);                     // the ends whipping back
             Sound.Play(Sfx.HeroEffort, 0.9f, null, 0.85f);
             Haptics.Vibrate();
-            if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.04f);
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.22f, 0.55f);
+            for (float t0 = 0f; t0 < 0.6f; t0 += Time.unscaledDeltaTime)
+            {
+                if (cam != null) cam.Scripted(snapAt + new Vector3(0.28f, 0.14f, -0.78f), snapAt, 1f, 30f);
+                yield return null;
+            }
+            Sound.Play(Sfx.Cloth, 0.7f, home, 0.8f);                        // the rope slithering off him
+            Sound.Play(Sfx.Crate, 0.8f, home);
             if (hero.body.Has("allfours")) hero.body.Play("allfours", 0.12f);
             for (float t0 = 0f; t0 < 1.2f; t0 += StoryDt)
             {

@@ -2100,3 +2100,16 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **The cause:** the camera's rule for keeping the frame inside the building measured it at the fight lane. The back wall is 2.6 m further away, where the view is wider and taller, so at full zoom-out the shot poked past the end walls and over the roof, and the lit yard showed through. A minimum-distance floor could also override the walls in a tight room.
   - **The camera** (`CameraDirector.Frame`): the frame is now measured at the back wall (`backZ`, 2.6 m), and at most 0.3 m of the roof's underside shows instead of 1.1 m. The walls win over `minDistance`: in a tight room the camera comes in. In the shed its widest pull-back is about 12 m (was about 16). Men left out of frame get the HUD's edge arrows as before. This applies to every chapter's buildings, since they share the camera.
   - **The outside** (`StoryOutside.cs`): the yard and the city (`SetYard`, `SetCity`) now exist only during the opening's wide shot (SHOT 0), the only shot that looks at them. After that they're switched off, so any glimpse past a wall (a scripted shot, an unusual screen shape) is dark, not a lit set.
+- **The rope (chapter 1, the chair), rebuilt to break like rope** (`StoryRope.cs`).
+  - **Why it looked like glass:** the rope was hundreds of tiny separate cylinders. When the chair went over, every piece got its own random velocity and flew off alone. The rock that was meant to come with each pull was never kicked either.
+  - **The rope now:**
+    - **One continuous line per run:** the chest wrap, the wrists' figure-eight, each ankle lashing, the coil and its lead.
+    - **Bound:** it holds its shape on the chair, pinned in the chair's own space, so it rocks and tips with it.
+    - **Freed:** it's a Verlet chain, with gravity and fixed segment lengths solved 14 times per step. It slides round his chest, hips, the seat and the chair back, and lies on the floor with friction. Steps are fixed in game time, so slow motion slows it too.
+    - **The look:** a twisted three-strand line from a procedural texture: round strands, dark grooves, fibre grain, a lay every three diameters.
+  - **How it fails, strand by strand:**
+    - Each tap of BREAK FREE is a pull. The chair rocks the other way, harder as he gets closer, and the rope creaks louder. The camera leans in on the point that will fail: where the chest wrap bites, nearest the camera.
+    - At 40% a strand pops: a tick, a twang, the rope necks there (width curve), and a tuft of fibres springs out. At 75% a second goes and it thins further.
+    - At 100% it parts. Slow motion and a close insert. Both ends whip back along themselves at about 7 m/s with splayed frayed tufts, and a puff of matte fibre dust drifts down, tumbling and fading.
+    - Then the turns go slack and slide off him as the chair goes over. The ankle lashings stay on the chair legs; his feet slip out.
+  - **A skip** past the scene lays the ropes where they'd have fallen.
