@@ -497,7 +497,7 @@ namespace ProjectInk
         /// <summary>The middle of the flight, at the top and just off the foot (sixteen treads, each 0.2 up and 0.325
         /// along); off the foot is left of the newel post (x 4.15, z 2.66), clear of the hall table (x 2.1-3.1).</summary>
         static Vector3 StairTop => new Vector3(HomePlan.StairX1, HomePlan.Floor2, HomePlan.StairZ - 0.1f);
-        static Vector3 StairFoot => new Vector3(HomePlan.StairX0 - 0.4f, 0f, HomePlan.StairZ - 0.1f);
+        static Vector3 StairFoot => new Vector3(HomePlan.StairX0 - 0.45f, 0f, HomePlan.StairZ - 0.1f);
 
         /// <summary>The height of the treads under someone on the flight: the line through the treads' middles,
         /// so the feet stand on each tread (not 10-20 cm sunk into them, as a straight line from the floor to the

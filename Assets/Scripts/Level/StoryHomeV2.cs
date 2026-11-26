@@ -222,7 +222,7 @@ namespace ProjectInk
             hero.body.Play(hero.body.Has("gyaku_zuki") ? "gyaku_zuki" : "idle", 0.03f);
             if (cleaner != null) cleaner.PuppetPlay("sit_slump", 0.05f);
             Sound.Play(Sfx.DeathBreath, 0.8f, cHead());
-            var floorPhone = new Vector3(28.6f, 0.0055f, 0.1f);
+            var floorPhone = new Vector3(28.25f, 0.0055f, 0.12f);                 // by his feet, clear of the bleach (a prop at 28.6)
             if (homePhone != null)
             {
                 homePhone.SetParent(null, true);

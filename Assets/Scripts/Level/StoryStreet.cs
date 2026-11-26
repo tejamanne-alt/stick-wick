@@ -857,7 +857,7 @@ namespace ProjectInk
                 var p = hero.transform.position;
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.28f; Sound.Play(Sfx.Footstep, 0.6f, p, 1.1f); }
                 // along the pavement with him, then held at the corner as he goes up the side street, away from us
-                float up = Mathf.Clamp01(p.z / 3f);
+                float up = Mathf.Clamp01((p.z - 1f) / 3f);
                 EndShot(new Vector3(Mathf.Lerp(p.x - 1.5f, 106.5f, up), 1.6f, -8f), new Vector3(Mathf.Lerp(p.x, sideX, up), 1.2f, Mathf.Max(0f, p.z * 0.6f)), 38f);
             });
             yield return Hold(1.0f, () => EndShot(new Vector3(106.5f, 1.6f, -8f), new Vector3(108f, 1.2f, 8f), 38f));
