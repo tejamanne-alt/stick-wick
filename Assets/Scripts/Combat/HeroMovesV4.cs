@@ -76,6 +76,30 @@ namespace ProjectInk
 
         string IdleClipV4 => MovesV4 && Style == FightStyle.Fists && !Threatened ? "idle_alone" : "idle";
 
+        // ------------------------------------------------------------------ never a walk on the spot
+        // Whatever put it there (input let go, a wall, a scene that started a walk and stopped moving him),
+        // a walk or run cycle on a hero who isn't going anywhere is wrong: after a moment of standing
+        // still he simply stands. Checked last thing every frame, against where he really is.
+        static readonly string[] Gaits = { "walk_alone", "walk", "run", "sprint", "katana_walk", "rod_walk" };
+        Vector3 gaitLastPos;
+        float gaitStill;
+
+        void LateUpdate()
+        {
+            float dt = Time.deltaTime;
+            var p = transform.position;
+            float moved = Mathf.Abs(p.x - gaitLastPos.x) + Mathf.Abs(p.z - gaitLastPos.z);
+            gaitLastPos = p;
+            if (dt <= 0f || body == null || state == State.Dead) return;
+            if (System.Array.IndexOf(Gaits, body.CurrentName) < 0) { gaitStill = 0f; return; }
+            // under 0.15 m/s is standing (a real walk is 1.1 m/s or more)
+            gaitStill = moved < 0.15f * dt ? gaitStill + dt : 0f;
+            if (gaitStill < 0.12f || !Grounded) return;
+            gaitStill = 0f;
+            running = false;
+            if (state == State.Idle || CinematicLock) body.Play(IdleClip, 0.2f);
+        }
+
         // ------------------------------------------------------------------ the idle loop
         void UpdateIdleV4()
         {
