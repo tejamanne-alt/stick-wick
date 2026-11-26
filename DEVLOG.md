@@ -2114,3 +2114,18 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - Then the turns go slack and slide off him as the chair goes over. The ankle lashings stay on the chair legs; his feet slip out.
   - **A skip** past the scene lays the ropes where they'd have fallen.
 - **No tap-anywhere skip.** A tap on the right half of the screen no longer skips a scene; only the SKIP › and TO PLAY » buttons do. The last taps of a mash (breaking free of the rope) were skipping the very animation they set off. The buttons also wait 1 s after the player last had the controls before they appear, so a tap still on its way down can't land on one.
+- **Walk and run, rethought.**
+  - **Controls:**
+    - **HOLD** left or right: he walks.
+    - **TAP, THEN HOLD** the same side: he runs.
+    - The press after a tap counts as a run only if it's held 0.14 s, so quick taps on one side stay a punch string.
+    - Keyboard: hold D walks; tap D then hold D runs.
+  - **Movement states:** three, each readable at a glance.
+    - **The Wick walk** (1.25 m/s, about 138 steps a minute): composed and purposeful. The heel is planted, there's a visible rise over each foot, the chest leads a touch, the chin is a little down, the hands are loose with soft elbows and a natural swing. It's made for the speed it plays at; the old walk was played 45% fast.
+    - **Guard footwork** near a man, as before.
+    - **One run** instead of the jog and sprint. It starts at 3.4 m/s (quicker than an ordinary man's 2.6) and builds to 4.6 over 0.9 s. It's made at 4 m/s, so playback stays within about ±15%: leaning in, midfoot under the hips, the arms driving at chest height instead of up at the chin.
+    - The momentum moves still work: knee and slide above 2.6 m/s, the barge above 4.0 after about half a second of run-up.
+  - **Directed story walks** (`ScriptedPace`) move at the scene's own pace: the walk to the bank doors walks, the chase after the van runs.
+  - **Camera:** it leads a run by up to 1.8 m, so what he runs into is on screen in time, and settles back when he stops.
+  - **Training ground:** RUN, FLYING KNEE and SLIDE TACKLE now teach tap-then-hold. Their demos show it, and the hold guide reads TAP, THEN HOLD.
+  - **Preview tool:** the blade shows only for sword and pipe moves. The FBX is rebuilt.

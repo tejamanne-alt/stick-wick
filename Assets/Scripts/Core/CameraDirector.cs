@@ -167,6 +167,9 @@ namespace ProjectInk
 
             // centre on the group, aiming a little high so the HUD never covers a head ...
             float cx = (loX + hiX) * 0.5f;
+            // ... leading a run: the frame goes ahead of him (up to 1.8 m at full pace) so what he runs into is
+            // on screen in time, settling back when he stops
+            cx += runLead;
             float cy = (loY + hiY) * 0.5f + SafeCentreY * dist * tanV;
             // ... keep the hero comfortably inside ...
             float hx = dist * tanH * SafeX - PadX, hyTop = dist * tanV * 0.70f, hyBot = dist * tanV * 0.86f;
@@ -236,10 +239,21 @@ namespace ProjectInk
             transform.LookAt(focus);
         }
 
+        float runLead, leadLastX, leadVel;
+
         void LateUpdate()
         {
             if (hero == null) return;
             float dt = UnityEngine.Time.unscaledDeltaTime;
+            // how fast he's going (from where he is, smoothed): a run pulls the frame ahead of him
+            if (UnityEngine.Time.deltaTime > 0f)
+            {
+                float v = (hero.position.x - leadLastX) / UnityEngine.Time.deltaTime;
+                leadVel = Mathf.Lerp(leadVel, Mathf.Abs(v) < 12f ? v : 0f, 1f - Mathf.Exp(-6f * dt));
+            }
+            leadLastX = hero.position.x;
+            float leadWant = Mathf.Abs(leadVel) > 2.6f ? Mathf.Clamp(leadVel * 0.4f, -1.8f, 1.8f) : 0f;
+            runLead = Mathf.MoveTowards(runLead, leadWant, dt * (Mathf.Abs(leadWant) > Mathf.Abs(runLead) ? 2.5f : 1.5f));
 
             // frame the hero and everyone in the fight, on both floors (see Frame)
             Frame(out Vector3 target, out float want);

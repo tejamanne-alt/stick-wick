@@ -92,16 +92,23 @@ CLIPS = {}
 
 # ---------------------------------------------------------------- the gaits
 # walking alone: loose, the hands relaxed and swinging low, heel first, a gentle rise over each foot
-WALK_SPEED, JOG_SPEED, RUN_SPEED, SNEAK_SPEED = 1.1, 3.3, 4.8, 0.55
-CLIPS["walk_alone"] = clip(28, gait(28, WALK_SPEED, duty=0.62, lift=0.05, hz=0.672, bounce=0.012, bounce_low_at_mid=False,
-                                    spine=178, chest=176, neck=172, head=178, arm_base=0, arm_amp=16, elbow=14, fist=60,
-                                    twist=8, strike=-16, push=34, hands_relaxed=True),
-                           loop=True, speed=WALK_SPEED, note="walking alone: heel first, rolling through, a loose arm swing")
-# the jog (the classic 'run'): a flight phase, midfoot landing, the arms bent and pumping
-CLIPS["run"] = clip(18, gait(18, JOG_SPEED, duty=0.38, lift=0.13, hz=0.65, bounce=0.03, bounce_low_at_mid=True,
-                             spine=172, chest=168, neck=164, head=174, arm_base=14, arm_amp=38, elbow=80, fist=120,
-                             twist=12, lean_pump=1.5, strike=4, push=48),
-                    loop=True, speed=JOG_SPEED, note="the jog: a flight phase, midfoot landing, arms pumping")
+WALK_SPEED, JOG_SPEED, RUN_SPEED, SNEAK_SPEED = 1.25, 4.0, 4.8, 0.55
+# THE WICK WALK (the hero's walk, HOLD): composed and purposeful, made for the speed it's played at.
+# Brisk, never hurried (a step every 0.43 s on his short legs); the heel planted firmly, rolling through
+# to a push off the toes; a visible rise over each foot; the chest leading a touch, the chin a little down,
+# eyes front; the hands loosely closed, soft elbows, a natural swing that goes further forward than back.
+CLIPS["walk_alone"] = clip(26, gait(26, WALK_SPEED, duty=0.6, lift=0.06, hz=0.664, bounce=0.02, bounce_low_at_mid=False,
+                                    spine=177, chest=172, neck=168, head=173, arm_base=1, arm_amp=19, elbow=11, fist=90,
+                                    twist=7, strike=-18, push=38),
+                           loop=True, speed=WALK_SPEED, note="the Wick walk: composed, purposeful; heel planted, chest leading, chin down, loose hands")
+# THE RUN (TAP, THEN HOLD): one run for every pace from the first stride (3.4 m/s) to flat out (4.6), made
+# at 4 m/s so the feet stay planted across the range. A flight phase, a midfoot landing under the hips,
+# leaning in from the ankles, the head steady and level, the arms bent near ninety and driving forward and
+# back at chest height (not up at the chin: he's running somewhere, not squaring up).
+CLIPS["run"] = clip(16, gait(16, JOG_SPEED, duty=0.36, lift=0.15, hz=0.648, bounce=0.03, bounce_low_at_mid=True,
+                             spine=170, chest=166, neck=164, head=172, arm_base=-3, arm_amp=44, elbow=70, fist=125,
+                             twist=11, lean_pump=1.4, strike=6, push=50),
+                    loop=True, speed=JOG_SPEED, note="the run: leaning in, midfoot under the hips, arms driving at chest height")
 # running flat out: leaning in, high knees, the arms driving hard
 CLIPS["sprint"] = clip(16, gait(16, RUN_SPEED, duty=0.31, lift=0.2, hz=0.635, bounce=0.035, bounce_low_at_mid=True,
                                 spine=166, chest=160, neck=158, head=170, arm_base=18, arm_amp=58, elbow=84, fist=140,

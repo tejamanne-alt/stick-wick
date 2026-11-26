@@ -15,7 +15,13 @@ namespace ProjectInk
     ///   (on its own)         loose and looking around when alone, the guard when a man is within 6 m</summary>
     public partial class HeroController
     {
-        const float WalkSpeed = 1.1f, JogSpeed = 3.3f, RunSpeedV4 = 4.8f, SneakSpeed = 0.55f;
+        // HOLD walks (the Wick walk); TAP, THEN HOLD runs: off at RunStart (quicker than an ordinary man's
+        // 2.6), building to RunSpeedV4 over RunBuild seconds (the barge needs 4.0: half a second's run-up)
+        const float WalkSpeed = 1.25f, JogSpeed = 3.4f, RunSpeedV4 = 4.6f, SneakSpeed = 0.55f, RunBuild = 0.9f;
+        const float RunClipSpeed = 4.0f;          // the run clip's own ground speed (played 0.85-1.15 across the range)
+        /// <summary>A directed story walk's pace (StoryBank.PlayerWalk): a hold there moves at it, walking or running
+        /// by how fast it is (the walk to the bank doors walks; the chase after the van runs). 0: none.</summary>
+        public float ScriptedPace;
         const float AloneRange = 6f;
 
         bool MovesV4 => Contact && body != null && body.Has("sprint");
@@ -180,7 +186,6 @@ namespace ProjectInk
 
             if (dir != 0 && Grounded)
             {
-                bool alone = Alone;
                 holdTime += dt;
                 // running hard the other way: a real turn
                 if (velocity.x * dir < -2.2f) { BeginTraverse("run_turn", 0f); SetFacing(dir); return; }
@@ -192,7 +197,9 @@ namespace ProjectInk
                 bool rodSteps = RodMode && KatanaMode && body.Has("rod_back");
                 // (the katana: okuri-ashi in chudan, katana_step in, katana_back out, the point on his eyes)
                 bool swordSteps = KatanaMode && !RodMode && !sheathed && body.Has("katana_back");
-                bool footwork = Contact && (rodSteps || swordSteps || (Style == FightStyle.Fists && !KatanaMode && carried == null && body.Has("retreat"))) &&
+                var giNow = GestureInput.Instance;
+                bool runHeld = giNow != null && giNow.RunHeld && float.IsNaN(stepGoal);
+                bool footwork = !runHeld && Contact && (rodSteps || swordSteps || (Style == FightStyle.Fists && !KatanaMode && carried == null && body.Has("retreat"))) &&
                                 float.IsNaN(stepGoal) && holdTime < GuardStepTime && Threatened;
                 if (footwork)
                 {
@@ -215,11 +222,10 @@ namespace ProjectInk
                 SetFacing(dir);
                 if (TryBarge(dir)) return;                              // flat out into him: the shoulder barge
                 if (Contact && WalkIntoClinch(dir)) return;
-                float want = !float.IsNaN(stepGoal) ? WalkSpeed
-                           : holdTime < 0.4f ? WalkSpeed : holdTime < 1.25f || !alone ? JogSpeed : RunSpeedV4;
-                // story mode with no fight on: he walks (a calm walk, never a jog or a run); and never faster than the story allows
-                if (Contact && NoFightNear) want = Mathf.Min(want, 1.6f);
-                if (Contact) want = Mathf.Min(want, Mathf.Max(WalkSpeed, runSpeed));
+                // hold: the walk; tap, then hold: the run, off quick and building (the barge comes with the run-up)
+                float want = runHeld ? Mathf.Lerp(JogSpeed, RunSpeedV4, Mathf.Clamp01(holdTime / RunBuild)) : WalkSpeed;
+                // a directed story walk: its own pace (a walk, or a run if it's that fast)
+                if (ScriptedPace > 0f) want = ScriptedPace >= 2.8f ? ScriptedPace : Mathf.Min(WalkSpeed, ScriptedPace);
                 if (KatanaMode)
                 {
                     if (sheathed && !GestureInput.IaiHolding) { sheathed = false; body.Play("katana_guard", 0.15f); }   // walking off: the blade comes out
@@ -240,10 +246,10 @@ namespace ProjectInk
                     return;
                 }
                 float sp = Mathf.Abs(velocity.x);
-                string clip = KatanaMode ? (RodMode && body.Has("rod_walk") ? "rod_walk" : "katana_walk") : sp < 1.7f ? "walk_alone" : sp < 4.0f ? "run" : "sprint";
+                string clip = KatanaMode ? (RodMode && body.Has("rod_walk") ? "rod_walk" : "katana_walk") : sp < 1.9f ? "walk_alone" : "run";
                 float clipSpeed = clip == "rod_walk" && body.Has("rod_step") ? RodWalkSpeed : clip == "katana_walk" && body.Has("katana_back") ? SwordWalkSpeed
                                 : clip == "katana_walk" || clip == "rod_walk" ? 0.7f
-                                : clip == "walk_alone" ? WalkSpeed : clip == "run" ? JogSpeed : RunSpeedV4;
+                                : clip == "walk_alone" ? WalkSpeed : RunClipSpeed;
                 float play = Mathf.Clamp(sp / clipSpeed, 0.55f, 1.5f);
                 if (body.CurrentName != clip) body.Play(clip, clip == "rod_walk" || clip == "katana_walk" ? 0.25f : 0.15f, false, play);   // the pipe: out of its stance into the walk, eased
                 else body.SetSpeed(play);

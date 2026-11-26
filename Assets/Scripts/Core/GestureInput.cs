@@ -68,6 +68,16 @@ namespace ProjectInk
         readonly HashSet<int> consumed = new HashSet<int>();
         readonly Dictionary<int, int> holding = new Dictionary<int, int>();   // classic: touch id -> run direction
         float keyDownAt = -1f;
+        // RUN: a tap, then straight away a hold on the same side (a plain hold walks)
+        const float RunGap = 0.32f;           // seconds from the tap's lift to the press that makes it a run
+        float lastTapAt = -9f; int lastTapHalf;
+        int runId = int.MinValue;
+        bool keyRun; int keySide; float keyUpAt = -9f; int keyUpSide;
+        readonly HashSet<int> runMaybe = new HashSet<int>();     // presses that follow a tap: a run if held
+        const float RunHold = 0.14f;                             // held this long after a tap, it's a run
+
+        /// <summary>The held press is a RUN (tap, then hold the same side): the hero runs, not walks.</summary>
+        public bool RunHeld => (runId != int.MinValue && holding.ContainsKey(runId)) || keyRun;
         int stickId = int.MinValue;
         Vector2 stickOrigin, stickNow;
         bool stickFlicked;
@@ -402,6 +412,10 @@ namespace ProjectInk
             }
             touchStart[id] = pos;
             touchTime[id] = now;
+            // a tap, and straight away a press on the same half: if it's held (a moment, not a quick tap: quick
+            // taps are a punch string), it's a RUN that way
+            int half = pos.x < Screen.width * 0.5f ? -1 : 1;
+            if (Classic && !consumed.Contains(id) && now - lastTapAt < RunGap && half == lastTapHalf) { runMaybe.Add(id); lastTapAt = -9f; }
             if (Grammar == WeaponGrammar.Katana && iaiId == int.MinValue && OnHero(pos)) { iaiId = id; iaiFrom = pos; }
         }
 
@@ -474,12 +488,13 @@ namespace ProjectInk
                     consumed.Add(id);
                     return;
                 }
-                if (UnityEngine.Time.unscaledTime - t0 > holdToRun && (pos - s0).magnitude < Screen.height * swipeFraction)
+                if (UnityEngine.Time.unscaledTime - t0 > (runMaybe.Contains(id) ? RunHold : holdToRun) && (pos - s0).magnitude < Screen.height * swipeFraction)
                 {
                     // the chain in hand and the press is on a man: drag him in instead of running
                     var on = HoldOnArmed ? EnemyAt(s0) : null;
                     if (on != null) { HeldEnemy = on; consumed.Add(id); Push(Command.HoldOn); return; }
                     holding[id] = s0.x < Screen.width * 0.5f ? -1 : 1;
+                    if (runMaybe.Remove(id)) runId = id;                    // tap, then hold: a run
                 }
                 return;
             }
@@ -513,8 +528,16 @@ namespace ProjectInk
                     return;
                 }
             }
-            if (holding.Remove(id)) { consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
-            if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s)) Push(Classify(s, pos));
+            runMaybe.Remove(id);
+            if (holding.Remove(id)) { if (id == runId) runId = int.MinValue; consumed.Remove(id); touchStart.Remove(id); touchTime.Remove(id); return; }
+            if (!consumed.Remove(id) && touchStart.TryGetValue(id, out var s))
+            {
+                var c = Classify(s, pos);
+                Push(c);
+                // a tap: held again on the same side straight after, it's a run
+                if (c == Command.StrikeLeft || c == Command.StrikeRight || c == Command.KickLeft || c == Command.KickRight || c == Command.StrikeForward || c == Command.KickForward)
+                { lastTapAt = UnityEngine.Time.unscaledTime; lastTapHalf = s.x < Screen.width * 0.5f ? -1 : 1; }
+            }
             touchStart.Remove(id);
             touchTime.Remove(id);
         }
@@ -523,9 +546,22 @@ namespace ProjectInk
         void ClassicKeys(bool left, bool right, bool leftDown, bool rightDown)
         {
             float now = UnityEngine.Time.unscaledTime;
-            if (leftDown) { Push(Command.StrikeLeft); keyDownAt = now; }
-            if (rightDown) { Push(Command.StrikeRight); keyDownAt = now; }
-            if (!left && !right) { keyDownAt = -1f; return; }
+            // tap the key, then press it again and hold: RUN (the second press doesn't strike)
+            foreach (var (down, side) in new[] { (leftDown, -1), (rightDown, 1) })
+            {
+                if (!down) continue;
+                keySide = side;
+                keyRun = now - keyUpAt < RunGap && keyUpSide == side;          // the second press: held, it's a run
+                Push(side < 0 ? Command.StrikeLeft : Command.StrikeRight);
+                keyDownAt = now;
+            }
+            if (!left && !right)
+            {
+                // let go: a short press was a tap (a run may follow it)
+                if (keyDownAt >= 0f && now - keyDownAt <= holdToRun) { keyUpAt = now; keyUpSide = keySide; }
+                keyDownAt = -1f; keyRun = false;
+                return;
+            }
             if (keyDownAt >= 0f && now - keyDownAt > holdToRun)
                 keyAxis = (right ? 1f : 0f) - (left ? 1f : 0f);
         }

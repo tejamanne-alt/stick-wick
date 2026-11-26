@@ -839,6 +839,7 @@ namespace ProjectInk
             if (cam != null) { cam.SetBounds(lo - 3f, hi + 3f); cam.Scripted(Vector3.zero, Vector3.zero, 0f); }
             barsPx = 0f;
             hero.runSpeed = pace;
+            hero.ScriptedPace = pace;                  // a hold moves at the scene's pace (walking, or running if it's that fast)
             hero.SetFacing(dir);
             hero.CineRelease();
             walkTitle = prompt;
@@ -854,6 +855,7 @@ namespace ProjectInk
             }
             walkAlpha = 0f;
             walkTitle = null;
+            hero.ScriptedPace = 0f;
             hero.runSpeed = runSpeed;
             hero.CineLock();
             barsPx = 92f;

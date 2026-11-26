@@ -288,7 +288,7 @@ namespace ProjectInk
             lessons = new[]
             {
                 new Lesson { title = "RUN",
-                    steps = new[] { S(Gest.Hold, "HOLD") },
+                    steps = new[] { S(Gest.Hold, "TAP, THEN HOLD") },
                     cast = NoMen, stage = () => HeroAt(-4f),
                     demo = () => DemoRun(),
                     match = (k, a, l, low) => k == 't' && a == "run" },
@@ -380,12 +380,12 @@ namespace ProjectInk
                     demo = () => DemoRush(),
                     match = (k, a, l, low) => k == 'd' && a == "far_rush" },
                 new Lesson { title = "FLYING KNEE", reps = 2,
-                    steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), Timed(S(Gest.TapHigh, "NOW: TAP HIGH"), _ => Gap(Man(0)) < 2.3f) },
+                    steps = new[] { S(Gest.Hold, "TAP, HOLD: RUN AT HIM"), Timed(S(Gest.TapHigh, "NOW: TAP HIGH"), _ => Gap(Man(0)) < 2.3f) },
                     stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); }, restage = true,
                     demo = () => DemoRunning(true),
                     match = (k, a, l, low) => k == 'd' && (a == "far_knee" || a == "far_barge") },
                 new Lesson { title = "SLIDE TACKLE",
-                    steps = new[] { S(Gest.Hold, "HOLD: RUN AT HIM"), Timed(S(Gest.TapLow, "NOW: TAP LOW"), _ => Gap(Man(0)) < 2.2f) },
+                    steps = new[] { S(Gest.Hold, "TAP, HOLD: RUN AT HIM"), Timed(S(Gest.TapLow, "NOW: TAP LOW"), _ => Gap(Man(0)) < 2.2f) },
                     stage = () => { HeroAt(-3.5f); Mark(0, 3.5f, true, false); }, restage = true,
                     demo = () => DemoRunning(false),
                     match = (k, a, l, low) => k == 'd' && a == "far_slide" },
@@ -586,8 +586,10 @@ namespace ProjectInk
 
         float Gap(Enemy e) => e != null ? Mathf.Abs(e.transform.position.x - hero.transform.position.x) : 99f;
 
+        /// <summary>The run: a tap, then straight away a press held on the same side (a plain hold only walks).</summary>
         IEnumerator DemoRun()
         {
+            yield return Tap(From(0), 0, 0, 0.14f);
             yield return HoldAt(From(0), 0, () => false, 1.6f, 1.6f);
             Lift(0);
         }
@@ -694,8 +696,8 @@ namespace ProjectInk
             var a = Man(0);
             var hp = From(0);
             demoStep = 0;
-            yield return Glide(0, hp);
-            yield return WaitU(0.12f);
+            // the run: a tap, then the press held
+            yield return Tap(hp, 0, 0, 0.14f);
             // finger one holds (he runs); finger two comes to hover over its pad, and taps at the moment
             fShow[1] = 1f;
             fPos[1] = From(1) + new Vector2(W * 0.05f, -H * 0.1f);
@@ -1650,7 +1652,7 @@ namespace ProjectInk
                     HoldGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, "KEEP HOLDING");
                     break;
                 case Gest.Hold:
-                    HoldGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, "HOLD");
+                    HoldGuide(Gui(From(i)) + shift, Gui(To(i)) + shift, a, st.say.StartsWith("TAP") ? "TAP, THEN HOLD" : "HOLD");
                     break;
                 case Gest.TapMan:
                     {
