@@ -1999,3 +1999,11 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
 ## SKIP in the intro, and from beginning to end
 - **The intro had no visible SKIP.** The buttons were drawn early, and the opening's cinema bars and fades were drawn over them. They're now drawn last, over everything, in every chapter.
 - **Scene phases always count as scenes,** whatever the hero's lock says: the opening, the breach until the men are let go, the memory, the walk to the hall and chapter 1's ending. So SKIP ›, TO PLAY » and the right-half tap work from the first frame of the game to the last. They still step aside for every prompt the player has to make.
+
+## SKIP takes the whole scene; story walking
+- **SKIP took only the dialogue.** The scenes are built from several short shots, plus chapters' own timing loops (the bank alone has a dozen). SKIP ended one shot and cut the line, so the animation carried on. Now:
+  - Every story timer runs on one story clock, `StoryDt`; the training ground, the recap and the subtitles stay on real time.
+  - **SKIP ›** (or a right-half tap) races the story at 30× behind a quick black dip, silent, until the **next line of dialogue** starts (or the player gets the controls). That line then plays normally. One tap, one scene.
+  - **TO PLAY »** races the same way to the controls.
+- **Running on the spot.** A tap with nobody near steps the hero toward it. In a story walk with tight bounds (the bank) the step's goal could sit past where he can go, so he ran into the limit forever. A step now stops when it's blocked.
+- **Story walking.** With nobody fighting within 12 m (and outside the training ground), holding makes him walk calmly, never a jog or a run with the arms up. He's never faster than the story's own pace for that walk.

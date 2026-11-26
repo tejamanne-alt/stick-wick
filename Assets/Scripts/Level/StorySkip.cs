@@ -17,13 +17,21 @@ namespace ProjectInk
     {
         static int skipFrame = -10;
         bool kGapAwait;
-        static bool fastForward;
+        static bool fastForward;              // TO PLAY: racing on until the player has the controls
+        static bool toNextLine;
+        static int skipStartFrame;               // SKIP: racing on until the next line of dialogue (or the controls)
+        const float SkipRate = 30f;           // how fast the story runs while it's being skipped
+
+        /// <summary>The story's clock: real seconds, or many of them a frame while a scene is being skipped (every
+        /// story timer runs on it, so a skip takes the whole scene with it: the shots, the walks, the waits).</summary>
+        public static float StoryDt => Time.unscaledDeltaTime * (Skipping ? SkipRate : 1f);
+        static bool Skipping => fastForward || toNextLine;
         float ffAt = -9f, ffEndAt = -9f, ffVolume = 1f, skipTapAt = -9f;
         // the next beat of each clock (what a skip jumps to), refilled every frame by the At() checks
         float nextT = 1e9f, nextB = 1e9f, nextM = 1e9f, nextE = 1e9f, nextH = 1e9f;
 
         /// <summary>True for the one frame a skip was asked for (and every frame of a fast-forward).</summary>
-        public static bool SkipNow => fastForward || skipFrame == Time.frameCount;
+        public static bool SkipNow => Skipping || skipFrame == Time.frameCount;
 
         static float NextBeat(float clock, float beat, float best) => beat > clock && beat < best ? beat : best;
 
@@ -40,13 +48,26 @@ namespace ProjectInk
         /// <summary>A scene playing by itself, that SKIP may cut.</summary>
         bool AutoPlaying => hero != null && !PlayerHasControl && phase != Phase.End && !recapOn && !TimeController.Paused && blackout < 0.98f;
 
-        /// <summary>Skip this scene. From the GUI (after the frame's coroutines ran) it lands next frame.</summary>
+        /// <summary>Skip this scene: the story races on (behind a quick black, silent) to its next line of
+        /// dialogue, which then plays as normal; or to the controls, if they come first.</summary>
         void SkipScene(bool fromGui)
         {
-            skipFrame = Time.frameCount + (fromGui ? 1 : 0);
+            if (Skipping) return;
+            Sound.Play(Sfx.Whoosh, 0.35f, null, 1.3f);
+            toNextLine = true;
+            skipStartFrame = Time.frameCount;
+            ffAt = Time.unscaledTime;
+            ffVolume = AudioListener.volume;
+            AudioListener.volume = 0f;
             subUntil = 0f;                                         // the line being spoken is cut
             skipTapAt = Time.unscaledTime;
-            Sound.Play(Sfx.Whoosh, 0.35f, null, 1.3f);
+        }
+
+        /// <summary>A line is about to be spoken: a SKIP ends here (the new scene plays from its first line).</summary>
+        void SkipReachedLine()
+        {
+            if (!toNextLine || Time.frameCount <= skipStartFrame) return;          // not the line we skipped from
+            StopFastForward();
         }
 
         /// <summary>On to the next moment the player has the controls.</summary>
@@ -54,6 +75,7 @@ namespace ProjectInk
         {
             // the opening has its own, proven way straight to the walk
             if (phase == Phase.Cinematic && !gateBusy) { SkipToWalk(); return; }
+            if (toNextLine) { toNextLine = false; fastForward = true; return; }
             fastForward = true;
             ffAt = Time.unscaledTime;
             ffVolume = AudioListener.volume;
@@ -63,8 +85,9 @@ namespace ProjectInk
 
         void StopFastForward()
         {
-            if (!fastForward) return;
+            if (!Skipping) return;
             fastForward = false;
+            toNextLine = false;
             ffEndAt = Time.unscaledTime;
             AudioListener.volume = ffVolume;
         }
@@ -72,13 +95,13 @@ namespace ProjectInk
         /// <summary>Every frame (from Update): the fast-forward ends where the player has the controls.</summary>
         void UpdateSkip()
         {
-            if (fastForward && (PlayerHasControl || phase == Phase.End || Time.unscaledTime - ffAt > 25f)) StopFastForward();
+            if (Skipping && (PlayerHasControl || phase == Phase.End || Time.unscaledTime - ffAt > (fastForward ? 25f : 8f))) StopFastForward();
         }
 
         /// <summary>A tap on the right half of the screen while a scene plays: skip it.</summary>
         void OnSkipTap(Vector2 at, bool low, int side)
         {
-            if (!AutoPlaying || fastForward) return;
+            if (!AutoPlaying || Skipping) return;
             if (at.x < Screen.width * 0.5f || GestureInput.IsBlocked(at)) return;
             if (Time.unscaledTime - skipTapAt < 0.25f) return;     // one tap, one scene
             SkipScene(false);
@@ -87,10 +110,10 @@ namespace ProjectInk
         void SkipGUI(float w, float h)
         {
             float now = Time.unscaledTime;
-            if (fastForward || now - ffEndAt < 0.5f)
+            if (Skipping || now - ffEndAt < 0.35f)
             {
                 // the scenes running through, behind black
-                float a = fastForward ? Mathf.Clamp01((now - ffAt) / 0.15f) : 1f - (now - ffEndAt) / 0.5f;
+                float a = Skipping ? Mathf.Clamp01((now - ffAt) / 0.08f) : 1f - (now - ffEndAt) / 0.35f;
                 Fill(new Rect(0, 0, w, h), new Color(0f, 0f, 0f, a));
                 if (fastForward)
                 {

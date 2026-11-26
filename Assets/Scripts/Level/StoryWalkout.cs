@@ -68,12 +68,12 @@ namespace ProjectInk
             Sound.PlayTake(Sfx.Birds, 0, 0.45f);
             StartCoroutine(FadeIn(1.4f));
             float est = 6.0f;
-            for (float t0 = 0f; t0 < est; t0 += Time.unscaledDeltaTime)
+            for (float t0 = 0f; t0 < est; t0 += StoryDt)
             {
                 float u = t0 / est;
                 var p = Vector3.Lerp(WoAt(147.0f, 2.2f, -97f), WoAt(147.0f, 2.5f, -92.5f), CineCam.Ease(u)) + Sway(0.03f, 0.25f, 4f);
                 Cine(new CineCam.Shot(p, WoAt(143.5f, 9.0f, 0f), 38f));
-                if (t0 > 2.0f && t0 - Time.unscaledDeltaTime <= 2.0f) Sound.PlayTake(Sfx.Birds, 2, 0.35f);
+                if (t0 > 2.0f && t0 - StoryDt <= 2.0f) Sound.PlayTake(Sfx.Birds, 2, 0.35f);
                 yield return null;
             }
 
@@ -88,7 +88,7 @@ namespace ProjectInk
             int next = 0;
             while (woT < 69.4f)
             {
-                woT += Time.unscaledDeltaTime;
+                woT += StoryDt;
                 if (SkipNow && next < events.Count) woT = Mathf.Max(woT, events[next].t);     // SKIP: on to the next beat of the take
                 while (next < events.Count && events[next].t <= woT) { events[next].act(); next++; }
                 WoFrame(Time.deltaTime);
@@ -243,13 +243,13 @@ namespace ProjectInk
                 bool auto = woT - start > 2.6f;
                 if (woHeld || auto)
                 {
-                    held += Time.unscaledDeltaTime;
+                    held += StoryDt;
                     if (hWalkie != null && !hWalkie.gameObject.activeSelf) hWalkie.gameObject.SetActive(true);
                     hFree.To(() => WoMouth(rigH, 1f), () => Vector3.down - WoSide() * 0.5f, 3.2f);
                 }
                 else
                 {
-                    held = Mathf.Max(0f, held - Time.unscaledDeltaTime);
+                    held = Mathf.Max(0f, held - StoryDt);
                     WoFreeRest(3f);
                 }
                 scWorld = HeroHead() + Vector3.up * 0.4f;
@@ -263,7 +263,7 @@ namespace ProjectInk
                 yield return null;
             }
             ScEnd();
-            for (float t0 = 0f; t0 < 2.6f; t0 += Time.unscaledDeltaTime) yield return null;
+            for (float t0 = 0f; t0 < 2.6f; t0 += StoryDt) yield return null;
             WoFreeRest(2.5f);
             if (hWalkie != null) hWalkie.gameObject.SetActive(false);
             rigH.nod = 4f; rigH.turn = 0f; rigM.nod = 0f;
@@ -283,7 +283,7 @@ namespace ProjectInk
             Sound.PlayTake(Sfx.WalkieClick, 0, 0.85f, hero.transform.position);
             Haptics.Vibrate();
             ScEnd();
-            for (float t0 = 0f; t0 < 0.3f; t0 += Time.unscaledDeltaTime) yield return null;
+            for (float t0 = 0f; t0 < 0.3f; t0 += StoryDt) yield return null;
             hFree.To(WoCoat, () => Vector3.down - WoSide() * 0.6f, 4f);
         }
 
@@ -310,7 +310,7 @@ namespace ProjectInk
                 yield return null;
             }
             ScEnd();
-            for (float t0 = 0f; t0 < 0.8f; t0 += Time.unscaledDeltaTime) yield return null;
+            for (float t0 = 0f; t0 < 0.8f; t0 += StoryDt) yield return null;
             WoFreeRest(2f);
         }
 
@@ -414,10 +414,10 @@ namespace ProjectInk
             float v = WoSpeed(t);
             heroZ -= v * dt;
             // her place beside him, her turn, her hop
-            float k = 1f - Mathf.Exp(-5f * Time.unscaledDeltaTime);
+            float k = 1f - Mathf.Exp(-5f * StoryDt);
             mayaOff = Mathf.Lerp(mayaOff, mayaOffWant, k);
             mayaZ = Mathf.Lerp(mayaZ, mayaZWant, k);
-            mayaYaw = Mathf.Lerp(mayaYaw, mayaYawWant, 1f - Mathf.Exp(-7f * Time.unscaledDeltaTime));
+            mayaYaw = Mathf.Lerp(mayaYaw, mayaYawWant, 1f - Mathf.Exp(-7f * StoryDt));
             mayaHop = 0f;
             if (t > 12.6f && t < 13.7f) mayaHop = 0.07f * Mathf.Abs(Mathf.Sin((t - 12.6f) / 1.1f * Mathf.PI * 2f));          // she skips
             swing = t > 50.2f && t < 52.6f ? Mathf.Sin((t - 50.2f) / 2.4f * Mathf.PI) : 0f;          // (slow motion: a long, floating swing)
@@ -466,9 +466,9 @@ namespace ProjectInk
             }
             // the drift of ash and embers round the lens
             if (woDrift != null && Camera.main != null) woDrift.transform.position = Camera.main.transform.position + Camera.main.transform.forward * 3f;
-            woShake = Mathf.MoveTowards(woShake * Mathf.Exp(-2.4f * Time.unscaledDeltaTime), 0f, Time.unscaledDeltaTime * 0.002f);
-            woFlash *= Mathf.Exp(-5.5f * Time.unscaledDeltaTime);
-            RibbonFlutter.Wind = Mathf.Lerp(RibbonFlutter.Wind, t > WoB + 0.2f ? (t > 52.6f ? 2.6f : 3.4f) : 1f, 1f - Mathf.Exp(-2f * Time.unscaledDeltaTime));
+            woShake = Mathf.MoveTowards(woShake * Mathf.Exp(-2.4f * StoryDt), 0f, StoryDt * 0.002f);
+            woFlash *= Mathf.Exp(-5.5f * StoryDt);
+            RibbonFlutter.Wind = Mathf.Lerp(RibbonFlutter.Wind, t > WoB + 0.2f ? (t > 52.6f ? 2.6f : 3.4f) : 1f, 1f - Mathf.Exp(-2f * StoryDt));
             BlastFx.Tick(woBurn);
             WoCamera(t);
         }
@@ -720,7 +720,7 @@ namespace ProjectInk
 
         IEnumerator WoLerp(float secs, System.Action<float> set)
         {
-            for (float t0 = 0f; t0 < secs; t0 += Time.unscaledDeltaTime) { if (SkipNow) break; set(Mathf.SmoothStep(0f, 1f, t0 / secs)); yield return null; }
+            for (float t0 = 0f; t0 < secs; t0 += StoryDt) { if (SkipNow) break; set(Mathf.SmoothStep(0f, 1f, t0 / secs)); yield return null; }
             set(1f);
         }
 
@@ -733,7 +733,7 @@ namespace ProjectInk
             var b = plungerBox.position + new Vector3(0.05f, 0f, 0.42f);
             var dir = (b - a); dir.y = 0f;
             float yaw = -Mathf.Atan2(dir.z, dir.x) * Mathf.Rad2Deg;
-            for (float t0 = 0f; t0 < 3.6f; t0 += Time.unscaledDeltaTime)
+            for (float t0 = 0f; t0 < 3.6f; t0 += StoryDt)
             {
                 float u = t0 / 3.6f;
                 lastMan.PuppetPose(Vector3.Lerp(a, b, u * (2f - u) * 0.5f + u * 0.5f));

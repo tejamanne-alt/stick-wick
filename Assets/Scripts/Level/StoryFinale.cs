@@ -372,7 +372,7 @@ namespace ProjectInk
                 float t = 0f;
                 while (t < 1.1f && voss.KataLine && voss.KataParries < 4)
                 {
-                    t += Time.unscaledDeltaTime;
+                    t += StoryDt;
                     if (!voss.KataLineOpen) break;                       // met: on to the next line
                     yield return null;
                 }
@@ -594,7 +594,7 @@ namespace ProjectInk
                     if (vossGun == null) return;
                     float tt = u * 1.6f;
                     vossGun.position = g0 + gv * tt + Vector3.down * 4.9f * tt * tt;
-                    vossGun.Rotate(0f, 0f, 900f * Time.unscaledDeltaTime);
+                    vossGun.Rotate(0f, 0f, 900f * StoryDt);
                 });
             if (vossGun != null) { Destroy(vossGun.gameObject); vossGun = null; }
             Sound.Play(Sfx.SlowmoOut, 0.6f);
@@ -760,7 +760,7 @@ namespace ProjectInk
         void UpdateDawn()
         {
             if (storm) return;
-            lensRain = Mathf.MoveTowards(lensRain, 0f, Time.unscaledDeltaTime * 0.15f);
+            lensRain = Mathf.MoveTowards(lensRain, 0f, StoryDt * 0.15f);
         }
 
         bool reached;
@@ -794,7 +794,7 @@ namespace ProjectInk
             Say("YOU", "...Let's go home.", 2.2f);
             yield return Cut(2.6f, u => Static(Roof(bp.x - 1.0f, -3.2f) + Vector3.up * 0.9f, Roof(bp.x - 1.0f, bp.z) + Vector3.up * 0.75f, Mathf.Lerp(36f, 33f, u)), 0.01f);
             Sound.MusicStop(2.0f);
-            for (float t0 = 0f; t0 < 1.4f; t0 += Time.unscaledDeltaTime) { blackout = t0 / 1.4f; yield return null; }
+            for (float t0 = 0f; t0 < 1.4f; t0 += StoryDt) { blackout = t0 / 1.4f; yield return null; }
             blackout = 1f;
             dawn = 0f;
             yield return RealWait(0.6f);

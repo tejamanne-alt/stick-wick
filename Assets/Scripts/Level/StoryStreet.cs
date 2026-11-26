@@ -129,7 +129,7 @@ namespace ProjectInk
         IEnumerator FadeIn(float s)
         {
             float t0 = 0f;
-            while (t0 < s) { t0 += Time.unscaledDeltaTime; if (SkipNow) t0 = s; blackout = 1f - t0 / s; yield return null; }
+            while (t0 < s) { t0 += StoryDt; if (SkipNow) t0 = s; blackout = 1f - t0 / s; yield return null; }
             blackout = 0f;
         }
 
@@ -161,7 +161,7 @@ namespace ProjectInk
             var exit0 = hero.transform.position;
             while (tt < 3.2f)
             {
-                tt += Time.unscaledDeltaTime;
+                tt += StoryDt;
                 hero.CinePose(Vector3.Lerp(exit0, new Vector3(door + 6.0f, 0f, 0f), Mathf.SmoothStep(0f, 1f, tt / 3.2f)));
                 // the four walk out across the pavement to meet him
                 for (int i = 0; i < 4; i++)
@@ -169,7 +169,7 @@ namespace ProjectInk
                     if (men[i] == null) continue;
                     float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((tt - 0.6f) / 2.4f));
                     men[i].PuppetPose(Vector3.Lerp(new Vector3(StreetPlan.KerbCarX - 1.0f + i * 0.5f, 0f, -1.9f), new Vector3(stand[i], 0f, i == 2 ? 0.9f : 0f), k));
-                    if (tt - Time.unscaledDeltaTime < 0.6f && tt >= 0.6f) men[i].PuppetPlay("walk", 0.2f);
+                    if (tt - StoryDt < 0.6f && tt >= 0.6f) men[i].PuppetPlay("walk", 0.2f);
                 }
                 EndShot(new Vector3(door + 1.5f, 1.5f, -6.5f), new Vector3(Mathf.Lerp(door + 3f, 9f, tt / 3.2f), 1.2f, 0f), 40f);
                 yield return null;
@@ -254,7 +254,7 @@ namespace ProjectInk
 
         void UpdateStreet()
         {
-            if (blackout > 0f && driverStage < 5 && sReady && !hero.CinematicLock) blackout = Mathf.MoveTowards(blackout, 0f, Time.unscaledDeltaTime);
+            if (blackout > 0f && driverStage < 5 && sReady && !hero.CinematicLock) blackout = Mathf.MoveTowards(blackout, 0f, StoryDt);
             if (!sReady || hero.IsDead) return;
             UpdateTrain();
             if (driverStage > 0) { UpdateDriver(); return; }
@@ -401,7 +401,7 @@ namespace ProjectInk
             float tt = 0f;
             while (tt < 2.0f)
             {
-                tt += Time.unscaledDeltaTime;
+                tt += StoryDt;
                 float k = 1f - Mathf.Pow(1f - Mathf.Clamp01(tt / 1.8f), 3f);
                 if (carPivot != null) carPivot.position = Vector3.Lerp(park + Vector3.right * 34f, park, k);
                 EndShot(new Vector3(112f, 1.3f, -9.5f), new Vector3(Mathf.Lerp(130f, StreetPlan.DriverCarX, k), 1.0f, -2f), 40f);
@@ -416,7 +416,7 @@ namespace ProjectInk
             var d0 = driver.transform.position;
             while (tt < 2.0f)
             {
-                tt += Time.unscaledDeltaTime;
+                tt += StoryDt;
                 driver.PuppetPose(Vector3.Lerp(d0, new Vector3(StreetPlan.DriverCarX - 4.5f, 0f, 0f), Mathf.SmoothStep(0f, 1f, tt / 2.0f)));
                 EndShot(new Vector3(StreetPlan.DriverCarX - 9f, 1.4f, -5.5f), driver.transform.position + Vector3.up * 1.4f, 36f);
                 yield return null;
@@ -670,7 +670,7 @@ namespace ProjectInk
             float tt = 0f;
             while (tt < 3.4f)
             {
-                tt += Time.unscaledDeltaTime;
+                tt += StoryDt;
                 float k = tt / 3.4f;
                 var p = k < 0.45f ? Vector3.Lerp(h0, new Vector3(108f, 0f, 0.5f), k / 0.45f)
                                   : Vector3.Lerp(new Vector3(108f, 0f, 0.5f), new Vector3(108f, 0f, 16f), (k - 0.45f) / 0.55f);
@@ -746,7 +746,7 @@ namespace ProjectInk
         IEnumerator OnToTheStreet()
         {
             float t0 = 0f;
-            while (t0 < 1.2f) { t0 += Time.unscaledDeltaTime; blackout = t0 / 1.2f; yield return null; }
+            while (t0 < 1.2f) { t0 += StoryDt; blackout = t0 / 1.2f; yield return null; }
             blackout = 1f;
             StreetCheckpoint = -1;
             StreetFrom = 0;

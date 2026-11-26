@@ -62,10 +62,10 @@ namespace ProjectInk
             float t1 = 0f;
             while (t1 < 4.6f)
             {
-                t1 += Time.unscaledDeltaTime;
+                t1 += StoryDt;
                 float k = Mathf.SmoothStep(0f, 1f, t1 / 4.6f);
                 EndShot(Vector3.Lerp(new Vector3(-31f, 9.5f, -23f), new Vector3(-27f, 7.5f, -18f), k), new Vector3(-6f, 3f, 4f), 46f);
-                if (t1 > 2.2f && t1 - Time.unscaledDeltaTime <= 2.2f) Sound.Play(Sfx.Rotor, 0.12f, null, 0.5f);      // a far-off engine
+                if (t1 > 2.2f && t1 - StoryDt <= 2.2f) Sound.Play(Sfx.Rotor, 0.12f, null, 0.5f);      // a far-off engine
                 yield return null;
             }
             bankUi = 0;
@@ -79,10 +79,10 @@ namespace ProjectInk
             float t2 = 0f;
             while (t2 < 5.6f)
             {
-                t2 += Time.unscaledDeltaTime;
+                t2 += StoryDt;
                 float k = Mathf.SmoothStep(0f, 1f, t2 / 5.6f);
-                if (t2 > 0.9f && t2 - Time.unscaledDeltaTime <= 0.9f) Say("YOU", "The same mark as the key. This is the place.", 2.4f);
-                if (t2 > 3.3f && t2 - Time.unscaledDeltaTime <= 3.3f) Say("YOU", "I have to get to that box before they do.", 2.4f);
+                if (t2 > 0.9f && t2 - StoryDt <= 0.9f) Say("YOU", "The same mark as the key. This is the place.", 2.4f);
+                if (t2 > 3.3f && t2 - StoryDt <= 3.3f) Say("YOU", "I have to get to that box before they do.", 2.4f);
                 EndShot(Vector3.Lerp(new Vector3(-7f, 4.6f, 0.4f), new Vector3(-5.2f, 5.0f, 0.2f), k), new Vector3(0f, 5.3f, 0f), 34f);
                 yield return null;
             }
@@ -102,7 +102,7 @@ namespace ProjectInk
                 float tg = 0f;
                 while (tg < 2.2f)
                 {
-                    tg += Time.unscaledDeltaTime;
+                    tg += StoryDt;
                     guard.PuppetPose(Vector3.Lerp(new Vector3(3.2f, 0f, 0.4f), new Vector3(0.0f, 0f, 0.15f), Mathf.SmoothStep(0f, 1f, tg / 2.1f)));
                     if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.55f; Sound.Play(Sfx.Footstep, 0.3f, guard.transform.position, 1.1f); }
                     doorsShot();
@@ -123,7 +123,7 @@ namespace ProjectInk
                 float tdo = 0f;
                 while (tdo < 1.4f)
                 {
-                    tdo += Time.unscaledDeltaTime;
+                    tdo += StoryDt;
                     float k = Mathf.SmoothStep(0f, 1f, tdo / 1.2f);
                     if (doorL != null) doorL.localRotation = Quaternion.Euler(0f, -78f * k, 0f);
                     if (doorR != null) doorR.localRotation = Quaternion.Euler(0f, 78f * k, 0f);
@@ -151,8 +151,8 @@ namespace ProjectInk
                     var wantPos = new Vector3(hp.x, 0f, 0f) + Vector3.Lerp(new Vector3(-1.4f, 2.6f, -8.0f), new Vector3(-0.6f, 1.6f, -2.0f), u);
                     var wantLook = new Vector3(hp.x, 0f, 0f) + Vector3.Lerp(new Vector3(0.6f, 1.2f, 0.4f), new Vector3(0.5f, 1.3f, 0.8f), u);
                     if (!primed) { primed = true; camNow = wantPos; lookNow = wantLook; }
-                    camNow = Vector3.SmoothDamp(camNow, wantPos, ref camVel, 0.35f, Mathf.Infinity, Time.unscaledDeltaTime);
-                    lookNow = Vector3.SmoothDamp(lookNow, wantLook, ref lookVel, 0.35f, Mathf.Infinity, Time.unscaledDeltaTime);
+                    camNow = Vector3.SmoothDamp(camNow, wantPos, ref camVel, 0.35f, Mathf.Infinity, StoryDt);
+                    lookNow = Vector3.SmoothDamp(lookNow, wantLook, ref lookVel, 0.35f, Mathf.Infinity, StoryDt);
                     EndShot(camNow, lookNow, Mathf.Lerp(42f, 36f, u));
                 });
             }
@@ -168,7 +168,7 @@ namespace ProjectInk
                 {
                     guard.SetFacing(1);
                     if (guard.body.CurrentName != "walk") guard.PuppetPlay("walk", 0.1f, 0.8f);
-                    guard.PuppetPose(Vector3.MoveTowards(guard.transform.position, new Vector3(1.8f, 0f, 1.4f), Time.unscaledDeltaTime * 1.6f));
+                    guard.PuppetPose(Vector3.MoveTowards(guard.transform.position, new Vector3(1.8f, 0f, 1.4f), StoryDt * 1.6f));
                 }
                 EndShot(new Vector3(3.6f, 1.7f, -1.4f), hero.transform.position + Vector3.up * 1.2f, 40f);
             });
@@ -180,7 +180,7 @@ namespace ProjectInk
             yield return Hold(2.8f, () =>
             {
                 if (guard != null) guard.FaceTowards(hero.transform.position.x);
-                float k = Mathf.Clamp01(Time.unscaledDeltaTime);
+                float k = Mathf.Clamp01(StoryDt);
                 EndShot(new Vector3(2.0f, 2.2f, -1.2f), new Vector3(16f, 3.4f, 8f), 54f);
             });
 
@@ -224,7 +224,7 @@ namespace ProjectInk
                 float th = 0f;
                 while (th < 2.6f)
                 {
-                    th += Time.unscaledDeltaTime;
+                    th += StoryDt;
                     harrow.PuppetPose(new Vector3(Mathf.Lerp(24.5f, TellerX + 1.4f, Mathf.SmoothStep(0f, 1f, th / 2.4f)), 0f, 0.3f));
                     EndShot(new Vector3(TellerX + 0.6f, 1.6f, -3.6f), new Vector3(TellerX + 1.6f, 1.3f, 0.3f), 38f);
                     yield return null;
@@ -243,7 +243,7 @@ namespace ProjectInk
             float endX = TableX - 1.2f;
             while (tw < WalkDur)
             {
-                tw += Time.unscaledDeltaTime;
+                tw += StoryDt;
                 float k = Mathf.SmoothStep(0f, 1f, tw / WalkDur);
                 float x = Mathf.Lerp(hx0, endX, k);
                 hero.CinePose(new Vector3(x, 0f, 0f));
@@ -289,7 +289,7 @@ namespace ProjectInk
                 float tb = 0f;
                 while (tb < 1.6f)
                 {
-                    tb += Time.unscaledDeltaTime;
+                    tb += StoryDt;
                     float k = Mathf.SmoothStep(0f, 1f, tb / 1.5f);
                     hero.CinePose(Vector3.Lerp(hFrom, hTo, k));
                     if (harrow != null) harrow.PuppetPose(Vector3.Lerp(mFrom, mTo, k));
@@ -331,7 +331,7 @@ namespace ProjectInk
             float tk = 0f;
             while (tk < 0.45f)
             {
-                tk += Time.unscaledDeltaTime;
+                tk += StoryDt;
                 float k = Mathf.SmoothStep(0f, 1f, tk / 0.4f);
                 if (bankKey != null) bankKey.localRotation = Quaternion.Euler(0f, 0f, -90f * k);
                 if (hisKey != null) hisKey.localRotation = Quaternion.Euler(0f, 0f, -90f * k);
@@ -349,7 +349,7 @@ namespace ProjectInk
             float tp = 0f;
             while (tp < 1.0f)
             {
-                tp += Time.unscaledDeltaTime;
+                tp += StoryDt;
                 if (depositBox != null) depositBox.position = Vector3.Lerp(slotIn, slotOut, Mathf.SmoothStep(0f, 1f, tp / 0.95f));
                 EndShot(new Vector3(Box417.x - 0.6f, 1.55f, 0.6f), Box417 + new Vector3(0.1f, -0.05f, -0.2f), 34f);
                 yield return null;
@@ -367,7 +367,7 @@ namespace ProjectInk
                 float tc = 0f;
                 while (tc < 2.0f)
                 {
-                    tc += Time.unscaledDeltaTime;
+                    tc += StoryDt;
                     float k = Mathf.SmoothStep(0f, 1f, tc / 1.9f);
                     harrow.PuppetPose(Vector3.Lerp(mFrom, mTo, k));
                     if (depositBox != null) depositBox.position = Vector3.Lerp(slotOut, CarriedBy(harrow), Mathf.Clamp01(tc / 0.4f));
@@ -379,7 +379,7 @@ namespace ProjectInk
                 float td = 0f;
                 while (td < 0.7f)
                 {
-                    td += Time.unscaledDeltaTime;
+                    td += StoryDt;
                     if (depositBox != null) depositBox.position = Vector3.Lerp(held, tableAt, Mathf.SmoothStep(0f, 1f, td / 0.6f));
                     EndShot(new Vector3(TableX - 1.4f, 1.7f, -1.9f), tableAt + Vector3.up * 0.2f, 38f);
                     yield return null;
@@ -396,7 +396,7 @@ namespace ProjectInk
                 float tw2 = 0f;
                 while (tw2 < 1.4f)
                 {
-                    tw2 += Time.unscaledDeltaTime;
+                    tw2 += StoryDt;
                     float k = Mathf.SmoothStep(0f, 1f, tw2 / 1.3f);
                     hero.CinePose(Vector3.Lerp(hFrom, new Vector3(TableX - 0.85f, 0f, 0f), k));
                     if (harrow != null) harrow.PuppetPose(Vector3.Lerp(mFrom, new Vector3(TableX + 1.1f, 0f, 0.6f), k));
@@ -418,7 +418,7 @@ namespace ProjectInk
                 float tl = 0f;
                 while (tl < 2.2f)
                 {
-                    tl += Time.unscaledDeltaTime;
+                    tl += StoryDt;
                     harrow.PuppetPose(Vector3.Lerp(from, new Vector3(VaultX - 1.5f, 0f, 1.0f), tl / 2.2f));
                     EndShot(new Vector3(TableX + 1.4f, 1.6f, -1.8f), new Vector3(VaultX + 1f, 1.4f, 0.4f), 44f);
                     yield return null;
@@ -453,7 +453,7 @@ namespace ProjectInk
             float to = 0f;
             while (to < 0.8f)
             {
-                to += Time.unscaledDeltaTime;
+                to += StoryDt;
                 if (boxLid != null) boxLid.localRotation = Quaternion.Euler(-105f * Mathf.SmoothStep(0f, 1f, to / 0.8f), 0f, 0f);
                 boxShot();
                 yield return null;
@@ -493,7 +493,7 @@ namespace ProjectInk
             int said = 0;
             while (tm < MemorySeconds)
             {
-                tm += Time.unscaledDeltaTime;
+                tm += StoryDt;
                 while (said < MemoryLines.Length && tm >= MemStart(MemoryLines[said].still) + MemoryLines[said].at)
                 {
                     var l = MemoryLines[said++];
@@ -614,10 +614,10 @@ namespace ProjectInk
             bool engine = false, door = false;
             while (tx < 5.0f)
             {
-                tx += Time.unscaledDeltaTime;
+                tx += StoryDt;
                 hero.CinePose(Vector3.Lerp(exit0, new Vector3(-6f, 0f, -0.6f), Mathf.SmoothStep(0f, 1f, tx / 4.5f)));
                 if (!engine && tx > 1.0f) { engine = true; Sound.Play(Sfx.Rotor, 0.25f, new Vector3(-6f, 0.6f, -26f), 0.35f); }
-                if (tx > 0.3f && tx - Time.unscaledDeltaTime <= 0.3f) Say("YOU", "Elena... I'm coming home.", 2.2f);
+                if (tx > 0.3f && tx - StoryDt <= 0.3f) Say("YOU", "Elena... I'm coming home.", 2.2f);
                 if (!door && tx > 2.6f) { door = true; Sound.Play(Sfx.Door, 0.5f, new Vector3(-6f, 1f, -26f), 1.2f); }
                 if (carDoor != null && tx > 2.6f) carDoor.localRotation = Quaternion.Euler(0f, -55f * Mathf.SmoothStep(0f, 1f, (tx - 2.6f) / 1.0f), 0f);
                 EndShot(new Vector3(-1.4f, 1.55f, 1.2f), Vector3.Lerp(hero.transform.position + Vector3.up * 1.2f, new Vector3(-6f, 1.0f, -26f), Mathf.SmoothStep(0f, 1f, (tx - 1.8f) / 2f)), 38f);
@@ -846,7 +846,7 @@ namespace ProjectInk
             while (dir > 0 ? hero.transform.position.x < toX - 0.15f : hero.transform.position.x > toX + 0.15f)
             {
                 float moved = Mathf.Abs(hero.transform.position.x - from);
-                walkAlpha = Mathf.MoveTowards(walkAlpha, moved < 1.2f ? 1f : 0f, Time.unscaledDeltaTime * 2f);
+                walkAlpha = Mathf.MoveTowards(walkAlpha, moved < 1.2f ? 1f : 0f, StoryDt * 2f);
                 if (Time.unscaledTime > footAt && hero.Velocity.sqrMagnitude > 0.2f) { footAt = Time.unscaledTime + 0.5f; Sound.Play(Sfx.Footstep, 0.4f, hero.transform.position, 1.0f); }
                 frame?.Invoke();
                 yield return null;
@@ -867,7 +867,7 @@ namespace ProjectInk
             float t = 0f;
             while (t < seconds)
             {
-                t += Time.unscaledDeltaTime;
+                t += StoryDt;
                 if (SkipNow) t = seconds;
                 hero.CinePose(new Vector3(Mathf.Lerp(from.x, toX, t / seconds), 0f, 0f));
                 frame();

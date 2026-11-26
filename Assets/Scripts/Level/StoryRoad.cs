@@ -69,11 +69,11 @@ namespace ProjectInk
         void UpdateRoad()
         {
             UpdateStorm();
-            if (driving) drive = Mathf.Min(1f, drive + driveSpeed * Time.unscaledDeltaTime);
+            if (driving) drive = Mathf.Min(1f, drive + driveSpeed * StoryDt);
             if (roadCar != null)
             {
                 roadCar.position = RoadPlan.Sample(drive * RoadPlan.PathLength, out var dir);
-                roadCar.rotation = Quaternion.Slerp(roadCar.rotation, RoadPlan.CarRotation(dir), Time.unscaledDeltaTime * 4f);
+                roadCar.rotation = Quaternion.Slerp(roadCar.rotation, RoadPlan.CarRotation(dir), StoryDt * 4f);
             }
             // the wipers, slow, then faster as the rain gets heavier
             float wa = 0f;                                         // the wipers rest: no rain yet

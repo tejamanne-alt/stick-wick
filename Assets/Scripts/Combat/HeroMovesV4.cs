@@ -21,7 +21,7 @@ namespace ProjectInk
         bool MovesV4 => Contact && body != null && body.Has("sprint");
         bool crouching;
         float holdTime, idleCheckAt, traverseFrom, traverseTo;
-        float stepGoal = float.NaN;
+        float stepGoal = float.NaN, stepLastX, stepStuck;
         string traverse;                     // the clip of a traversal in progress (vault, pick_up, push, run_stop, run_turn)
         Component interactWith;
         WeaponPickup pickingUp;
@@ -34,6 +34,19 @@ namespace ProjectInk
             {
                 foreach (var e in Enemy.All)
                     if (e != null && e.Alive && !e.Fleeing && Mathf.Abs(e.transform.position.x - transform.position.x) < AloneRange &&
+                        Mathf.Abs(e.transform.position.y - transform.position.y) < 1.6f) return false;
+                return true;
+            }
+        }
+
+        /// <summary>No man up and able to fight within twelve metres on this floor: a story walk, not a fight.</summary>
+        bool NoFightNear
+        {
+            get
+            {
+                if (StoryIntro.Instance != null && StoryIntro.Instance.InTraining) return false;     // the training ground: running is a lesson
+                foreach (var e in Enemy.All)
+                    if (e != null && e.Alive && !e.Fleeing && !e.Passive && Mathf.Abs(e.transform.position.x - transform.position.x) < 12f &&
                         Mathf.Abs(e.transform.position.y - transform.position.y) < 1.6f) return false;
                 return true;
             }
@@ -93,8 +106,18 @@ namespace ProjectInk
             if (dir == 0 && !float.IsNaN(stepGoal))
             {
                 float dg = stepGoal - transform.position.x;
-                if (Mathf.Abs(dg) < 0.05f) { stepGoal = float.NaN; velocity.x = 0f; ArriveAtThing(); }
-                else { dir = dg > 0 ? 1 : -1; a = dir * 0.4f; }
+                // blocked short of it (a wall, the edge of where the story lets him go): stop, don't run on the spot
+                if (Mathf.Abs(transform.position.x - stepLastX) < 0.002f) stepStuck += dt; else stepStuck = 0f;
+                stepLastX = transform.position.x;
+                if (Mathf.Abs(dg) < 0.05f || stepStuck > 0.2f)
+                {
+                    bool arrived = Mathf.Abs(dg) < 0.05f;
+                    stepGoal = float.NaN; stepStuck = 0f; velocity.x = 0f;
+                    if (arrived) ArriveAtThing();
+                    if (running) { running = false; body.Play(IdleClipV4, 0.2f); }
+                    return;
+                }
+                dir = dg > 0 ? 1 : -1; a = dir * 0.4f;
             }
             else if (dir != 0) stepGoal = float.NaN;
 
@@ -110,6 +133,9 @@ namespace ProjectInk
                 if (Contact && WalkIntoClinch(dir)) return;
                 float want = !float.IsNaN(stepGoal) ? WalkSpeed
                            : holdTime < 0.4f ? WalkSpeed : holdTime < 1.25f || !alone ? JogSpeed : RunSpeedV4;
+                // story mode with no fight on: he walks (a calm walk, never a jog or a run); and never faster than the story allows
+                if (Contact && NoFightNear) want = Mathf.Min(want, 1.6f);
+                if (Contact) want = Mathf.Min(want, Mathf.Max(WalkSpeed, runSpeed));
                 if (KatanaMode)
                 {
                     if (sheathed && !GestureInput.IaiHolding) { sheathed = false; body.Play("katana_guard", 0.15f); }   // walking off: the blade comes out

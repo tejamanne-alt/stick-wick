@@ -381,7 +381,7 @@ namespace ProjectInk
 
         void UpdateDuel()
         {
-            float dt = Time.unscaledDeltaTime;
+            float dt = StoryDt;
             // the story's clock: crawl into a prompt fast, come out of it faster
             float rate = cineTarget < cineScale ? 6f : 12f;
             cineScale = Mathf.MoveTowards(cineScale, cineTarget, dt * rate);
@@ -406,7 +406,7 @@ namespace ProjectInk
             foreach (var m0 in men) if (m0 != null && m0.Alive) reach = Mathf.Max(reach, Mathf.Min(4.5f, Mathf.Abs(m0.transform.position.x - hp.x)));
             float dist = 3.4f + reach * 0.9f;
             float lean = ask != Ask.None ? 0.97f : 1f;      // in the crawl the lens creeps in
-            cam.ScriptRoll = Mathf.MoveTowards(cam.ScriptRoll, 0f, Time.unscaledDeltaTime * 8f);
+            cam.ScriptRoll = Mathf.MoveTowards(cam.ScriptRoll, 0f, StoryDt * 8f);
             cam.Scripted(new Vector3(hp.x, 1.25f, -dist * lean) + Sway(0.02f, 0.5f, 21f), new Vector3(hp.x, 0.95f, 0f), 1f, 40f);
         }
 

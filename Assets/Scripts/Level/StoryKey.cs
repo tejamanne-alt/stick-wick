@@ -21,7 +21,7 @@ namespace ProjectInk
         /// <summary>The Foreman's orders, folded in with the key: a torn scrap, in someone else's hand.</summary>
         void NoteGUI(float w, float h)
         {
-            noteUi = Mathf.MoveTowards(noteUi, noteUiTarget, Time.unscaledDeltaTime * 2f);
+            noteUi = Mathf.MoveTowards(noteUi, noteUiTarget, StoryDt * 2f);
             if (noteUi <= 0.001f) return;
             float a = noteUi;
             float bh = barsPx * (h / 720f);
@@ -48,7 +48,7 @@ namespace ProjectInk
         /// chapter 2: he has been there before).</summary>
         void MatchGUI(float w, float h)
         {
-            matchUi = Mathf.MoveTowards(matchUi, matchUiTarget, Time.unscaledDeltaTime * 2.2f);
+            matchUi = Mathf.MoveTowards(matchUi, matchUiTarget, StoryDt * 2.2f);
             if (matchUi <= 0.001f) return;
             float a = matchUi;
             float bh = barsPx * (h / 720f);
@@ -147,7 +147,7 @@ namespace ProjectInk
         /// over the picture so they stay crisp at any size.</summary>
         void KeyGUI(float w, float h)
         {
-            keyUi = Mathf.MoveTowards(keyUi, keyUiTarget, Time.unscaledDeltaTime * 1.6f);
+            keyUi = Mathf.MoveTowards(keyUi, keyUiTarget, StoryDt * 1.6f);
             if (keyUi <= 0.001f) return;
             if (keyTex == null) keyTex = KeyTagTexture(256, 384);
             if (markTex == null) markTex = BankMark(128, new Color(0.74f, 0.74f, 0.74f));

@@ -183,7 +183,7 @@ namespace ProjectInk
             System.Action drive = () =>
             {
                 if (van == null) return;
-                vx += Time.unscaledDeltaTime * Mathf.Lerp(1.2f, 6f, Mathf.Clamp01(vx / 6f));
+                vx += StoryDt * Mathf.Lerp(1.2f, 6f, Mathf.Clamp01(vx / 6f));
                 van.position = v0 + new Vector3(vx, 0f, vx > 8f ? (vx - 8f) * 0.6f : 0f);
             };
             // slow motion: the van pulling away, her small hand on the glass
@@ -199,7 +199,7 @@ namespace ProjectInk
             StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () =>
             {
                 drive();
-                ran = Mathf.MoveTowards(ran, scProgress * 9f, Time.unscaledDeltaTime * 6f);
+                ran = Mathf.MoveTowards(ran, scProgress * 9f, StoryDt * 6f);
                 hero.CinePose(h0 + Vector3.right * ran);
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.24f; Sound.Play(Sfx.Footstep, 0.7f, hero.transform.position, 1.2f); }
                 Cine(new CineCam.Shot(hero.transform.position + new Vector3(-2.6f, 0.9f, -1.6f), Vector3.Lerp(HeroHead(), VanWindow(), 0.6f), 38f));

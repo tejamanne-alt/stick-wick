@@ -92,7 +92,7 @@ namespace ProjectInk
 
         void UpdateEscape()
         {
-            float dt = Time.unscaledDeltaTime;
+            float dt = StoryDt;
             var hp = hero.transform.position;
             float y = home.y;
 

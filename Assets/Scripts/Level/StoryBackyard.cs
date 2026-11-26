@@ -164,7 +164,7 @@ namespace ProjectInk
                     {
                         hero.CinePose(new Vector3(Mathf.Lerp(2.2f, 8.2f, u), 0f, 0f));
                         if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.55f; Sound.Play(Sfx.Footstep, 0.25f, hero.transform.position, 0.8f); }
-                        if (u > 0.5f && u - Time.unscaledDeltaTime / 4.2f <= 0.5f) Say("YOU", "...To the swings.", 2.2f);
+                        if (u > 0.5f && u - StoryDt / 4.2f <= 0.5f) Say("YOU", "...To the swings.", 2.2f);
                     });
                 CineOff();
                 yield return PlayerWalk(ParkPlan.RibbonX - 0.9f, 7.5f, 1.6f, Application.isMobilePlatform ? "HOLD TO FOLLOW THEM" : "HOLD  D  TO FOLLOW THEM");

@@ -70,7 +70,7 @@ namespace ProjectInk
         void UpdateBoss()
         {
             if (bossT < 0f || foreman == null) return;
-            prevBossT = bossT; bossT += Time.unscaledDeltaTime;
+            prevBossT = bossT; bossT += StoryDt;
             float y = home.y;
             if (!bossLive)
             {
@@ -108,7 +108,7 @@ namespace ProjectInk
                     if (bossT < 3.0f) cam.Scripted(hero.transform.position + new Vector3(-1.4f, 0.5f, -2.4f), new Vector3(HookX, Mathf.Max(1.6f, fp.y + 1.2f), 0f), 1f, 44f);
                     else cam.Scripted(fp + new Vector3(-2.4f, 1.0f, -2.2f), fp + Vector3.up * 1.7f, 1f - Ease(4.3f, 4.9f, bossT), 34f);
                 }
-                barsPx = Mathf.MoveTowards(barsPx, bossT < 4.3f ? 56f : 0f, Time.unscaledDeltaTime * 120f);
+                barsPx = Mathf.MoveTowards(barsPx, bossT < 4.3f ? 56f : 0f, StoryDt * 120f);
                 if (bossT >= 4.9f)
                 {
                     bossLive = true;

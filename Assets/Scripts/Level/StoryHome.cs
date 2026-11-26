@@ -74,7 +74,7 @@ namespace ProjectInk
             float t0 = 0f;
             while (t0 < secs)
             {
-                t0 += Time.unscaledDeltaTime;
+                t0 += StoryDt;
                 if (SkipNow) t0 = secs;
                 float u = Mathf.Clamp01(t0 / secs);
                 Cine(shot(u));
@@ -214,7 +214,7 @@ namespace ProjectInk
                 hero.CinePuppet();
                 if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f);
                 yield return Move(4.2f, u => CineCam.OverheadRotation(new Vector3(-2.2f, 0f, 0.15f), u, 3.4f, -8f, 26f, 48f),
-                    u => { if (u > 0.3f && u - Time.unscaledDeltaTime / 4.2f <= 0.3f) Say("YOU", "...Three.", 2.2f); });
+                    u => { if (u > 0.3f && u - StoryDt / 4.2f <= 0.3f) Say("YOU", "...Three.", 2.2f); });
 
                 // ------------------------------------------------ H4 the door, ajar: a slow dolly in on it
                 hero.CinePose(new Vector3(-1.4f, 0f, 0f));
@@ -255,7 +255,7 @@ namespace ProjectInk
                 bool l1 = false, l2 = false;
                 while (mt < MayaSeconds)
                 {
-                    mt += Time.unscaledDeltaTime;
+                    mt += StoryDt;
                     if (!l1 && mt > 0.6f) { l1 = true; Say("HER", "She has your frown.", 2.0f); }
                     if (!l2 && mt > MayaSeconds - 2.8f) { l2 = true; Say("MAYA", "Papa! Look!", 2.2f); }
                     yield return null;
@@ -346,7 +346,7 @@ namespace ProjectInk
                 yield return Move(3.0f, u => CineCam.ArcShot(inRoom, u, 2.8f, -46f, 0f, 0.3f, 36f));
                 yield return ShelfWalkie();
                 yield return Move(3.0f, u => CineCam.ArcShot(inRoom, u, 2.8f, 0f, 22f, 0.3f, 36f),
-                    u => { if (u > 0.4f && u - Time.unscaledDeltaTime / 3f <= 0.4f) Say("YOU", "...Where are you, sweetheart?", 2.6f); });
+                    u => { if (u > 0.4f && u - StoryDt / 3f <= 0.4f) Say("YOU", "...Where are you, sweetheart?", 2.6f); });
                 CineOff();
                 yield return PlayerWalk(24.2f, 17.5f, 1.6f, Application.isMobilePlatform ? "HOLD TO WALK" : "HOLD  D  TO WALK");
             }
@@ -591,7 +591,7 @@ namespace ProjectInk
             foreach (var e in Enemy.All.ToArray()) if (e != null && e != cleaner && e != elenaBody && e.Alive) e.PuppetDie();
             // later: black, then the kitchen
             float t0 = 0f;
-            while (t0 < 0.8f) { t0 += Time.unscaledDeltaTime; blackout = t0 / 0.8f; yield return null; }
+            while (t0 < 0.8f) { t0 += StoryDt; blackout = t0 / 0.8f; yield return null; }
             blackout = 1f;
             hero.CinePuppet();
             barsPx = 92f;
@@ -628,7 +628,7 @@ namespace ProjectInk
             float t0 = 0f;
             while (t0 < secs)
             {
-                t0 += Time.unscaledDeltaTime;
+                t0 += StoryDt;
                 if (roll) Cine(CineCam.Roll(new Vector3(28.4f, 1.3f, -3.4f), new Vector3(28.45f, 1.0f, 0.75f), t0 / secs, 0f, -9f, 36f));
                 else frame?.Invoke();
                 yield return null;
@@ -648,7 +648,7 @@ namespace ProjectInk
             hero.body.Play("walk", 0.2f, true, 0.6f);
             var p0 = hero.transform.position;
             yield return Move(4.6f, u => CineCam.OverheadRotation(floorAt, u, 4.4f, -20f, 24f, 50f),
-                u => { hero.CinePose(Vector3.Lerp(p0, new Vector3(30.2f, 0f, 0.2f), Mathf.Min(1f, u * 2f))); if (u > 0.5f && u - Time.unscaledDeltaTime / 4.6f <= 0.5f) hero.body.Play("idle", 0.3f); });
+                u => { hero.CinePose(Vector3.Lerp(p0, new Vector3(30.2f, 0f, 0.2f), Mathf.Min(1f, u * 2f))); if (u > 0.5f && u - StoryDt / 4.6f <= 0.5f) hero.body.Play("idle", 0.3f); });
             Say("YOU", "...Small feet. She ran.", 2.6f);
             yield return Hold(2.4f, () => Cine(CineCam.OverheadRotation(floorAt, 1f, 4.4f, -20f, 24f, 50f)));
             // H21 out through the back door: the garden, the swing still moving; the camera pulls away from him

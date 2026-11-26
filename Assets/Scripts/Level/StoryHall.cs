@@ -97,7 +97,7 @@ namespace ProjectInk
         {
             float y = home.y;
             var hp = hero.transform.position;
-            barsPx = Mathf.MoveTowards(barsPx, 56f, Time.unscaledDeltaTime * 120f);
+            barsPx = Mathf.MoveTowards(barsPx, 56f, StoryDt * 120f);
             if (AtH(0.2f)) { Say("VOICE, BEYOND THE SHUTTER", "Kovac went quiet. Get in there. ALL of you.", 2.4f); Sound.Play(Sfx.Footstep, 0.8f, new Vector3(16f, 0f, 0f), 0.8f); }
             if (AtH(0.6f)) Sound.Play(Sfx.Footstep, 0.9f, new Vector3(16f, 0f, 0f), 0.85f);
             if (AtH(0.9f)) Sound.Play(Sfx.Chain, 0.6f, new Vector3(17f, 1f, 0f));

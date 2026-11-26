@@ -65,7 +65,7 @@ namespace ProjectInk
 
         IEnumerator FadeOut(float s)
         {
-            for (float t0 = 0f; t0 < s; t0 += Time.unscaledDeltaTime) { if (SkipNow) break; blackout = t0 / s; yield return null; }
+            for (float t0 = 0f; t0 < s; t0 += StoryDt) { if (SkipNow) break; blackout = t0 / s; yield return null; }
             blackout = 1f;
         }
 
@@ -194,9 +194,9 @@ namespace ProjectInk
                 float swing = 0f, vel = 0f;
                 System.Action swingFrame = () =>
                 {
-                    vel += -swing * 3.2f * Time.unscaledDeltaTime;
-                    vel *= 1f - 0.12f * Time.unscaledDeltaTime;
-                    swing += vel * Time.unscaledDeltaTime;
+                    vel += -swing * 3.2f * StoryDt;
+                    vel *= 1f - 0.12f * StoryDt;
+                    swing += vel * StoryDt;
                     float len = EpiloguePlan.SwingPivot.y - seat.y;
                     var off = new Vector3(Mathf.Sin(swing) * len, (1f - Mathf.Cos(swing)) * len, 0f);
                     if (swingSeat != null) swingSeat.localRotation = Quaternion.Euler(0f, 0f, swing * Mathf.Rad2Deg);

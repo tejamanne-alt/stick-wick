@@ -82,11 +82,11 @@ namespace ProjectInk
             var bp0 = boss != null ? boss.transform.position : new Vector3(landX, 0f, 0f);
             while (t0 < 1.7f)
             {
-                t0 += Time.unscaledDeltaTime;
+                t0 += StoryDt;
                 float k = Mathf.Clamp01(t0 / 1.5f);
                 if (boss != null) boss.PuppetPose(new Vector3(Mathf.Lerp(bp0.x, landX, 1f - (1f - k) * (1f - k)), Mathf.Max(0f, Mathf.Sin(k * Mathf.PI) * 0.8f), 0f));
                 EndShot(new Vector3(landX - 3.2f, 1.0f, -4.6f), new Vector3(landX - 0.6f, 0.8f, 0f), 40f);
-                barsPx = Mathf.MoveTowards(barsPx, 70f, Time.unscaledDeltaTime * 140f);
+                barsPx = Mathf.MoveTowards(barsPx, 70f, StoryDt * 140f);
                 yield return null;
             }
             Sound.Play(Sfx.Boom, 0.8f);
@@ -104,7 +104,7 @@ namespace ProjectInk
             float t1 = 0f;
             while (t1 < 2.4f)
             {
-                t1 += Time.unscaledDeltaTime;
+                t1 += StoryDt;
                 float k = Mathf.SmoothStep(0f, 1f, t1 / 2.2f);
                 hero.CinePose(new Vector3(Mathf.Lerp(hx0, kneelX, k), 0f, 0f));
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.55f; Sound.Play(Sfx.Footstep, 0.7f, hero.transform.position, 0.8f); }
@@ -145,7 +145,7 @@ namespace ProjectInk
             float td = 0f;
             while (td < 1.4f)
             {
-                td += Time.unscaledDeltaTime;
+                td += StoryDt;
                 var hand = HandOf(boss, landX);
                 PoseGun(hand, Vector3.Slerp(new Vector3(0.3f, -1f, 0f), Vector3.right, Mathf.SmoothStep(0f, 1f, td / 1.4f)));
                 Heart(); Rain();
@@ -169,7 +169,7 @@ namespace ProjectInk
             float tg = 0f;
             while (tg < 1.5f)
             {
-                tg += Time.unscaledDeltaTime;
+                tg += StoryDt;
                 var hand = HandOf(boss, landX);
                 PoseGun(hand, Vector3.Slerp(Vector3.right + Vector3.up * 0.2f, HeadC() - hand, Mathf.SmoothStep(0f, 1f, tg / 1.1f)));
                 Heart();
@@ -211,7 +211,7 @@ namespace ProjectInk
             float tgrab = 0f;
             while (tgrab < 0.35f)
             {
-                tgrab += Time.unscaledDeltaTime;
+                tgrab += StoryDt;
                 float k = Mathf.SmoothStep(0f, 1f, tgrab / 0.35f);
                 var hand = HandOf(boss, landX);
                 PoseGun(Vector3.Lerp(hand, Vector3.Lerp(hand, HeroHand(), 0.45f), k), HeadC() - hand);
@@ -226,7 +226,7 @@ namespace ProjectInk
             float gruntAt = 0.3f;
             while (ts < 2.6f)
             {
-                ts += Time.unscaledDeltaTime;
+                ts += StoryDt;
                 var hand = HandOf(boss, landX);
                 var at = Vector3.Lerp(hand, HeroHand(), 0.45f) + new Vector3(Random.Range(-0.03f, 0.03f), Random.Range(-0.025f, 0.025f), 0f) * (1f + ts);
                 var toHero = HeadC() - at;
@@ -244,7 +244,7 @@ namespace ProjectInk
                     default: EndShot(HeadC() + new Vector3(0.15f, -0.05f, -0.6f) + shake, HeadC(), 24f); break;                     // his
                 }
                 if (ts > gruntAt) { gruntAt += Random.Range(0.45f, 0.75f); Sound.Play(Random.value < 0.5f ? Sfx.HeroEffort : Sfx.EnemyEffort, 0.8f, null, Random.Range(0.85f, 1f)); }
-                if (ts > 1.3f && ts - Time.unscaledDeltaTime <= 1.3f) Sound.Play(Sfx.Struggle, 0.9f);
+                if (ts > 1.3f && ts - StoryDt <= 1.3f) Sound.Play(Sfx.Struggle, 0.9f);
                 backGlow = 1f + Mathf.Sin(ts * 23f) * 0.08f;
                 Heart(); Rain();
                 yield return null;
@@ -288,7 +288,7 @@ namespace ProjectInk
             bool dropped = false, breathed = false, stirred = false;
             while (tdie < 4.2f)
             {
-                tdie += Time.unscaledDeltaTime;
+                tdie += StoryDt;
                 if (!breathed && tdie > 0.6f) { breathed = true; Sound.Play(Sfx.DeathBreath, 0.9f); }
                 if (!dropped && tdie > 1.3f)
                 {
@@ -305,7 +305,7 @@ namespace ProjectInk
                 if (boss != null && InkFx.Instance != null && Random.value < 0.08f && tdie < 3f)
                     InkFx.Instance.Stain(boss.transform.position + Vector3.right * Random.Range(-0.5f, 0.4f), boss.InkColor, 0.6f + tdie * 0.35f, false);
                 if (!stirred && tdie > 2.4f) { stirred = true; Sound.Ambience(0.7f, 0.12f, 2500f); }   // the rain comes back, slowly
-                backGlow = Mathf.MoveTowards(backGlow, 1f, Time.unscaledDeltaTime * 1.5f);
+                backGlow = Mathf.MoveTowards(backGlow, 1f, StoryDt * 1.5f);
                 Rain();
                 EndShot(new Vector3(mx, 0.28f, -3.6f + tdie * 0.18f), new Vector3(mx, 0.55f, 0f), 34f - tdie * 1.2f);
                 yield return null;
@@ -324,10 +324,10 @@ namespace ProjectInk
             float stand = hero.transform.position.x;
             while (tn < 4.2f)
             {
-                tn += Time.unscaledDeltaTime;
+                tn += StoryDt;
                 headYaw = Mathf.Sin(tn * 3.2f) * 26f * Mathf.Clamp01(tn / 0.6f) * (1f - Mathf.Clamp01((tn - 3.6f) / 0.6f));
                 hero.CinePose(new Vector3(stand - 0.5f * Mathf.SmoothStep(0f, 1f, tn / 3f), 0f, 0f));      // backing away
-                if (tn > 2.6f && tn - Time.unscaledDeltaTime <= 2.6f) Say("YOU", "That wasn't... I didn't...", 1.8f);
+                if (tn > 2.6f && tn - StoryDt <= 2.6f) Say("YOU", "That wasn't... I didn't...", 1.8f);
                 Rain();
                 EndShot(new Vector3(mx - 0.3f, 0.9f, -3.0f + 0.4f * tn / 4.2f), HeadC() + Vector3.down * 0.4f, 32f);
                 yield return null;
@@ -362,7 +362,7 @@ namespace ProjectInk
                 float sx = hero.transform.position.x, tk = 0f;
                 while (tk < 1.4f)
                 {
-                    tk += Time.unscaledDeltaTime;
+                    tk += StoryDt;
                     hero.CinePose(new Vector3(Mathf.Lerp(sx, landX - 0.95f, Mathf.SmoothStep(0f, 1f, tk / 1.3f)), 0f, 0f));
                     if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.6f; Sound.Play(Sfx.Footstep, 0.55f, hero.transform.position, 0.8f); }
                     EndShot(new Vector3(landX - 3.0f, 0.35f, -2.2f), new Vector3(landX - 0.6f, 0.6f, 0f), 36f);
@@ -474,7 +474,7 @@ namespace ProjectInk
             float tw = 0f, wx0 = hero.transform.position.x;
             while (tw < 6.5f)
             {
-                tw += Time.unscaledDeltaTime;
+                tw += StoryDt;
                 float x = wx0 + 1.05f * tw;
                 hero.CinePose(new Vector3(x, 0f, 0.2f * Mathf.Clamp01((x - 60f) / 2f)));
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.6f; Sound.Play(Sfx.Footstep, 0.6f, hero.transform.position, 0.8f); }
@@ -486,9 +486,9 @@ namespace ProjectInk
                     searchlight.rotation = Quaternion.FromToRotation(Vector3.down, target - heli);
                     if (searchPool != null) searchPool.position = target + Vector3.up * 0.05f;
                 }
-                if (tw > 1.5f && tw - Time.unscaledDeltaTime <= 1.5f) Sound.Play(Sfx.Rotor, 0.5f);
+                if (tw > 1.5f && tw - StoryDt <= 1.5f) Sound.Play(Sfx.Rotor, 0.5f);
                 EndShot(new Vector3(landX - 4.5f, 1.5f, -0.6f), new Vector3(63f, 2.0f, 1.5f), 42f);
-                barsPx = Mathf.MoveTowards(barsPx, 90f, Time.unscaledDeltaTime * 8f);
+                barsPx = Mathf.MoveTowards(barsPx, 90f, StoryDt * 8f);
                 yield return null;
             }
             Sound.Play(Sfx.Thunder, 0.8f);
@@ -508,14 +508,14 @@ namespace ProjectInk
         static IEnumerator RealWait(float s)
         {
             float t = 0f;
-            while (t < s) { t += Time.unscaledDeltaTime; if (SkipNow) t = s; yield return null; }
+            while (t < s) { t += StoryDt; if (SkipNow) t = s; yield return null; }
         }
 
         /// <summary>Hold for `s` real seconds, framing each frame with `frame`.</summary>
         static IEnumerator Hold(float s, System.Action frame)
         {
             float t = 0f;
-            while (t < s) { t += Time.unscaledDeltaTime; if (SkipNow) t = s; frame(); yield return null; }
+            while (t < s) { t += StoryDt; if (SkipNow) t = s; frame(); yield return null; }
         }
 
         void EndShot(Vector3 pos, Vector3 look, float fov)
@@ -635,7 +635,7 @@ namespace ProjectInk
         void UpdateFlashSmoke()
         {
             if (flashQuad != null && Time.unscaledTime > flashOff) { Destroy(flashQuad.gameObject); flashQuad = null; }
-            float dt = Time.unscaledDeltaTime;
+            float dt = StoryDt;
             for (int i = smoke.Count - 1; i >= 0; i--)
             {
                 var (tr, v, born) = smoke[i];
@@ -698,7 +698,7 @@ namespace ProjectInk
         {
             UpdateFlashSmoke();
             if (backdrop == null) return;
-            float dt = Time.unscaledDeltaTime;
+            float dt = StoryDt;
             foreach (var d in drops)
             {
                 if (d == null) continue;
@@ -815,7 +815,7 @@ namespace ProjectInk
         void PhoneBuzzing(bool on)
         {
             if (phone == null) return;
-            phoneGlow = Mathf.MoveTowards(phoneGlow, on ? 1f : 0.6f, Time.unscaledDeltaTime * 4f);
+            phoneGlow = Mathf.MoveTowards(phoneGlow, on ? 1f : 0.6f, StoryDt * 4f);
             if (phoneScreen != null) phoneScreen.material.color = Color.Lerp(Color.black, new Color(0.75f, 0.85f, 1f), phoneGlow);
             var pool = phone.Find("PhoneGlow");
             if (pool != null) pool.GetComponent<Renderer>().material.color = new Color(0.55f, 0.7f, 1f, 0.28f * phoneGlow);

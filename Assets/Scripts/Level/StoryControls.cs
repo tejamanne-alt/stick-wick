@@ -144,7 +144,7 @@ namespace ProjectInk
             while (scProgress < 1f)
             {
                 bool held = PointerDown() || KeyHeld(SKey.E, SKey.Space, SKey.Enter);
-                scProgress = Mathf.Clamp01(scProgress + (held ? 1f / secs : -0.6f / secs) * Time.unscaledDeltaTime);
+                scProgress = Mathf.Clamp01(scProgress + (held ? 1f / secs : -0.6f / secs) * StoryDt);
                 if (held && Random.value < 0.08f) Haptics.Vibrate();
                 frame?.Invoke(scProgress);
                 yield return null;
@@ -173,7 +173,7 @@ namespace ProjectInk
                     frame?.Invoke(scProgress);
                     if (scProgress >= 0.999f) { scProgress = 1f; break; }       // full: done, before any drain
                 }
-                else scProgress = Mathf.Max(0f, scProgress - 0.08f * Time.unscaledDeltaTime);
+                else scProgress = Mathf.Max(0f, scProgress - 0.08f * StoryDt);
                 frame?.Invoke(scProgress);
                 yield return null;
             }
@@ -192,7 +192,7 @@ namespace ProjectInk
             float t0 = 0f;
             while (window <= 0f || t0 < window)
             {
-                t0 += Time.unscaledDeltaTime;
+                t0 += StoryDt;
                 scProgress = window > 0f ? t0 / window : 0f;
                 bool down = PointerDown();
                 var pos = PointerPos();
@@ -300,9 +300,9 @@ namespace ProjectInk
                     float along = Vector2.Dot(pos - dragFrom, scDragDir) / (Screen.height * 0.28f);
                     pulled = Mathf.Max(pulled, Mathf.Clamp01(along));
                 }
-                else pulled = Mathf.MoveTowards(pulled, scProgress >= 0.98f ? 1f : Mathf.Floor(pulled * 4f) / 4f, Time.unscaledDeltaTime);
+                else pulled = Mathf.MoveTowards(pulled, scProgress >= 0.98f ? 1f : Mathf.Floor(pulled * 4f) / 4f, StoryDt);
                 pointerWasDown = down;
-                if (KeyHeld(SKey.E, SKey.Space)) pulled = Mathf.Min(1f, pulled + Time.unscaledDeltaTime / 1.2f);
+                if (KeyHeld(SKey.E, SKey.Space)) pulled = Mathf.Min(1f, pulled + StoryDt / 1.2f);
                 scProgress = pulled;
                 frame?.Invoke(scProgress);
                 yield return null;
@@ -328,7 +328,7 @@ namespace ProjectInk
 
         IEnumerator HoldFor(float secs, System.Action frame = null)
         {
-            for (float t0 = 0f; t0 < secs; t0 += Time.unscaledDeltaTime) { if (SkipNow) t0 = secs; frame?.Invoke(); yield return null; }
+            for (float t0 = 0f; t0 < secs; t0 += StoryDt) { if (SkipNow) t0 = secs; frame?.Invoke(); yield return null; }
         }
 
         /// <summary>A small toy walkie-talkie (an object for his hand, her pocket, a seat, a stone).</summary>

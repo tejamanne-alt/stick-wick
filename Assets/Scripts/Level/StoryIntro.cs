@@ -79,13 +79,14 @@ namespace ProjectInk
             HeroController.Did -= OnFortHit;
             GestureInput.Tapped -= OnSkipTap;
             TrainingUnhook();
-            if (fastForward) { fastForward = false; AudioListener.volume = ffVolume; }
+            if (fastForward || toNextLine) { fastForward = false; toNextLine = false; AudioListener.volume = ffVolume; }
         }
 
         void Start()
         {
             Sound.KeepClear = false;
             fastForward = false;
+            toNextLine = false;
             GestureInput.Tapped += OnSkipTap;           // a tap on the right half during a scene: skip it                        // the walk-out's clear sound never outlives it
             cam = CameraDirector.Instance;
             if (hero == null) hero = FindAnyObjectByType<HeroController>();
@@ -161,7 +162,7 @@ namespace ProjectInk
                         if (c != null) c.position += new Vector3(hc.x - (home.x - 0.6f), 0f, 0f);
                 }
             }
-            float dt = Time.unscaledDeltaTime;
+            float dt = StoryDt;
             UpdateSkip();
             switch (phase)
             {
@@ -732,7 +733,7 @@ namespace ProjectInk
         {
             float moved = Mathf.Abs(hero.transform.position.x - walkFromX);
             float want = moved < 1.5f ? 1f : 0f;
-            promptAlpha = Mathf.MoveTowards(promptAlpha, want, Time.unscaledDeltaTime * (want > 0f ? 1.2f : 2.5f));
+            promptAlpha = Mathf.MoveTowards(promptAlpha, want, StoryDt * (want > 0f ? 1.2f : 2.5f));
             if (hero.transform.position.x > ShutterX - 5f) { phase = Phase.Breach; b = prevB = 0f; }
         }
 
@@ -1633,8 +1634,8 @@ namespace ProjectInk
                 {
                     var r = ropes.GetChild(i);
                     if (r.position.y <= 0.012f) continue;
-                    ropeVel[i] += Vector3.down * 9.8f * Time.unscaledDeltaTime;
-                    r.position += ropeVel[i] * Time.unscaledDeltaTime;
+                    ropeVel[i] += Vector3.down * 9.8f * StoryDt;
+                    r.position += ropeVel[i] * StoryDt;
                     if (r.position.y < 0.012f) { r.position = new Vector3(r.position.x, 0.012f, r.position.z); r.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 90f); }
                 }
             }
@@ -1663,19 +1664,19 @@ namespace ProjectInk
                 if (cam != null) cam.Scripted(c + new Vector3(Mathf.Cos(a) * 1.0f, 3.6f, Mathf.Sin(a) * 1.0f - 0.4f), c, 1f, 52f);
             };
             Sound.Play(Sfx.Breath, 0.8f);
-            for (float t0 = 0f; t0 < 3.0f; t0 += Time.unscaledDeltaTime) { overhead(); yield return null; }
+            for (float t0 = 0f; t0 < 3.0f; t0 += StoryDt) { overhead(); yield return null; }
             Say("YOU", "...Where...?", 1.8f);
             Sound.Play(Sfx.Struggle, 0.5f);
-            for (float t0 = 0f; t0 < 2.0f; t0 += Time.unscaledDeltaTime) { overhead(); yield return null; }
+            for (float t0 = 0f; t0 < 2.0f; t0 += StoryDt) { overhead(); yield return null; }
             // low, close: his wrists behind the chair, the rope biting
             System.Action low = () => { if (cam != null) cam.Scripted(home + new Vector3(-1.1f, 0.55f, -0.9f), home + new Vector3(-0.2f, 0.62f, 0f), 1f, 40f); };
             Say("YOU", "Rope...", 1.4f);
-            for (float t0 = 0f; t0 < 1.6f; t0 += Time.unscaledDeltaTime) { low(); yield return null; }
+            for (float t0 = 0f; t0 < 1.6f; t0 += StoryDt) { low(); yield return null; }
             // BREAK FREE: the chair rocks with every pull
             float rock = 0f;
             StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () =>
             {
-                rock = Mathf.MoveTowards(rock, 0f, Time.unscaledDeltaTime * 30f);
+                rock = Mathf.MoveTowards(rock, 0f, StoryDt * 30f);
                 if (chairRig != null) chairRig.rotation = Quaternion.Euler(0f, 0f, rock);
                 hero.transform.rotation = Quaternion.Euler(0f, 0f, rock * 0.6f);
                 if (cam != null) cam.Scripted(home + new Vector3(0.2f, 1.1f, -2.4f) + Sway(0.02f, 1.5f, 9f) * Mathf.Abs(rock), home + Vector3.up * 0.7f, 1f, 44f);
@@ -1689,7 +1690,7 @@ namespace ProjectInk
             Haptics.Vibrate();
             if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.04f);
             if (hero.body.Has("allfours")) hero.body.Play("allfours", 0.12f);
-            for (float t0 = 0f; t0 < 1.2f; t0 += Time.unscaledDeltaTime)
+            for (float t0 = 0f; t0 < 1.2f; t0 += StoryDt)
             {
                 TipChair(Mathf.Clamp01(t0 / 0.45f));
                 hero.CinePose(home + Vector3.right * 0.25f * Mathf.Clamp01(t0 / 0.5f));

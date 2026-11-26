@@ -135,7 +135,7 @@ namespace ProjectInk
             }
             float wet = Mathf.Lerp(0.35f + 0.5f * height, 2.2f, rainAmount);   // before the rain only the wind (louder up high); then the downpour
             Sound.Ambience(indoors && fZone >= 4 ? wet * 0.45f : wet, indoors ? 0.55f : 0.25f, indoors && fZone >= 4 ? 1400f : 22000f);
-            lensRain = Mathf.MoveTowards(lensRain, indoors && fZone >= 4 ? 0f : 0.32f * rainAmount, Time.unscaledDeltaTime * 0.5f);
+            lensRain = Mathf.MoveTowards(lensRain, indoors && fZone >= 4 ? 0f : 0.32f * rainAmount, StoryDt * 0.5f);
             SetRipple(rainAmount);
             if (Time.unscaledTime >= nextStrike)
             {
@@ -183,7 +183,7 @@ namespace ProjectInk
             float t0 = 0f;
             while (t0 < secs)
             {
-                t0 += Time.unscaledDeltaTime;
+                t0 += StoryDt;
                 if (SkipNow) t0 = secs;                       // SKIP: the shot's last frame, then the next scene
                 float u = Mathf.Clamp01(t0 / secs);
                 var s = shot(u);
@@ -226,7 +226,7 @@ namespace ProjectInk
                     u => hero.CinePose(new Vector3(wx0 + u * 3.2f, 0f, 0f)));
                 // ------------------------------------------------ T3 (a) a boot in a puddle, at ground level
                 yield return Cut(1.6f, u => Static(hero.transform.position + new Vector3(1.2f, 0.12f, -0.9f), hero.transform.position + new Vector3(0f, 0.15f, 0f), 34f), 0.01f,
-                    u => { hero.CinePose(new Vector3(wx0 + 3.2f + u * 1.2f, 0f, 0f)); if (u > 0.35f && u - Time.unscaledDeltaTime / 1.6f <= 0.35f) Sound.Play(Sfx.Splash, 0.6f, hero.transform.position); });
+                    u => { hero.CinePose(new Vector3(wx0 + 3.2f + u * 1.2f, 0f, 0f)); if (u > 0.35f && u - StoryDt / 1.6f <= 0.35f) Sound.Play(Sfx.Splash, 0.6f, hero.transform.position); });
                 // (b) walking into the camera, the rain sheeting between
                 float wx1 = hero.transform.position.x;
                 yield return Cut(3.4f, u => CineCam.DollyOut(hero.transform.position + Vector3.up * 1.1f, new Vector3(-1f, -0.05f, 0.25f), u, 3.2f, 4.0f, 36f), 0.03f,
@@ -662,7 +662,7 @@ namespace ProjectInk
             HoldWalkie(false);
             // (c) his voice, down through the storm
             Say("VOICE, FROM THE TOWER", "Come up, old friend. She's been asking for you.", 3.6f);
-            yield return Cut(3.6f, u => Static(gal + new Vector3(-2.6f, -1.4f, -3.4f), gal + Vector3.up * 1.0f, 30f), 0.03f, u => { if (u > 0.5f && u - Time.unscaledDeltaTime / 3.6f <= 0.5f) Strike(0.9f, 0.1f); });
+            yield return Cut(3.6f, u => Static(gal + new Vector3(-2.6f, -1.4f, -3.4f), gal + Vector3.up * 1.0f, 30f), 0.03f, u => { if (u > 0.5f && u - StoryDt / 3.6f <= 0.5f) Strike(0.9f, 0.1f); });
             // (d) on the hero, close, lightning across his face
             Strike(1f, 0.0f);
             yield return Cut(2.4f, u => CineCam.DollyIn(HeroHead(), new Vector3(0.4f, 0.25f, 1f), u, 1.6f, 1.0f, 28f), 0.01f);
@@ -670,7 +670,7 @@ namespace ProjectInk
             yield return Cut(2.0f, u => Static(HeroHead() + new Vector3(0.6f, 0.1f, -1.0f), HeroHead(), 28f), 0.01f);
             // (e) pull away: small at the foot of the tower in the storm
             yield return Cut(4.0f, u => CineCam.DronePullAway(hero.transform.position + Vector3.up * 1.0f, u, 2.4f, 22f, 0.8f, 16f, 44f), 0.04f,
-                u => { if (u > 0.4f && u - Time.unscaledDeltaTime / 4f <= 0.4f) Strike(1f, 0.4f); });
+                u => { if (u > 0.4f && u - StoryDt / 4f <= 0.4f) Strike(1f, 0.4f); });
             if (towerMan != null) towerMan.gameObject.SetActive(false);
             if (towerGirl != null) towerGirl.gameObject.SetActive(false);
         }

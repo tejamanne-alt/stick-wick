@@ -29,6 +29,7 @@ namespace ProjectInk
     {
         /// <summary>The training ground has been played (and left) in this run: a retry goes straight to the fight.</summary>
         public static bool TrainedThisRun;
+        public bool InTraining => phase == Phase.Training;
 
         /// <summary>Where on the screen a step is made (drawn as a little phone screen).</summary>
         enum Gest { TapHigh, TapLow, TapMan, SwipeAt, SwipeAway, SwipeUp, SwipeUpAt, Hold, CrouchHold, Creep, HoldMan, SwipeDown }
