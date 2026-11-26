@@ -1139,6 +1139,7 @@ namespace ProjectInk
                 return;
             }
             running = false;
+            if (cmd == Command.Crossfire) { CrossfireCommand(); return; }  // two thumbs at once, any weapon (HeroNearV4)
             if (KatanaCommand(cmd)) return;                          // the katana's own grammar (HeroKatanaV4)
             if (TryShovePushKick(cmd)) return;
             switch (cmd)

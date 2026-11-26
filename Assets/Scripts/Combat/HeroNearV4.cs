@@ -170,7 +170,7 @@ namespace ProjectInk
         bool CrossfirePair(out Enemy front, out Enemy back, int side)
         {
             front = back = null;
-            if (!MovesV4 || !ContactBare || !Grounded || (Time.time < crossfireReadyAt && !Sparring && !CrossfireAnytime) || !body.Has("crossfire")) return false;
+            if (!MovesV4 || CrossfireKit == null || !Grounded || (Time.time < crossfireReadyAt && !Sparring && !CrossfireAnytime) || !body.Has("crossfire")) return false;
             float bf = 1.8f, bb = 1.8f;
             foreach (var e in Enemy.All)
             {
@@ -182,6 +182,14 @@ namespace ProjectInk
             }
             return front != null && back != null;
         }
+
+        /// <summary>Which four he has: bare hands (or the knife), the pipe, the katana; null: none (a gun, a bottle...).</summary>
+        string CrossfireKit => ContactBare && carried == null ? "bare"
+                             : KatanaMode && RodMode && body.Has("rod_cf_ends") ? "rod"
+                             : KatanaMode && !RodMode && !sheathed && body.Has("katana_cf_line") ? "katana" : null;
+
+        /// <summary>Is CROSSFIRE his to use with what's in his hands (bare, the knife, the pipe, the katana)?</summary>
+        public bool HasCrossfire => CrossfireKit != null;
 
         /// <summary>No cooldown (the chapter 1 CROSSFIRE test).</summary>
         public bool CrossfireAnytime;
@@ -210,7 +218,48 @@ namespace ProjectInk
             { "cf_into", new[] { new CfHit { f = 5, who = 2, dmg = 12, sfx = Sfx.PunchHeavy, stop = 5 },
                                  new CfHit { f = 11, who = 1, dmg = 14, sfx = Sfx.Bone, stop = 6 },
                                  new CfHit { f = 23, who = 3, dmg = 30, sfx = Sfx.BodyFall, stop = 9, label = "ONE INTO THE OTHER" } } },
+            // the pipe (each one wears it once)
+            { "rod_cf_ends", new[] { new CfHit { f = 6, who = 2, dmg = 20, sfx = Sfx.PipeHit, stop = 6 },
+                                     new CfHit { f = 14, who = 1, dmg = 32, sfx = Sfx.PipeHit, stop = 8, label = "BOTH ENDS" } } },
+            { "rod_cf_scythe", new[] { new CfHit { f = 9, who = 1, dmg = 16, sfx = Sfx.PipeHit, stop = 6 },
+                                       new CfHit { f = 16, who = 2, dmg = 16, sfx = Sfx.PipeHit, stop = 6 },
+                                       new CfHit { f = 31, who = 1, dmg = 30, sfx = Sfx.PipeHit, stop = 8, label = "THE SCYTHE" } } },
+            { "rod_cf_windup", new[] { new CfHit { f = 6, who = 2, dmg = 18, sfx = Sfx.PipeHit, stop = 6 },
+                                       new CfHit { f = 13, who = 1, dmg = 34, sfx = Sfx.PipeHit, stop = 9, label = "THE WIND-UP" } } },
+            { "rod_cf_shoulder", new[] { new CfHit { f = 6, who = 1, dmg = 14, sfx = Sfx.PipeHit, stop = 5 },
+                                         new CfHit { f = 12, who = 2, dmg = 26, sfx = Sfx.PipeHit, stop = 7 },
+                                         new CfHit { f = 22, who = 1, dmg = 30, sfx = Sfx.PipeHit, stop = 8, label = "OVER THE SHOULDER" } } },
+            // the katana (every line cuts a man down; he stands a beat, then falls)
+            { "katana_cf_line", new[] { new CfHit { f = 9, who = 1, dmg = 999, sfx = Sfx.SwordHit, stop = 6 },
+                                        new CfHit { f = 15, who = 2, dmg = 999, sfx = Sfx.SwordHit, stop = 8, label = "ONE LINE, TWO MEN" } } },
+            { "katana_cf_kneel", new[] { new CfHit { f = 8, who = 1, dmg = 999, sfx = Sfx.SwordHit, stop = 6 },
+                                         new CfHit { f = 15, who = 2, dmg = 999, sfx = Sfx.SwordHit, stop = 8, label = "THE KNEELING CIRCLE" } } },
+            { "katana_cf_thrust", new[] { new CfHit { f = 7, who = 2, dmg = 999, sfx = Sfx.SwordHit, stop = 7 },
+                                          new CfHit { f = 15, who = 1, dmg = 999, sfx = Sfx.SwordHit, stop = 8, label = "THE THRUST BEHIND" } } },
+            { "katana_cf_rise", new[] { new CfHit { f = 8, who = 1, dmg = 999, sfx = Sfx.SwordHit, stop = 6 },
+                                        new CfHit { f = 16, who = 2, dmg = 999, sfx = Sfx.SwordHit, stop = 8, label = "RISE AND FALL" } } },
         };
+
+        /// <summary>The four, per kit: HIGH + HIGH, LOW + LOW, front HIGH back LOW, front LOW back HIGH.</summary>
+        static readonly System.Collections.Generic.Dictionary<string, string[]> CfMoves = new System.Collections.Generic.Dictionary<string, string[]>
+        {
+            { "bare", new[] { "crossfire", "cf_knees", "cf_split", "cf_into" } },
+            { "rod", new[] { "rod_cf_ends", "rod_cf_scythe", "rod_cf_windup", "rod_cf_shoulder" } },
+            { "katana", new[] { "katana_cf_line", "katana_cf_kneel", "katana_cf_thrust", "katana_cf_rise" } },
+        };
+
+        /// <summary>Who lands on his face when it's over (the man in front, the man behind).</summary>
+        static bool CfFaceDown(string move, bool front)
+        {
+            switch (move)
+            {
+                case "cf_split": case "rod_cf_ends": return !front;
+                case "rod_cf_windup": case "rod_cf_shoulder": return front;
+                case "katana_cf_line": case "katana_cf_kneel": case "katana_cf_thrust": return true;
+                case "katana_cf_rise": return !front;
+                default: return false;
+            }
+        }
 
         /// <summary>The two-thumb tap: CROSSFIRE if two men are on him (the thumbs pick the move); otherwise
         /// it's a tap at the nearer man, at that thumb's height.</summary>
@@ -227,7 +276,8 @@ namespace ProjectInk
                 if (d < bd) { bd = d; best = e; }
             }
             int side = best != null ? (best.transform.position.x >= transform.position.x ? 1 : -1) : Facing;
-            Strike(side, side < 0 ? l : r);
+            bool low = side < 0 ? l : r;                                // as that one thumb's tap (whatever's in his hands)
+            HandleCommand(side < 0 ? (low ? Command.KickLeft : Command.StrikeLeft) : (low ? Command.KickRight : Command.StrikeRight));
         }
 
         bool TryCrossfire(bool leftLow, bool rightLow)
@@ -236,9 +286,13 @@ namespace ProjectInk
             int dir = a.transform.position.x >= transform.position.x ? 1 : -1;
             // the thumb on each man's side: the one in front is on the `dir` side of the screen
             bool frontLow = dir > 0 ? rightLow : leftLow, backLow = dir > 0 ? leftLow : rightLow;
-            string move = !frontLow && !backLow ? "crossfire" : frontLow && backLow ? "cf_knees" : !frontLow ? "cf_split" : "cf_into";
+            var four = CfMoves[CrossfireKit];
+            string move = four[!frontLow && !backLow ? 0 : frontLow && backLow ? 1 : !frontLow ? 2 : 3];
             if (!body.Has(move) || !a.body.Has(move + "_a_v") || !b.body.Has(move + "_b_v"))
+            {
+                if (CrossfireKit != "bare") return false;                    // (armed, the clips missing: no bare-handed stand-in)
                 move = "crossfire";
+            }
             string va = move == "crossfire" ? "crossfire_a_v" : move + "_a_v", vb = move == "crossfire" ? "crossfire_b_v" : move + "_b_v";
             SetFacing(dir);
             var me = transform.position;
@@ -282,6 +336,14 @@ namespace ProjectInk
             {
                 var h = hits[crossStep++];
                 bool last = crossStep == hits.Length;
+                bool blade = crossMove.StartsWith("katana_");
+                if (crossStep == 1 && crossMove.StartsWith("rod_") && RodMode) PipeWear();            // one hit of wear, the whole sequence
+                if (blade)
+                {
+                    if (swordFx != null) swordFx.Glint();
+                    var cut = (h.who & 1) != 0 ? crossA : crossB;
+                    if (cut != null) Sound.Play(Sfx.FlashCut, 0.8f, cut.Chest);
+                }
                 if ((h.who & 1) != 0) { Hurt(crossA, h.dmg); Sound.Play(h.sfx, 1.1f, me + Vector3.right * dir * 0.6f + Vector3.up * 0.9f); }
                 if ((h.who & 2) != 0) { Hurt(crossB, h.dmg); Sound.Play(h.sfx == Sfx.CineHit ? Sfx.Kick : h.sfx, 1.1f, me - Vector3.right * dir * 0.6f + Vector3.up * 0.9f, 0.92f); }
                 var cam = CameraDirector.Instance;
@@ -322,7 +384,7 @@ namespace ProjectInk
             {
                 if (e == null || !e.Held) continue;
                 float sh = e.body != null && e.body.Current != null ? e.body.Current.endShift : 0f;
-                e.LandThrown(sh, crossMove == "cf_split" && e == crossB);       // folded round the heel: on his face
+                e.LandThrown(sh, CfFaceDown(crossMove, e == crossA));
             }
             crossA = crossB = null;
         }

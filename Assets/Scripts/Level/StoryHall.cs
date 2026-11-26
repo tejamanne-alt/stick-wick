@@ -30,6 +30,8 @@ namespace ProjectInk
         /// <summary>The CROSSFIRE test (chapter 1, the first hall): men come in pairs, one each side of him, and
         /// CROSSFIRE has no cooldown, so all four can be tried again and again.</summary>
         public static bool CrossfireTest;
+        /// <summary>The CROSSFIRE test's weapon: Fists (bare), Pipe or Sword (it never wears out there).</summary>
+        public static FightStyle CrossfireWeapon = FightStyle.Fists;
         float cfNextAt;
 
         void CrossfireTestTick()
@@ -56,7 +58,7 @@ namespace ProjectInk
         }
 
         /// <summary>From the menu: the chapter from the top (no checkpoint, no retry state).</summary>
-        public static void NewRun() { KatanaTest = false; PipeTest = false; KatanaMen = false; PickupTest = false; CrossfireTest = false; HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
+        public static void NewRun() { KatanaTest = false; PipeTest = false; KatanaMen = false; PickupTest = false; CrossfireTest = false; CrossfireWeapon = FightStyle.Fists; HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
 
         struct Spawn { public EnemyType type; public SpawnKind kind; public Spawn(EnemyType t, SpawnKind k) { type = t; kind = k; } }
 
@@ -232,6 +234,7 @@ namespace ProjectInk
                 else if (CrossfireTest && director != null)
                 {
                     hero.CrossfireAnytime = true;
+                    if (CrossfireWeapon != FightStyle.Fists) hero.TrainWith(CrossfireWeapon);
                     director.ShowBanner("CROSSFIRE TEST  ·  TWO ON YOU: BOTH THUMBS AT ONCE  ·  EACH HIGH OR LOW", 4f);
                 }
                 else if (PickupTest && director != null)

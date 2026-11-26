@@ -7,7 +7,7 @@ namespace ProjectInk
     /// one side. So in every fight, in every chapter, they now box him in now and then, deliberately: with
     /// two or more men on him, one of them is told to go round ("Get behind him!") and works his way to the
     /// hero's other side (Enemy.ContactFlank). The first time comes early in a fight; after that, every 25 s
-    /// or so of fighting. Only while CROSSFIRE is his to use (bare hands or the knife).</summary>
+    /// or so of fighting. Only while CROSSFIRE is his to use (bare hands, the knife, the pipe, the katana).</summary>
     public partial class StoryIntro
     {
         float cfFighting, cfLastPincerAt = -99f;
@@ -24,7 +24,7 @@ namespace ProjectInk
         {
             if (!cfHooked) { cfHooked = true; Enemy.PincerStarted += OnPincer; }
             if (hero == null || hero.IsDead || TimeController.Paused) return;
-            bool bare = hero.Style == FightStyle.Fists || hero.Style == FightStyle.Knife;
+            bool bare = hero.HasCrossfire;                                       // bare hands, the knife, the pipe, the katana
             int near = 0;
             var hp = hero.transform.position;
             foreach (var e in Enemy.All)

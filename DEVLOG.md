@@ -2242,3 +2242,11 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **The move:** it already worked in every chapter's fights (every chapter runs on the V4 body and the story combat), bare-handed or with the knife.
   - **The pincer** (`StoryCrossfire.cs`): men mostly come from one side, so in any fight, in any chapter, they now box him in deliberately. With two or more on him, one is told to go round (`Enemy.PincerNext`), and his mates call it ("Get behind him!", "Box him in!"...). The first time is about 5 s into a fight, then every ~25 s of fighting, and only while CROSSFIRE is his to use.
   - **Armed:** with a pipe or sword there is still no CROSSFIRE; the four moves need both hands.
+- **Armed CROSSFIRE: the pipe's four and the katana's four** (docs/design/crossfire.md, `v4_cf_armed.py`).
+  - **The control:** the same two-thumb tap, each thumb high or low; the weapon in hand picks the set.
+  - **The pipe:** BOTH ENDS, THE SCYTHE, THE WIND-UP, OVER THE SHOULDER. One hit of wear per sequence; everyone goes down.
+  - **The katana:** ONE LINE, TWO MEN, THE KNEELING CIRCLE, THE THRUST BEHIND, RISE AND FALL. Ordinary men are cut down (they stand a beat, then fall); each ends with chiburi.
+  - **The pincer** now fires when he's armed too, so armed CROSSFIRE comes up in every chapter.
+  - **Training:** 8 lessons (4 pipe, 4 sword) with two-finger demonstrations. Saved lesson progress is reset (new key).
+  - **Tests:** chapter 1 checkpoints TEST · CROSSFIRE with the pipe / with the katana.
+  - **Build:** the FBX is rebuilt (350 clips).

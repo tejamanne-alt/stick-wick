@@ -540,3 +540,8 @@ def meta(name, spec):
                 loadFrame=spec["load"] if spec.get("load") is not None else -1,
                 reach=spec.get("reach") or 0.0,
                 endShift=round(end.get("hx", 0.0), 4) if spec.get("shift") else 0.0, v4=True)
+
+# CROSSFIRE with a weapon in hand: the pipe's four, the katana's four (docs/design/crossfire.md)
+import v4_cf_armed  # noqa: E402
+
+CLIPS.update(v4_cf_armed.CLIPS)

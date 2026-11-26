@@ -55,12 +55,37 @@ When one man is close in front of him and one close behind, **tap both thumbs at
 - **The problem:** CROSSFIRE needs a man in front and one behind, but in most fights the men come at him from one side. Only about half of them ever go round on their own.
 - **The fix:** in any fight, in any chapter, the men now box him in deliberately. With two or more on him, one is told to go round, and his mates call it: "Get behind him!", "Box him in!", "Take his back!"
 - **How often:** the first time about 5 s into a fight, then every 25 s or so of fighting.
-- **When:** only while CROSSFIRE is his to use (bare hands or the knife).
+- **When:** only while CROSSFIRE is his to use (bare hands, the knife, the pipe, or the drawn katana).
 - **The cue:** the "TWO ON YOU · BOTH THUMBS" cue over him shows in every chapter.
 
-**Not yet:** with a pipe or a sword in hand there is no CROSSFIRE. These four moves need both hands free (grabbing heads, the hip throw); armed versions would be separate moves.
+## Armed: the pipe and the katana
+
+**The control is the same: both thumbs at once, each HIGH or LOW.** The weapon changes what they do. Clips: `tools/blender/v4_cf_armed.py`.
+
+**THE PIPE** (weight and momentum: the swing carries on, and both ends are weapons). The whole sequence counts as one hit of wear, and everyone goes down.
+
+| Thumbs | Move | |
+|---|---|---|
+| high + high | **BOTH ENDS** (`rod_cf_ends`) | The butt end straight back into the face behind; off that, the forehand round into the front man's head |
+| low + low | **THE SCYTHE** (`rod_cf_scythe`) | Low through the front man's shins, over the top, low through the other man's; then the overhead PUT DOWN on one |
+| front high, back low | **THE WIND-UP** (`rod_cf_windup`) | The backswing chops the knee behind as it winds up; over the top into the front man's head |
+| front low, back high | **OVER THE SHOULDER** (`rod_cf_shoulder`) | A rap on the front man's shins (he buckles); whipped back over the shoulder into the face behind; down on the buckled man |
+
+**THE KATANA** (one line, precision, death; based on iaido's answers to men behind). Every line cuts an ordinary man down; he stands a beat, then falls. Each ends with chiburi (the flick that cleans the blade).
+
+| Thumbs | Move | |
+|---|---|---|
+| high + high | **ONE LINE, TWO MEN** (`katana_cf_line`) | A level cut through the front man; the turn carries the same line through the man behind |
+| low + low | **THE KNEELING CIRCLE** (`katana_cf_kneel`) | Down on one knee: through the front man's legs, then, turning on the knee, through the other's |
+| front high, back low | **THE THRUST BEHIND** (`katana_cf_thrust`) | The point reversed under the arm, straight back into the man behind; out and up, a diagonal cut down the front man |
+| front low, back high | **RISE AND FALL** (`katana_cf_rise`) | Rising from the hip through the front man; carried overhead as he turns; straight down onto the other |
+
+**Limits:**
+- **Turning:** the pose engine turns his upper body about 180° with the feet planted, so the turns read as strong pivots, not free spins.
+- **When the katana works:** only drawn. Sheathed for the draw, there's no CROSSFIRE.
 
 ## Test
 
 - **Main menu → test checkpoints → CHAPTER 1 · TEST · CROSSFIRE:** the first hall. Men come in pairs, one each side of him, and there is no cooldown.
-- **The training ground:** four lessons, one for each move, each with a two-finger demonstration.
+- **CHAPTER 1 · TEST · CROSSFIRE with the pipe / with the katana:** the same, with the weapon in hand (it never wears out there).
+- **The training ground:** four lessons each for bare hands, the pipe and the sword, each with a two-finger demonstration.

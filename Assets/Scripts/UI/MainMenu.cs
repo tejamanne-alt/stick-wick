@@ -205,6 +205,8 @@ namespace ProjectInk
             ("CHAPTER 1  ·  THE WAREHOUSE", "TEST  ·  the katana vs ordinary men (crane bay)", () => Ch1(() => { Hall(3); StoryIntro.KatanaMen = true; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "TEST  ·  the pipe (crane bay, three pipes on the floor)", () => Ch1(() => { Hall(3); StoryIntro.PipeTest = true; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "TEST  ·  CROSSFIRE (pairs of men; both thumbs at once, each high or low: four moves)", () => Ch1(() => { Hall(0); StoryIntro.CrossfireTest = true; })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "TEST  ·  CROSSFIRE with the pipe (both ends, the scythe, the wind-up, over the shoulder)", () => Ch1(() => { Hall(0); StoryIntro.CrossfireTest = true; StoryIntro.CrossfireWeapon = FightStyle.Pipe; })),
+            ("CHAPTER 1  ·  THE WAREHOUSE", "TEST  ·  CROSSFIRE with the katana (one line, the kneeling circle, the thrust behind, rise and fall)", () => Ch1(() => { Hall(0); StoryIntro.CrossfireTest = true; StoryIntro.CrossfireWeapon = FightStyle.Sword; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "TEST  ·  picking up the pipe and the sword (swap, kneel, scoop on the run, drops)", () => Ch1(() => { Hall(3); StoryIntro.PickupTest = true; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "The Foreman (the fight)", () => Ch1(() => { Hall(3); StoryIntro.BossReached = true; })),
             ("CHAPTER 1  ·  THE WAREHOUSE", "Ending  ·  \"the old man wants his book\"", () => Ch1(() => { StoryIntro.EscapeSeen = true; StoryIntro.TestEnding = 1; })),
