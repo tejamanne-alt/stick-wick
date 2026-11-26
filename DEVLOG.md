@@ -2037,3 +2037,23 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - The feet never cross, the hips stay level, and the point never leaves his man's eyes.
     - The point presses forward a finger's width as the front foot lands going in (seme), and lifts a touch going back.
   - **Stopping:** the blade comes up from the low carry into the guard over 0.3 s. The FBX is rebuilt (287 clips).
+- **The pipe, v2** (`HeroPipeV4.cs`, `docs/design/pipe.md`). Rebuilt around three ideas:
+  - **The swipe is the pipe's path.**
+    - **Where:** a swipe started in the lower part of the screen goes for the legs, the game's one high/low line. This replaces the old "low and away".
+    - **How fast:** swipe speed sets power, from ×0.85 to ×1.2.
+    - **New swings:** the chop (↘, drops his guard) and the backhand (← straight after a swing).
+    - **Ground smash:** the overhead finds a man on the floor (PUT DOWN).
+  - **Keep it swinging.**
+    - **Flowing:** a swipe made as the pipe comes through flows, cutting the follow-through short, up to four deep. Each step adds +15% damage and +7% speed, a hotter whoosh and splash, and a heavier hit-stop and shake.
+    - **Buffered:** early swipes are held, not lost.
+    - **Combos:** chains that follow the pipe's momentum pay: FIGURE EIGHT, WINDMILL, SWEEP AND SMASH, UP AND UNDER, FOLD AND DROP, STEP AND SWING.
+    - **Missing costs:** a big miss outside the flow slows the recovery.
+  - **Hit the hand that hits you.** Landing on a man mid wind-up or mid-swing INTERCEPTS him: his blow is gone, he reels for 1.4 s, and it does ×1.3 damage, with a crack and slow motion. This is the pipe's defence against ordinary men.
+  - **Also:**
+    - **Blunt after-effects:** the chop, sweep and butt-end leave him staggered (`Enemy.Stagger`).
+    - **The full turn:** the hold winds up for real (`rod_coil`). Charge builds over 1 s (22 → 37 damage, a spark and creak when full). Letting go, dragged or not, is the turn (`rod_unwind`).
+    - **The back-hop:** swipe away plays `rod_evade`, not the katana's clip.
+    - **Wear:** 14 HITS, and misses don't count. THE PIPE IS BENDING at 4. The last blow is LAST SWING (×1.5, knocks down, slow motion), then THE PIPE GIVES OUT.
+    - **Pickup:** picking one up shows a one-line banner explaining it.
+  - **Clips:** five new (`rod_backhand`, which starts exactly where the forehand leaves the pipe; `rod_chop`; `rod_evade`; `rod_coil`; `rod_unwind`). The FBX is rebuilt (292 clips).
+  - **Test checkpoint:** TEST · the pipe.

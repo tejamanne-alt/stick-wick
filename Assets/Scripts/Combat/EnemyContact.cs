@@ -21,6 +21,14 @@ namespace ProjectInk
         public bool Held => heldBy != null && state == State.Scripted;
         /// <summary>Moved by a scene's hand (a bank guard, a clerk, a man in a cutscene): not a fighter.</summary>
         public bool Puppeted => heldBy == null && state == State.Scripted;
+        /// <summary>Mid-blow: swinging, the hit not landed yet (a pipe can meet the arm).</summary>
+        public bool MidSwing => state == State.Attack && !hitDone;
+        /// <summary>Out on his feet for a moment (a blunt blow: his guard arm dropped, a knee gone, the wind out of him).</summary>
+        public void Stagger(float seconds)
+        {
+            if (!Alive || IsDown || state == State.Scripted) return;
+            dazedUntil = Mathf.Max(dazedUntil, Time.time + seconds);
+        }
         public float HealthFraction => maxHealth > 0f ? Health / maxHealth : 0f;
         /// <summary>A man the hero can take hold of: on his feet, not a boss, not mid-cutscene.</summary>
         public bool CanBeHeld => Alive && (!Boss || (Cleaner && Dazed)) && !Passive && Targetable && state != State.Scripted && !OnLedge;

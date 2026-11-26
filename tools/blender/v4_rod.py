@@ -167,3 +167,79 @@ CLIPS["rod_spin"] = clip(36, [
     (28, R(hx=0.26, hz=0.6, tw_hips=40, tw_chest=40, gx=-0.02, gz=1.06, a=210, fL=(FL[0] + 0.32, 0), fR=(FR[0] + 0.2, 30)), "smooth"),
     (36, at(RG, 0.26, fL=(FL[0] + 0.3, 0), fR=(FR[0] + 0.2, 30)), "smooth"),
 ], hit=16, reach=1.6, react="stumble_back", striker="R", shift=True, note="the full turn: wound right round, everyone in reach")
+
+
+# ================================================================ the pipe, v2: momentum
+# A pipe has weight, so every swing ends somewhere, and the best next swing starts from there:
+# the forehand ends with the pipe over the lead shoulder, and the BACKHAND comes back from exactly
+# there (a figure eight: forehand, backhand, forehand...). The game lets the next swipe cut the
+# follow-through short, so these clips begin where the last one leaves the pipe.
+
+RL0, RR0 = RG["fL"], RG["fR"]
+
+
+def _k(body, hz=None, fL=None, fR=None, **kw):
+    """The rod stance moved `body` metres (hands, hips and feet with it), then changed: feet given in
+    the stance's own space (before the move), the rest as R() takes it."""
+    q = at(R(**({"hz": hz} if hz is not None else {}), **kw), body)
+    if fL is not None:
+        q["fL"] = (fL[0] + body,) + tuple(fL[1:])
+    if fR is not None:
+        q["fR"] = (fR[0] + body,) + tuple(fR[1:])
+    return q
+
+
+# where the forehand leaves him, the moment the flow can take over (rod_swing's frame 15)
+FH_END = R(hx=0.18, hz=0.59, spine=168, chest=164, tw_hips=48, tw_chest=82, gx=0.1, gz=1.12, a=196,
+           fL=(FL[0] + 0.26, 0), fR=(FR[0] + 0.04, 0.06, 40))
+
+# ---------------------------------------------------------------- the backhand: the return of the figure eight
+CLIPS["rod_backhand"] = clip(24, [
+    (0, at(FH_END, -0.18), "lin"),                                                                                   # over the lead shoulder, wound the other way
+    (2, R(hx=0.0, hz=0.6, tw_hips=42, tw_chest=74, gx=0.14, gz=1.22, a=214, fL=(RL0[0] + 0.08, 0), fR=(RR0[0] + 0.24, 40)), "out"),   # drawn up a touch: the load
+    (5, R(hx=0.06, hz=0.585, spine=168, chest=162, tw_hips=10, tw_chest=12, gx=0.42, gz=1.08, a=122,
+          fL=(RL0[0] + 0.2, 0.04, -6), fR=(RR0[0] + 0.24, 50)), "in"),                                              # coming back across, the lead foot stepping
+    (7, R(hx=0.12, hz=0.578, spine=166, chest=158, neck=156, head=164, tw_hips=-26, tw_chest=-38, gx=0.56, gz=1.0, a=88,
+          fL=(RL0[0] + 0.28, 0), fR=(RR0[0] + 0.24, 62)), "in3"),                                                   # HIT: level, the back of the swing
+    (11, R(hx=0.12, hz=0.59, tw_hips=-42, tw_chest=-64, gx=0.18, gz=1.08, a=250,
+           fL=(RL0[0] + 0.28, 0), fR=(RR0[0] + 0.2, 44)), "out"),                                                   # on through, wrapping round the rear side
+    (16, R(hx=0.12, hz=0.6, tw_hips=-30, tw_chest=-40, gx=0.0, gz=1.08, a=214, fL=(RL0[0] + 0.26, 0), fR=(RR0[0] + 0.14, 34)), "smooth"),
+    (24, at(RG, 0.12), "smooth"),                                                                                     # cocked again: ready for the forehand
+], hit=7, reach=1.3, react="hit_chin", striker="R", shift=True,
+    note="the backhand: back from over the lead shoulder, level through him, wrapping round to the rear shoulder (the figure eight's return)")
+
+# ---------------------------------------------------------------- the chop: short, down across the collarbone
+CLIPS["rod_chop"] = clip(20, [
+    (0, RG, "lin"),
+    (2, R(hz=0.62, spine=180, chest=182, tw_chest=-30, gx=-0.06, gz=1.22, a=214, fR=(RR0[0], 22)), "out"),                     # lifted off the shoulder: a short load
+    (6, R(hx=0.14, hz=0.585, spine=164, chest=156, neck=156, head=164, tw_hips=20, tw_chest=26, gx=0.5, gz=0.98, a=62,
+          fL=(RL0[0] + 0.2, 0), fR=(RR0[0], 64)), "in3"),                                                                       # HIT: angled down into the collarbone
+    (9, R(hx=0.14, hz=0.578, spine=160, chest=152, tw_chest=36, gx=0.36, gz=0.78, a=28, fL=(RL0[0] + 0.2, 0), fR=(RR0[0], 52)), "out"),   # carried on down across him
+    (13, R(hx=0.14, hz=0.6, tw_chest=6, gx=0.14, gz=0.94, a=150, fL=(RL0[0] + 0.18, 0), fR=(RR0[0] + 0.08, 36)), "smooth"),  # back up
+    (20, at(RG, 0.14), "smooth"),
+], hit=6, reach=1.2, react="hit_body", striker="R", shift=True,
+    note="the chop: quick, short, down across his collarbone; the arm he guards with drops")
+
+# ---------------------------------------------------------------- out of his reach: the back-hop, the pipe kept cocked
+CLIPS["rod_evade"] = clip(14, [
+    (0, RG, "lin"),
+    (3, _k(-0.1, hz=0.6, fR=(RR0[0] - 0.22, 0.05, 10)), "out"),                    # the rear foot pushes off backwards
+    (6, _k(-0.34, hz=0.635, fL=(RL0[0] - 0.08, 0.08, 0), fR=(RR0[0] - 0.3, 40)), "out"),   # a skip back, the lead foot off the floor
+    (9, _k(-0.5, hz=0.598, fL=(RL0[0], 0), fR=(RR0[0], 40)), "in"),                # lands, the knees give
+    (14, at(RG, -0.55), "smooth"),
+], shift=True, note="the back-hop: out of his reach in one skip, the pipe still cocked to come back")
+
+# ---------------------------------------------------------------- the full turn, charged
+COIL = R(hz=0.56, spine=170, chest=166, tw_hips=-74, tw_spine=-70, tw_chest=-96, gx=-0.3, gz=1.0, a=270, fR=(FR[0] - 0.1, 10))
+CLIPS["rod_coil"] = clip(40, [
+    (0, COIL, "smooth"),
+    (10, P(COIL, hz=0.554, tw_chest=-100), "smooth"),                                # winding tighter, the pipe trembling with it
+    (20, P(COIL, tw_chest=-97, **grip(-0.31, 1.01, 272)), "smooth"),
+    (30, P(COIL, hz=0.553, tw_chest=-101), "smooth"),
+    (40, COIL, "smooth"),
+], loop=True, breath=True, breaths=4, note="wound right round, the weight on the back foot, holding it: the turn coming")
+
+_spin = CLIPS["rod_spin"]["keys"]
+CLIPS["rod_unwind"] = clip(29, [(0, COIL, "lin")] + [(f - 7, p, e) for f, p, e in _spin if f > 7], hit=9, reach=1.6,
+                           react="stumble_back", striker="R", shift=True,
+                           note="let go: the full turn out of the coil, level, round through everyone in reach")

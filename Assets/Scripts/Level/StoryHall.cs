@@ -19,9 +19,11 @@ namespace ProjectInk
         public static int HallCheckpoint = -1;
         /// <summary>Test checkpoint: the crane bay with a katana on the floor and swordsmen in the waves (backlog step 5).</summary>
         public static bool KatanaTest;
+        /// <summary>TEST · the pipe: the crane bay's men, with pipes on the floor (three of them, 14 hits each).</summary>
+        public static bool PipeTest;
 
         /// <summary>From the menu: the chapter from the top (no checkpoint, no retry state).</summary>
-        public static void NewRun() { KatanaTest = false; HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
+        public static void NewRun() { KatanaTest = false; PipeTest = false; HallCheckpoint = -1; Retry = false; EscapeSeen = false; BossReached = false; Enemy.StoryFinale = null; TestEnding = 0; BankFrom = 0; EndingFrom = 0; StreetCheckpoint = -1; StreetFrom = 0; HomeCheckpoint = -1; HomeFrom = 0; BackyardCheckpoint = -1; BackyardFrom = 0; FortressCheckpoint = -1; FortressFrom = 0; }
 
         struct Spawn { public EnemyType type; public SpawnKind kind; public Spawn(EnemyType t, SpawnKind k) { type = t; kind = k; } }
 
@@ -189,6 +191,8 @@ namespace ProjectInk
                 hero.CineRelease();
                 hero.runSpeed = runSpeed;
                 if (KatanaTest && director != null) WeaponPickup.Spawn(FightStyle.Sword, 999, new Vector3(ZoneX0(z) + 3.0f, 0f, 0f), director.weaponMaterial);
+                else if (PipeTest && director != null)
+                    for (int k = 0; k < 3; k++) WeaponPickup.Spawn(FightStyle.Pipe, 14, new Vector3(ZoneX0(z) + 3.0f + k * 2.5f, 0f, 0f), director.weaponMaterial);
                 else if (hero.Style == FightStyle.Fists) hero.GiveWeapon(FightStyle.Knife, 3);
                 var sh = Find("InnerShutter");
                 if (sh != null) foreach (var r in sh.GetComponentsInChildren<Renderer>()) r.enabled = false;

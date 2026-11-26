@@ -44,7 +44,8 @@ namespace ProjectInk
         void KatanaTick()
         {
             GestureInput.Grammar = KatanaMode || KnifeLines ? GestureInput.WeaponGrammar.Katana : GestureInput.WeaponGrammar.Fists;
-            if (!KatanaMode) { sheathed = false; return; }
+            if (!KatanaMode) { sheathed = false; rodWound = false; return; }
+            if (RodMode) PipeWindTick();
             // the world slows while he waits on the draw
             if (sheathed && GestureInput.IaiHolding && Time.unscaledTime > iaiSlowAt && TimeController.Instance != null)
             {
@@ -81,7 +82,7 @@ namespace ProjectInk
                 case Command.Cut: KatanaCut(GestureInput.CutVector, GestureInput.CutSpeed); return true;
                 case Command.IaiHold: BeginIaiStance(); return true;
                 case Command.IaiDraw: IaiDraw(GestureInput.CutVector); return true;
-                case Command.IaiCancel: if (RodMode && rodWound) { rodWound = false; body.Play(KatanaIdle, 0.2f); return true; }
+                case Command.IaiCancel: if (RodMode && rodWound) { PipeRelease(Vector2.zero, false); return true; }      // the pipe: let go is the turn
                     if (sheathed) { sheathed = false; body.Play("katana_guard", 0.15f); Sound.Play(Sfx.SwordSwing, 0.5f, transform.position, 1.3f); } return true;
             }
             return false;
@@ -100,7 +101,7 @@ namespace ProjectInk
 
         void KatanaCut(Vector2 v, float speed)
         {
-            if (RodMode && body.Has("rod_swing")) { RodSwing(v, speed); return; }
+            if (RodMode && body.Has("rod_swing")) { var gi0 = GestureInput.Instance; PipeSwipe(v, speed, gi0 == null || gi0.LastSwipeHigh); return; }   // the pipe (HeroPipeV4)
             if (state != State.Idle && state != State.Traverse) return;
             if (sheathed) { IaiDraw(v); return; }
             lastStroke = InkStroke.Draw(GestureInput.CutStart, GestureInput.CutEnd, 0.16f, transform.position.z);
@@ -156,12 +157,7 @@ namespace ProjectInk
         /// <summary>A tap with the katana: the thrust, high (throat) or low (belly).</summary>
         void KatanaThrust(int side, bool low)
         {
-            if (RodMode && body.Has("rod_jab"))
-            {
-                if (side != Facing) SetFacing(side);
-                RodMove(low ? "rod_shin" : "rod_jab", low ? 1.3f : 1.2f);
-                return;
-            }
+            if (RodMode && body.Has("rod_jab")) { PipeTap(side, low); return; }
             if (sheathed) { IaiDraw(new Vector2(side, 0f)); return; }
             if (side != Facing) SetFacing(side);
             var t = PickTarget(Facing, 3.4f, false);
@@ -209,71 +205,6 @@ namespace ProjectInk
             if (!any) Sound.Play(Sfx.Whoosh, 0.6f, transform.position);
         }
 
-        /// <summary>The rod's grammar: the swipe's angle picks the swing (it's a club, not a sword).
-        ///   → level / ↘ down-towards: the big swing · ↓: the overhead smash · ↑ ↗: the rising swing
-        ///   ↙ ↖ low and away: the shin swing · ← away: the retreat · tap: the butt-end jab · tap low: the shins
-        ///   hold on yourself, let go: the full turn (everyone in reach)</summary>
-        void RodSwing(Vector2 v, float speed)
-        {
-            if (state != State.Idle && state != State.Traverse) return;
-            lastStroke = InkStroke.Draw(GestureInput.CutStart, GestureInput.CutEnd, 0.14f, transform.position.z);
-            if (TryMirrorParry(v)) return;
-            float ang = CutAngle(v);
-            if (Mathf.Abs(ang) > 158f) { BeginTraverse("katana_retreat", 0f); invulnerableUntil = Time.time + 0.3f; return; }
-            string clip = Mathf.Abs(ang) > 112f ? "rod_shin" : ang > 22f ? "rod_rising" : ang < -60f ? "rod_overhead" : "rod_swing";
-            RodMove(clip, clip == "rod_overhead" ? 1.2f : clip == "rod_shin" ? 1.3f : clip == "rod_rising" ? 1.2f : 1.35f);
-        }
-
-        void RodMove(string clip, float reach)
-        {
-            katanaCut = clip;
-            katanaMul = Time.time < kaeshiUntil ? 1.5f : 1f;
-            katanaLabel = Time.time < kaeshiUntil ? "KAESHI" : null;
-            kaeshiUntil = 0f;
-            var t = PickTarget(Facing, 3.0f, false);
-            if (t != null && Mathf.Abs(t.transform.position.y - transform.position.y) > 0.8f) t = null;
-            if (t != null) BeginFar(clip, t, "rod", reach); else BeginFarClip(clip, "rod");
-            SetTrails(true);
-            Sound.Play(Sfx.WhooshBig, clip == "rod_jab" ? 0.6f : 1f, transform.position, clip == "rod_overhead" ? 0.8f : 0.95f);
-        }
-
-        /// <summary>A rod swing lands: blunt, heavy. The swing and the full turn catch everyone in their arc.</summary>
-        void RodLand()
-        {
-            string c = katanaCut;
-            float reach = c == "rod_spin" ? 1.6f : c == "rod_swing" ? 1.35f : c == "rod_shin" ? 1.3f : 1.2f;
-            float dmg = (c == "rod_overhead" ? 30f : c == "rod_spin" ? 22f : c == "rod_swing" ? 22f : c == "rod_jab" ? 12f : c == "rod_shin" ? 14f : 18f) * katanaMul;
-            bool arc = c == "rod_swing" || c == "rod_spin";
-            int n = 0;
-            foreach (var e in Enemy.All.ToArray())
-            {
-                if (e == null || !e.Targetable || Mathf.Abs(e.transform.position.y - transform.position.y) > 1.0f) continue;
-                float dx = (e.transform.position.x - transform.position.x) * Facing;
-                bool inReach = c == "rod_spin" ? Mathf.Abs(dx) < reach + 0.3f : dx > -0.2f && dx < reach + 0.4f;
-                if (!inReach || (!arc && farFoe != null && e != farFoe)) continue;
-                n++;
-                string react = c == "rod_shin" ? "leg_buckle" : c == "rod_jab" ? "fold" : c == "rod_rising" ? "hit_up" : c == "rod_overhead" ? "hit_body" : "hit_chin";
-                e.TakeHit(new HitInfo { damage = dmg, direction = dx >= 0f ? Facing : -Facing, knockback = c == "rod_spin" || c == "rod_swing" ? 5.5f : 2.5f,
-                                        knockdown = c == "rod_overhead" || c == "rod_spin", heavy = true, low = c == "rod_shin", react = react, attacker = this });
-                Sound.Play(Sfx.PipeHit, 1.1f, e.Chest, c == "rod_overhead" ? 0.85f : 1f);
-                if (InkFx.Instance != null) InkFx.Instance.Splash(e.Chest, new Vector3(Facing, 0.3f, 0f), 14, e.InkColor);
-            }
-            if (c == "rod_overhead") Sound.Play(Sfx.MetalClang, 0.9f, transform.position + Vector3.right * Facing * 1.0f, 0.8f);   // it rings off the floor
-            if (n > 0)
-            {
-                if (TimeController.Instance != null) TimeController.Instance.HitStop(c == "rod_overhead" || c == "rod_spin" ? 8 : 6);
-                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(c == "rod_overhead" ? 0.22f : 0.14f, 0.18f);
-                if (WaveDirector.Instance != null)
-                {
-                    if (n >= 2) WaveDirector.Instance.AddStyle(250, "CLEARING THE ROOM");
-                    else if (c == "rod_overhead") WaveDirector.Instance.AddStyle(120, "OVERHEAD");
-                    else if (katanaLabel != null) WaveDirector.Instance.AddStyle(150, katanaLabel);
-                }
-            }
-            else Sound.Play(Sfx.Whoosh, 0.6f, transform.position, 0.8f);
-            if (--PipeUses <= 0) { Style = FightStyle.Fists; ApplyStyleVisuals(); if (WaveDirector.Instance != null) WaveDirector.Instance.ShowBanner("THE ROD BENDS: FISTS", 1.2f); }
-        }
-
         /// <summary>The rod: the same lines, blunt. The level sweep catches everyone in reach (CLEARING THE ROOM);
         /// the overhead floors a man; it wears out with use.</summary>
         void RodImpact(string cut, float reach, float dmg)
@@ -293,7 +224,7 @@ namespace ProjectInk
             if (n >= 2 && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(250, "CLEARING THE ROOM");
             else if (n == 1 && katanaLabel != null && WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(150, katanaLabel);
             if (n > 0 && TimeController.Instance != null) TimeController.Instance.HitStop(5);
-            if (--PipeUses <= 0) { Style = FightStyle.Fists; ApplyStyleVisuals(); if (WaveDirector.Instance != null) WaveDirector.Instance.ShowBanner("THE ROD BENDS: FISTS", 1.2f); }
+            if (n > 0) PipeWear();
         }
 
         /// <summary>The knife: a swipe is a one-handed slash along its line (a tap still stabs, or throws at a man far off).</summary>
@@ -409,14 +340,7 @@ namespace ProjectInk
         void BeginIaiStance()
         {
             if (state != State.Idle) return;
-            if (RodMode)
-            {
-                // the rod: wound right round, held, let go into the full turn
-                rodWound = true;
-                body.Play("rod_spin", 0.15f, true, 0.001f);              // held coiled at the start of the turn
-                Sound.Play(Sfx.Cloth, 0.8f, transform.position);
-                return;
-            }
+            if (RodMode) { PipeWind(); return; }                         // the pipe: wound right round (HeroPipeV4)
             sheathed = true;
             running = false;
             velocity.x = 0f;
@@ -428,15 +352,7 @@ namespace ProjectInk
         /// <summary>The held press dragged out and let go: the draw cut along the drag; men in a line along it: the pass.</summary>
         void IaiDraw(Vector2 v)
         {
-            if (RodMode)
-            {
-                if (!rodWound) { KatanaCut(v, 3000f); return; }
-                rodWound = false;
-                SetFacing(v.x >= 0f ? 1 : -1);
-                InkStroke.Draw(GestureInput.CutStart, GestureInput.CutEnd, 0.2f, transform.position.z);
-                RodMove("rod_spin", 1.6f);
-                return;
-            }
+            if (RodMode) { PipeRelease(v, true); return; }               // the pipe: the full turn (HeroPipeV4)
             if (!sheathed) { KatanaCut(v, 3000f); return; }
             sheathed = false;
             if (state == State.Traverse && traverse == "iai_sheathe") { traverse = null; state = State.Idle; }
