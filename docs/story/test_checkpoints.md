@@ -51,3 +51,5 @@ Use **Hall 1** (knife in hand) or **Hall 2**. On first meeting, the fight shows 
 - **A big man (brute):** a lift is refused with TOO HEAVY until he's down to 40% health. Knees and the sweep always work.
 - **From range:** swipe at a man 1.6–3 m away for a SPEAR; punch while running into him for a CLOTHESLINE.
 - **Check:** thrown men land where the animation puts them (no snapping back), get up the way they fell (a DDT means face down), and a man you're holding is let go if someone else hits you.
+
+**SKIP (all chapters):** during any scene that plays by itself, SKIP › (or a tap on the right half) skips one scene, and TO PLAY » runs on to the next moment you have the controls. Check that it never appears during a prompt, a fight or the training ground, and that skipping through a whole chapter never leaves a character in a wrong place.

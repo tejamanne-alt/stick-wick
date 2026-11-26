@@ -91,7 +91,7 @@ namespace ProjectInk
             Sound.Tension(true);
         }
 
-        bool AtH(float x) => prevHallT < x && hallT >= x;
+        bool AtH(float x) { nextH = NextBeat(hallT, x, nextH); return prevHallT < x && hallT >= x; }
 
         void UpdateToHall()
         {

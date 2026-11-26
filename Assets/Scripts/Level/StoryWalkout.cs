@@ -89,6 +89,7 @@ namespace ProjectInk
             while (woT < 69.4f)
             {
                 woT += Time.unscaledDeltaTime;
+                if (SkipNow && next < events.Count) woT = Mathf.Max(woT, events[next].t);     // SKIP: on to the next beat of the take
                 while (next < events.Count && events[next].t <= woT) { events[next].act(); next++; }
                 WoFrame(Time.deltaTime);
                 yield return null;
@@ -719,7 +720,7 @@ namespace ProjectInk
 
         IEnumerator WoLerp(float secs, System.Action<float> set)
         {
-            for (float t0 = 0f; t0 < secs; t0 += Time.unscaledDeltaTime) { set(Mathf.SmoothStep(0f, 1f, t0 / secs)); yield return null; }
+            for (float t0 = 0f; t0 < secs; t0 += Time.unscaledDeltaTime) { if (SkipNow) break; set(Mathf.SmoothStep(0f, 1f, t0 / secs)); yield return null; }
             set(1f);
         }
 

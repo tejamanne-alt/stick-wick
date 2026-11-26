@@ -328,7 +328,7 @@ namespace ProjectInk
 
         IEnumerator HoldFor(float secs, System.Action frame = null)
         {
-            for (float t0 = 0f; t0 < secs; t0 += Time.unscaledDeltaTime) { frame?.Invoke(); yield return null; }
+            for (float t0 = 0f; t0 < secs; t0 += Time.unscaledDeltaTime) { if (SkipNow) t0 = secs; frame?.Invoke(); yield return null; }
         }
 
         /// <summary>A small toy walkie-talkie (an object for his hand, her pocket, a seat, a stone).</summary>

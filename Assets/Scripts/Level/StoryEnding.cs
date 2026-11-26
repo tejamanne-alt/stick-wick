@@ -508,14 +508,14 @@ namespace ProjectInk
         static IEnumerator RealWait(float s)
         {
             float t = 0f;
-            while (t < s) { t += Time.unscaledDeltaTime; yield return null; }
+            while (t < s) { t += Time.unscaledDeltaTime; if (SkipNow) t = s; yield return null; }
         }
 
         /// <summary>Hold for `s` real seconds, framing each frame with `frame`.</summary>
         static IEnumerator Hold(float s, System.Action frame)
         {
             float t = 0f;
-            while (t < s) { t += Time.unscaledDeltaTime; frame(); yield return null; }
+            while (t < s) { t += Time.unscaledDeltaTime; if (SkipNow) t = s; frame(); yield return null; }
         }
 
         void EndShot(Vector3 pos, Vector3 look, float fov)

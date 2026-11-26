@@ -781,6 +781,7 @@ namespace ProjectInk
             float nextFlash = Time.unscaledTime + 1.6f, flashAt = -10f;
             var gi = GestureInput.Instance;
             bool made = false;
+            kGapAwait = true;                                   // the player's moment: no SKIP over it
             while (!made)
             {
                 if (Time.unscaledTime > nextFlash) { Strike(1f, 0.15f); flashAt = Time.unscaledTime; nextFlash = Time.unscaledTime + Random.Range(2.2f, 3.4f); }
@@ -815,6 +816,7 @@ namespace ProjectInk
                 }
                 yield return null;
             }
+            kGapAwait = false;
             barsPx = 0f;
             hero.CineRelease();
             SetArena(683.8f, KesselPlan.Levels[10].x0 + 2f);

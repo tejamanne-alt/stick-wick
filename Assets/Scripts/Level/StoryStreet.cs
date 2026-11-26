@@ -129,7 +129,7 @@ namespace ProjectInk
         IEnumerator FadeIn(float s)
         {
             float t0 = 0f;
-            while (t0 < s) { t0 += Time.unscaledDeltaTime; blackout = 1f - t0 / s; yield return null; }
+            while (t0 < s) { t0 += Time.unscaledDeltaTime; if (SkipNow) t0 = s; blackout = 1f - t0 / s; yield return null; }
             blackout = 0f;
         }
 

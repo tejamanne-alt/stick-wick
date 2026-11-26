@@ -56,8 +56,8 @@ namespace ProjectInk
         }
 
         bool CanEscape => !EscapeSeen && chain != null && floorKnife != null;
-        bool AtE(float time) => prevE < time && e >= time;
-        bool AtD(float d) => impactAt >= 0f && prevE - impactAt < d && e - impactAt >= d;
+        bool AtE(float time) { nextE = NextBeat(e, time, nextE); return prevE < time && e >= time; }
+        bool AtD(float d) { if (impactAt >= 0f) nextE = NextBeat(e, impactAt + d, nextE); return impactAt >= 0f && prevE - impactAt < d && e - impactAt >= d; }
         float D => impactAt >= 0f ? e - impactAt : -1f;
 
         void HeroAnim(string clip, float fade, float speed = 1f, bool restart = true)

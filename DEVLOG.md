@@ -1978,3 +1978,15 @@ These two lessons replace SLIP AND COUNTER in the training ground. The slip itse
 - While holding a man, a slow swipe down never becomes a crouch (`GestureInput.HeroHolding`).
 
 **Training:** both lessons freeze at his swing for the first control, then again for the finish.
+
+## SKIP, across the whole story
+While a scene plays by itself (the hero locked, no prompt waiting), two buttons sit bottom right:
+- **SKIP ›** skips this scene only. The shot in progress jumps to its end, so everyone lands where it leaves them, the line being spoken is cut, and the story goes on to its next scene. **A tap on the right half of the screen does the same.**
+- **TO PLAY »** runs to the next moment the player has the controls (a prompt to make, or the hero free). The scenes run through behind a black SKIPPING card, silent (audio muted, lines not spoken). In the opening it goes straight to the walk, as the old SKIP did.
+
+**How it works:**
+- The shared timing helpers end their wait when `SkipNow` is true: Hold, RealWait, Cut, Move, HoldFor, PuppetWalk, the fades and WoLerp.
+- The clock-driven sequences jump to the next beat their `At()` checks are waiting for: the opening, the breach, the escape, the memory, the walk to the hall, and the walk-out's event list.
+- Nothing that waits for the player is skipped: the HOLD/MASH/SWIPE/choice prompts, the bank's tap beats, the Kessel broken-stair jump, the Driver's car dodge.
+- Skip never shows during fights, the training ground, the end card or the recap (which keeps its own SKIP).
+- The old chapter 1-only SKIP is replaced.

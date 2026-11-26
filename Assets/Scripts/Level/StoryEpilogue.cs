@@ -65,7 +65,7 @@ namespace ProjectInk
 
         IEnumerator FadeOut(float s)
         {
-            for (float t0 = 0f; t0 < s; t0 += Time.unscaledDeltaTime) { blackout = t0 / s; yield return null; }
+            for (float t0 = 0f; t0 < s; t0 += Time.unscaledDeltaTime) { if (SkipNow) break; blackout = t0 / s; yield return null; }
             blackout = 1f;
         }
 

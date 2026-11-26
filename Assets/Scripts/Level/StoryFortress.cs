@@ -184,6 +184,7 @@ namespace ProjectInk
             while (t0 < secs)
             {
                 t0 += Time.unscaledDeltaTime;
+                if (SkipNow) t0 = secs;                       // SKIP: the shot's last frame, then the next scene
                 float u = Mathf.Clamp01(t0 / secs);
                 var s = shot(u);
                 s.pos += Sway(sway, 0.55f, 13f);

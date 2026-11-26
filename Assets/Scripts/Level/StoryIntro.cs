@@ -73,11 +73,20 @@ namespace ProjectInk
         float walkFromX;
 
         void Awake() { Instance = this; }
-        void OnDestroy() { if (Instance == this) Instance = null; HeroController.Did -= OnFortHit; TrainingUnhook(); }
+        void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+            HeroController.Did -= OnFortHit;
+            GestureInput.Tapped -= OnSkipTap;
+            TrainingUnhook();
+            if (fastForward) { fastForward = false; AudioListener.volume = ffVolume; }
+        }
 
         void Start()
         {
-            Sound.KeepClear = false;                        // the walk-out's clear sound never outlives it
+            Sound.KeepClear = false;
+            fastForward = false;
+            GestureInput.Tapped += OnSkipTap;           // a tap on the right half during a scene: skip it                        // the walk-out's clear sound never outlives it
             cam = CameraDirector.Instance;
             if (hero == null) hero = FindAnyObjectByType<HeroController>();
             if (director == null) director = WaveDirector.Instance;
@@ -110,9 +119,9 @@ namespace ProjectInk
         static Renderer R(string n) { var g = GameObject.Find(n); return g != null ? g.GetComponent<Renderer>() : null; }
 
         static float Ease(float a, float b2, float x) => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(a, b2, x));
-        bool At(float time) => prevT < time && t >= time;
-        bool AtB(float time) => prevB < time && b >= time;
-        bool AtM(float time) => prevM < time && m >= time;
+        bool At(float time) { nextT = NextBeat(t, time, nextT); return prevT < time && t >= time; }
+        bool AtB(float time) { nextB = NextBeat(b, time, nextB); return prevB < time && b >= time; }
+        bool AtM(float time) { nextM = NextBeat(m, time, nextM); return prevM < time && m >= time; }
 
         Vector3 HeadC() => head != null ? head.position + head.up * 0.19f : hero.transform.position + Vector3.up * 1.2f;
 
@@ -153,23 +162,29 @@ namespace ProjectInk
                 }
             }
             float dt = Time.unscaledDeltaTime;
+            UpdateSkip();
             switch (phase)
             {
                 case Phase.Cinematic:
                     prevT = t;
-                    if (!OpeningGate()) t += dt / Pace;
+                    if (!OpeningGate()) { t += dt / Pace; if (SkipNow && nextT < 1e8f) t = Mathf.Max(t, nextT); }
+                    nextT = 1e9f;
                     if (!chairScene) Cinematic();
                     UpdateTies();
                     break;
                 case Phase.Walk: UpdateWalk(); break;
                 case Phase.Escape:
                     prevE = e; e += dt;
+                    if (SkipNow && nextE < 1e8f) e = Mathf.Max(e, nextE);
+                    nextE = 1e9f;
                     UpdateEscape();
                     break;
                 case Phase.Duel: UpdateDuel(); break;
                 case Phase.Training: UpdateTraining(); break;
                 case Phase.ToHall:
                     prevHallT = hallT; hallT += dt;
+                    if (SkipNow && nextH < 1e8f) hallT = Mathf.Max(hallT, nextH);
+                    nextH = 1e9f;
                     UpdateToHall();
                     break;
                 case Phase.Hall: UpdateHall(); break;
@@ -181,11 +196,15 @@ namespace ProjectInk
                 case Phase.Epilogue: UpdateEpilogue(); break;
                 case Phase.Breach:
                     prevB = b; b += dt;
+                    if (SkipNow && nextB < 1e8f) b = Mathf.Max(b, nextB);
+                    nextB = 1e9f;
                     UpdateBreach();
                     break;
                 case Phase.Fight: UpdateFight(); break;
                 case Phase.Memory:
                     prevM = m; m += dt;
+                    if (SkipNow && nextM < 1e8f) m = Mathf.Max(m, nextM);
+                    nextM = 1e9f;
                     UpdateMemory();
                     break;
                 case Phase.End:
@@ -917,6 +936,7 @@ namespace ProjectInk
             if (phase == Phase.Duel || Time.unscaledTime - okAt < 0.4f) DuelGUI(w, h);
             if (phase == Phase.Training) TrainingGUI(w, h);
             HallGUI(w, h);
+            SkipGUI(w, h);
 
             // lightning: two white frames, then a blue afterglow
             if (flashFrames > 0) { Fill(new Rect(0, 0, w, h), Color.white); if (repaint) flashFrames--; }
@@ -940,15 +960,6 @@ namespace ProjectInk
                     cap.normal.textColor = new Color(1f, 1f, 1f, 0.85f * ca);
                     GUI.Label(new Rect(70, h - bh + (bh - 30) * 0.5f, w, 30), Spaced("THE YARDS") + "     3:12 AM", cap);
                     Fill(new Rect(70, h - bh + bh * 0.5f + 16, 40, 2), new Color(0.8f, 0.06f, 0.07f, ca));
-                }
-                // SKIP
-                if (t > 1.5f && t < Control - 1.2f)
-                {
-                    var r = new Rect(w - 190, Mathf.Max(18f, bh * 0.5f - 22f), 160, 44);
-                    btn.fontSize = 22;
-                    btn.normal.textColor = new Color(1f, 1f, 1f, 0.55f);
-                    if (GUI.Button(r, Spaced("SKIP") + "  >", btn)) SkipToWalk();
-                    btn.fontSize = 30;
                 }
             }
 

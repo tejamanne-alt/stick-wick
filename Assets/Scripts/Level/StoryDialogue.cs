@@ -43,6 +43,7 @@ namespace ProjectInk
         /// YOU is the hero, THE FOREMAN the boss, any other on-screen name the nearest of his men.</summary>
         void Say(string who, string line, float seconds, Transform source)
         {
+            if (fastForward) return;                       // the scenes running through behind black: silent
             string w = who.ToUpperInvariant();
             if (w == "HIM" || w == "YOU") { subKind = VoiceKind.You; subSpeaker = "YOU"; }
             else if (w == "THE FOREMAN" || w == "THE DRIVER" || w == "THE CLEANER" || w == "THE HANDLER" || w == "THE WARDEN" || w == "VOSS" || w == "V." || w == "SILAS") { subKind = VoiceKind.Boss; subSpeaker = w; }

@@ -75,6 +75,7 @@ namespace ProjectInk
             while (t0 < secs)
             {
                 t0 += Time.unscaledDeltaTime;
+                if (SkipNow) t0 = secs;
                 float u = Mathf.Clamp01(t0 / secs);
                 Cine(shot(u));
                 each?.Invoke(u);

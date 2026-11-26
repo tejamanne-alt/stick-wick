@@ -868,6 +868,7 @@ namespace ProjectInk
             while (t < seconds)
             {
                 t += Time.unscaledDeltaTime;
+                if (SkipNow) t = seconds;
                 hero.CinePose(new Vector3(Mathf.Lerp(from.x, toX, t / seconds), 0f, 0f));
                 frame();
                 yield return null;
