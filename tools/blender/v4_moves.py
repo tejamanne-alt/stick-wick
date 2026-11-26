@@ -114,22 +114,20 @@ CLIPS["sneak"] = clip(40, gait(40, SNEAK_SPEED, duty=0.72, lift=0.06, hz=0.47, b
                       loop=True, speed=SNEAK_SPEED, note="sneaking: crouched, slow placed steps, hands ready")
 
 # ---------------------------------------------------------------- standing alone
-# loose, the weight on one leg then the other, the hands hanging (half open), the shoulders loose,
-# looking around: left, the floor, right, behind; a breath that shows
+# simply standing: both feet planted, the weight even, the hands hanging still (half open), the
+# shoulders down. Nothing walks or fidgets: only the breath, and the head now and then looking a
+# little one way, then the other (a story stand, not a fight)
 LOOSE = P(hx=0.0, hz=0.676, hips=180, spine=178, spine_mid=177, chest=176, neck=174, head=178,
           clL=(0, 0), clR=(0, 0), uaL=4, faL=12, haL=8, uaR=-4, faR=6, haR=2, fiL=55, fiR=55,
           fL=(0.12, 0), fR=(-0.04, 0))
 CLIPS["idle_alone"] = clip(150, [
     (0, LOOSE, "smooth"),
-    (24, P(LOOSE, hx=0.012, tw_hips=4, fR=(-0.04, 8), head=176, tw_head=-24), "smooth"),            # looks away (over the far shoulder)
-    (44, P(LOOSE, hx=0.014, tw_hips=5, fR=(-0.04, 10), head=176, tw_head=-28, fiR=80), "smooth"),
-    (62, P(LOOSE, hx=0.0, head=168, tw_head=0, neck=170), "smooth"),                                # down at the floor
-    (80, P(LOOSE, hx=-0.012, tw_hips=-4, fL=(0.12, 8), head=180, tw_head=22, clL=(4, 6), clR=(4, 6)), "smooth"),   # the other way, a shoulder roll
-    (96, P(LOOSE, hx=-0.012, tw_hips=-4, fL=(0.12, 8), head=180, tw_head=26, fiL=85), "smooth"),
-    (116, P(LOOSE, hx=0.0, head=178, tw_head=-6, uaR=-2, faR=20, haR=30), "smooth"),               # a hand flexes
-    (134, P(LOOSE, hx=0.004, head=177, tw_head=4), "smooth"),
+    (30, P(LOOSE, head=177, tw_head=-7), "smooth"),           # a glance one way (the head only)
+    (60, P(LOOSE, head=177, tw_head=-7), "smooth"),
+    (90, P(LOOSE, head=178, tw_head=6), "smooth"),            # and the other
+    (120, P(LOOSE, head=178, tw_head=6), "smooth"),
     (150, LOOSE, "smooth"),
-], loop=True, breath=True, breaths=4, note="alone: weight shifting, hands loose, looking around, breathing")
+], loop=True, breath=True, breaths=4, note="standing alone: feet planted, hands still, breathing, the head looking about a little")
 
 CROUCH = P(hx=0.0, hz=0.47, hips=180, spine=158, spine_mid=154, chest=150, neck=148, head=168,
            clL=(10, 6), clR=(10, 6), uaL=44, faL=110, uaR=36, faR=104, fiL=90, fiR=90,
