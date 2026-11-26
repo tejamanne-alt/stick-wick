@@ -90,7 +90,7 @@ namespace ProjectInk
 
         void Update()
         {
-            if (!Active || hero == null) return;
+            if (!Active || hero == null || TimeController.Paused) return;
             float dt = Time.unscaledDeltaTime;
             t += dt;
             var cam = CameraDirector.Instance;

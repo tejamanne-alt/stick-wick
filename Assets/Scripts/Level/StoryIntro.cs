@@ -133,6 +133,12 @@ namespace ProjectInk
         void Update()
         {
             if (hero == null) return;
+            if (TimeController.Paused)
+            {
+                // paused: the story's clock stands still (StoryDt is 0); the line being spoken waits with it
+                float pd = Time.unscaledDeltaTime;
+                subAt += pd; subUntil += pd;
+            }
             if (!setUp && chapter == 2) { setUp = true; BeginBank(); }
             if (!setUp && chapter == 3) { setUp = true; BeginStreet(); }
             if (!setUp && chapter == 4) { setUp = true; BeginHome(); }

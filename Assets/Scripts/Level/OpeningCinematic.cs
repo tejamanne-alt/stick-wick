@@ -91,7 +91,7 @@ namespace ProjectInk
 
         void Update()
         {
-            if (!Active || hero == null) return;
+            if (!Active || hero == null || TimeController.Paused) return;
             t += Time.unscaledDeltaTime;
 
             var input = GestureInput.Instance;

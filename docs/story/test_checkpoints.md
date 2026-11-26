@@ -33,6 +33,8 @@
 | 7 · Home | 0–3 | `EpilogueFrom`: Harrow ("...Then I never saw you. Take her home."), the grave (HOLD your hand on the stone), the swing (SWIPE to push), the drawer (DRAG to close it), THE END, then the recap. |
 | The whole story | Timeline | `EpilogueFrom = 5` (also the main menu's THE WHOLE STORY button): the recap alone. |
 
+**Pause, everywhere:** at any checkpoint, while a scene plays by itself (bars up, SKIP showing), the pause button sits top left, above the bars. Pause: the scene freezes (camera, people, the line on screen, the music); RESUME carries on exactly where it stopped. During play the button is top centre with the ?.
+
 **For every new chapter:** add its checkpoints here and to `MainMenu.Checkpoints`. At least: its start, each fight zone, its boss fight, its ending after the boss, and every story beat worth replaying on its own. The entry points live in `StoryTest.cs` (and a `TestState` per chapter, like the bank's).
 
 ## CONTACT combat: what to try (any hall checkpoint in chapter 1)

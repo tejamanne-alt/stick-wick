@@ -60,8 +60,48 @@ namespace ProjectInk
             bars = Mathf.MoveTowards(bars, want, Time.unscaledDeltaTime * 5f);
         }
 
+        /// <summary>No full HUD this moment (a scene playing by itself, a cinematic, the boss's entrance, the
+        /// victory): the corner pause button stands in for it, drawn above everything (TopLayer).</summary>
+        bool CornerPause
+        {
+            get
+            {
+                var cine = OpeningCinematic.Instance;
+                if (cine != null && cine.Active) return true;
+                var s = StoryIntro.Instance;
+                if (s != null && s.HideHud) return true;
+                var bd = BossDirector.Instance;
+                if (bd != null && bd.Cinematic) return true;
+                if (hero != null && hero.RampageIntro) return true;
+                var win = VictoryCinematic.Instance;
+                return win != null && win.Active;
+            }
+        }
+
+        HudTop top;
+
+        /// <summary>Drawn after every other interface (the story's bars, blacks, cards and buttons): the pause
+        /// button is always there to press, whatever plays, and its card always covers the screen.</summary>
+        public void TopLayer()
+        {
+            if (big == null) return;
+            scale = Screen.height / 720f * UiBoost;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            if (CornerPause) StoryPauseOnly(Screen.width / scale, Screen.height / scale);
+            else if (StoryIntro.Instance != null && !pauseOpen && !helpOpen && gTitle != null && pauseBtn.width > 1f)
+            {
+                // the full HUD's own pause button (it handles the press), drawn again above the story's
+                // letterbox and blacks so a scene can never cover it
+                DrawButton(pauseBtn, "", 26);
+                Fill(new Rect(pauseBtn.center.x - 10, pauseBtn.y + 12, 7, 24), new Color(1f, 1f, 1f, 0.92f));
+                Fill(new Rect(pauseBtn.center.x + 3, pauseBtn.y + 12, 7, 24), new Color(1f, 1f, 1f, 0.92f));
+            }
+            GUI.matrix = Matrix4x4.identity;
+        }
+
         void OnGUI()
         {
+            if (top == null) { top = GetComponent<HudTop>() ?? gameObject.AddComponent<HudTop>(); top.hud = this; }
             if (big == null) Build();
             // the whole interface is drawn larger than the 720-line design (phones most of all), so
             // text and buttons are comfortable to read and press; layouts use w and h, not 720
@@ -93,8 +133,7 @@ namespace ProjectInk
             var storyScene = StoryIntro.Instance;
             if (storyScene != null && storyScene.HideHud)
             {
-                // the story draws its own; but a pause (the button, or the phone leaving the app) still gets its card
-                StoryPauseOnly(w, h);
+                // the story draws its own; the pause button and its card are drawn on top of it all (TopLayer)
                 GUI.matrix = Matrix4x4.identity;
                 return;
             }
@@ -884,8 +923,9 @@ namespace ProjectInk
             return true;
         }
 
-        /// <summary>In the story's cutscenes: only a small pause button in the top-left corner (in the
-        /// letterbox, clear of SKIP at the top right and the words at the bottom), and the pause card.</summary>
+        /// <summary>Whenever the full HUD isn't up (the story's scenes, the cinematics): a pause button in the
+        /// top-left corner (in the letterbox, clear of SKIP at the bottom right and the words at the bottom),
+        /// and the pause card.</summary>
         void StoryPauseOnly(float w, float h)
         {
             GuideStyles();
@@ -895,17 +935,19 @@ namespace ProjectInk
             if (!pauseOpen && !helpOpen)
             {
                 var old = GUI.color;
-                GUI.color = new Color(1f, 1f, 1f, 0.55f);
+                GUI.color = new Color(1f, 1f, 1f, 0.75f);
                 DrawButton(pauseBtn, "", 24);
                 GUI.color = old;
-                Fill(new Rect(pauseBtn.center.x - 9, pauseBtn.y + 11, 6, 20), new Color(1f, 1f, 1f, 0.8f));
-                Fill(new Rect(pauseBtn.center.x + 3, pauseBtn.y + 11, 6, 20), new Color(1f, 1f, 1f, 0.8f));
+                Fill(new Rect(pauseBtn.center.x - 9, pauseBtn.y + 11, 6, 20), new Color(1f, 1f, 1f, 0.9f));
+                Fill(new Rect(pauseBtn.center.x + 3, pauseBtn.y + 11, 6, 20), new Color(1f, 1f, 1f, 0.9f));
                 if (repaint) GestureInput.Blocked.Add(ToScreen(pauseBtn));
             }
             bool pKey = false;
 #if ENABLE_INPUT_SYSTEM
             var kb = UnityEngine.InputSystem.Keyboard.current;
             if (repaint && kb != null) pKey = kb.pKey.wasPressedThisFrame || (!helpOpen && kb.escapeKey.wasPressedThisFrame);
+#else
+            if (repaint) pKey = Input.GetKeyDown(KeyCode.P) || (!helpOpen && Input.GetKeyDown(KeyCode.Escape));
 #endif
             if (repaint && !pauseOpen && !helpOpen && (Pressed(pauseBtn) || pKey)) SetPause(true);
             else if (repaint && pauseOpen && pKey) SetPause(false);
@@ -1766,6 +1808,17 @@ namespace ProjectInk
             GUI.color = c;
             GUI.DrawTexture(r, white);
             GUI.color = old;
+        }
+    }
+
+    /// <summary>The HUD's top layer (the pause button and card), drawn above every other OnGUI.</summary>
+    public class HudTop : MonoBehaviour
+    {
+        public HudGUI hud;
+        void OnGUI()
+        {
+            GUI.depth = -100;
+            if (hud != null) hud.TopLayer();
         }
     }
 }

@@ -24,7 +24,7 @@ namespace ProjectInk
 
         /// <summary>The story's clock: real seconds, or many of them a frame while a scene is being skipped (every
         /// story timer runs on it, so a skip takes the whole scene with it: the shots, the walks, the waits).</summary>
-        public static float StoryDt => Time.unscaledDeltaTime * (Skipping ? SkipRate : 1f);
+        public static float StoryDt => TimeController.Paused ? 0f : Time.unscaledDeltaTime * (Skipping ? SkipRate : 1f);
         static bool Skipping => fastForward || toNextLine;
         float ffAt = -9f, ffEndAt = -9f, ffVolume = 1f, skipTapAt = -9f;
         // the next beat of each clock (what a skip jumps to), refilled every frame by the At() checks

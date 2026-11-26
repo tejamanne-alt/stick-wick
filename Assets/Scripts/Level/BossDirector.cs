@@ -96,7 +96,7 @@ namespace ProjectInk
         {
             if (wd == null) wd = GetComponent<WaveDirector>();
             if (hero == null && wd != null) hero = wd.hero;
-            if (hero == null) return;
+            if (hero == null || TimeController.Paused) return;      // paused: the boss's scenes wait too
             switch (Current)
             {
                 case Stage.Armed: UpdateArmed(); break;
