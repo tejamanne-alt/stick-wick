@@ -64,6 +64,11 @@ A pipe doesn't parry; it breaks.
 - **Why:** this is the pipe's defence. Watch his wind-up and beat him to it. The butt-end tap is the quickest interceptor.
 - **Swordsmen:** the mirror parry still works against their red line.
 
+## Evading his swing
+
+- **The back-hop:** swipe ← with nothing to return to, or Q / E on the keys. One skip out of his reach with the pipe kept cocked; swing within 0.6 s for STEP AND SWING (×1.3).
+- **SLIPPED:** hop as his swing starts and it whiffs past your nose, with a beat of slow motion. Your next swing within 1.2 s is **MAKE HIM PAY** (×1.5).
+
 ## In the air
 
 **The leap:** swipe up while running. Standing still, swipe up stays the rising swing. Both hands keep the pipe cocked on the shoulder through the leap.

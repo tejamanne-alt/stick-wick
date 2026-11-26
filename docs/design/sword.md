@@ -81,6 +81,12 @@ Each man cut down within 1.3 s of the last builds a chain: **TWO IN ONE BREATH**
 
 **The lift:** the blade in his hand starts exactly where it lay and comes up into his grip. A blade lying with its point towards him comes up and over in an arc.
 
+## Evading his swing (NUKI-WAZA)
+
+- **The retreat (hiki):** swipe away with nobody behind, or Q / E on the keys. Out of distance in one gliding step, the hands and the point travelling with him (they used to stay behind, stretching both arms dead straight).
+- **NUKI-WAZA:** retreat as he winds up or swings, and his blade hits nothing (slow motion, OUT OF DISTANCE). Your next cut within 1.1 s comes as his blow falls through empty air: ×1.5 damage, and an ordinary man it would finish is cut down.
+- **Not DEBANA:** DEBANA is cutting as he starts; NUKI-WAZA is cutting after he has missed.
+
 ## In the air
 
 **The leap:** swipe up while running. Standing still, swipe up stays the rising cut, and the swallow combo is untouched. The blade is raised overhead (jodan) for the leap.

@@ -117,7 +117,8 @@ namespace ProjectInk
                 else if (pipeLast == "rod_chop" && clip == "rod_rising") { pipeCombo = "UP AND UNDER"; pipeComboMul = 1.4f; }
                 else if (pipeLast == "rod_jab" && clip == "rod_overhead") { pipeCombo = "FOLD AND DROP"; pipeComboMul = 1.4f; }
             }
-            if (Time.time - pipeEvadeAt < 0.6f && clip != "rod_jab") { pipeCombo = "STEP AND SWING"; pipeComboMul = 1.3f; pipeEvadeAt = -9f; }
+            if (Time.time - pipeSlipAt < 1.2f && clip != "rod_jab") { pipeCombo = "MAKE HIM PAY"; pipeComboMul = 1.5f; pipeSlipAt = -9f; pipeEvadeAt = -9f; }
+            else if (Time.time - pipeEvadeAt < 0.6f && clip != "rod_jab") { pipeCombo = "STEP AND SWING"; pipeComboMul = 1.3f; pipeEvadeAt = -9f; }
             // out of a run: the pipe arrives with all his weight behind it
             if (running && Mathf.Abs(velocity.x) > 2.6f) { pipeComboMul *= 1.2f; pipeCombo = pipeCombo ?? "CHARGING SWING"; }
             pipeLast = clip;
@@ -150,6 +151,7 @@ namespace ProjectInk
             invulnerableUntil = Time.time + 0.32f;
             pipeEvadeAt = Time.time;
             pipeFlow = 0;
+            if (SwingComing(2.4f) != null) { pipeSlipAt = Time.time; ArmedSlip("SLIPPED"); }      // his swing whiffs past (HeroSwordV4)
             Sound.Play(Sfx.Cloth, 0.8f, transform.position);
             Tell("evade");
         }

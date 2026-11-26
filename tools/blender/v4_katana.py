@@ -128,13 +128,16 @@ CLIPS["katana_back"] = clip(16, v4_far.glide_drag(KG, -1, K_STEP, 16, hz=0.612, 
                             loop=True, speed=K_STEP_SPEED,
                             note="okuri-ashi out: gliding back, the rear foot first, the front follows; the point never leaves him")
 
+# hiki: out of distance in one gliding step. The hands travel WITH the body (reviewed: they used to stay
+# where they started while he slid back, so both arms went dead straight, the blade stuck in the air); the
+# point stays on his eyes, the hips level; the back foot slides, the front follows to the same gap.
 CLIPS["katana_retreat"] = clip(12, [
     (0, KG, "lin"),
-    (3, K(hx=-0.08, fR=(FR[0] - 0.24, 0.05, 10), hz=0.615), "out"),
-    (6, K(hx=-0.2, fR=(FR[0] - 0.42, 30), fL=(FL[0], 20)), "in"),
-    (9, K(hx=-0.36, fR=(FR[0] - 0.42, 30), fL=(FL[0] - 0.3, 0.04, 0)), "out"),
+    (3, at(K(hz=0.612, fR=(FR[0] - 0.16, 0.04, 10)), -0.08, fL=(FL[0], 0)), "out"),                      # the back foot slides first
+    (6, at(K(hz=0.608, gx=0.31, gz=0.85, a=137), -0.22, fR=(FR[0] - 0.42, 30), fL=(FL[0], 20)), "in"),   # the weight back onto it
+    (9, at(K(hz=0.612), -0.36, fR=(FR[0] - 0.42, 30), fL=(FL[0] - 0.3, 0.03, 0)), "out"),               # the front follows, skimming
     (12, at(KG, -0.42), "smooth"),
-], shift=True, note="out of distance: the back foot slides, the front follows, the point never leaves him")
+], shift=True, note="hiki: out of distance in one gliding step, the hands and the point travelling with him, on his eyes")
 
 
 def cut(name, frames, hit, reach, raised, strike, follow, note, step=0.2, react="hit_chin", extra_raise=None, extra_hit=None):

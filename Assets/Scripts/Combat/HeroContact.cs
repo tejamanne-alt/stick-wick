@@ -251,6 +251,7 @@ namespace ProjectInk
         /// <summary>A swipe in story mode: under a swing (slide), into a hold, a spear, or a step back.</summary>
         void ContactDodge(int dir)
         {
+            if (ArmedDodge()) return;                                // a pipe or a katana in hand: its own evasion (HeroSwordV4)
             if (TrySidestep(dir)) return;                            // a charge coming: the matador
             Tell("dodge");
             pendingExecution = null;

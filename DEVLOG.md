@@ -2250,3 +2250,10 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **Training:** 8 lessons (4 pipe, 4 sword) with two-finger demonstrations. Saved lesson progress is reset (new key).
   - **Tests:** chapter 1 checkpoints TEST · CROSSFIRE with the pipe / with the katana.
   - **Build:** the FBX is rebuilt (350 clips).
+- **Dodging with the pipe and the katana, reviewed.**
+  - **The sword retreat** (`katana_retreat`, now hiki): the hands stayed where they started while he slid back, so both arms went dead straight. Now they travel with the body, the point on his eyes.
+  - **Timed evasion, rewarded:**
+    - **Pipe:** back-hop as his swing starts and it's SLIPPED (slow motion); the next swing within 1.2 s is MAKE HIM PAY (×1.5).
+    - **Katana:** retreat as he swings: OUT OF DISTANCE; the next cut within 1.1 s is NUKI-WAZA (×1.5, an ordinary man it would finish is cut down).
+  - **Keys:** Q / E with a weapon is now the weapon's evasion, still facing him, instead of the bare-hand dodge.
+  - **Build:** the FBX is rebuilt.

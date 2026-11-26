@@ -40,6 +40,62 @@ namespace ProjectInk
         }
 
         bool edgeClean, edgeTurned, edgeSlow;
+
+        // ------------------------------------------------------------------ the armed evasion, timed
+        // Reviewed: a step back out of his swing with a weapon in hand was the same as a casual step back. Now,
+        // made as his swing starts (or comes), it's rewarded the way each weapon would: the pipe, MAKE HIM PAY
+        // (the next swing within 1.2 s, ×1.5); the katana, NUKI-WAZA (the next cut within 1.1 s, as his blow
+        // falls through empty air: ×1.5, and an ordinary man it would finish is cut down).
+        float nukiUntil = -9f, pipeSlipAt = -9f;
+        bool nukiCut;
+
+        /// <summary>A man in front of him, close, winding up or swinging at him.</summary>
+        Enemy SwingComing(float range)
+        {
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.Targetable || e.IsDown) continue;
+                if (Mathf.Abs(e.transform.position.y - transform.position.y) > 0.6f) continue;
+                float dx = (e.transform.position.x - transform.position.x) * Facing;
+                if (dx > 0f && dx < range && (e.Telegraphing || e.MidSwing)) return e;
+            }
+            return null;
+        }
+
+        /// <summary>His swing whiffs past: a beat of slow motion, the label, a little longer out of reach.</summary>
+        void ArmedSlip(string label)
+        {
+            invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + 0.5f);
+            if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.3f, 0.55f);
+            if (WaveDirector.Instance != null) WaveDirector.Instance.OnPerfectDodge(label);
+            Sound.Play(Sfx.Whoosh, 1f, transform.position + Vector3.right * Facing * 0.6f + Vector3.up, 0.8f);
+            Tell("armed_slip");
+        }
+
+        /// <summary>The katana's retreat (hiki): out of distance in one gliding step; timed into his swing, NUKI-WAZA is on.</summary>
+        void KatanaRetreat()
+        {
+            BeginTraverse("katana_retreat", 0f);
+            invulnerableUntil = Time.time + 0.3f;
+            Sound.Play(Sfx.Cloth, 0.8f, transform.position);
+            if (SwingComing(2.4f) != null)
+            {
+                nukiUntil = Time.time + 1.1f;                                 // the retreat (0.4 s), then 0.7 s to cut
+                ArmedSlip("OUT OF DISTANCE");
+            }
+        }
+
+        /// <summary>A dodge key with a weapon in hand (Q / E): the weapon's own evasion, still facing him.</summary>
+        bool ArmedDodge()
+        {
+            if (!KatanaMode || sheathed || !Grounded) return false;
+            if (state != State.Idle && state != State.Traverse) return false;
+            var man = NearestThreat(4.5f);
+            if (man != null) FaceTowards(man.transform.position.x);
+            if (RodMode && body.Has("rod_evade")) PipeEvade();
+            else KatanaRetreat();
+            return true;
+        }
         int breath;
         float lastCutDownAt = -9f;
         // a swipe made before the blade has landed: held until it has
@@ -68,6 +124,9 @@ namespace ProjectInk
         /// <summary>At the start of a cut: is the man it's going for just deciding (the first 45% of his wind-up)?</summary>
         void ReadDebana(Enemy t)
         {
+            // NUKI-WAZA: out of distance as he swung; this cut comes as his blow falls through empty air
+            nukiCut = Time.time < nukiUntil;
+            if (nukiCut) nukiUntil = -9f;
             debanaFoe = null;
             if (t == null) return;
             float wp = t.WindupProgress;

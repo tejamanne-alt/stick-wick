@@ -116,9 +116,7 @@ namespace ProjectInk
             if (Mathf.Abs(ang) > 112f)
             {
                 if (behind != null) { KatanaStrike("ushiro", behind, 1.2f, speed); return; }
-                BeginTraverse("katana_retreat", 0f);                 // the retreat: out of distance
-                invulnerableUntil = Time.time + 0.3f;
-                Sound.Play(Sfx.Cloth, 0.8f, transform.position);
+                KatanaRetreat();                                     // the retreat: out of distance (timed: NUKI-WAZA, HeroSwordV4)
                 return;
             }
             string cut = ang > 67f ? "kiriage" : ang > 22f ? "gyaku" : ang > -22f ? "yoko" : ang > -67f ? "kesa" : "oroshi";
@@ -223,6 +221,7 @@ namespace ProjectInk
                     d *= 2f;
                 }
                 else if (timing == 1) { d *= 1.3f; katanaLabel = katanaLabel ?? "CUT HIM OFF"; }
+                else if (nukiCut) { d *= 1.5f; katanaLabel = "NUKI-WAZA"; Lesson("nuki", "Out of distance as he swings. Cut as it falls through air."); }
                 if (e.Health <= d && !e.Boss && e.CanBeHeld) { CutDown(e); continue; }
                 e.TakeHit(new HitInfo { damage = d, direction = reach > 0f ? Facing : -Facing, knockback = 2.5f, heavy = true,
                                         react = cut == "kiriage" ? "head_back" : cut == "tsuki_low" ? "fold" : "hit_chin", attacker = this });
