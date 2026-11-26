@@ -715,6 +715,9 @@ namespace ProjectInk
             hero.SetFacing(1);
             hero.CineRelease();
             hero.runSpeed = runSpeed * 0.5f;            // he walks, he does not run, until they come
+            // the chair he woke in lies on its back across the lane behind him (to home - 0.23): the room
+            // ends just short of it, so nobody walks through it (the men who come in take the same wall)
+            if (chairRig != null) hero.arenaMinX = Mathf.Max(hero.arenaMinX, home.x + 0.3f);
             walkFromX = hero.transform.position.x;
             promptAlpha = 0f;
             Sound.Ambience(0.7f, 0.4f, 900f);
@@ -807,6 +810,11 @@ namespace ProjectInk
                     men[i] = director.SpawnScripted(EnemyType.Brawler, SpawnKind.Background);
                     if (men[i] != null)
                     {
+                        // in through the right half of the doorway, a step apart: coming forward they drift
+                        // 0.3 m towards him per metre, and from the door's middle (± the director's 0.4) the
+                        // first ones walked over the tips of the pallet jack's forks (to x 11.4, 1.4-1.9 deep)
+                        var dp = men[i].transform.position;
+                        men[i].transform.position = new Vector3(ShutterX + 0.35f + 0.25f * i, dp.y, dp.z);
                         men[i].Passive = true;                              // no swings until the scene lets go
                         menColor[i] = men[i].InkColor;
                         men[i].SetBaseColor(new Color(0.015f, 0.015f, 0.02f));   // black against the moonlight
@@ -1676,14 +1684,26 @@ namespace ProjectInk
 
         float chairTip = -1f;
 
-        /// <summary>The chair goes over backwards (u 0..1); the ropes fall slack to the floor.</summary>
+        /// <summary>The chair goes over backwards (u 0..1); the ropes fall slack to the floor. It goes over
+        /// on its back feet, as a chair does, and comes to rest on the top of its back (86°: the top rail
+        /// meets the floor). (Turned about its middle it sank 0.2 m into the floor.)</summary>
         void TipChair(float u)
         {
             if (chairRig == null) return;
             chairTip = u;
-            chairRig.rotation = Quaternion.Euler(0f, 0f, 82f * Mathf.SmoothStep(0f, 1f, u));
-            chairRig.position = home + new Vector3(-0.04f - 0.5f * u, 0.0f, 0f);
+            PoseWakeChair(86f * Mathf.SmoothStep(0f, 1f, u));
             // (the ropes, freed, fall by themselves: StoryRope)
+        }
+
+        /// <summary>The chair turned `deg` about z on the feet it is rocking onto: the back feet when it
+        /// tips backwards (deg > 0), the front feet the other way, so its legs never go into the floor.</summary>
+        void PoseWakeChair(float deg)
+        {
+            if (chairRig == null) return;
+            var foot = new Vector3(deg >= 0f ? -0.22f : 0.22f, 0f, 0f);
+            var rot = Quaternion.Euler(0f, 0f, deg);
+            chairRig.rotation = rot;
+            chairRig.position = home + new Vector3(-0.04f, 0f, 0f) + foot - rot * foot;
         }
 
         bool ropesSettled;
@@ -1739,7 +1759,7 @@ namespace ProjectInk
             {
                 rock = Mathf.MoveTowards(rock, 0f, StoryDt * 22f);
                 kick = Mathf.MoveTowards(kick, 0f, StoryDt * 3f);
-                if (chairRig != null) chairRig.rotation = Quaternion.Euler(0f, 0f, rock);
+                PoseWakeChair(rock);                                          // rocking on its feet, not about its middle
                 hero.transform.rotation = Quaternion.Euler(0f, 0f, rock * 0.6f);
                 float lean = Mathf.SmoothStep(0f, 0.55f, scProgress);
                 var fp = FailPos();

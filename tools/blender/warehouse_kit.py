@@ -1590,7 +1590,7 @@ def hall_detail(S, g, M):
     RY = H.RIDGE_Y
     yw = B - 0.06                                         # what is fixed to the back wall
     mz = H.MEZZ[2]
-    spawn = [21.65, 33.5, 45.5, 57.5]                     # background spawns (x, y 3.5): keep a path to the lane
+    spawn = [21.98, 32.0, 45.85, 55.7]                    # background spawns (StoryHall.SetDoors): keep a path to the lane
     cols = [X0 + 2.7 + 6.0 * k for k in range(8)]
 
     def free(x, y, r=0.8):

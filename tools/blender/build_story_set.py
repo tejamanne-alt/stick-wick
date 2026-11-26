@@ -518,12 +518,14 @@ def drum(g, c, M, m, lying=False):
         g.torus((Vector(c) + off)[:], 0.29, 0.018, m, rot=rot if lying else None, n1=20, n2=5)
 
 
-def pallet(g, c, M):
+def pallet(g, c, M, w=1.2):
+    """A pallet `w` long (x): three bearers, deck boards across them (1.2 m: seven boards)."""
     x, y, z = c
     for dy in (-0.45, 0.0, 0.45):
-        g.box((x, y + dy, z + 0.05), (1.2, 0.1, 0.1), M["wood_dark"])
-    for i in range(7):
-        g.box((x - 0.54 + i * 0.18, y, z + 0.12), (0.12, 1.0, 0.025), M["wood"])
+        g.box((x, y + dy, z + 0.05), (w, 0.1, 0.1), M["wood_dark"])
+    n = max(2, round((w - 0.12) / 0.18) + 1)
+    for i in range(n):
+        g.box((x - (w - 0.12) / 2 + i * (w - 0.12) / (n - 1), y, z + 0.12), (0.12, 1.0, 0.025), M["wood"])
 
 
 def crate(g, c, s, M):

@@ -34,6 +34,7 @@ namespace ProjectInk
             HallCheckpoint = -1;
             BossReached = false;
             phase = Phase.Ending;
+            if (bossT >= 0f) StartCoroutine(CraneSettles());                // the hook, the loads, the box settle (StoryForeman)
             StartCoroutine(Ending(boss));
         }
 
@@ -80,15 +81,24 @@ namespace ProjectInk
             Sound.Play(Sfx.SlowmoIn, 0.6f);
             float t0 = 0f;
             var bp0 = boss != null ? boss.transform.position : new Vector3(landX, 0f, 0f);
+            int flyDir = landX >= bp0.x ? 1 : -1;
+            // thrown past the hero (when the skylight is on his far side): the body goes by behind him, not
+            // through him
+            float hxNow = hero.transform.position.x;
+            bool pastHero = (hxNow - bp0.x) * (landX - hxNow) > 0f;
             while (t0 < 1.7f)
             {
                 t0 += StoryDt;
                 float k = Mathf.Clamp01(t0 / 1.5f);
-                if (boss != null) boss.PuppetPose(new Vector3(Mathf.Lerp(bp0.x, landX, 1f - (1f - k) * (1f - k)), Mathf.Max(0f, Mathf.Sin(k * Mathf.PI) * 0.8f), 0f));
+                float bxNow = Mathf.Lerp(bp0.x, landX, 1f - (1f - k) * (1f - k));
+                if (boss != null) boss.PuppetPose(new Vector3(bxNow, Mathf.Max(0f, Mathf.Sin(k * Mathf.PI) * 0.8f), pastHero ? 0.8f * Mathf.Sin(k * Mathf.PI) : 0f));
+                ScatterFloorProps(flyDir > 0 ? bxNow - 0.2f : bxNow - 1.0f, flyDir > 0 ? bxNow + 1.0f : bxNow + 0.2f, flyDir);   // what he's thrown into goes flying
                 EndShot(new Vector3(landX - 3.2f, 1.0f, -4.6f), new Vector3(landX - 0.6f, 0.8f, 0f), 40f);
                 barsPx = Mathf.MoveTowards(barsPx, 70f, StoryDt * 140f);
                 yield return null;
             }
+            // and what is where he comes down (his legs reach a metre past his hips)
+            ScatterFloorProps(flyDir > 0 ? landX - 0.3f : landX - 1.4f, flyDir > 0 ? landX + 1.4f : landX + 0.3f, flyDir);
             Sound.Play(Sfx.Boom, 0.8f);
             Sound.Play(Sfx.BodySplash, 1f, new Vector3(landX, 0f, 0f));
             if (cam != null) cam.Shake(0.3f, 0.35f);
@@ -98,19 +108,26 @@ namespace ProjectInk
             yield return RealWait(1.0f);
 
             // ---------------------------------------------------------------- 2 he walks over and kneels
-            hero.SetFacing(1);
+            // (facing the way he walks: he used to walk backwards to the body when he came from its far
+            // side; and from there he goes round behind it, not through it)
+            float hx0 = hero.transform.position.x, hz0 = hero.transform.position.z, kneelX = landX - 1.05f;
+            bool round = hx0 > landX - 0.8f;
+            hero.SetFacing(kneelX >= hx0 ? 1 : -1);
+            endingWalkYaw = hero.Facing > 0 ? 0f : 180f;
             if (hero.body.Has("walk")) hero.body.Play("walk", 0.25f, true, 0.8f);
-            float hx0 = hero.transform.position.x, kneelX = landX - 1.05f;
             float t1 = 0f;
             while (t1 < 2.4f)
             {
                 t1 += StoryDt;
                 float k = Mathf.SmoothStep(0f, 1f, t1 / 2.2f);
-                hero.CinePose(new Vector3(Mathf.Lerp(hx0, kneelX, k), 0f, 0f));
+                var was = hero.transform.position;
+                hero.CinePose(new Vector3(Mathf.Lerp(hx0, kneelX, k), 0f, Mathf.Lerp(hz0, 0f, k) + (round ? 0.75f * Mathf.Sin(Mathf.PI * k) : 0f)));
+                TurnAsHeWalks(hero.transform.position - was, StoryDt);
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.55f; Sound.Play(Sfx.Footstep, 0.7f, hero.transform.position, 0.8f); }
                 EndShot(new Vector3(landX - 4.6f, 0.32f, -3.1f), new Vector3(landX - 0.8f, 0.6f, 0f), 40f);
                 yield return null;
             }
+            hero.SetFacing(1);                                            // to the body (a turn, if he came round it)
             if (hero.body.Has("kneel_hold")) hero.body.Play("kneel_hold", 0.35f);
             Sound.Play(Sfx.Cloth, 0.9f);
             Sound.Play(Sfx.Breath, 0.8f);
@@ -467,16 +484,24 @@ namespace ProjectInk
             yield return Hold(2.6f, () => EndShot(new Vector3(landX - 7.0f, 7.2f, -4.5f), new Vector3(landX - 1.0f, 0.4f, 0.5f), 46f));
 
             // ---------------------------------------------------------------- 13 he walks out into the rain
+            // (round behind the body, which lies along the lane from his feet to a metre past its hips,
+            // and behind anything else left standing or lying in the lane: he used to walk the length of
+            // the dead man, through him. First a step away from it, then along to the door.)
             hero.SetFacing(1);
+            endingWalkYaw = 0f;
             if (hero.body.Has("walk")) hero.body.Play("walk", 0.3f, true, 0.75f);
             Lightning(0.9f, 1f, 0.6f);
             ShowSearch(true);
-            float tw = 0f, wx0 = hero.transform.position.x;
+            float tw = 0f, wx0 = hero.transform.position.x, wz0 = hero.transform.position.z;
             while (tw < 6.5f)
             {
                 tw += StoryDt;
-                float x = wx0 + 1.05f * tw;
-                hero.CinePose(new Vector3(x, 0f, 0.2f * Mathf.Clamp01((x - 60f) / 2f)));
+                float sw = 1.05f * tw;                                    // how far he has walked
+                float side = Mathf.Min(sw, 0.8f);                         // the step away (into the room)...
+                float x = wx0 + 0.15f * side / 0.8f + Mathf.Max(0f, sw - 0.8f);   // ...then on along it
+                var was = hero.transform.position;
+                hero.CinePose(new Vector3(x, 0f, Mathf.Lerp(wz0, 0.85f, side / 0.8f)));
+                TurnAsHeWalks(hero.transform.position - was, StoryDt);
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.6f; Sound.Play(Sfx.Footstep, 0.6f, hero.transform.position, 0.8f); }
                 if (searchlight != null)
                 {
@@ -505,6 +530,33 @@ namespace ProjectInk
 
         // ---------------------------------------------------------------- helpers
 
+        float endingWalkYaw;
+
+        /// <summary>Turn him towards the way he is walking, eased as a man turns (not snapped): the ending's
+        /// walks are not all straight along the lane.</summary>
+        void TurnAsHeWalks(Vector3 step, float dt)
+        {
+            step.y = 0f;
+            if (step.sqrMagnitude < 1e-8f) return;
+            float want = Mathf.Atan2(-step.z, step.x) * Mathf.Rad2Deg;
+            endingWalkYaw = Mathf.MoveTowardsAngle(endingWalkYaw, want, 240f * dt);
+            float r = endingWalkYaw * Mathf.Deg2Rad;
+            hero.LookAtXZ(hero.transform.position + new Vector3(Mathf.Cos(r), 0f, -Mathf.Sin(r)));
+        }
+
+        /// <summary>The floor between x0 and x1 cleared the way it would be: a drum standing or lying in the
+        /// lane there is knocked rolling (that way), a crate bursts. (The Foreman's body went through them,
+        /// and the scene played out inside them: an oil drum where the hero kneels.)</summary>
+        void ScatterFloorProps(float x0, float x1, int dir)
+        {
+            foreach (var d in OilDrum.All.ToArray())
+                if (d != null && d.Available && Mathf.Abs(d.transform.position.z) < 0.8f && d.transform.position.x > x0 && d.transform.position.x < x1)
+                    d.Kick(dir, null, 4.5f);
+            foreach (var c in Crate.All.ToArray())
+                if (c != null && c.Available && Mathf.Abs(c.transform.position.z) < 0.8f && c.transform.position.x > x0 && c.transform.position.x < x1)
+                    c.Kick(dir, null);
+        }
+
         static IEnumerator RealWait(float s)
         {
             float t = 0f;
@@ -531,10 +583,21 @@ namespace ProjectInk
             return hd != null ? hd.position + hd.up * 0.27f : new Vector3(x - 0.5f, 0.3f, 0f);
         }
 
+        Enemy gunHandOwner;
+        Transform gunHand, gunFingers;
+
+        /// <summary>The middle of his right palm (between the hand bone and the knuckles), where a grip sits:
+        /// the pistol went on the wrist, its slide over the back of his hand.</summary>
         Vector3 HandOf(Enemy boss, float x)
         {
-            var h = boss != null && boss.body != null ? boss.body.Bone("hand.R") : null;
-            return h != null ? h.position : new Vector3(x, 0.4f, 0f);
+            if (boss != gunHandOwner)
+            {
+                gunHandOwner = boss;
+                gunHand = boss != null && boss.body != null ? boss.body.Bone("hand.R") : null;
+                gunFingers = boss != null && boss.body != null ? boss.body.Bone("fingers.R") : null;
+            }
+            if (gunHand == null) return new Vector3(x, 0.4f, 0f);
+            return gunFingers != null ? Vector3.Lerp(gunHand.position, gunFingers.position, 0.5f) : gunHand.position;
         }
 
         Vector3 HeroHand()

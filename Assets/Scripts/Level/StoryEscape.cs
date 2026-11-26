@@ -101,9 +101,9 @@ namespace ProjectInk
             {
                 if (e < 0.8f)
                 {
-                    // a step back, then another: he does not want this
+                    // frozen where he stands: he does not want this (he used to drift back 0.5 m here with
+                    // his feet planted in a standing clip: a slide, not a step)
                     hero.SetFacing(1);
-                    runX -= 0.6f * dt;
                     if (AtE(0.1f)) { Say("YOU", "...No.", 0.9f); Sound.Play(Sfx.Breath, 0.8f); }
                 }
                 else
@@ -114,7 +114,8 @@ namespace ProjectInk
                         HeroAnim("run", 0.1f, 1.35f);
                         Sound.Play(Sfx.Cloth, 0.8f);
                         Sound.Play(Sfx.HeroEffort, 0.6f, null, 1.1f);
-                        foreach (var m0 in men) if (m0 != null) m0.PuppetPlay("run", 0.15f, 1.1f);
+                        // their stride at their pace (the run clip covers 4 m/s; they come at 1.9-2.5): no skating
+                        foreach (var m0 in men) if (m0 != null) m0.PuppetPlay("run", 0.15f, 0.6f);
                     }
                     if (AtE(1.0f)) Say("THUG", "Get him!", 1.1f);
                     float v = Mathf.Lerp(1.5f, 5.2f, Ease(0.8f, 1.2f, e));
@@ -229,6 +230,9 @@ namespace ProjectInk
             else
             {
                 float back = Ease(D_Rise + 0.5f, D_Rise + 1.4f, d) * 0.35f;
+                // the step back is a real one (backing off behind the guard), not a slide in the guard
+                if (AtD(D_Rise + 0.5f)) foreach (var m0 in men) if (m0 != null) m0.PuppetPlay("retreat", 0.2f, 0.8f);
+                if (AtD(D_Rise + 1.4f)) foreach (var m0 in men) if (m0 != null) m0.PuppetPlay("idle", 0.3f);
                 for (int i = 0; i < men.Length; i++)
                     if (men[i] != null)
                     {

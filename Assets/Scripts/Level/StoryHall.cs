@@ -112,6 +112,15 @@ namespace ProjectInk
         float ZoneX0(int z) => WarehousePlan.ZoneX[z];
         float ZoneX1(int z) => WarehousePlan.ZoneX[z + 1];
 
+        /// <summary>A zone's left wall. The mezzanine's is where the stairs overhead clear a big man's head
+        /// (their underside is 1.0 m up at 38.3, 1.75 m at 38.85): at the old 38.6 he stood with his head
+        /// and shoulders in the treads.</summary>
+        float HallZoneMinX(int z) => z == 2 ? Mathf.Max(ZoneX0(z) + 0.6f, WarehousePlan.StairX0 + 1.55f) : ZoneX0(z) + 0.6f;
+
+        /// <summary>Where he stands to get a hand under the inner shutter's bottom bar (x 14.2): pick_up's hand
+        /// reaches 0.4 m in front of him at 0.08 m up, which is where the bar is.</summary>
+        const float InnerShutterGripX = WarehousePlan.StoreHalf - 0.28f;
+
         // ================================================================ into the hall
 
         /// <summary>After the memory: voices and boots behind the inner shutter; he goes to it and
@@ -147,14 +156,15 @@ namespace ProjectInk
             }
             if (AtH(1.8f))
             {
-                // cut: he is at the shutter
-                hero.CinePose(new Vector3(WarehousePlan.StoreHalf - 0.9f, y, 0f));
+                // cut: he is at the shutter, close enough to reach it (he used to stand 1.1 m off it, in a
+                // boxer's duck and then a boxer's guard): down, his hand under the bottom bar, and up with it
+                hero.CinePose(new Vector3(InnerShutterGripX, y, 0f));
                 hero.SetFacing(1);
-                if (hero.body.Has("duck")) hero.body.Play("duck", 0.15f, true, 0.9f);
+                if (hero.body.Has("pick_up")) hero.body.Play("pick_up", 0.15f, true, 0.9f);
                 hero.PutAwayKnife();                                   // both hands for the shutter: the knife goes in his belt
                 Sound.Play(Sfx.Cloth, 0.8f);
             }
-            if (AtH(2.25f)) { if (hero.body.Has("idle")) hero.body.Play("idle", 0.2f); Sound.Play(Sfx.HeroEffort, 0.9f, null, 0.9f); Sound.Play(Sfx.Latch, 1f, new Vector3(14f, 1f, 0f), 0.85f); }
+            if (AtH(2.25f)) { Sound.Play(Sfx.HeroEffort, 0.9f, null, 0.9f); Sound.Play(Sfx.Latch, 1f, new Vector3(14f, 1f, 0f), 0.85f); }
             if (innerShutter != null && hallT >= 2.25f)
             {
                 float k = Ease(2.25f, 2.75f, hallT);
@@ -179,7 +189,7 @@ namespace ProjectInk
             // until the scene lets go)
             if (AtH(3.2f) && hero.body.Has("walk")) hero.body.Play("walk", 0.2f, true, 1.1f);
             if (AtH(5.5f)) hero.body.Play("idle", 0.25f);
-            hero.CinePose(new Vector3(Mathf.Lerp(WarehousePlan.StoreHalf - 0.9f, ZoneX0(0) + 1.4f, Ease(3.2f, 5.5f, hallT)), y, 0f));
+            hero.CinePose(new Vector3(Mathf.Lerp(InnerShutterGripX, ZoneX0(0) + 1.4f, Ease(3.2f, 5.5f, hallT)), y, 0f));
             UpdateHall();
             if (cam != null)
             {
@@ -255,7 +265,7 @@ namespace ProjectInk
         }
 
         /// <summary>Walls for him, his enemies and the camera: this zone only.</summary>
-        void LockZone(int z) => SetArena(ZoneX0(z) + 0.6f, ZoneX1(z) - 0.6f);
+        void LockZone(int z) => SetArena(HallZoneMinX(z), ZoneX1(z) - 0.6f);
 
         void SetArena(float x0, float x1)
         {
@@ -265,7 +275,16 @@ namespace ProjectInk
         }
 
         /// <summary>Where this zone's men come from: the far end, the back of the hall (stepping
-        /// out of the dark between the racks), a rack top or the office door, from above.</summary>
+        /// out of the dark between the racks), a rack top or the office door, from above.
+        /// A man from the back walks straight to the lane, drifting 0.3 m sideways (towards the hero) for
+        /// every metre he comes forward (Enemy, entering), so each way in is chosen clear of the set for
+        /// that whole walk, whichever way he drifts: the loading bay's between the forklift's wheels (to
+        /// 21.03) and the crate at 23.6 (the old 21.65 walked him into the forklift); the racking's down the
+        /// 2 m gap between the two racks over the lane, from 2.3 m back (from 33.5 he walked through rack
+        /// 2's upright and stock); the mezzanine's between its column at 45 and the drum at 47.4; the crane
+        /// bay's between the drums at 53.6 and 57.8 (from 57.5 he walked into the second). Up top: on the
+        /// rack deck in front of its stock (at 1.0 m deep he was in the cartons), and just outside the
+        /// office door (at 47.4 he was in the desk, and walked out through the wall).</summary>
         void SetDoors(int z)
         {
             if (director == null) return;
@@ -274,11 +293,26 @@ namespace ProjectInk
             void At(SpawnKind k, Vector3 p) { var t = pts[(int)k]; if (t != null) t.position = p; }
             At(SpawnKind.RightDoor, new Vector3(x1 - 0.7f, 0f, 0f));
             At(SpawnKind.LeftDoor, new Vector3(x0 + 0.7f, 0f, 0f));
-            At(SpawnKind.Background, new Vector3(mid + 1.5f, 0f, 3.5f));
-            At(SpawnKind.UpperDoor, z == 1 ? new Vector3(WarehousePlan.Rack2X0 + 1.5f, WarehousePlan.RackY, 1.0f)
-                                  : z == 2 ? new Vector3(WarehousePlan.MezzX1 - 2.6f, WarehousePlan.MezzY, 2.0f)
+            At(SpawnKind.Background, z == 0 ? new Vector3(21.98f, 0f, 3.3f)
+                                   : z == 1 ? new Vector3(WarehousePlan.HoistX, 0f, 2.3f)
+                                   : z == 2 ? new Vector3(45.85f, 0f, 3.5f)
+                                   : new Vector3(55.7f, 0f, 3.5f));
+            At(SpawnKind.UpperDoor, z == 1 ? new Vector3(WarehousePlan.Rack2X0 + 1.5f, WarehousePlan.RackY, 0.15f)
+                                  : z == 2 ? new Vector3(44.4f, WarehousePlan.MezzY, 2.1f)
                                   : new Vector3(x1 - 1.0f, 0f, 2.5f));
             At(SpawnKind.Ceiling, new Vector3(mid, 6.0f, 0f));
+        }
+
+        /// <summary>A man from the back or from up top comes out exactly where SetDoors put his way in (the
+        /// director scatters arrivals 0.4 m either side, which those narrow ways have no room for).</summary>
+        void ComesInClear(Enemy e, SpawnKind kind)
+        {
+            if (e == null || director == null || (kind != SpawnKind.Background && kind != SpawnKind.UpperDoor)) return;
+            var door = director.spawnPoints[(int)kind];
+            if (door == null) return;
+            var p = e.transform.position;
+            p.x = door.position.x;
+            e.transform.position = p;
         }
 
         void UpdateHall()
@@ -302,7 +336,7 @@ namespace ProjectInk
                 {
                     var sp = list[queued];
                     var e = director.SpawnScripted(KatanaTest ? EnemyType.Swordsman : PickupTest ? (queued % 2 == 0 ? EnemyType.Piper : EnemyType.Swordsman) : sp.type, sp.kind);
-                    if (e != null) { hallMen.Add(e); if (phase == Phase.ToHall) e.Passive = true; }
+                    if (e != null) { ComesInClear(e, sp.kind); hallMen.Add(e); if (phase == Phase.ToHall) e.Passive = true; }
                     queued++;
                     nextSpawnAt = Time.time + Random.Range(0.6f, 1.3f);
                 }
@@ -340,7 +374,7 @@ namespace ProjectInk
                 return;
             }
             zoneState = ZoneState.Clear;
-            SetArena(ZoneX0(zone) + 0.6f, ZoneX1(zone + 1) - 0.6f);
+            SetArena(HallZoneMinX(zone), ZoneX1(zone + 1) - 0.6f);
             if (cam != null) cam.SetBounds(ZoneX0(zone) - 0.3f, ZoneX1(zone + 1) + 0.3f);
             if (director != null) director.ShowBanner("CLEAR", 1.4f);
             Sound.Play(Sfx.WaveClear, 0.7f);

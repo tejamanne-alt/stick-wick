@@ -19,12 +19,25 @@ namespace ProjectInk
     /// ending (StoryEnding).</summary>
     public partial class StoryIntro
     {
-        const float HookX = 56f, HookTop = 7.2f, HookLen = 5.4f;
+        /// <summary>The hook hangs from the trolley's hoist drum at (HookX, HookTop) on HookLen of chain: its
+        /// claw's bottom 1.48 m up, just over a man's head (1.45; at 5.4 it grazed every head that passed).</summary>
+        const float HookX = 56f, HookTop = 7.2f, HookLen = 5.35f;
+        /// <summary>The hook block: where its claw (what a hand takes hold of) is below its centre, how far
+        /// down the claw reaches, and the highest the block can be without going into the hoist's drum
+        /// (its underside is 6.95 m up).</summary>
+        const float HookClawY = 0.29f, HookClawBottom = 0.37f, HookHigh = 6.7f;
+        /// <summary>The swing ends on its fifth pass through the bottom, where it hangs (it used to stop at
+        /// 6 s, 0.11 rad out, and the hook jumped up to 0.9 m back to its sway).</summary>
+        const float HookSwingEnd = 5f * Mathf.PI / 2.4f;
         Enemy foreman;
         Transform hook;
         LineRenderer hookChain;
         Renderer hookR;
         float bossT = -1f, prevBossT, hookSwingAt, hookSwingFrom = -1f;
+        float hookLen = HookLen, hookBump, hookBumpV, hookX = HookX;
+        readonly Dictionary<Enemy, Transform> hookHeads = new Dictionary<Enemy, Transform>();
+        float pendantHeld;
+        Transform foremanHandL;
         bool bossLive;
         int bossPhase;                    // 1 the crowbar, 2 the crane (and after it), 3 bare hands
         bool atCrane, craneDone, craneArrived, craneMen;
@@ -48,6 +61,8 @@ namespace ProjectInk
             ClearCrane();
             bossPhase = 1;
             atCrane = craneDone = false;
+            hookLen = HookLen; hookBump = hookBumpV = 0f; hookX = HookX;
+            pendantHeld = 0f; foremanHandL = null;
             WaveDirector.BossWeapon = FightStyle.Pipe;               // his crowbar
             WaveDirector.StoryBoss = true;
             foreman = director != null ? director.SpawnScripted(EnemyType.Brute, SpawnKind.RightDoor) : null;
@@ -60,6 +75,10 @@ namespace ProjectInk
             foreman.Puppet();
             foreman.SetFacing(-1);
             foreman.PuppetPlay("hang", 0.05f);
+            // he comes down where the hook is: a hero standing under it is put off to the side he was on (at
+            // the cut into the scene), not left for the Foreman to land in
+            float land = HookX + 0.19f * foreman.transform.localScale.x, hx = hero.transform.position.x;
+            if (Mathf.Abs(hx - land) < 1.4f) hero.CinePose(new Vector3(land + (hx < land ? -1.4f : 1.4f), hero.transform.position.y, 0f));
             Enemy.StoryFinale = (e, hit) => BeginEnding(e);
             HallCheckpoint = 3;
             BossReached = true;
@@ -74,18 +93,37 @@ namespace ProjectInk
             float y = home.y;
             if (!bossLive)
             {
-                // the crane brings him down out of the dark, hanging from the hook
+                // the crane brings him down out of the dark, hanging by both hands from the hook's claw.
+                // The hang clip holds the hands 0.19 m in front of his feet and 1.625 m above them, at his
+                // size; facing -x, his feet are behind the claw. (He used to hang 2.05 m under the block's
+                // centre: his hands 0.33 m off the hook in the air, the block starting at 8.6 m, up inside
+                // the crane's girder and trolley with him under it.) He lets go 0.1 m off the floor.
+                float s = foreman.transform.localScale.x, gripX = 0.19f * s, gripY = 1.625f * s;
+                float endY = y + 0.1f + HookClawY + gripY;
                 float k = Ease(0.4f, 2.6f, bossT);
-                float hy = Mathf.Lerp(8.6f, 2.15f, k);
-                PoseHook(new Vector3(HookX, hy, 0f));
-                foreman.PuppetPose(new Vector3(HookX - 0.05f, hy - 2.05f, 0f));
+                float hy = Mathf.Lerp(HookHigh, endY, k);
+                if (bossT < 2.65f)
+                {
+                    PoseHook(new Vector3(HookX, hy, 0f));
+                    hookX = HookX;
+                    foreman.PuppetPose(new Vector3(HookX + gripX, hy - HookClawY - gripY, 0f));
+                }
+                else
+                {
+                    // he has let go: the hook hangs where he left it (clear of his head), its sway coming back;
+                    // the crane lets it down to its working height once he is out from under it (UpdateHookSwing)
+                    hookLen = HookTop - endY;
+                    HookTick(0.06f * Mathf.Sin(Time.time * 1.3f) * Ease(2.9f, 4.2f, bossT), Time.deltaTime);
+                }
                 if (AtBoss(0.4f)) { Sound.Play(Sfx.Rotor, 0.5f, new Vector3(HookX, 7f, 0f), 0.6f); Lightning(0.4f, 0.5f, 0.3f); }
                 if (AtBoss(1.4f)) Sound.Play(Sfx.Chain, 0.8f, new Vector3(HookX, 5f, 0f), 0.9f);
                 if (AtBoss(2.65f))
                 {
-                    // he lets go the last metre: the floor shakes
-                    foreman.PuppetPose(new Vector3(HookX - 0.05f, y, 0f));
-                    foreman.PuppetPlay("duck", 0.03f);
+                    // he lets go the last of it: the floor shakes
+                    foreman.PuppetPose(new Vector3(HookX + gripX, y, 0f));
+                    // down onto a knee and a hand and up (the hang's own landing; it was a boxer's duck, forearms
+                    // over his head)
+                    foreman.PuppetPlay(foreman.body.Has("land_heavy") ? "land_heavy" : "duck", 0.03f);
                     Sound.Play(Sfx.Boom, 0.9f);
                     Sound.Play(Sfx.BodyFall, 1f, foreman.transform.position, 0.7f);
                     if (cam != null) cam.Shake(0.35f, 0.4f);
@@ -124,6 +162,7 @@ namespace ProjectInk
             UpdatePhases();
             UpdateHookSwing();
             UpdateLoads();
+            UpdateCranePendant(Time.deltaTime);
         }
 
         // ---------------------------------------------------------------- the phases
@@ -182,16 +221,21 @@ namespace ProjectInk
             var fp = foreman.transform.position;
             if (craneT > 0.8f && !craneArrived)
             {
-                // the run to the box
+                // the run to the box (the run clip's stride, at his size, at 0.8 matches his 4.6 m/s: at 1.1
+                // his feet skated); a drum or a crate in his way goes flying, he does not run through it
                 float nx = Mathf.MoveTowards(fp.x, pendantX - Mathf.Sign(pendantX - HookX) * 0.35f, 4.6f * dt);
-                foreman.SetFacing(pendantX > fp.x ? 1 : -1);
-                if (foreman.body.CurrentName != "run") foreman.PuppetPlay("run", 0.1f, 1.1f);
+                int rd = pendantX > fp.x ? 1 : -1;
+                foreman.SetFacing(rd);
+                if (foreman.body.CurrentName != "run") foreman.PuppetPlay("run", 0.1f, 0.8f);
                 foreman.PuppetPose(new Vector3(nx, 0f, 0f));
+                ForemanBarges(nx, rd);
                 if (Mathf.Abs(nx - (pendantX - Mathf.Sign(pendantX - HookX) * 0.35f)) < 0.02f)
                 {
                     craneArrived = true;
                     foreman.FaceTowards(hero.transform.position.x);
-                    foreman.PuppetPlay("sword_idle", 0.15f);
+                    // the box in his free hand (UpdateCranePendant), the crowbar hanging in the other: working the
+                    // crane, not squaring up (he stood in a sword guard with his back to the box, holding nothing)
+                    foreman.PuppetPlay("idle_loose", 0.15f);
                     Sound.Play(Sfx.Latch, 0.8f, new Vector3(pendantX, 1.4f, 0f));
                     Sound.Play(Sfx.Chain, 0.9f, new Vector3(HookX, 6f, 0f), 0.8f);
                 }
@@ -202,7 +246,7 @@ namespace ProjectInk
             {
                 // two of his men come back in to keep the hero busy
                 craneMen = true;
-                director.SpawnScripted(EnemyType.Brawler, SpawnKind.Background);
+                ComesInClear(director.SpawnScripted(EnemyType.Brawler, SpawnKind.Background), SpawnKind.Background);
                 director.SpawnScripted(EnemyType.Piper, pendantX > HookX ? SpawnKind.LeftDoor : SpawnKind.RightDoor);
             }
             // the crane works: its loads come down where the hero stands
@@ -254,6 +298,44 @@ namespace ProjectInk
             pendant.position = new Vector3(x, 1.45f, -0.2f);
             pendantCable.SetPosition(0, new Vector3(x, 7.5f, -0.2f));
             pendantCable.SetPosition(1, new Vector3(x, 1.62f, -0.2f));
+        }
+
+        /// <summary>The control box: in the Foreman's free (left) hand while he works the crane, its cable
+        /// following it; let go of, back to hanging on its cable.</summary>
+        void UpdateCranePendant(float dt)
+        {
+            if (pendant == null || pendantCable == null) return;
+            bool held = atCrane && craneArrived && foreman != null && foreman.Alive;
+            pendantHeld = Mathf.MoveTowards(pendantHeld, held ? 1f : 0f, dt * (held ? 3.3f : 2f));
+            var rest = new Vector3(pendantX, 1.45f, -0.2f);
+            var at = rest;
+            if (pendantHeld > 0f && foreman != null && foreman.body != null)
+            {
+                if (foremanHandL == null) foremanHandL = foreman.body.Bone("hand.L");
+                if (foremanHandL != null) at = Vector3.Lerp(rest, foremanHandL.position + Vector3.down * 0.12f, Mathf.SmoothStep(0f, 1f, pendantHeld));
+            }
+            pendant.position = at;
+            pendant.rotation = Quaternion.identity;
+            pendantCable.SetPosition(0, new Vector3(pendantX, 7.5f, -0.2f));
+            pendantCable.SetPosition(1, at + Vector3.up * 0.17f);
+        }
+
+        /// <summary>A puppeted run (to the crane box) that would go through a drum or a crate standing in the
+        /// lane sends it flying instead: the drum rolls off ahead of him, the crate bursts.</summary>
+        void ForemanBarges(float x, int dir)
+        {
+            foreach (var d in OilDrum.All.ToArray())
+                if (d != null && d.Available && Mathf.Abs(d.transform.position.z) < 0.8f)
+                {
+                    float a = (d.transform.position.x - x) * dir;
+                    if (a > -0.1f && a < 0.65f) d.Kick(dir, null, 7f);
+                }
+            foreach (var c in Crate.All.ToArray())
+                if (c != null && c.Available && Mathf.Abs(c.transform.position.z) < 0.8f)
+                {
+                    float a = (c.transform.position.x - x) * dir;
+                    if (a > -0.1f && a < 0.7f) c.Kick(dir, null);
+                }
         }
 
         /// <summary>A pallet of crates let go from the crane: a red ring where it will land, a rattle
@@ -381,6 +463,96 @@ namespace ProjectInk
             hookChain.SetPosition(1, p + Vector3.up * 0.2f);
         }
 
+        /// <summary>The hook at `angle` (radians off straight down) on hookLen of chain, plus whatever a man has
+        /// knocked it by: anyone whose head is up past its claw (the Foreman is 2.1 m, a grabber 1.7) shoulders
+        /// it aside, to the side it was on, instead of walking (or being swung) through it, and once he is past
+        /// it swings back like the pendulum it is and settles.</summary>
+        void HookTick(float angle, float dt)
+        {
+            if (hook == null) return;
+            hookBumpV += (-9.8f / Mathf.Max(1f, hookLen) * hookBump - 1.1f * hookBumpV) * dt;
+            hookBump += hookBumpV * dt;
+            float a = angle + hookBump;
+            var p = new Vector3(HookX + Mathf.Sin(a) * hookLen, HookTop - Mathf.Cos(a) * hookLen, 0f);
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.gameObject.activeInHierarchy) continue;
+                var ep = e.transform.position;
+                float sc = e.transform.localScale.x, r = 0.25f * sc + 0.16f;
+                if (Mathf.Abs(ep.z) > 0.45f || Mathf.Abs(p.x - ep.x) >= r || HeadTopFor(e) < p.y - HookClawBottom + 0.04f) continue;
+                float side = hookX >= ep.x ? 1f : -1f;
+                float want = Mathf.Asin(Mathf.Clamp((ep.x + side * r - HookX) / hookLen, -0.9f, 0.9f));
+                hookBump = want - angle;
+                hookBumpV = 0f;
+                a = want;
+                p = new Vector3(HookX + Mathf.Sin(a) * hookLen, HookTop - Mathf.Cos(a) * hookLen, 0f);
+            }
+            hookX = p.x;
+            PoseHook(p);
+        }
+
+        /// <summary>The top of a man's head, from his head bone (so a man lying down is low): the head's
+        /// centre 0.19 m up the bone, its radius 0.21, at his size.</summary>
+        float HeadTopFor(Enemy e)
+        {
+            if (!hookHeads.TryGetValue(e, out var hd)) { hd = e.body != null ? e.body.Bone("head") : null; hookHeads[e] = hd; }
+            float sc = e.transform.localScale.x;
+            if (hd == null) return e.transform.position.y + 1.45f * sc;
+            return (hd.position + hd.up * 0.19f * sc).y + 0.21f * sc;
+        }
+
+        /// <summary>Where the hook's swing has it (radians off straight down): its slow idle sway, and on top
+        /// of it the big swing once it has flashed red (from 0 and back to 0, so neither end jumps).</summary>
+        float HookSwingAngle(float now)
+        {
+            float angle = 0.06f * Mathf.Sin(now * 1.3f);
+            if (hookSwingFrom >= 0f && now - hookSwingFrom >= 0.7f)
+            {
+                float s = Mathf.Min(now - hookSwingFrom - 0.7f, HookSwingEnd);
+                angle += 0.95f * Mathf.Sin(s * 2.4f) * Mathf.Exp(-s * 0.35f);
+            }
+            return angle;
+        }
+
+        /// <summary>The ending has the floor (StoryEnding): the crane is left as it is, so it settles as things
+        /// do. A swing in progress carries on as a free one and dies away (a man still pushes the hook aside),
+        /// a load still in the air never comes down and the ones on the floor clear away, the control box goes
+        /// back on its cable. (It all used to freeze: the hook mid-swing, a load in mid-air.)</summary>
+        System.Collections.IEnumerator CraneSettles()
+        {
+            atCrane = false;
+            if (hook != null)
+            {
+                float now = Time.time, idle0 = 0.06f * Mathf.Sin(now * 1.3f), idle1 = 0.06f * Mathf.Sin((now + 0.02f) * 1.3f);
+                float sw0 = HookSwingAngle(now) - idle0, sw1 = HookSwingAngle(now + 0.02f) - idle1;
+                hookBump += sw0;
+                // the scripted swing runs at 2.4 rad/s, quicker than the chain swings by itself: carry its
+                // reach over, not its speed (or it would fly out far past where it was going)
+                hookBumpV += (sw1 - sw0) / 0.02f * Mathf.Sqrt(9.8f / Mathf.Max(1f, hookLen)) / 2.4f;
+            }
+            hookSwingFrom = -1f;
+            if (hookR != null) hookR.material.color = new Color(0.72f, 0.72f, 0.72f);
+            for (int i = loads.Count - 1; i >= 0; i--)
+            {
+                var l = loads[i];
+                if (l.tr == null) { loads.RemoveAt(i); continue; }
+                if (l.restAt < 0f) { Destroy(l.tr.gameObject); loads.RemoveAt(i); }
+                else l.restAt = Mathf.Min(l.restAt, Time.time);
+            }
+            while (phase == Phase.Ending)
+            {
+                float dt = Time.deltaTime;
+                if (hook != null)
+                {
+                    hookLen = Mathf.MoveTowards(hookLen, HookLen, 0.5f * dt);
+                    HookTick(0.06f * Mathf.Sin(Time.time * 1.3f), dt);
+                }
+                UpdateLoads();
+                UpdateCranePendant(dt);
+                yield return null;
+            }
+        }
+
         /// <summary>The hook hangs; every so often it creaks, flashes red and swings right across the
         /// floor. A hero standing in its path (not ducking, not in the air) is knocked flat.</summary>
         void UpdateHookSwing()
@@ -393,7 +565,7 @@ namespace ProjectInk
                 Sound.Play(Sfx.Chain, 1f, hook.position, 0.75f);
                 Sound.Play(Sfx.EnemyEffort, 0.9f, foreman.Chest, 0.8f);
             }
-            float angle = 0.06f * Mathf.Sin(now * 1.3f);
+            float angle = HookSwingAngle(now);
             if (hookSwingFrom >= 0f)
             {
                 float u = now - hookSwingFrom;
@@ -401,7 +573,6 @@ namespace ProjectInk
                 if (u >= 0.7f)
                 {
                     float s = u - 0.7f;
-                    angle = 0.95f * Mathf.Sin(s * 2.4f) * Mathf.Exp(-s * 0.35f);
                     var hp = hook.position + Vector3.down * 0.5f;
                     var hc = hero.Chest;
                     if (s < 4f && Mathf.Abs(hp.x - hc.x) < 0.55f && Mathf.Abs(hp.y - hc.y) < 0.7f && !hero.Ducking && hero.Grounded && !hero.Invulnerable && now > hookHitAt)
@@ -420,10 +591,13 @@ namespace ProjectInk
                                 d.Kick(Mathf.Cos(s * 2.4f) >= 0f ? 1 : -1, null, 7f);
                                 Sound.Play(Sfx.MetalClang, 1f, hp, 0.9f);
                             }
-                    if (s > 6f) { hookSwingFrom = -1f; hookSwingAt = now + (atCrane ? Random.Range(3.5f, 5f) : bossPhase == 3 ? Random.Range(6f, 8f) : Random.Range(8f, 12f)); }
+                    if (s > HookSwingEnd) { hookSwingFrom = -1f; hookSwingAt = now + (atCrane ? Random.Range(3.5f, 5f) : bossPhase == 3 ? Random.Range(6f, 8f) : Random.Range(8f, 12f)); }
                 }
             }
-            PoseHook(new Vector3(HookX + Mathf.Sin(angle) * HookLen, HookTop - Mathf.Cos(angle) * HookLen, 0f));
+            // the crane lets the hook down to its working height once the Foreman is out from under it
+            if (foreman == null || !foreman.Alive || Mathf.Abs(foreman.transform.position.x - hookX) > 1f)
+                hookLen = Mathf.MoveTowards(hookLen, HookLen, 0.5f * Time.deltaTime);
+            HookTick(angle, Time.deltaTime);
         }
 
         float hookHitAt;

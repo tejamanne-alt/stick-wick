@@ -238,18 +238,25 @@ def boxes_on(g, M, x0, x1, y0, y1, z, fill=0.7, hmax=0.9, pallets=False):
         x += w + 0.08
 
 
-def rack(g, M, x0, x1, y0, y1, levels, stock_front=False):
-    """A pallet rack: blue uprights with bracing, orange beams, decks, stock."""
+def rack(g, M, x0, x1, y0, y1, levels, stock_front=False, lane=False):
+    """A pallet rack: blue uprights with bracing, orange beams, decks, stock. `lane`: a drive-through
+    rack over the fight lane. Its end frames are portals: no bracing across the lane below the top
+    deck and a foot plate under each upright only, so nobody walking the lane (or standing on the
+    first deck, or climbing onto it at its end) goes through steel."""
     xs = [x0, x1] if x1 - x0 < 5 else [x0 + i * (x1 - x0) / round((x1 - x0) / 2.7) for i in range(round((x1 - x0) / 2.7) + 1)]
     top = levels[-1] + 1.4
     for x in xs:
         for y in (y0, y1):
             g.box((x, y, top / 2), (0.09, 0.09, top), M["rack_blue"])
-        z = 0.3
+        z = levels[-1] if lane else 0.3
         while z < top - 0.4:                                                                 # frame bracing
             g.beam((x, y0, z), (x, y1, z + 0.55), 0.04, 0.04, M["rack_blue"])
             z += 0.55
-        g.box((x, (y0 + y1) / 2, 0.02), (0.2, y1 - y0 + 0.2, 0.04), M["steel_mid"])          # foot plates
+        if lane:
+            for y in (y0, y1):
+                g.box((x, y, 0.02), (0.2, 0.2, 0.04), M["steel_mid"])                       # foot plates
+        else:
+            g.box((x, (y0 + y1) / 2, 0.02), (0.2, y1 - y0 + 0.2, 0.04), M["steel_mid"])      # foot plates
     for z in levels:
         for y in (y0, y1):
             g.box(((x0 + x1) / 2, y, z - 0.07), (x1 - x0, 0.06, 0.12), M["rack_orange"])
@@ -372,7 +379,9 @@ def build_hall(S, coll, M):
 
     # ------------------------------------------------------------ ZONE 1: the loading bay
     S.forklift(g, (FORK[0] + FORK[1]) / 2, 2.1, M, -90, fork_z=FORK[2] - 0.14)
-    S.pallet(g, ((FORK[0] + FORK[1]) / 2, 0.55, FORK[2] - 0.12), M)                              # the pallet on the forks
+    # the pallet on the forks: as long as the platform (19.6-21.2), so a man at either end of it
+    # stands on wood, and one hanging from its edge holds wood, not air (a 1.2 m one left 0.2 m bare)
+    S.pallet(g, ((FORK[0] + FORK[1]) / 2, 0.55, FORK[2] - 0.12), M, w=FORK[1] - FORK[0])
     trailer(g, M, 20.5, 17.4)
     for (px, py, n) in ((16.2, 5.0, 3), (17.6, 5.2, 2), (24.5, 4.8, 4), (16.0, 9.0, 2), (25.0, 9.5, 3), (22.5, 12.0, 2)):
         for k in range(n):
@@ -391,7 +400,7 @@ def build_hall(S, coll, M):
 
     # ------------------------------------------------------------ ZONE 2: the racking aisle
     for (x0, x1) in RACKS:
-        rack(g, M, x0, x1, -0.75, 1.15, RACK_LEVELS)
+        rack(g, M, x0, x1, -0.75, 1.15, RACK_LEVELS, lane=True)
     for ry in (4.0, 6.6, 9.8, 12.4, 15.6):                                                         # racks receding
         rack(g, M, 26.6, 37.4, ry, ry + 1.1, (2.2, 4.4, 6.6), stock_front=True)
     g.box((32.0, 0.0, 8.0), (12.4, 0.12, 0.3), M["steel"])                                          # monorail I-beam
