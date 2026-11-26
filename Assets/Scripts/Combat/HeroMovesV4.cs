@@ -21,7 +21,9 @@ namespace ProjectInk
         bool MovesV4 => Contact && body != null && body.Has("sprint");
         bool crouching;
         float holdTime, idleCheckAt, traverseFrom, traverseTo;
-        float stepGoal = float.NaN, stepLastX, stepStuck;
+        float stepGoal = float.NaN, stepLastX, stepStuck, walkLastX, walkBlocked;
+        /// <summary>Pushing a way he can't go (the story's walks finish on it rather than wait for ever).</summary>
+        public bool WalkBlocked => walkBlocked > 0.5f;
         string traverse;                     // the clip of a traversal in progress (vault, pick_up, push, run_stop, run_turn)
         Component interactWith;
         WeaponPickup pickingUp;
@@ -33,7 +35,7 @@ namespace ProjectInk
             get
             {
                 foreach (var e in Enemy.All)
-                    if (e != null && e.Alive && !e.Fleeing && Mathf.Abs(e.transform.position.x - transform.position.x) < AloneRange &&
+                    if (e != null && e.Alive && !e.Fleeing && !e.Puppeted && Mathf.Abs(e.transform.position.x - transform.position.x) < AloneRange &&
                         Mathf.Abs(e.transform.position.y - transform.position.y) < 1.6f) return false;
                 return true;
             }
@@ -46,7 +48,7 @@ namespace ProjectInk
             {
                 if (StoryIntro.Instance != null && StoryIntro.Instance.InTraining) return false;     // the training ground: running is a lesson
                 foreach (var e in Enemy.All)
-                    if (e != null && e.Alive && !e.Fleeing && !e.Passive && Mathf.Abs(e.transform.position.x - transform.position.x) < 12f &&
+                    if (e != null && e.Alive && !e.Fleeing && !e.Passive && !e.Puppeted && Mathf.Abs(e.transform.position.x - transform.position.x) < 12f &&
                         Mathf.Abs(e.transform.position.y - transform.position.y) < 1.6f) return false;
                 return true;
             }
@@ -62,7 +64,7 @@ namespace ProjectInk
                 if (Time.time - lastAttackEnd < 1.6f || Time.time - lastHurtAt < 1.6f) return true;
                 foreach (var e in Enemy.All)
                 {
-                    if (e == null || !e.Alive || e.Fleeing || e.Unaware || e.IsDown || e.Held || e.Passive) continue;
+                    if (e == null || !e.Alive || e.Fleeing || e.Unaware || e.IsDown || e.Held || e.Passive || e.Puppeted) continue;
                     if (Mathf.Abs(e.transform.position.y - transform.position.y) > 1.6f) continue;
                     float dx = Mathf.Abs(e.transform.position.x - transform.position.x);
                     if ((e.Engaged || e.Telegraphing || e.Charging) && dx < AloneRange) return true;
@@ -143,6 +145,18 @@ namespace ProjectInk
                 }
                 float accel = Mathf.Abs(velocity.x) < want ? 9f : 12f;
                 velocity.x = Mathf.MoveTowards(velocity.x, dir * want, accel * dt);
+                // held against something (the edge of where he may go, a wall, a man): he stands, still pushing
+                // that way, and walks on the moment the way is clear (never a walk cycle on the spot)
+                float movedX = Mathf.Abs(transform.position.x - walkLastX);
+                walkLastX = transform.position.x;
+                walkBlocked = movedX < 0.002f && holdTime > 0.15f ? walkBlocked + dt : 0f;
+                if (walkBlocked > 0.12f)
+                {
+                    string stand = IdleClipV4;
+                    if (body.CurrentName != stand) body.Play(stand, 0.2f);
+                    running = false;
+                    return;
+                }
                 float sp = Mathf.Abs(velocity.x);
                 string clip = KatanaMode ? (RodMode && body.Has("rod_walk") ? "rod_walk" : "katana_walk") : sp < 1.7f ? "walk_alone" : sp < 4.0f ? "run" : "sprint";
                 float clipSpeed = clip == "katana_walk" || clip == "rod_walk" ? 0.7f : clip == "walk_alone" ? WalkSpeed : clip == "run" ? JogSpeed : RunSpeedV4;

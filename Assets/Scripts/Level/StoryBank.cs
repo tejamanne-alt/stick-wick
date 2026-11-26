@@ -845,6 +845,7 @@ namespace ProjectInk
             float from = hero.transform.position.x;
             while (dir > 0 ? hero.transform.position.x < toX - 0.15f : hero.transform.position.x > toX + 0.15f)
             {
+                if (hero.WalkBlocked) break;               // held short of the mark (something in the way): the scene goes on
                 float moved = Mathf.Abs(hero.transform.position.x - from);
                 walkAlpha = Mathf.MoveTowards(walkAlpha, moved < 1.2f ? 1f : 0f, StoryDt * 2f);
                 if (Time.unscaledTime > footAt && hero.Velocity.sqrMagnitude > 0.2f) { footAt = Time.unscaledTime + 0.5f; Sound.Play(Sfx.Footstep, 0.4f, hero.transform.position, 1.0f); }

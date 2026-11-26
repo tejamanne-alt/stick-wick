@@ -19,6 +19,8 @@ namespace ProjectInk
         /// <summary>Out on his feet (after a parry): the next blow can finish the job.</summary>
         public bool Dazed => Alive && Time.time < dazedUntil && state != State.Down && state != State.GetUp;
         public bool Held => heldBy != null && state == State.Scripted;
+        /// <summary>Moved by a scene's hand (a bank guard, a clerk, a man in a cutscene): not a fighter.</summary>
+        public bool Puppeted => heldBy == null && state == State.Scripted;
         public float HealthFraction => maxHealth > 0f ? Health / maxHealth : 0f;
         /// <summary>A man the hero can take hold of: on his feet, not a boss, not mid-cutscene.</summary>
         public bool CanBeHeld => Alive && (!Boss || (Cleaner && Dazed)) && !Passive && Targetable && state != State.Scripted && !OnLedge;
