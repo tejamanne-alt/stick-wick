@@ -216,7 +216,8 @@ namespace ProjectInk
                 bool swordSteps = KatanaMode && !RodMode && !sheathed && body.Has("katana_back");
                 var giNow = GestureInput.Instance;
                 bool runHeld = giNow != null && giNow.RunHeld && float.IsNaN(stepGoal);
-                bool bareSteps = Style == FightStyle.Fists && !KatanaMode && carried == null && body.Has("retreat");
+                // (the knife too: chapter 1's fights are fought with it in hand, the guard the same)
+                bool bareSteps = (Style == FightStyle.Fists || Style == FightStyle.Knife) && !KatanaMode && carried == null && body.Has("retreat");
                 bool stalk = bareSteps && body.Has("guard_stalk");
                 // how long he may keep it up: the weapons' steps a moment; bare-handed walking him down, as long
                 // as it's held; backing off, a little longer, then he turns and goes
