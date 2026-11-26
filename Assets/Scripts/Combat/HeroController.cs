@@ -2320,6 +2320,7 @@ namespace ProjectInk
         public static event System.Action<string, string, bool> Landed;
         /// <summary>The training ground: he can be knocked down, never out.</summary>
         public static bool Sparring;
+        float lastHurtAt = -99f;
         bool lastStrikeLow;
         static void Tell(string what) { Did?.Invoke(what); }
 
@@ -2562,6 +2563,7 @@ namespace ProjectInk
             }
             if (state == State.Clinch) EndClinch();          // hit from behind: he lets go
             ReleaseFarFoe();
+            lastHurtAt = Time.time;
             Health = Mathf.Max(Sparring ? 1f : 0f, Health - hit.damage);
             ComboCount = 0;
             comboStep = 0;

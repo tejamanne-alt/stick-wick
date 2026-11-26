@@ -39,7 +39,27 @@ namespace ProjectInk
             }
         }
 
-        string IdleClipV4 => MovesV4 && Style == FightStyle.Fists && Alone ? "idle_alone" : "idle";
+        /// <summary>A real threat: someone attacking, winding up or charging within six metres, a man up and
+        /// fighting within three, or he has just struck or been hit. Otherwise he stands easy (not a boxer's
+        /// guard all day: the men who are down, unaware, held or standing off don't count).</summary>
+        bool Threatened
+        {
+            get
+            {
+                if (Time.time - lastAttackEnd < 1.6f || Time.time - lastHurtAt < 1.6f) return true;
+                foreach (var e in Enemy.All)
+                {
+                    if (e == null || !e.Alive || e.Fleeing || e.Unaware || e.IsDown || e.Held || e.Passive) continue;
+                    if (Mathf.Abs(e.transform.position.y - transform.position.y) > 1.6f) continue;
+                    float dx = Mathf.Abs(e.transform.position.x - transform.position.x);
+                    if ((e.Engaged || e.Telegraphing || e.Charging) && dx < AloneRange) return true;
+                    if (!e.HoldFire && !e.Keep && dx < 3.2f) return true;
+                }
+                return false;
+            }
+        }
+
+        string IdleClipV4 => MovesV4 && Style == FightStyle.Fists && !Threatened ? "idle_alone" : "idle";
 
         // ------------------------------------------------------------------ the idle loop
         void UpdateIdleV4()

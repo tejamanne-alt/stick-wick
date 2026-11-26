@@ -1990,3 +1990,8 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
 - Nothing that waits for the player is skipped: the HOLD/MASH/SWIPE/choice prompts, the bank's tap beats, the Kessel broken-stair jump, the Driver's car dodge.
 - Skip never shows during fights, the training ground, the end card or the recap (which keeps its own SKIP).
 - The old chapter 1-only SKIP is replaced.
+
+## Standing still: relaxed unless there's a real threat, and a calm guard
+- **The guard only under a real threat.** That means someone attacking, winding up or charging within 6 m; a man up and fighting within about 3 m; or he has just struck or been hit (1.6 s). Otherwise he stands easy (`idle_alone`: loose hands, weight shifting, looking about).
+- **Who doesn't count:** men who are down, unaware, held, standing off or sparring with orders not to swing. Before, any enemy within 6 m, whatever he was doing, kept the hero in a boxing guard.
+- **The guard idle no longer looks like stepping in place.** The rear heel's rise and fall and the weight rock are gone. Both feet stay planted; only the breathing and the hands settle.

@@ -46,14 +46,12 @@ CLIPS = {}
 # rear fist re-settling at the cheek once, the head making small checks, the shoulders loosening.
 CLIPS["idle"] = clip(90, [
     (0, GUARD, "smooth"),
-    (15, G(hx=0.008, fR=(-0.13, 34), uaL=60, faL=153, twL=-26, head=171, tw_head=-3, clL=(15, 11)), "smooth"),
-    (30, G(hx=0.016, hz=0.637, fR=(-0.13, 30), uaL=63, faL=149, twL=-33, chest=167, tw_chest=-8, head=173, tw_head=-1), "smooth"),
-    (44, G(hx=0.01, fR=(-0.13, 36), uaL=64, faL=147, uaR=24, faR=163, haR=168, head=172, tw_head=2, clL=(13, 9)), "smooth"),
-    (52, G(hx=0.006, uaR=21, faR=168, haR=174, fiR=170, clR=(1, 9)), "smooth"),          # the rear fist re-settles at the cheek
-    (66, G(hx=-0.004, hz=0.642, fR=(-0.13, 41), uaL=61, faL=151, twL=-29, chest=165, tw_chest=-5, head=171, tw_head=-2), "smooth"),
-    (78, G(hx=-0.006, fR=(-0.13, 40), head=173, tw_head=1, clL=(15, 11)), "smooth"),
+    (22, G(hx=0.004, uaL=61, faL=151, twL=-28, head=171, tw_head=-2, clL=(15, 11)), "smooth"),
+    (44, G(hx=0.006, hz=0.638, uaL=63, faL=149, twL=-32, chest=167, tw_chest=-7, head=172, tw_head=-1), "smooth"),
+    (56, G(hx=0.004, uaR=21, faR=168, haR=174, fiR=170, clR=(1, 9)), "smooth"),          # the rear fist re-settles at the cheek
+    (70, G(hx=0.0, hz=0.641, uaL=61, faL=151, twL=-29, chest=165, tw_chest=-5, head=171, tw_head=-1), "smooth"),
     (90, GUARD, "smooth"),
-], loop=True, breath=True, breaths=3, note="a live guard: breathing, weight rocking, rear heel bouncing, hands alive")
+], loop=True, breath=True, breaths=3, note="a calm guard: both heels planted, breathing, the hands settling (no bounce: standing, not stepping)")
 
 # ---------------------------------------------------------------- JAB (lead hand → chin)
 # No wind-up: the fist leaves first, the elbow stays down behind it, the lead foot slides in as the
