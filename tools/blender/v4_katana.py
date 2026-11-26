@@ -71,9 +71,74 @@ CLIPS["katana_guard"] = clip(60, [
     (60, KG, "smooth"),
 ], loop=True, breath=True, breaths=3, note="chūdan: the point at his eyes, the tip alive, breathing")
 
-# suri-ashi: the advance's step-drag, the arms holding the guard
-CLIPS["katana_walk"] = clip(18, [(f, P(p, **grip(0.3, 0.84, 135), tw_chest=-6), e) for f, p, e in v4_far.CLIPS["advance"]["keys"]],
-                            loop=True, speed=v4_far.CLIPS["advance"]["speed"], note="suri-ashi: sliding steps, the guard never moves")
+# ---------------------------------------------------------------- moving with the blade
+# Travelling (no one pressing him): the swordsman's walk. Upright and level (the head never bobs,
+# the hips glide; the feet skim the floor, heel barely leading), the drawn blade carried low in the
+# right hand along his thigh, its point trailing down and back a hand above the floor; the left hand
+# rests at the left hip where the scabbard would sit, thumb forward. Nothing swings: only the
+# blade's point sways a little with the stride, like something alive he's keeping on a short leash.
+KATANA_WALK_SPEED = 1.3
+from v4_moves import gait
+
+
+def _katana_walk():
+    n = 28
+    base = 0.645
+    keys = []
+    for f, p, e in gait(n, KATANA_WALK_SPEED, duty=0.64, lift=0.032, hz=base, bounce=0.005, bounce_low_at_mid=False,
+                        spine=178, chest=177, neck=172, head=176, arm_base=0, arm_amp=0, elbow=12, fist=150,
+                        twist=4, strike=-10, push=26):
+        ph = f / n
+        sway = math.sin(2 * math.pi * ph)                              # once a stride: the point drifts out and back
+        g = grip(0.0, 0.56 + (p["hz"] - base), -56 + 5 * sway)
+        g.update(hL=(0.07, 0.68 + (p["hz"] - base)), haL=96, fiL=120)   # the left hand at the hip, on the saya
+        q = P(p, tw_head=0.0, clL=(4, 2), clR=(2, 4), **g)
+        keys.append((f, q, e))
+    return keys
+
+
+CLIPS["katana_walk"] = clip(28, _katana_walk(), loop=True, speed=KATANA_WALK_SPEED,
+                            note="the swordsman's walk: level and gliding, the blade low along the thigh, its point trailing; the left hand on the saya")
+
+# Fighting distance: okuri-ashi in chudan. The front foot slides first (forward) or the rear one
+# (back), the other follows to the same gap; the feet never cross or close, the rear heel stays up, the
+# hips stay level, and the point never leaves his eyes. Going in, the point presses a finger's width
+# forward as the front foot lands (seme); going back, it lifts a touch as the rear foot lands.
+K_STEP = 0.22
+
+
+def _katana_drag(sign):
+    S = sign * K_STEP
+    mover, dragger = ("fL", "fR") if sign > 0 else ("fR", "fL")
+    M0, D0 = KG[mover], KG[dragger]
+    land = (M0[0], 0) if sign > 0 else (M0[0], 34)
+
+    def key(body, hz, m, d, press=0.0):
+        q = at(K(hz=hz, gx=0.3 + press, gz=0.84 + (0.02 if press < 0 else 0.0), a=135), body)
+        q[mover] = m
+        q[dragger] = d
+        return q
+
+    def step(o):
+        mx, dx = M0[0] + o, D0[0] + o
+        return [
+            (2, key(o + S * 0.12, 0.616, (mx + S * 0.55, 0.012, -4 if sign > 0 else 20), (dx,) + tuple(D0[1:])), "out"),     # the foot skims out
+            (4, key(o + S * 0.45, 0.613, (mx + S,) + tuple(land[1:]), (dx,) + tuple(D0[1:]), 0.025 * sign), "in"),            # lands: seme / the lift
+            (6, key(o + S * 0.75, 0.616, (mx + S,) + tuple(land[1:]), (dx + S * 0.55, 0.01, 30 if sign > 0 else 0)), "out"),  # the other follows, low
+            (8, at(KG, o + S), "smooth"),
+        ]
+    seq = [(0, KG, "lin")]
+    seq += step(0.0)
+    seq += [(f + 8, q, e) for f, q, e in step(S)]
+    n = 16
+    return [(f, at(p, -2 * S * f / n), e) for f, p, e in seq]          # loop in place: the game carries the root
+
+
+K_STEP_SPEED = round(2 * K_STEP * 30 / 16, 3)
+CLIPS["katana_step"] = clip(16, _katana_drag(1), loop=True, speed=K_STEP_SPEED,
+                            note="okuri-ashi in: the front foot slides, the rear follows, the point pressing on his eyes")
+CLIPS["katana_back"] = clip(16, _katana_drag(-1), loop=True, speed=K_STEP_SPEED,
+                            note="okuri-ashi out: the rear foot slides back, the front follows, the point never leaves him")
 
 CLIPS["katana_retreat"] = clip(12, [
     (0, KG, "lin"),

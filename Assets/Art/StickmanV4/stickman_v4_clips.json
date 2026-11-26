@@ -2469,7 +2469,29 @@
     },
     {
       "name": "katana_walk",
-      "frames": 18,
+      "frames": 28,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_step",
+      "frames": 16,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true
+    },
+    {
+      "name": "katana_back",
+      "frames": 16,
       "fps": 30,
       "loop": true,
       "hitFrame": -1,

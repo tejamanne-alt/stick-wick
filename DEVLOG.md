@@ -2026,3 +2026,14 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **In a fight** (for the first 0.9 s of a press), he uses step-drags in the pipe's own stance, facing his man: new `rod_step` in and `rod_back` out, at 1.2 m/s. The stance matches `rod_guard`, so starting and stopping don't jolt.
   - **Easing.** The walk eases out of the stance (0.25 s).
 - **Stopping with a weapon.** Every stop in the walk loop played the fist idle, so with the pipe (or katana, sword or gun) he dropped into the boxing guard and later snapped into his weapon stance. Now it's always the idle that matches what's in his hands. The FBX is rebuilt (285 clips).
+- **Moving with the katana, its own way** (not the pipe's, not the boxer's):
+  - **Travelling: the swordsman's walk** (`katana_walk`, 1.3 m/s, played at the speed he moves).
+    - He stays upright and level: the head never bobs, the hips glide, and the feet skim the floor.
+    - The drawn blade is carried low in the right hand along the thigh, its point trailing down and back above the floor and drifting a little with the stride.
+    - The left hand rests at the left hip where the scabbard would be.
+    - The old version was the boxer's shuffle in the fist stance, played too slowly, so the feet slid.
+  - **In a fight: okuri-ashi in chudan** (new `katana_step` in, `katana_back` out, 1.3 m/s, for the first 0.9 s of a press).
+    - The front foot slides first going in, the rear foot first going back, and the other follows to the same gap.
+    - The feet never cross, the hips stay level, and the point never leaves his man's eyes.
+    - The point presses forward a finger's width as the front foot lands going in (seme), and lifts a touch going back.
+  - **Stopping:** the blade comes up from the low carry into the guard over 0.3 s. The FBX is rebuilt (287 clips).
