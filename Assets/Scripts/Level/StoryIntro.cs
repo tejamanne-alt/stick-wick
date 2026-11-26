@@ -78,7 +78,6 @@ namespace ProjectInk
         {
             if (Instance == this) Instance = null;
             HeroController.Did -= OnFortHit;
-            GestureInput.Tapped -= OnSkipTap;
             TrainingUnhook();
             if (fastForward || toNextLine) { fastForward = false; toNextLine = false; AudioListener.volume = ffVolume; }
             Sound.Skipping = false;
@@ -89,7 +88,7 @@ namespace ProjectInk
             Sound.KeepClear = false;
             fastForward = false;
             toNextLine = false;
-            GestureInput.Tapped += OnSkipTap;           // a tap on the right half during a scene: skip it                        // the walk-out's clear sound never outlives it
+            // (no tap-anywhere skip: taps belong to the scene, e.g. the mash to break free; SKIP is its button)
             cam = CameraDirector.Instance;
             if (hero == null) hero = FindAnyObjectByType<HeroController>();
             if (director == null) director = WaveDirector.Instance;

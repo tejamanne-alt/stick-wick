@@ -2113,3 +2113,4 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - At 100% it parts. Slow motion and a close insert. Both ends whip back along themselves at about 7 m/s with splayed frayed tufts, and a puff of matte fibre dust drifts down, tumbling and fading.
     - Then the turns go slack and slide off him as the chair goes over. The ankle lashings stay on the chair legs; his feet slip out.
   - **A skip** past the scene lays the ropes where they'd have fallen.
+- **No tap-anywhere skip.** A tap on the right half of the screen no longer skips a scene; only the SKIP › and TO PLAY » buttons do. The last taps of a mash (breaking free of the rope) were skipping the very animation they set off. The buttons also wait 1 s after the player last had the controls before they appear, so a tap still on its way down can't land on one.
