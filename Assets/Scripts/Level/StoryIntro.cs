@@ -171,6 +171,7 @@ namespace ProjectInk
             }
             float dt = StoryDt;
             UpdateSkip();
+            UpdateOutside();
             switch (phase)
             {
                 case Phase.Cinematic:

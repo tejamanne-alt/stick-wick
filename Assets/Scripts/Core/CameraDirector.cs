@@ -115,6 +115,8 @@ namespace ProjectInk
 
         [Tooltip("Inner faces of the side walls: the camera never shows past them if it can help it.")]
         public float wallX = 13.0f;
+        [Tooltip("How far behind the fight lane the back wall stands: the frame is measured there, where it's widest.")]
+        public float backZ = 2.6f;
         /// <summary>A stretch of a long building the framing keeps to (a fight zone), instead of
         /// the symmetric ±wallX; NaN for none.</summary>
         public float boundMinX = float.NaN, boundMaxX = float.NaN;
@@ -136,11 +138,15 @@ namespace ProjectInk
         {
             float tanV = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
             float tanH = tanV * Mathf.Max(0.5f, cam.aspect);
-            // the frame may show a strip of floor below and of roof above, but never past the side walls
-            float floorY = -0.9f, roofY = Fighter.RoofY + 1.1f;
-            // the furthest it may pull back: the whole building from wall to wall, and no further
-            float dMax = Mathf.Min((roofY - floorY) * 0.5f / tanV, (WallHi - WallLo) * 0.5f / tanH);
-            dMax = Mathf.Max(dMax, minDistance);
+            // the frame may show a strip of floor below and the underside of the roof, but never past the
+            // side walls or over the roof. Measured at the BACK WALL (backZ behind the fighters), where the
+            // view is widest and tallest: measured at the fighters, it poked out past the building there
+            float floorY = -0.9f, roofY = Fighter.RoofY + 0.3f;
+            // the furthest it may pull back: the whole building from wall to wall, and no further (the
+            // walls win over minDistance: in a small room the camera comes in rather than see outside)
+            float dMax = Mathf.Min((roofY - floorY) * 0.5f / tanV, (WallHi - WallLo) * 0.5f / tanH) - backZ;
+            dMax = Mathf.Max(dMax, 4f);
+            float dMin = Mathf.Min(minDistance, dMax);
             float sx = tanH * SafeX, sy = tanV * SafeY;
 
             var h = hero.position;
@@ -157,7 +163,7 @@ namespace ProjectInk
                 if (need > dMax) continue;              // would push the shot out of the building
                 loX = nLoX; hiX = nHiX; loY = nLoY; hiY = nHiY;
             }
-            dist = Mathf.Clamp(Mathf.Max(((hiX - loX) * 0.5f + PadX) / sx, ((hiY - loY) * 0.5f + PadY) / sy), minDistance, dMax);
+            dist = Mathf.Clamp(Mathf.Max(((hiX - loX) * 0.5f + PadX) / sx, ((hiY - loY) * 0.5f + PadY) / sy), dMin, dMax);
 
             // centre on the group, aiming a little high so the HUD never covers a head ...
             float cx = (loX + hiX) * 0.5f;
@@ -166,8 +172,8 @@ namespace ProjectInk
             float hx = dist * tanH * SafeX - PadX, hyTop = dist * tanV * 0.70f, hyBot = dist * tanV * 0.86f;
             cx = Mathf.Clamp(cx, h.x - hx, h.x + hx);
             cy = Mathf.Clamp(cy, h.y + BodyHeight - hyTop, h.y + hyBot);
-            // ... and never look past the building
-            float halfW = dist * tanH, halfH = dist * tanV;
+            // ... and never look past the building (its extent at the back wall, where the view is widest)
+            float halfW = (dist + backZ) * tanH, halfH = (dist + backZ) * tanV;
             cx = halfW < (WallHi - WallLo) * 0.5f ? Mathf.Clamp(cx, WallLo + halfW, WallHi - halfW) : (WallLo + WallHi) * 0.5f;
             cy = halfH < (roofY - floorY) * 0.5f ? Mathf.Clamp(cy, floorY + halfH, roofY - halfH) : (floorY + roofY) * 0.5f;
             center = new Vector3(cx, cy, 0f);
