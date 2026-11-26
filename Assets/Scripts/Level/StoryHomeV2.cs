@@ -158,11 +158,19 @@ namespace ProjectInk
                         break;
                 }
             }
-            // the phone on the table: V.
-            Sound.Play(Sfx.PhoneBuzz, 1f, new Vector3(28.4f, 0.95f, 0.3f));
+            // the phone on the table: V. (the kitchen island's worktop, its front edge at z 1.7, top 0.985: a real
+            // phone lying there, not a shot of the air between the two of them)
+            var phonePos = new Vector3(28.4f, 0.991f, 1.85f);
+            if (homePhone != null)
+            {
+                homePhone.SetParent(null, true);
+                homePhone.position = phonePos;
+                homePhone.rotation = Quaternion.LookRotation(Vector3.down, Quaternion.Euler(0f, 18f, 0f) * Vector3.right);   // face up
+                homePhone.gameObject.SetActive(true);
+            }
+            Sound.Play(Sfx.PhoneBuzz, 1f, phonePos);
             phoneAt = Time.unscaledTime;
             phoneName = "V.";
-            var phonePos = new Vector3(28.45f, 0.92f, 0.35f);
             System.Action onPhone = () => Cine(new CineCam.Shot(phonePos + new Vector3(-0.1f, 0.55f, -0.5f), phonePos, 30f));
             yield return Hold(1.4f, onPhone);
             Say("THE CLEANER", "...That'll be my father.", 2.2f, ch);
@@ -172,8 +180,16 @@ namespace ProjectInk
             phoneAt = -1f;
             Sound.Play(Sfx.PhoneClick, 0.8f);
             Sound.MusicStop(1f);
-            hero.body.Play("idle", 0.2f);
+            // (cut) he has it at his ear, turned away from the chair to take it: the flex let go, a phone's stand (not
+            // a fighter's guard), the Cleaner now behind him (so BEHIND YOU is true)
+            DropFlex();
+            hero.LookAtXZ(hero.transform.position + new Vector3(-0.3f, 0f, -1f));
+            hero.body.Play(hero.body.Has("talk_walkie") ? "talk_walkie" : "idle_loose", 0f);
+            if (homePhone != null) homePhone.gameObject.SetActive(false);
             System.Action phoneClose = () => Cine(new CineCam.Shot(HeroHead() + new Vector3(-0.55f, -0.02f, -0.75f), HeroHead(), 26f));
+            phoneClose();
+            yield return null;                                                     // the pose in place before the phone goes in his hand
+            PhoneToHand();
             Say("PHONE", "Silas? Is it done?", 2.2f);
             yield return Hold(2.6f, phoneClose);
             yield return Hold(1.2f, phoneClose);
@@ -195,19 +211,29 @@ namespace ProjectInk
             if (TimeController.Instance != null) TimeController.Instance.SlowMo(0.25f, 1.4f, 0.02f, 0.25f);
             StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, () => Cine(new CineCam.Shot(new Vector3(29.4f, 1.2f, -1.6f), cHead() + Vector3.left * 0.5f, 34f))));
             yield return SwipeTo("BEHIND YOU", 1, 1.6f);
-            // one move: the reflex he can't remember learning
+            // one move: the reflex he can't remember learning (round to the chair, under the white flash); the phone
+            // goes from his hand to the floor
             cutAt = Time.unscaledTime;
             if (!scOk) { hero.TakeHit(new HitInfo { damage = 6f, direction = -1, knockback = 0.5f }); Sound.Play(Sfx.HeroHurt, 0.8f); }
             Sound.Play(Sfx.PunchHeavy, 1f, cHead());
             Sound.Play(Sfx.Bone, 0.9f, cHead());
             if (InkFx.Instance != null) InkFx.Instance.ImpactFlash(0.08f);
+            if (cleaner != null) hero.LookAtXZ(cleaner.transform.position);
             hero.body.Play(hero.body.Has("gyaku_zuki") ? "gyaku_zuki" : "idle", 0.03f);
             if (cleaner != null) cleaner.PuppetPlay("sit_slump", 0.05f);
             Sound.Play(Sfx.DeathBreath, 0.8f, cHead());
+            var floorPhone = new Vector3(28.6f, 0.0055f, 0.1f);
+            if (homePhone != null)
+            {
+                homePhone.SetParent(null, true);
+                homePhone.position = floorPhone;
+                homePhone.rotation = Quaternion.LookRotation(Vector3.down, Quaternion.Euler(0f, -35f, 0f) * Vector3.right);
+                homePhone.gameObject.SetActive(true);
+            }
             yield return Hold(1.2f, () => Cine(CineCam.Roll(new Vector3(28.4f, 1.3f, -3.4f), two, 1f, 0f, -9f, 36f)));
+            if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.5f);    // the fist comes down (a one-shot holds its last frame)
             // the phone on the floor, the line still open
-            Sound.Play(Sfx.Crate, 0.4f, phonePos + Vector3.down * 0.9f, 1.6f);
-            var floorPhone = new Vector3(28.6f, 0.02f, 0.1f);
+            Sound.Play(Sfx.Crate, 0.4f, floorPhone, 1.6f);
             System.Action onFloor = () => Cine(new CineCam.Shot(floorPhone + new Vector3(-0.35f, 0.25f, -0.45f), floorPhone, 30f));
             phoneAt = Time.unscaledTime; phoneName = "CALL CONNECTED";
             yield return Hold(1.0f, onFloor);
@@ -225,6 +251,28 @@ namespace ProjectInk
             yield return Hold(1.8f, onYou);
             Say("YOU", "Your son.", 1.8f);
             yield return Move(3.4f, u => CineCam.DollyOut(HeroHead(), new Vector3(0.5f, -0.1f, 1f), u, 1.4f, 4.6f, 34f));
+        }
+
+        /// <summary>The phone into his right hand at his ear (talk_walkie holds the hand there): its screen (-z) to his
+        /// face, its length along the hand (forearm to hand), then carried by the hand bone. Posed from where the bones
+        /// are in the world, not from the bone's own axes.</summary>
+        void PhoneToHand()
+        {
+            if (homePhone == null || hero.body == null) return;
+            var hand = hero.body.Bone("hand.R");
+            var fore = hero.body.Bone("forearm.R");
+            if (hand == null) return;
+            var face = head != null ? head.position : hero.transform.position + Vector3.up * 1.5f;
+            var toFace = face - hand.position;
+            var along = fore != null ? hand.position - fore.position : Vector3.up;
+            if (toFace.sqrMagnitude < 1e-6f || along.sqrMagnitude < 1e-6f) return;
+            toFace.Normalize();
+            along.Normalize();
+            homePhone.SetParent(null, true);
+            homePhone.position = hand.position + toFace * 0.035f + along * 0.03f;
+            homePhone.rotation = Quaternion.LookRotation(-toFace, along);
+            homePhone.SetParent(hand, true);
+            homePhone.gameObject.SetActive(true);
         }
 
         // ---------------------------------------------------------------- on screen

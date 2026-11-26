@@ -49,6 +49,10 @@ namespace ProjectInk
         Texture2D[] mayaStills, flashStills;
         Texture2D photoTex;
         Font markerFont;
+        Transform homePhone;
+        LineRenderer flexLine;
+        bool flexHeld, flexLoose;
+        const float PorchTop = 0.16f;            // the porch's top step (build_home_set.build_outside: x -1.6 to 0)
 
         // ================================================================ the camera
 
@@ -159,6 +163,33 @@ namespace ProjectInk
             }
             Part(prints, new Vector3(32.4f, 0.005f, 0.6f), new Vector3(0.9f, 0.003f, 0.6f), blood);                                // where Elena lies
             prints.gameObject.SetActive(false);
+            // the porch's two steps (x -1.9 to 0, 8 and 16 cm up): something to stand on, so he walks up them and in
+            // rather than wading through them (the set's own colliders are stripped)
+            var porch = new GameObject("PorchSteps");
+            foreach (var (c, s) in new[] { (new Vector3(-0.8f, PorchTop * 0.5f, 0f), new Vector3(1.6f, PorchTop, 1.8f)),
+                                           (new Vector3(-1.75f, 0.04f, 0f), new Vector3(0.3f, 0.08f, 1.6f)) })
+            {
+                var bc = porch.AddComponent<BoxCollider>();
+                bc.center = c;
+                bc.size = s;
+            }
+            // the Cleaner's phone (story v2, 3.8-3.9c): it rings on the kitchen island, is answered at his ear, ends on
+            // the floor. Its body is x wide, y long, z thin, the screen on its -z face
+            homePhone = new GameObject("CleanerPhone").transform;
+            Part(homePhone, Vector3.zero, new Vector3(0.072f, 0.145f, 0.011f), ink);
+            Part(homePhone, new Vector3(0f, 0.004f, -0.0062f), new Vector3(0.062f, 0.118f, 0.002f),
+                 new Material(Shader.Find("Unlit/Color")) { color = new Color(0.78f, 0.8f, 0.84f) });
+            homePhone.gameObject.SetActive(false);
+            // the lamp flex he holds: from the socket over the worktop, down, across the floor to his hand
+            var flexGo = new GameObject("LampFlex");
+            flexLine = flexGo.AddComponent<LineRenderer>();
+            flexLine.sharedMaterial = ink;
+            flexLine.widthMultiplier = 0.012f;
+            flexLine.positionCount = 5;
+            flexLine.useWorldSpace = true;
+            flexLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            flexLine.receiveShadows = false;
+            flexGo.SetActive(false);
             // the swing seat, on a pivot at the frame's top bar
             var sw = Find("Swing");
             if (sw != null)
@@ -188,22 +219,39 @@ namespace ProjectInk
                 // ------------------------------------------------ H2 Alder Lane at dusk: an aerial orbit as he arrives, running
                 CutawayWall.ShowAll = true;
                 hero.CinePose(new Vector3(HomePlan.StreetX0 + 1f, 0f, 0f));
-                hero.body.Play("run", 0.1f, true, 1.2f);
+                // 12.5 m in 4.5 s: the run played at that pace (0.7 of its own 4 m/s), and he stops when he gets
+                // there (not running on the spot for the rest of the shot)
+                hero.body.Play("run", 0.1f, true, 0.7f);
                 Sound.Play(Sfx.Wind, 0.4f);
                 StartCoroutine(FadeIn(1.2f));
                 float runFrom = hero.transform.position.x;
+                bool arrived = false;
                 yield return Move(5.2f, u => CineCam.AerialOrbit(new Vector3(-7f, 1.2f, 1.5f), u, 16f, 7.5f, -62f, -28f, 42f),
                     u =>
                     {
-                        hero.CinePose(new Vector3(Mathf.Lerp(runFrom, -10.5f, Mathf.Min(1f, u * 1.15f)), 0f, 0f));
-                        if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.3f; Sound.Play(Sfx.Footstep, 0.6f, hero.transform.position); }
+                        float k = Mathf.Min(1f, u * 1.15f);
+                        hero.CinePose(new Vector3(Mathf.Lerp(runFrom, -10.5f, k), 0f, 0f));
+                        if (k >= 1f && !arrived)
+                        {
+                            arrived = true;
+                            hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.25f);
+                            Sound.Play(Sfx.Breath, 0.8f, hero.Chest);
+                        }
+                        if (!arrived && Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.3f; Sound.Play(Sfx.Footstep, 0.6f, hero.transform.position); }
                     });
-                hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.2f);
-                Sound.Play(Sfx.Breath, 0.8f, hero.Chest);
+                if (!arrived)
+                {
+                    hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.2f);
+                    Sound.Play(Sfx.Breath, 0.8f, hero.Chest);
+                }
 
                 // ------------------------------------------------ H2b the black car: he turns to it (a pan off him onto it)
+                // (it's behind him on the road, at x -18, z -5.2: he turns round to look at it, not on at the house)
                 var carAt = new Vector3(-18f, 0.8f, -5.2f);
-                yield return Move(2.4f, u => CineCam.Pan(new Vector3(-8.2f, 1.55f, -2.2f), HeroHead(), carAt, u, 40f));
+                var faceFrom = hero.transform.rotation * Vector3.right;
+                var faceTo = new Vector3(carAt.x - hero.transform.position.x, 0f, carAt.z - hero.transform.position.z).normalized;
+                yield return Move(2.4f, u => CineCam.Pan(new Vector3(-8.2f, 1.55f, -2.2f), HeroHead(), carAt, u, 40f),
+                    u => hero.LookAtXZ(hero.transform.position + Vector3.Slerp(faceFrom, faceTo, Mathf.SmoothStep(0f, 1f, u * 2.5f))));
                 Say("YOU", "...Another black car.", 2.0f);
                 yield return Hold(2.0f, () => Cine(CineCam.Pan(new Vector3(-8.2f, 1.55f, -2.2f), HeroHead(), carAt, 1f, 40f)));
 
@@ -217,7 +265,7 @@ namespace ProjectInk
                     u => { if (u > 0.3f && u - StoryDt / 4.2f <= 0.3f) Say("YOU", "...Three.", 2.2f); });
 
                 // ------------------------------------------------ H4 the door, ajar: a slow dolly in on it
-                hero.CinePose(new Vector3(-1.4f, 0f, 0f));
+                hero.CinePose(new Vector3(-1.4f, PorchTop, 0f));             // on the porch's top step, not sunk into it
                 Sound.Play(Sfx.Door, 0.6f, new Vector3(0f, 1f, 0f), 0.65f);
                 yield return Move(3.0f, u => CineCam.DollyIn(new Vector3(0f, 1.1f, 0f), new Vector3(1f, -0.05f, 0.2f), u, 4.4f, 2.0f, 40f));
                 CutawayWall.ShowAll = false;
@@ -276,10 +324,13 @@ namespace ProjectInk
                 var her = new Vector3(HomePlan.ElenaX - 0.4f, 0.25f, 0.7f);
                 yield return Move(4.6f, u => CineCam.LateralReveal(new Vector3(24.7f, 1.2f, 1.0f), new Vector3(26.6f, 1.25f, -0.9f), her, u, 40f));
                 // ------------------------------------------------ H9 he goes to her and kneels: the crane comes down to him
-                hero.body.Play("walk", 0.2f, true, 0.7f);
+                // (some 6.6 m: at a hurried walk, 1.6 m/s, the walk played at that pace; it was 2.5 m/s at 0.7, skating)
                 var h0 = hero.transform.position;
-                yield return Move(2.6f, u => CineCam.LateralReveal(new Vector3(26.6f, 1.25f, -0.9f), new Vector3(27.6f, 1.25f, -1.4f), her, u, 40f),
-                    u => hero.CinePose(Vector3.Lerp(h0, new Vector3(HomePlan.ElenaX - 0.55f, 0f, -0.05f), u)));       // at her side, by her hand
+                var atHer = new Vector3(HomePlan.ElenaX - 0.55f, 0f, -0.05f);                                     // at her side, by her hand
+                float toHer = Mathf.Max(1.2f, Vector3.Distance(h0, atHer) / 1.6f);
+                hero.body.Play("walk", 0.2f, true, 1.5f);
+                yield return Move(toHer, u => CineCam.LateralReveal(new Vector3(26.6f, 1.25f, -0.9f), new Vector3(27.6f, 1.25f, -1.4f), her, u, 40f),
+                    u => hero.CinePose(Vector3.Lerp(h0, atHer, WalkPace(u))));
                 if (hero.body.Has("kneel_hand")) hero.body.Play("kneel_hand", 0.35f);
                 Sound.Play(Sfx.Cloth, 0.6f, hero.Chest);
                 var kneelAt = hero.transform.position + new Vector3(0.4f, 0.6f, 0.1f);
@@ -377,7 +428,7 @@ namespace ProjectInk
                 hero.CinePuppet();
                 hero.CinePose(new Vector3(28.6f, 0f, 0.4f));
                 hero.SetFacing(1);
-                hero.body.Play("idle", 0f);
+                hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0f);
                 barsPx = 92f;
                 yield return FadeIn(0.5f);
             }
@@ -404,9 +455,9 @@ namespace ProjectInk
             if (director != null) director.ShowBanner($"{r + 1}  ·  {R.name}", 2.0f);
             // the living room: one turning it over, his back to the kitchen door (StoryLookouts)
             if (r == 1) PostLookout(R.x0 + 3.6f, R.y, -1, homeMen, "ONE SEARCHING THE LIVING ROOM");
+            else lookout = null;
             // the kitchen, torn apart in the search: a length of pipe pulled from under the sink
             if (r == 0) PlaceWeapon(FightStyle.Pipe, 12, new Vector3(R.x0 + 2.2f, R.y, 0f));
-            else lookout = null;
             if (cut || hero.CinematicLock)
             {
                 if (cut) hero.CinePose(new Vector3(R.x1 - 1.4f, R.y, 0f));
@@ -423,19 +474,90 @@ namespace ProjectInk
         {
             if (director == null) return;
             var R = HomePlan.Rooms[r];
-            float mid = (R.x0 + R.x1) * 0.5f;
             var pts = director.spawnPoints;
             void At(SpawnKind k, Vector3 p) { var t = pts[(int)k]; if (t != null) t.position = p; }
             At(SpawnKind.RightDoor, new Vector3(R.x1 - 0.5f, R.y, 0f));
             At(SpawnKind.LeftDoor, new Vector3(R.x0 + 0.5f, R.y, 0f));
-            At(SpawnKind.Background, new Vector3(mid + 1.2f, R.y, 2.4f));
-            At(SpawnKind.UpperDoor, r == 2 ? new Vector3(HomePlan.StairX1 - 0.4f, 0f, 2.9f) : new Vector3(mid, R.y, 2.4f));
-            At(SpawnKind.Ceiling, new Vector3(mid, R.y, 2.4f));
+            // the back of each room, on clear floor (they step out from there to the lane, drifting towards him):
+            // the kitchen between the island (x 28.15-30.65, z 1.7-2.7, its stool at 30.35) and the bin bags by the
+            // fridge (33.1+); the living room right of the glass coffee table (x 19.3-20.7, z 0.85-1.55); the study
+            // right of his desk chair and clear of the plant by the door (9.45, 1.55); the landing right of the
+            // stairwell's newel posts and balustrade (x 9.5-9.6, z 2.36-2.66) and on the slab (z < 2.4)
+            float bx = r == 0 ? 31.9f : r == 1 ? 22.4f : r == 2 ? 13.4f : 11.4f;
+            var back = new Vector3(bx, R.y, r == 1 ? 2.4f : 2.2f);
+            At(SpawnKind.Background, back);
+            // the hall's men come down the stairs: they appear at the top, on the landing, and are walked down
+            // the flight (DownTheStairs), not spawned inside the staircase and the study wall
+            At(SpawnKind.UpperDoor, r == 2 ? StairTop + new Vector3(0.8f, 0f, 0f) : back);
+            At(SpawnKind.Ceiling, back);
+        }
+
+        // ================================================================ the stairs (x 4.2-9.4 along the back wall, z 2.6-4.0)
+
+        /// <summary>The middle of the flight, at the top and just off the foot (sixteen treads, each 0.2 up and 0.325
+        /// along); off the foot is left of the newel post (x 4.15, z 2.66), clear of the hall table (x 2.1-3.1).</summary>
+        static Vector3 StairTop => new Vector3(HomePlan.StairX1, HomePlan.Floor2, HomePlan.StairZ - 0.1f);
+        static Vector3 StairFoot => new Vector3(HomePlan.StairX0 - 0.4f, 0f, HomePlan.StairZ - 0.1f);
+
+        /// <summary>The height of the treads under someone on the flight: the line through the treads' middles,
+        /// so the feet stand on each tread (not 10-20 cm sunk into them, as a straight line from the floor to the
+        /// landing would put them); the floor below it, the landing above it.</summary>
+        static float StairY(Vector3 p)
+        {
+            if (p.z < 2.5f) return p.y > 1.6f ? HomePlan.Floor2 : 0f;
+            float y = 0.615f * (p.x - HomePlan.StairX0) + 0.1f;
+            return Mathf.Clamp(y, 0f, HomePlan.Floor2);
+        }
+
+        /// <summary>Going out of the back door: the kitchen floor, then its concrete step (x 34.1-34.6, 6 cm up), the patio.</summary>
+        static float BackStepY(Vector3 p) => Mathf.Abs(p.z) < 0.75f ? 0.06f * Mathf.Clamp01(Mathf.Min(p.x - 34.0f, 34.7f - p.x) / 0.1f) : 0f;
+
+        /// <summary>One of the hall's men coming down the stairs at him: from the top of the flight, down it
+        /// between the balusters and the wall, off the bottom (left of the newel post at x 4.15), out to the lane.</summary>
+        IEnumerator DownTheStairs(Enemy e)
+        {
+            if (e == null) yield break;
+            e.Puppet();
+            e.PuppetPose(StairTop + new Vector3(0.8f, 0f, 0f));
+            e.PuppetPlay("run", 0.1f, 0.7f);
+            var lane = new Vector3(StairFoot.x, 0f, 0f);
+            yield return StrollPath(e, e.PuppetPose, new[] { StairTop, StairFoot, lane }, 2.8f, StairY, false, null,
+                                    hero.transform.position.x >= lane.x ? 1 : -1);
+            if (e == null || !e.Alive) yield break;
+            e.PuppetRelease();
+        }
+
+        /// <summary>The lamp flex: out of the socket over the worktop, over its edge and down the cupboard doors, across
+        /// the floor round the little table's chair (x 26.2-26.6, z 2.5-2.9), to his hand, or to the floor once he lets it go.</summary>
+        void PoseFlex()
+        {
+            var h = hero.transform.position;
+            var hand = flexHeld && hero.body != null ? hero.body.Bone("hand.R") : null;
+            var feet = new Vector3(h.x - 0.25f, 0.012f, h.z + 0.3f);
+            flexLine.positionCount = 6;
+            flexLine.SetPosition(0, new Vector3(26.2f, 1.15f, 4.13f));
+            flexLine.SetPosition(1, new Vector3(26.25f, 0.955f, 3.5f));
+            flexLine.SetPosition(2, new Vector3(26.35f, 0.012f, 3.3f));
+            flexLine.SetPosition(3, new Vector3(26.9f, 0.012f, 2.9f));
+            flexLine.SetPosition(4, feet);
+            flexLine.SetPosition(5, hand != null ? hand.position : feet + new Vector3(0.4f, 0f, -0.15f));
+        }
+
+        /// <summary>He lets the flex go: its end drops to the floor by his feet and stays there (it doesn't follow him).</summary>
+        void DropFlex()
+        {
+            if (flexLine == null || !flexLine.gameObject.activeSelf) { flexHeld = false; return; }
+            PoseFlex();
+            flexHeld = false;
+            var feet = flexLine.GetPosition(4);
+            flexLine.SetPosition(5, new Vector3(feet.x + 0.4f, 0.012f, feet.z - 0.15f));
+            flexLoose = true;
         }
 
         void UpdateHome()
         {
             UpdateSwing();
+            if (flexLine != null && flexLine.gameObject.activeSelf && !flexLoose) PoseFlex();
             if (bulbFlicker >= 0f && bulbR != null) bulbR.enabled = Mathf.Sin(Time.unscaledTime * 53f) * Mathf.Sin(Time.unscaledTime * 17f) > -0.2f;
             if (dripAt > 0f && Time.unscaledTime > dripAt) { dripAt = Time.unscaledTime + 1.3f; Sound.Play(Sfx.Drip, 0.35f, new Vector3(27.4f, 1f, 3.8f)); }
             if (cleanerStage > 0 && cleanerStage < 5) { UpdateCleaner(); return; }
@@ -450,6 +572,7 @@ namespace ProjectInk
                     var sp = list[hQueued];
                     var e = director.SpawnScripted(sp.type, sp.kind);
                     if (e != null) homeMen.Add(e);
+                    if (e != null && hRoom == 2 && sp.kind == SpawnKind.UpperDoor) StartCoroutine(DownTheStairs(e));
                     hQueued++;
                     hNextSpawn = Time.time + Random.Range(0.7f, 1.4f);
                 }
@@ -484,25 +607,25 @@ namespace ProjectInk
         {
             hClimbing = true;
             hero.CinePuppet();
-            var p0 = hero.transform.position;
-            var foot = new Vector3(HomePlan.StairX0 + 0.2f, 0f, HomePlan.StairZ - 0.2f);
-            var top = new Vector3(HomePlan.StairX1 + 0.1f, HomePlan.Floor2, HomePlan.StairZ - 0.2f);
-            var land = new Vector3(HomePlan.StairX1 + 0.6f, HomePlan.Floor2, 0f);
-            hero.SetFacing(p0.x > foot.x ? -1 : 1);
-            hero.body.Play("walk", 0.2f, true, 1.1f);
-            float d0 = Mathf.Abs(p0.x - foot.x) / 2.6f + 0.3f;
+            // along the hall to the foot of the flight (through the study's doorway if he's past it: the wall at
+            // x 9 runs from z 0.65 to the back), round the newel post onto the bottom tread, up the treads with his
+            // feet on each (StairY), off the top onto the landing and out past its newel posts (x 9.5-9.6) to the
+            // lane: never through the wall, the balusters, the stringer or the posts
+            var lane0 = new Vector3(StairFoot.x, 0f, 0f);
+            var landing = new Vector3(HomePlan.StairX1 + 0.85f, HomePlan.Floor2, StairTop.z);
+            var land = new Vector3(landing.x, HomePlan.Floor2, 0f);
+            System.Action truck = () =>
+            {
+                var h = hero.transform.position;
+                if (h.y > 0.05f && h.y < HomePlan.Floor2 - 0.05f && Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.32f; Sound.Play(Sfx.Creak, 0.25f, h); }
+                var cp = new Vector3(h.x + 0.9f, h.y + 1.6f, -5.2f);                   // alongside him, outside the cut-away front
+                Cine(new CineCam.Shot(cp, cp + new Vector3(0f, -0.25f, 5.2f), 42f));
+            };
             barsPx = 56f;
-            yield return Move(d0, u => CineCam.Truck(new Vector3(p0.x - 0.5f, 1.6f, -5.2f), new Vector3(foot.x + 1.2f, 1.6f, -5.2f), new Vector3(0f, -0.2f, 5.2f), u, 42f),
-                u => hero.CinePose(Vector3.Lerp(p0, foot, u)));
-            hero.SetFacing(1);
-            yield return Move(2.4f, u => CineCam.Truck(new Vector3(foot.x + 1.2f, 1.7f, -5.0f), new Vector3(top.x + 0.4f, HomePlan.Floor2 + 1.6f, -5.0f), new Vector3(0f, -0.3f, 5.0f), u, 42f),
-                u =>
-                {
-                    hero.CinePose(Vector3.Lerp(foot, top, u));
-                    if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.32f; Sound.Play(Sfx.Creak, 0.25f, hero.transform.position); }
-                });
-            yield return Move(0.6f, u => CineCam.Truck(new Vector3(top.x + 0.4f, HomePlan.Floor2 + 1.6f, -5.0f), new Vector3(land.x, HomePlan.Floor2 + 1.6f, -5.6f), new Vector3(0f, -0.3f, 5.6f), u, 42f),
-                u => hero.CinePose(Vector3.Lerp(top, land, u)));
+            hero.body.Play("run", 0.15f, true, 0.75f);                                   // 3 m/s, the run's own pace
+            yield return StrollPath(hero, hero.CinePose, new[] { lane0, StairFoot }, 3.0f, StairY, true, truck);
+            hero.body.Play("walk", 0.2f, true, 1.25f);                                   // 1.55 m/s along
+            yield return StrollPath(hero, hero.CinePose, new[] { StairTop, landing, land }, 1.55f, StairY, true, truck, 1);
             hClimbing = false;
             StartHomeRoom(3, false);
             hero.SetFacing(1);
@@ -547,11 +670,12 @@ namespace ProjectInk
             cleaner.PuppetPlay("walk", 0.2f, 0.7f);
             yield return Move(3.4f, u => CineCam.LowAngleArc(cleaner.transform.position + Vector3.up * 1.0f, u, 3.2f, -58f, 4f, 36f),
                 u => cleaner.PuppetPose(Vector3.Lerp(c0, new Vector3(29.6f, HomePlan.Floor2, 0f), u)));
-            cleaner.PuppetPlay("idle", 0.2f);
+            cleaner.PuppetPlay("idle_loose", 0.2f);              // he talks standing easy, the knife down; the guard comes up after
             Say("THE CLEANER", "You're early. I wasn't finished.", 2.4f, HeadOf(cleaner));
             yield return Hold(2.4f, () => Cine(CineCam.LowAngleArc(cleaner.transform.position + Vector3.up * 1.0f, 1f, 3.2f, -58f, 4f, 36f)));
             Say("THE CLEANER", "They always come home.", 2.4f, HeadOf(cleaner));
             yield return Hold(2.8f, () => Cine(CineCam.LowAngleArc(cleaner.transform.position + Vector3.up * 1.0f, 1f, 3.2f, -58f, 4f, 36f)));
+            cleaner.PuppetPlay("idle", 0.25f);
             if (director != null) director.ShowBanner("THE CLEANER", 2.6f);
             Sound.Play(Sfx.CineMassive, 0.7f);
             yield return Hold(1.2f, () => Cine(CineCam.DollyIn(HeroHead(), new Vector3(1f, -0.1f, 0.8f), 1f, 2.6f, 1.6f, 34f)));
@@ -613,7 +737,12 @@ namespace ProjectInk
             }
             hero.CinePose(new Vector3(27.7f, 0f, 0.55f));
             hero.SetFacing(1);
-            hero.body.Play(hero.body.Has("hold_cord") ? "hold_cord" : "idle", 0f);
+            hero.LookAtXZ(seat);                          // he faces the man in the chair (it's 0.35 m further back than him)
+            // the stripped flex in his hand (hold_cord holds it out: with nothing in it, it was a hand held out at air)
+            bool cord = hero.body.Has("hold_cord");
+            hero.body.Play(cord ? "hold_cord" : "idle_loose", 0f);
+            flexHeld = cord;
+            if (flexLine != null) { flexLine.gameObject.SetActive(cord); if (cord) PoseFlex(); }
             Sound.Play(Sfx.FridgeHum, 0.6f);
             var ch = cleaner != null ? HeadOf(cleaner) : null;
             System.Func<Vector3> cHead = () => ch != null ? ch.position : seat + Vector3.up * 1.0f;
@@ -651,22 +780,34 @@ namespace ProjectInk
             if (prints != null) prints.gameObject.SetActive(true);
             // H20 he turns: on the floor, from straight above, turning
             var floorAt = new Vector3(31.8f, 0f, 0.6f);
-            hero.body.Play("walk", 0.2f, true, 0.6f);
+            // 2.5 m in 2.3 s (past the slumped man's feet, z 0.7 on): the walk at that pace, then a loose stand
+            // looking down at the prints (not a fighter's guard)
+            hero.body.Play("walk", 0.2f, true, 1.0f);
             var p0 = hero.transform.position;
+            var atPrints = new Vector3(30.2f, 0f, 0.2f);
+            hero.LookAtXZ(atPrints);
             yield return Move(4.6f, u => CineCam.OverheadRotation(floorAt, u, 4.4f, -20f, 24f, 50f),
-                u => { hero.CinePose(Vector3.Lerp(p0, new Vector3(30.2f, 0f, 0.2f), Mathf.Min(1f, u * 2f))); if (u > 0.5f && u - StoryDt / 4.6f <= 0.5f) hero.body.Play("idle", 0.3f); });
+                u =>
+                {
+                    hero.CinePose(Vector3.Lerp(p0, atPrints, WalkPace(u * 2f)));
+                    if (u > 0.5f && u - StoryDt / 4.6f <= 0.5f) hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.3f);
+                });
             Say("YOU", "...Small feet. She ran.", 2.6f);
             yield return Hold(2.4f, () => Cine(CineCam.OverheadRotation(floorAt, 1f, 4.4f, -20f, 24f, 50f)));
-            // H21 out through the back door: the garden, the swing still moving; the camera pulls away from him
+            // H21 out through the back door: the garden, the swing still moving; the camera pulls away from him.
+            // Through the middle of the doorway (|z| < 0.62; the open door's leaf lies outside along z 0.62-0.87) and over
+            // its step, at a walk's own pace (6.3 m in 2.6 s was a 2.4 m/s skate at 0.8)
             swingFrom = Time.unscaledTime;
             Sound.Play(Sfx.SwingCreak, 0.7f, new Vector3(HomePlan.SwingX, 1f, HomePlan.SwingZ));
             Sound.Play(Sfx.Door, 0.5f, new Vector3(HomePlan.BackDoorX, 1f, 0f), 0.7f);
-            hero.body.Play("walk", 0.2f, true, 0.8f);
+            hero.body.Play("walk", 0.2f, true, 1.3f);
             var w0 = hero.transform.position;
             var outside = new Vector3(36.4f, 0f, 0.4f);
-            yield return Move(2.6f, u => new CineCam.Shot(new Vector3(31.0f, 1.35f, -1.6f), Vector3.Lerp(HeroHead(), new Vector3(HomePlan.SwingX, 1.2f, HomePlan.SwingZ), u), 40f),
-                u => hero.CinePose(Vector3.Lerp(w0, outside, u)));
-            hero.body.Play("idle", 0.3f);
+            var swing = new Vector3(HomePlan.SwingX, 1.2f, HomePlan.SwingZ);
+            yield return StrollPath(hero, hero.CinePose, new[] { new Vector3(HomePlan.BackDoorX - 0.4f, 0f, 0.05f), outside }, 1.6f, BackStepY, true,
+                () => Cine(new CineCam.Shot(new Vector3(31.0f, 1.35f, -1.6f),
+                                            Vector3.Lerp(HeroHead(), swing, Mathf.InverseLerp(w0.x, outside.x, hero.transform.position.x)), 40f)), 1);
+            hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.3f);
             Sound.Play(Sfx.SwingCreak, 0.6f, new Vector3(HomePlan.SwingX, 1f, HomePlan.SwingZ));
             yield return Move(6.0f, u => CineCam.DronePullAway(hero.transform.position + Vector3.up * 1.0f, u, 2.2f, 13f, 0.6f, 7.5f, 42f));
             cardAt = Time.unscaledTime;

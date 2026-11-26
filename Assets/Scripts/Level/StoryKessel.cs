@@ -95,6 +95,35 @@ namespace ProjectInk
             return best;
         }
 
+        /// <summary>A few steps of his own (in depth too: to a wheel or a crank that stands behind the lane, and back),
+        /// facing the way he goes, the walk's pace matched to the ground covered (no sliding).</summary>
+        IEnumerator KWalkTo(Vector3 to, float secs)
+        {
+            var from = hero.transform.position;
+            float d = Vector3.Distance(from, to);
+            if (d < 0.02f) { hero.CinePose(to); yield break; }
+            hero.LookAtXZ(to);
+            hero.body.Play("walk", 0.15f, true, Mathf.Clamp(d / secs / 1.25f, 0.4f, 1.6f));    // the walk covers 1.25 m/s
+            for (float t = 0f; t < secs; t += StoryDt)
+            {
+                if (SkipNow) break;
+                hero.CinePose(Vector3.Lerp(from, to, t / secs));
+                yield return null;
+            }
+            hero.CinePose(to);
+            hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.2f);
+        }
+
+        /// <summary>CineCam.LowAngleArc, its lens low over this floor. (LowAngleArc puts the lens 0.25 over y 0, the
+        /// street's ground: on Kessel Hill's raised floors that was metres under the stone, the hall's floor or the
+        /// roof filling the frame.)</summary>
+        static CineCam.Shot KLowArc(float floorY, Vector3 subject, float u, float r, float a0, float a1, float fov)
+        {
+            var s = CineCam.LowAngleArc(subject, u, r, a0, a1, fov);
+            s.pos.y = floorY + 0.25f;
+            return s;
+        }
+
         /// <summary>A man of this level: placed on the floor at x, facing the hero.</summary>
         Enemy KMan(EnemyType t, float x, float nearY, bool watch = false, int face = 0)
         {
@@ -202,11 +231,13 @@ namespace ProjectInk
             var from = truck.position;
             float t = 0f;
             var hitAlready = new HashSet<Enemy>();
+            // it rolls under the upper road and stops short of its end (x 322): further on it would roll out
+            // through the retaining wall's end and into the boulders of the cliff behind the road (x 307..319)
             while (t < 2.4f)
             {
                 t += Time.deltaTime;
                 float u = t / 2.4f;
-                truck.position = from + Vector3.left * (u * u * 16f);
+                truck.position = from + Vector3.left * (u * u * 4.8f);
                 foreach (var e in Enemy.All.ToArray())
                 {
                     if (e == null || !e.Targetable || hitAlready.Contains(e)) continue;
@@ -240,7 +271,7 @@ namespace ProjectInk
             hero.CineRelease();
             nextBarrel = Time.time + 2.5f;
             KMan(EnemyType.Brawler, 393f, 7.4f); KMan(EnemyType.Brawler, 408f, 11.4f);
-            KMan(EnemyType.Runner, 410f, 11.4f); KMan(EnemyType.Grabber, 424f, 15.4f);
+            KMan(EnemyType.Runner, 410f, 11.4f); KMan(EnemyType.Grabber, 419f, 15.4f);    // the top of flight three (424 was past the level's end: he snapped back to 420)
             if (director != null) director.ShowBanner("BARRELS: SWIPE UP TO JUMP  ·  THE LIONS ARE COVER", 2.6f);
             yield return KFight(() => hero.transform.position.x > 412f);
             SetArena(kx0, KesselPlan.Levels[2].x0 + 2f);
@@ -318,17 +349,31 @@ namespace ProjectInk
             hero.CinePuppet();
             barsPx = 92f;
             var c0 = new Vector3(KesselPlan.DrawbridgeChain.x, KesselPlan.DrawbridgeChain.y, 0f);
-            var c1 = new Vector3(KesselPlan.ChainTop.x, KesselPlan.ChainTop.y, 0f);
+            // hand over hand up the chain (it runs from 443.2 on the forecourt to the room's window, 448.0 at 21.6), over
+            // the moat and over the raised drawbridge (x 447.25..447.55, its top at 18.9), to hang from the sill: the
+            // room's floor edge (448.0, 21.0). The V4 hang puts his root 0.22 short of an edge and 1.6 under its top
+            // (tools/blender/v4_hang.py); hang_climb ends with him standing 0.26 past it. (A straight line to under the
+            // chain's top went through the drawbridge, and the pull-up ended 0.48 m on, then snapped back.)
+            var sill = new Vector3(KesselPlan.Platforms[5].x0, KesselPlan.Platforms[5].y, 0f);
+            var climb = new[]
+            {
+                new Vector3(hero.transform.position.x, KesselPlan.Platforms[4].y, 0f),
+                new Vector3(KesselPlan.Platforms[4].x1 - 0.1f, KesselPlan.Platforms[4].y, 0f),      // the forecourt's edge: off his feet
+                new Vector3(sill.x - 0.6f, 19.46f, 0f),                                              // hanging under the chain
+                new Vector3(sill.x - 0.22f, sill.y - 1.6f, 0f),                                      // hanging from the sill
+            };
+            hero.SetFacing(1);
             hero.body.Play(hero.body.Has("hang") ? "hang" : "idle", 0.2f);
             Sound.Play(Sfx.Chain, 1f, c0);
             yield return HoldTo("CLIMB THE CHAIN", 2.8f, u =>
             {
-                hero.CinePose(Vector3.Lerp(c0, c1 + Vector3.down * 1.6f, u));
+                hero.CinePose(AlongPath(climb, u, out _));
                 if (Random.value < 0.03f) Sound.Play(Sfx.Chain, 0.6f, hero.transform.position);
             }, c0 + Vector3.up * 2f);
+            hero.CinePose(climb[climb.Length - 1]);
             hero.body.Play(hero.body.Has("hang_climb") ? "hang_climb" : "idle", 0.1f);
             yield return RealWait(0.9f);
-            hero.CinePose(c1);
+            hero.CinePose(sill + Vector3.right * 0.26f);
             barsPx = 0f;
         }
 
@@ -400,6 +445,11 @@ namespace ProjectInk
             // the windlass
             yield return PlayerWalk(KesselPlan.Windlass.x - 0.5f, 449.6f, 1.8f, Application.isMobilePlatform ? "HOLD TO GO TO THE WINDLASS" : "HOLD  D  TO GO TO THE WINDLASS");
             hero.CinePuppet();
+            // it stands behind the lane (its spokes turn in the plane z 1.6, the hub 1.0 up): he steps back to it and
+            // faces it, his hands on the spokes, not heaving at the air in front of it
+            var hub = new Vector3(KesselPlan.Windlass.x, KesselPlan.Windlass.y + 1.0f, 1.6f);
+            yield return KWalkTo(new Vector3(hub.x, KesselPlan.Windlass.y, 0.98f), 0.9f);
+            hero.LookAtXZ(hub);
             hero.body.Play(hero.body.Has("push") ? "push" : "idle", 0.15f);
             yield return MashTo("HEAVE THE WINDLASS", 16, u =>
             {
@@ -407,6 +457,8 @@ namespace ProjectInk
                 if (Random.value < 0.1f) Sound.Play(Sfx.Chain, 0.6f, kPortB != null ? kPortB.position : hero.transform.position);
             });
             Sound.Play(Sfx.Latch, 1f, hero.transform.position);
+            yield return KWalkTo(new Vector3(hub.x, KesselPlan.Windlass.y, 0f), 0.8f);          // back to the lane
+            hero.SetFacing(1);
             SetArena(449.6f, KesselPlan.Levels[4].x0 + 2f);
             hero.CineRelease();
             yield return PlayerWalk(KesselPlan.Levels[4].x0 + 1.2f, 449.6f, 2.0f, Application.isMobilePlatform ? "HOLD TO GO UP TO THE WALL" : "HOLD  D  TO GO UP TO THE WALL");
@@ -606,24 +658,32 @@ namespace ProjectInk
             hero.CinePuppet();
             barsPx = 92f;
             var ph = new Vector3(KesselPlan.Photo.x, 17.0f, 2.8f);
+            // he stands and looks at it (not in his guard), turned towards it on its easel behind the lane
+            int side = hero.Facing;
+            hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.3f);
+            hero.LookAtXZ(hero.transform.position + new Vector3(side * 1f, 0f, 0.7f));
             Say("YOU", "...Me. Twenty. And him.", 2.4f);
-            yield return Cut(2.6f, u => CineCam.DollyIn(ph, new Vector3(0f, 0f, -1f), u, 2.2f, 1.2f, 28f), 0.01f);
+            // in on the frame from the room's side (looking in, +z): from -z it was behind the panelled wall at z 4.2
+            yield return Cut(2.6f, u => CineCam.DollyIn(ph, new Vector3(0f, 0f, 1f), u, 2.2f, 1.2f, 28f), 0.01f);
             Sound.Play(Sfx.FlashCut, 0.8f);
             Say("VOSS MEMORY", "Again. Three lines. One breath.", 2.8f);
-            // the three lines of the kata, drawn in ink before his eyes
+            // the three lines of the kata, drawn in ink before his eyes (the shot on him: at the photo, they were behind the lens)
             var c = hero.transform.position + Vector3.up * 1.4f;
-            yield return RealWait(0.6f);
-            InkStroke.DrawWorld(c + new Vector3(-0.6f, 0.6f, 0f), c + new Vector3(0.6f, -0.6f, 0f), 2.4f, new Color(0.95f, 0.95f, 0.97f, 0.95f), 0.14f);
+            System.Func<float, CineCam.Shot> inkShot = u => Static(c + new Vector3(side * 0.4f, 0.05f, -2.8f), c, 36f);
+            var ink = new Color(0.95f, 0.95f, 0.97f, 0.95f);
+            yield return Cut(0.6f, inkShot, 0.01f);
+            InkStroke.DrawWorld(c + new Vector3(-0.6f, 0.6f, 0f), c + new Vector3(0.6f, -0.6f, 0f), 2.4f, ink, 0.14f);
             Sound.Play(Sfx.SwordSwing, 1f);
-            yield return RealWait(0.5f);
-            InkStroke.DrawWorld(c + new Vector3(0.6f, -0.6f, 0f), c + new Vector3(-0.4f, 0.8f, 0f), 2.0f, new Color(0.95f, 0.95f, 0.97f, 0.95f), 0.14f);
+            yield return Cut(0.5f, inkShot, 0.01f);
+            InkStroke.DrawWorld(c + new Vector3(0.6f, -0.6f, 0f), c + new Vector3(-0.4f, 0.8f, 0f), 2.0f, ink, 0.14f);
             Sound.Play(Sfx.SwordSwing, 1f, null, 1.1f);
-            yield return RealWait(0.5f);
-            InkStroke.DrawWorld(c + new Vector3(-0.7f, 0.1f, 0f), c + new Vector3(0.8f, 0.1f, 0f), 1.6f, new Color(0.95f, 0.95f, 0.97f, 0.95f), 0.14f);
+            yield return Cut(0.5f, inkShot, 0.01f);
+            InkStroke.DrawWorld(c + new Vector3(-0.7f, 0.1f, 0f), c + new Vector3(0.8f, 0.1f, 0f), 1.6f, ink, 0.14f);
             Sound.Play(Sfx.SwordSwing, 1f, null, 1.2f);
-            yield return RealWait(1.4f);
+            yield return Cut(1.4f, inkShot, 0.01f);
             Say("VOSS MEMORY", "You will use this on me one day. That's how I'll know I taught you well.", 4.0f);
-            yield return Cut(4.0f, u => Static(HeroHead() + new Vector3(0.5f, 0.05f, -0.8f), HeroHead(), 28f), 0.01f);
+            hero.SetFacing(side);                                           // (a cut) side on again, his face to the lens
+            yield return Cut(4.0f, u => Static(HeroHead() + new Vector3(side * 0.5f, 0.05f, -0.8f), HeroHead(), 28f), 0.01f);
             if (director != null) director.ShowBanner("THE KATA OF THREE: THREE CUTS WITHOUT A PAUSE", 2.6f);
             CineOff();
             barsPx = 0f;
@@ -688,26 +748,37 @@ namespace ProjectInk
             warden.DriverPhase = 2;
             warden.arenaMinX = kx0; warden.arenaMaxX = kx1;
             warden.Puppet();
-            warden.PuppetPose(new Vector3(641.6f, 15.4f, 3.0f));            // in his chair at the table's head (behind the lane)
+            warden.PuppetPose(new Vector3(641.6f, 15.4f, 3.0f));            // at the table's head, behind his chair (behind the lane)
             warden.SetFacing(-1);
-            warden.PuppetPlay("idle", 0f);
+            warden.PuppetPlay("sentry", 0f);                                // the man who kept the door, on his post (not a fighter's guard yet)
             wardenStage = 0;
             Enemy.StoryFinale = (e, hit) => { if (wardenStage < 5) wardenStage = 5; };
             yield return Cut(3.6f, u => CineCam.LateralReveal(new Vector3(kx0 + 0.6f, 17.6f, -1.6f), new Vector3(kx0 + 4f, 17.8f, -2.4f), new Vector3(640f, 17f, 2f), u, 46f), 0.02f);
             Dress(warden.body, Look.Warden);
             Say("THE WARDEN", "Twenty years I kept his door. Boss says whoever brings the book gets the chair.", 3.6f, HeadOf(warden));
             yield return Cut(3.6f, u => CineCam.DollyIn(HeadOf(warden).position, new Vector3(1f, -0.1f, 0.4f), u, 7f, 3.2f, 30f), 0.015f);
-            warden.PuppetPlay("walk", 0.2f, 0.7f);
-            var w0 = warden.transform.position;
-            Sound.Play(Sfx.Chain, 0.8f, w0);
-            yield return Cut(2.6f, u => CineCam.LowAngleArc(warden.transform.position + Vector3.up * 1.3f, u, 3.6f, -60f, -10f, 36f), 0.02f,
-                u => warden.PuppetPose(Vector3.Lerp(w0, new Vector3(624f, 15.4f, 0f), u)));
+            // round the table's head into the lane: past his chair (x 640.4..641.2, z 2.7..3.5), clear of the table
+            // (x 626..640, z 2.4..3.8) and of the gallery stair's treads (x 640..644, in front of z 1.6); his own width
+            // is 0.3 either side. (He used to walk straight through the chair and the table's end to x 624: 18 m in 2.6 s
+            // on a slow walk, his feet sliding.)
+            var wPath = new[] { warden.transform.position, new Vector3(641.6f, 15.4f, 2.2f), new Vector3(639.6f, 15.4f, 2.0f), new Vector3(638.0f, 15.4f, 0f) };
+            warden.PuppetPlay("walk", 0.2f, PathLength(wPath) / 2.6f / (1.25f * 1.22f));     // the walk covers 1.25 m/s; he's 1.22 tall
+            Sound.Play(Sfx.Chain, 0.8f, wPath[0]);
+            yield return Cut(2.6f, u => KLowArc(15.4f, warden.transform.position + Vector3.up * 1.3f, u, 3.6f, -60f, -10f, 36f), 0.02f,
+                u =>
+                {
+                    var wAt = AlongPath(wPath, u, out var wAhead);
+                    warden.PuppetPose(wAt);
+                    if (wAhead.sqrMagnitude > 0.0001f) warden.LookAtXZ(wAt + wAhead);
+                });
+            warden.PuppetPose(wPath[wPath.Length - 1]);
+            warden.SetFacing(-1);
             warden.PuppetPlay("sword_idle", 0.2f);
             Say("THE WARDEN", "No further.", 1.6f, HeadOf(warden));
             if (director != null) director.ShowBanner("THE WARDEN", 2.6f);
             Sound.Play(Sfx.CineMassive, 0.7f);
             Strike(0.8f, 0.3f);
-            hero.CinePose(new Vector3(kx0 + 4f, 15.4f, 0f));
+            hero.CinePose(new Vector3(630f, 15.4f, 0f));                   // the fight starts 8 m from him, as it did
             CineOff();
             barsPx = 0f;
             warden.PuppetRelease();
@@ -767,7 +838,7 @@ namespace ProjectInk
         {
             // first, from below: the man and the child on the gallery, lit by a strike (the old tower's shots)
             if (!cut) { yield return TheTower(); }
-            yield return BeginLevel(9, true, 659.4f);
+            yield return BeginLevel(9, true, 660.4f);                     // the stair's foot (659.4 was outside the arena: snapped to 660)
             SetArena(kx0, 682.2f);                                   // this side of the broken steps until the jump
             KMan(EnemyType.Swordsman, 673.5f, 21.4f); KMan(EnemyType.Swordsman, 668f, 18.4f);
             foreach (var m in kMen) if (m != null) m.arenaMaxX = 682.2f;
@@ -802,15 +873,21 @@ namespace ProjectInk
                     }
                     else
                     {
-                        // a miss: the hands catch the far edge, a heave up
+                        // a miss: the hands catch the far edge (the ledge's end, x 684), a heave up. Hanging, his root is
+                        // 0.22 short of the edge and 1.6 under its top (tools/blender/v4_hang.py); hang_climb stands him
+                        // 0.26 past it. (He used to hang at x 685, inside the ledge's stone, and snap back after the climb.)
+                        var edge = new Vector3(KesselPlan.Platforms[14].x0, KesselPlan.Platforms[14].y, 0f);
+                        var hangAt = edge + new Vector3(-0.22f, -1.6f, 0f);
+                        hero.SetFacing(1);
                         yield return Cut(0.6f, u => Static(Vector3.Lerp(a, b, 0.5f) + new Vector3(0f, 0.2f, -6f), Vector3.Lerp(a, b, u), 40f), 0.03f,
-                            u => hero.CinePose(Vector3.Lerp(a, b + Vector3.down * 1.6f, u)));
+                            u => hero.CinePose(Vector3.Lerp(a, hangAt, u) + Vector3.up * Mathf.Sin(u * Mathf.PI) * 0.6f));   // up off the step, then short
+                        hero.CinePose(hangAt);
                         hero.body.Play(hero.body.Has("hang") ? "hang" : "idle", 0.05f);
                         Sound.Play(Sfx.HeroEffort, 1f, b);
                         yield return MashTo("PULL YOURSELF UP", 8);
                         hero.body.Play(hero.body.Has("hang_climb") ? "hang_climb" : "idle", 0.05f);
                         yield return RealWait(0.8f);
-                        hero.CinePose(b);
+                        hero.CinePose(edge + Vector3.right * 0.26f);
                         made = true;
                     }
                 }
@@ -839,7 +916,12 @@ namespace ProjectInk
             // the crank turns the dome's slot to the roof's door
             yield return PlayerWalk(KesselPlan.DomeCrank.x - 0.6f, kx0, 1.8f, Application.isMobilePlatform ? "HOLD TO GO TO THE CRANK" : "HOLD  D  TO GO TO THE CRANK");
             hero.CinePuppet();
-            hero.body.Play(hero.body.Has("push") ? "push" : "idle", 0.2f);
+            // the crank stands by the dome's wall, behind the lane: its handle at (714.6, 1.2 up, z 2.5). He goes to it
+            // and turns it, his hands on it (not pushing at the air 2.5 m in front of it)
+            var handle = new Vector3(KesselPlan.DomeCrank.x + 0.6f, KesselPlan.DomeCrank.y + 1.2f, 2.5f);
+            yield return KWalkTo(new Vector3(handle.x, KesselPlan.DomeCrank.y, 1.9f), 1.8f);
+            hero.LookAtXZ(handle);
+            hero.body.Play(hero.body.Has("push_swing") ? "push_swing" : hero.body.Has("push") ? "push" : "idle", 0.2f);   // hands at its height, round and round
             Sound.Play(Sfx.Rumble, 0.8f, hero.transform.position);
             yield return HoldTo("TURN THE CRANK", 2.6f, u => { if (Random.value < 0.05f) Sound.Play(Sfx.MetalClang, 0.4f, hero.transform.position, 0.6f); });
             Sound.Play(Sfx.Door, 1f, hero.transform.position, 0.6f);

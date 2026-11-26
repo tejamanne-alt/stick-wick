@@ -188,7 +188,8 @@ namespace ProjectInk
                 plungerWire.sharedMaterial = iron;
                 plungerWire.widthMultiplier = 0.018f;
                 plungerWire.useWorldSpace = true;
-                var pts = new[] { plungerBox.position + new Vector3(0.18f, 0.05f, 0.1f), WoAt(149.45f, 0.02f, -24.0f), WoAt(149.3f, 0.02f, -18.0f), WoAt(149.45f, 0.02f, -12.0f), WoAt(149.3f, 0.02f, -7.2f), WoAt(149.9f, 0.02f, -5.0f), WoAt(149.7f, 0.02f, -3.4f) };
+                // along the paved path's edge and over the porch's flags (their tops 0.05..0.06 up: at 0.02 it ran under them)
+                var pts = new[] { plungerBox.position + new Vector3(0.18f, 0.05f, 0.1f), WoAt(149.45f, 0.07f, -24.0f), WoAt(149.3f, 0.07f, -18.0f), WoAt(149.45f, 0.07f, -12.0f), WoAt(149.3f, 0.07f, -7.2f), WoAt(149.9f, 0.08f, -5.0f), WoAt(149.7f, 0.08f, -3.4f) };
                 plungerWire.positionCount = pts.Length;
                 plungerWire.SetPositions(pts);
             }
@@ -396,14 +397,18 @@ namespace ProjectInk
             return 1.2f;
         }
 
+        /// <summary>The way out's paving stands proud of the hill's level (tools/blender/build_fortress_front.py: the path's
+        /// and the porch's flags' tops 0.05..0.06 over Up, the bridge's setts 0.02..0.04): on it, not sunk in it.</summary>
+        const float WoPaving = 0.05f;
+
         void WoPlace()
         {
-            var hp = WoAt(147.3f, 0f, heroZ);
+            var hp = WoAt(147.3f, WoPaving, heroZ);
             hero.CinePose(hp);
             hero.transform.rotation = Quaternion.Euler(0f, 90f, 0f);          // facing the camera (-z)
             if (maya != null)
             {
-                maya.PuppetPose(WoAt(147.3f + mayaOff, mayaHop, heroZ + 0.04f + mayaZ));
+                maya.PuppetPose(WoAt(147.3f + mayaOff, WoPaving + mayaHop, heroZ + 0.04f + mayaZ));
                 maya.transform.rotation = Quaternion.Euler(0f, mayaYaw, 0f);
             }
         }

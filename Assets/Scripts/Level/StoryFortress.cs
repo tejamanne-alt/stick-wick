@@ -242,19 +242,23 @@ namespace ProjectInk
                 hero.body.Play("idle", 0.3f);
                 var g1 = director != null ? director.SpawnScripted(Br, SpawnKind.Background) : null;
                 var g2 = director != null ? director.SpawnScripted(Br, SpawnKind.Background) : null;
+                // on the wall walk behind the battlements (the curtain wall's top, z 4.2..5.4 at Up + 8; its merlons stand on
+                // its front edge, z 4.05..4.55): at z 4.1 their legs were sunk in the merlons. On watch: a sentry's stand
+                const float walkZ = 4.85f;
                 foreach (var (g, x) in new[] { (g1, 56.2f), (g2, 57.4f) })
-                    if (g != null) { g.Puppet(); g.PuppetPose(new Vector3(x, FortressPlan.Up + 8.05f, 4.1f)); g.SetFacing(-1); g.PuppetPlay("idle", 0f); GiveTorch(g); }
+                    if (g != null) { g.Puppet(); g.PuppetPose(new Vector3(x, FortressPlan.Up + 8.05f, walkZ)); g.SetFacing(-1); g.PuppetPlay("sentry", 0f); GiveTorch(g); }
                 yield return Cut(2.4f, u => Static(new Vector3(58.5f, FortressPlan.Up + 9.6f, 4.8f), hero.transform.position + Vector3.up * 0.8f, 26f), 0.03f);
                 // (b) on the guards: "Movement on the road!"
                 Say("GUARD", "It's him! The book's on him!", 2.0f, g1 != null ? HeadOf(g1) : null);
-                yield return Cut(2.0f, u => Static(new Vector3(55.0f, FortressPlan.Up + 8.8f, 0.6f), new Vector3(56.8f, FortressPlan.Up + 9.2f, 4.1f), 34f), 0.03f);
+                yield return Cut(2.0f, u => Static(new Vector3(55.0f, FortressPlan.Up + 8.8f, 0.6f), new Vector3(56.8f, FortressPlan.Up + 9.2f, walkZ), 34f), 0.03f);
                 Say("GUARD", "Whoever brings the boss that book gets the son's place!", 2.6f, g2 != null ? HeadOf(g2) : null);
-                yield return Cut(2.6f, u => Static(new Vector3(57.6f, FortressPlan.Up + 8.6f, 0.4f), new Vector3(57.4f, FortressPlan.Up + 9.2f, 4.1f), 32f), 0.03f);
+                yield return Cut(2.6f, u => Static(new Vector3(57.6f, FortressPlan.Up + 8.6f, 0.4f), new Vector3(57.4f, FortressPlan.Up + 9.2f, walkZ), 32f), 0.03f);
                 // (c) back on him, low: he doesn't stop
                 hero.body.Play("walk", 0.2f, true, 0.9f);
                 float wx3 = hero.transform.position.x;
+                // 2.4 m in the 2.2 s: the walk at 0.9 covers 1.1 m/s (at 1.2 m, low on his feet, they slid)
                 yield return Cut(2.2f, u => CineCam.LowAngleArc(hero.transform.position + Vector3.up * 1.1f, u, 2.6f, -30f, -10f, 34f), 0.02f,
-                    u => hero.CinePose(new Vector3(wx3 + u * 1.2f, 0f, 0f)));
+                    u => hero.CinePose(new Vector3(wx3 + u * 2.4f, 0f, 0f)));
                 foreach (var g in new[] { g1, g2 }) if (g != null) g.PuppetDie();
             }
             // ---------------------------------------------------- KESSEL HILL v3: the ascent (StoryKessel), the road to the observatory
@@ -507,7 +511,9 @@ namespace ProjectInk
         /// <summary>A chandelier cut loose over him: its shadow on the floor first, then it comes down.</summary>
         void DropChandelier(float x)
         {
-            // Kessel Hill's hall: the hanging chandelier nearest him is the one that comes down (no twin left hanging)
+            // Kessel Hill's hall: the hanging chandelier nearest him is the one that comes down (no twin left hanging),
+            // from where it hung (a new one 1.6 m higher and 0.4 nearer the lens popped in in its place)
+            var from = new Vector3(x, hallFloorY + 7.4f, 0f);
             if (hallFloorY > 10f)
             {
                 Transform near = null;
@@ -516,10 +522,15 @@ namespace ProjectInk
                     var t = Find(n);
                     if (t != null && t.gameObject.activeSelf && (near == null || Mathf.Abs(t.position.x - x) < Mathf.Abs(near.position.x - x))) near = t;
                 }
-                if (near != null) { x = near.position.x; near.gameObject.SetActive(false); }
+                if (near != null) { x = near.position.x; from = near.position; near.gameObject.SetActive(false); }
             }
+            // it comes down on the floor under it: the minstrels' gallery's, over the hall's far end (not through it)
+            float floorY = hallFloorY;
+            if (hallFloorY > 10f)
+                foreach (var p in KesselPlan.Platforms)
+                    if (p.x0 >= 280f && p.Contains(x) && p.y < from.y - 1f && p.y > floorY) floorY = p.y;
             var root = new GameObject("FallingChandelier").transform;
-            root.position = new Vector3(x, hallFloorY + 7.4f, 0f);
+            root.position = from;
             var ink = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.05f, 0.05f, 0.06f) };
             var white = new Material(Shader.Find("Unlit/Color")) { color = Color.white };
             for (int k = 0; k < 12; k++)
@@ -542,35 +553,37 @@ namespace ProjectInk
             var shadow = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Destroy(shadow.GetComponent<Collider>());
             shadow.name = "ChandelierShadow";
-            shadow.transform.position = new Vector3(x, hallFloorY + 0.02f, 0f);
+            shadow.transform.position = new Vector3(x, floorY + 0.02f, from.z);
             shadow.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             shadow.transform.localScale = new Vector3(2.2f, 1.2f, 1f);
             shadow.GetComponent<Renderer>().material = new Material(Shader.Find("Unlit/Color")) { color = new Color(0f, 0f, 0f) };
             Sound.Play(Sfx.Chain, 0.9f, root.position);
             chandeliers.Add(root);
             chandeliers.Add(shadow.transform);
-            StartCoroutine(FallChandelier(root, shadow.transform));
+            StartCoroutine(FallChandelier(root, shadow.transform, floorY));
         }
 
-        IEnumerator FallChandelier(Transform c, Transform shadow)
+        IEnumerator FallChandelier(Transform c, Transform shadow, float floorY)
         {
             yield return new WaitForSeconds(0.9f);
             float v = 0f;
-            while (c != null && c.position.y > hallFloorY + 0.15f)
+            while (c != null && c.position.y > floorY + 0.15f)
             {
                 v += 22f * Time.deltaTime;
                 c.position += Vector3.down * v * Time.deltaTime;
                 yield return null;
             }
             if (c == null) yield break;
+            c.position = new Vector3(c.position.x, floorY + 0.15f, c.position.z);
             var at = c.position;
             Sound.Play(Sfx.MetalClang, 1f, at);
             Sound.Play(Sfx.Glass, 0.8f, at);
             if (cam != null) cam.Shake(0.25f, 0.3f);
             if (InkFx.Instance != null) InkFx.Instance.Splash(at + Vector3.up * 0.2f, Vector3.up, 30, new Color(0.9f, 0.9f, 0.9f));
-            if (Mathf.Abs(hero.transform.position.x - at.x) < 1.2f && !hero.Invulnerable)
+            // whoever stands on that floor under it (not a man on the floor above or below)
+            if (Mathf.Abs(hero.transform.position.x - at.x) < 1.2f && Mathf.Abs(hero.transform.position.y - floorY) < 1.5f && !hero.Invulnerable)
                 hero.TakeHit(new HitInfo { damage = 18f, direction = hero.transform.position.x < at.x ? -1 : 1, knockback = 5f, knockdown = true, heavy = true });
-            if (warden != null && warden.Alive && Mathf.Abs(warden.transform.position.x - at.x) < 1.2f)
+            if (warden != null && warden.Alive && Mathf.Abs(warden.transform.position.x - at.x) < 1.2f && Mathf.Abs(warden.transform.position.y - floorY) < 1.5f)
             {
                 warden.TakeHit(new HitInfo { damage = 20f, direction = 1, knockback = 3f, heavy = true, hitsDowned = true });
                 if (WaveDirector.Instance != null) WaveDirector.Instance.AddStyle(200, "HIS OWN CHANDELIER!");
@@ -623,36 +636,46 @@ namespace ProjectInk
             hero.CinePuppet();
             barsPx = 92f;
             Sound.Tension(false);
-            // they are up there: a man at the rail holding a child (lit only by the lightning)
-            var gal = new Vector3(FortressPlan.TowerX, FortressPlan.GalleryY, FortressPlan.TowerZ - 4.6f);
+            // they are up there: a man at the edge of the observatory holding a child (lit only by the lightning). Kessel
+            // Hill v3 (KesselPlan): he's at the foot of the tower stair, where the great hall ends, and they're on the
+            // observatory's floor at the top of it, its open front over the stair. (This was the old set's: it cut him into
+            // that hall, at x 146, and its tower's gallery, which the hall's ceiling and roof hide from below; there the man
+            // stood on the rail's line, a rail post through him, the child outside the rail.)
+            var obs = KesselPlan.Levels[10];
+            var gal = new Vector3(KesselPlan.Telescope.x - 1.0f, obs.y, -1.1f);          // on the floor (its front edge z -1.6)
             if (director != null)
             {
                 towerMan = director.SpawnScripted(EnemyType.Brawler, SpawnKind.Background);
                 towerGirl = director.SpawnScripted(EnemyType.Brawler, SpawnKind.Background);
-                if (towerMan != null) { towerMan.Puppet(); towerMan.transform.localScale = Vector3.one * 1.1f; towerMan.PuppetPose(gal); towerMan.SetFacing(-1); towerMan.PuppetPlay("idle", 0f); }
+                // he holds her before him, her feet off the floor (not a boxing guard beside her)
+                if (towerMan != null) { towerMan.Puppet(); towerMan.transform.localScale = Vector3.one * 1.1f; towerMan.PuppetPose(gal); towerMan.SetFacing(-1); towerMan.PuppetPlay(towerMan.body.Has("hold_victim") ? "hold_victim" : "idle_loose", 0f); }
                 if (towerGirl != null)
                 {
                     towerGirl.Puppet();
                     towerGirl.SetBaseColor(new Color(0.86f, 0.86f, 0.85f));
                     towerGirl.transform.localScale = Vector3.one * 0.58f;
-                    towerGirl.PuppetPose(gal + new Vector3(-0.5f, 0.55f, -0.1f));
+                    towerGirl.PuppetPose(gal + new Vector3(-0.5f, 0.45f, -0.1f));
                     towerGirl.SetFacing(-1);
-                    towerGirl.PuppetPlay(towerGirl.body.Has("struggle") ? "struggle" : "idle", 0f);
+                    towerGirl.PuppetPlay(towerGirl.body.Has("struggle") ? "struggle" : "idle_loose", 0f);
                 }
             }
-            hero.CinePose(new Vector3(146f, FortressPlan.Up, -1.0f));
+            // where the hall's end left him (on the stair's first step), turned to the tower; standing, not in his guard
+            float sx = Mathf.Clamp(hero.transform.position.x, KesselPlan.Levels[9].x0 - 0.6f, KesselPlan.Levels[9].x0 + 1.2f);
+            hero.CinePose(new Vector3(sx, FloorAt(sx, KesselPlan.Levels[9].y), 0f));
             hero.SetFacing(1);
+            hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.3f);
             fZone = 5;
-            // (a) outside, low, up the tower in the rain, a strike behind it
-            var foot = new Vector3(FortressPlan.TowerX - 9f, FortressPlan.Up + 0.6f, -6f);
+            // (a) outside, low, in front of the stair's foot: up the stair and the tower to them, a strike behind it
+            var foot = hero.transform.position + new Vector3(-1.6f, 0.6f, -6f);
             Strike(1f, 0.3f);
-            yield return Cut(3.0f, u => CineCam.TiltUp(foot, new Vector3(FortressPlan.TowerX, FortressPlan.Up + 6f, 6f), gal + Vector3.up * 1f, u, 46f), 0.03f);
+            yield return Cut(3.0f, u => CineCam.TiltUp(foot, new Vector3(690f, hero.transform.position.y + 6f, 6f), gal + Vector3.up * 1f, u, 46f), 0.03f);
             // (b) a dolly zoom on the gallery: for a flash, the man and the child
             Strike(1f, 0.1f);
             yield return Cut(2.6f, u => CineCam.DollyZoom(gal + Vector3.up * 0.9f, u, 18f, 8f, 3.4f), 0.02f);
             // (c2) the walkie in his pocket clicks on: she sees him
             Sound.Play(Sfx.Static, 0.6f, hero.Chest, 1.6f);
             HoldWalkie(true);
+            if (hero.body.Has("talk_walkie")) hero.body.Play("talk_walkie", 0.2f);   // the walkie up at his mouth, not held out in a guard
             Walkie("Papa! I see you! You're tiny!", 2.6f);
             yield return Cut(2.8f, u => Static(HeroHead() + new Vector3(0.45f, -0.12f, -0.6f), HeroHead() + Vector3.down * 0.1f, 28f), 0.015f);
             Walkie("The cane man is taking me up to the roof.", 2.8f);
@@ -660,6 +683,7 @@ namespace ProjectInk
             Say("YOU", "I see you too. I'm coming up. Over.", 2.6f);
             yield return Cut(2.8f, u => Static(HeroHead() + new Vector3(0.45f, -0.12f, -0.6f), HeroHead() + Vector3.down * 0.1f, 28f), 0.015f);
             HoldWalkie(false);
+            hero.body.Play(hero.body.Has("idle_loose") ? "idle_loose" : "idle", 0.3f);
             // (c) his voice, down through the storm
             Say("VOICE, FROM THE TOWER", "Come up, old friend. She's been asking for you.", 3.6f);
             yield return Cut(3.6f, u => Static(gal + new Vector3(-2.6f, -1.4f, -3.4f), gal + Vector3.up * 1.0f, 30f), 0.03f, u => { if (u > 0.5f && u - StoryDt / 3.6f <= 0.5f) Strike(0.9f, 0.1f); });

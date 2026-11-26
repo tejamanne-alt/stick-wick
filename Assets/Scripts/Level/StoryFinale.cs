@@ -19,6 +19,8 @@ namespace ProjectInk
         Texture2D[] vossStills;
 
         static Vector3 Roof(float x, float z = 0f) => new Vector3(x, FortressPlan.RoofY, z);
+        /// <summary>Maya held up in Voss's arms (hold_victim: his hands out at his chest), her chest at his hands.</summary>
+        static readonly Vector3 HeldUp = new Vector3(0f, 0.4f, 0f);
         static string Pick(ClipPlayer b, params string[] names)
         {
             foreach (var n in names) if (b != null && b.Has(n)) return n;
@@ -66,7 +68,9 @@ namespace ProjectInk
             {
                 RoofCast();
                 rainAmount = 1f;
-                if (voss != null) voss.PuppetPose(Roof(FortressPlan.EdgeX - 2.6f, 0f));
+                if (voss != null) { voss.PuppetPose(Roof(FortressPlan.EdgeX - 2.6f, 0f)); voss.PuppetPlay("idle", 0f); }
+                // where the duel left her: by the door, down on a knee (not held up in the air by nobody)
+                if (maya != null) { maya.PuppetPose(Roof(FortressPlan.RoofDoorX + 1.6f, 3.4f)); maya.PuppetPlay(Pick(maya.body, "kneel_hurt", "idle_loose"), 0f); }
                 hero.CinePose(Roof(FortressPlan.EdgeX - 4.2f));
                 yield return FadeIn(0.4f);
             }
@@ -97,40 +101,42 @@ namespace ProjectInk
                 }
             }
             if (maya == null) maya = SpawnMaya(Roof(159.0f, -0.55f), -1);
-            if (voss != null) { voss.PuppetPose(Roof(159.6f, -0.4f)); voss.SetFacing(-1); voss.PuppetPlay("idle", 0f); }
-            if (maya != null) { maya.PuppetPose(Roof(159.0f, -0.55f)); maya.SetFacing(-1); maya.PuppetPlay(Pick(maya.body, "struggle", "idle"), 0f); }
+            // he holds her before him (his arms out at his chest), her feet off the stones: not a boxing guard beside a
+            // child he isn't touching
+            if (voss != null) { voss.PuppetPose(Roof(159.6f, -0.4f)); voss.SetFacing(-1); voss.PuppetPlay(Pick(voss.body, "hold_victim", "idle_loose"), 0f); }
+            if (maya != null) { maya.PuppetPose(Roof(159.05f, -0.5f) + (voss != null ? HeldUp : Vector3.zero)); maya.SetFacing(-1); maya.PuppetPlay(Pick(maya.body, "struggle", "idle_loose"), 0f); }
             hero.CinePose(Roof(FortressPlan.RoofDoorX - 0.4f, 0f));
             hero.SetFacing(1);
         }
 
         // ================================================================ the stair, the roof
 
-        /// <summary>Up the outside of the tower in the storm: his shape against the strikes, and the voices.</summary>
+        /// <summary>The top of the tower in the storm: his shape against the strikes, and the voices. Kessel Hill v3: he has
+        /// climbed it already (the tower stair, the observatory: StoryKessel), and the crank has turned the dome's slot to
+        /// the roof's door; so it's played on the observatory's floor (KesselPlan), not up the old hall's tower, which has
+        /// no stair on it: there he walked on air inside the great hall, his head through its ceiling, and came up
+        /// through the roof's stones.</summary>
         IEnumerator TheStair()
         {
             hero.CinePuppet();
             barsPx = 92f;
-            float face = FortressPlan.TowerZ - 4.6f;
-            float[] hs = { 2.6f, 6.4f, 10.2f };
-            hero.body.Play("walk", 0.2f, true, 0.9f);
-            for (int i = 0; i < hs.Length; i++)
+            var obs = KesselPlan.Levels[10];
+            var p0 = new Vector3(KesselPlan.DomeCrank.x - 1.4f, obs.y, 0f);     // back in the lane by the crank, turned to the slot
+            hero.CinePose(p0);
+            hero.SetFacing(-1);
+            hero.body.Play(Pick(hero.body, "idle_alone", "idle_loose"), 0.3f);
+            for (int i = 0; i < 3; i++)
             {
-                var p0 = new Vector3(FortressPlan.TowerX - 2.4f + i * 1.6f, FortressPlan.Up + hs[i], face - 0.2f);
-                hero.CinePose(p0);
-                hero.SetFacing(1);
                 Strike(1f, i == 0 ? 0.4f : 0.15f);
                 if (i == 1) Say("HER", "Promise me you'll always come home.", 2.8f);
                 if (i == 2) Say("MAYA", "Papa! Look!", 1.8f);
-                // low, beside him, up past him at the sky: a silhouette on the lightning
-                var camAt = p0 + (i == 1 ? new Vector3(2.2f, -1.4f, -2.4f) : new Vector3(-1.6f, -1.5f, -2.2f));
-                yield return Cut(i == 1 ? 2.8f : 1.9f, u => Static(camAt, hero.transform.position + new Vector3(0f, 1.6f, 0f), 40f), 0.03f,
-                    u => hero.CinePose(p0 + new Vector3(u * 1.2f, u * 1.1f, 0f)));
+                // low, beside him, up past him at the sky: a silhouette on the lightning. The lens just off the floor's
+                // front edge (z -1.6) and under its top, so the stone's edge hides his feet and nothing cuts the frame
+                var camAt = p0 + (i == 1 ? new Vector3(2.2f, -0.4f, -2.4f) : new Vector3(-1.6f, -0.4f, -2.2f));
+                yield return Cut(i == 1 ? 2.8f : 1.9f, u => Static(camAt, hero.transform.position + new Vector3(0f, 1.6f, 0f), 40f), 0.03f);
             }
-            // high, down the tower's wall: the courtyard far below him, the storm round him
-            var top = new Vector3(FortressPlan.TowerX + 1.0f, FortressPlan.RoofY - 0.6f, face - 0.2f);
-            hero.CinePose(top);
-            yield return Cut(2.0f, u => Static(top + new Vector3(-1.4f, 4.2f, -2.2f), top + new Vector3(0f, -0.4f, 0f), 44f), 0.04f,
-                u => hero.CinePose(top + Vector3.up * u * 0.6f));
+            // high, down on him: the drop under the dome's open front, the storm round him
+            yield return Cut(2.0f, u => Static(p0 + new Vector3(-1.4f, 4.2f, -2.2f), p0 + new Vector3(0f, 0.6f, 0f), 44f), 0.04f);
         }
 
         IEnumerator TheRoof()
@@ -138,7 +144,10 @@ namespace ProjectInk
             RoofCast();
             var door = Roof(FortressPlan.RoofDoorX, FortressPlan.RoofDoorZ);
             hero.CinePose(door + new Vector3(0f, 0f, -0.4f));
-            hero.body.Play("idle", 0.1f);
+            // he strides out of it towards us, facing the way he goes (he slid 3.6 m out side on, standing in his guard):
+            // the walk covers 1.25 m/s, and it's 3.6 m in the 1.6 s
+            hero.LookAtXZ(Roof(FortressPlan.RoofDoorX, 0.4f));
+            hero.body.Play("walk", 0.1f, true, 1.8f);
             // (a) the door bursts open onto the terrace
             Sound.Play(Sfx.Door, 1f, door, 0.6f);
             Sound.Play(Sfx.Boom, 0.6f, door);
@@ -149,6 +158,7 @@ namespace ProjectInk
                 u => hero.CinePose(Vector3.Lerp(door + new Vector3(0f, 0f, -0.4f), Roof(FortressPlan.RoofDoorX, 0.4f), u)));
             hero.CinePose(Roof(FortressPlan.RoofDoorX + 0.4f, 0f));
             hero.SetFacing(1);
+            hero.body.Play(Pick(hero.body, "idle_loose"), 0.3f);           // the talk: standing, not in a boxing guard
             // (b) the reverse, down the terrace: a man at the broken end, holding a child, in the rain
             var vh = voss != null ? HeadOf(voss) : null;
             System.Func<Vector3> vHead = () => vh != null ? vh.position : Roof(159.6f) + Vector3.up * 1.7f;
@@ -162,7 +172,7 @@ namespace ProjectInk
             if (director != null) director.ShowBanner("VOSS", 2.6f);
             Sound.Play(Sfx.CineMassive, 0.6f);
             Say("VOSS", "Look at you. Six years out, and you still walk like one of mine.", 3.4f, vh);
-            yield return Cut(3.4f, u => CineCam.LowAngleArc(vHead() + Vector3.down * 0.5f, u, 2.8f, -40f, -20f, 34f), 0.015f);
+            yield return Cut(3.4f, u => KLowArc(FortressPlan.RoofY, vHead() + Vector3.down * 0.5f, u, 2.8f, -40f, -20f, 34f), 0.015f);
             Say("YOU", "Let her go.", 1.8f);
             yield return Cut(2.0f, u => CineCam.DollyIn(HeroHead(), new Vector3(-0.5f, -0.05f, 1f), u, 2.2f, 1.4f, 30f), 0.015f);
             // flash 3: three nights... last night, the window, the phone: the order he gave
@@ -189,8 +199,10 @@ namespace ProjectInk
             // THE RAIN: it has held off all night. Now, here, with the two of them face to face, it comes.
             yield return TheRain(vHead);
             // THE TRADE: everything he sent has failed; this is his last card, and it's force
-            if (maya != null) { maya.PuppetPose(Roof(FortressPlan.EdgeX - 0.6f, -2.4f)); maya.PuppetPlay(Pick(maya.body, "struggle", "idle"), 0.1f); }
-            if (voss != null) voss.PuppetPose(Roof(FortressPlan.EdgeX - 1.2f, -2.0f));
+            // at the broken end, she held up before him over the edge's stones (she used to be behind him, out of his
+            // hands; and when he let her go she ran straight through him where he knelt)
+            if (maya != null) { maya.PuppetPose(Roof(FortressPlan.EdgeX - 1.35f, -2.1f) + (voss != null ? HeldUp : Vector3.zero)); maya.PuppetPlay(Pick(maya.body, "struggle", "idle_loose"), 0.1f); }
+            if (voss != null) { voss.PuppetPose(Roof(FortressPlan.EdgeX - 0.8f, -2.0f)); voss.SetFacing(-1); }
             Sound.Play(Sfx.Struggle, 0.6f, mh != null ? mh.position : vHead());
             Say("VOSS", "You've killed my whole house to get here. Now: the book. Or she learns to fly.", 4.0f, vh);
             yield return Cut(4.0f, u => Static(Roof(FortressPlan.EdgeX - 3.0f, -5.2f) + Vector3.up * 0.6f, Roof(FortressPlan.EdgeX - 0.8f, -2.2f) + Vector3.up * 0.9f, 36f), 0.03f);
@@ -200,7 +212,7 @@ namespace ProjectInk
             bookProp = MakeBook();
             bookProp.position = hero.Chest + Vector3.right * 0.3f;
             var b0 = Roof(hero.transform.position.x + 0.6f, -0.4f) + Vector3.up * 0.04f;
-            var b1 = Roof(FortressPlan.EdgeX - 1.8f, -1.8f) + Vector3.up * 0.04f;
+            var b1 = Roof(FortressPlan.EdgeX - 2.3f, -1.7f) + Vector3.up * 0.04f;           // at their feet, before them
             System.Action tradeShot = () => Cine(Static(Roof((b0.x + b1.x) * 0.5f, -5.0f) + Vector3.up * 0.8f, Roof((b0.x + b1.x) * 0.5f, -1.0f) + Vector3.up * 0.3f, 40f));
             StartCoroutine(HoldWhile(() => scAsk != ScAsk.None, tradeShot));
             yield return DragTo("SLIDE THE BOOK TO HIM", Vector2.right, p => { if (bookProp != null) bookProp.position = Vector3.Lerp(b0, b1, p); }, b0);
@@ -208,20 +220,23 @@ namespace ProjectInk
             yield return Cut(1.2f, u => Static(b1 + new Vector3(-0.6f, 0.4f, -0.8f), b1, 30f), 0.01f);
             // he lets her go: she runs to the door
             Say("VOSS", "Run along, little one.", 2.0f, vh);
-            if (voss != null) { voss.PuppetPose(Roof(FortressPlan.EdgeX - 1.9f, -1.6f)); voss.PuppetPlay(Pick(voss.body, "kneel_hold", "idle"), 0.2f); }
-            if (maya != null) maya.PuppetPlay(Pick(maya.body, "run", "walk"), 0.1f, 1.3f);
+            // he sets her down where he stands and she runs, away from him, past the book, to the door
+            if (voss != null) voss.PuppetPlay(Pick(voss.body, "kneel_hold", "idle_loose"), 0.2f);
+            if (maya != null) maya.PuppetPose(new Vector3(maya.transform.position.x, FortressPlan.RoofY, maya.transform.position.z));
             var m0 = maya != null ? maya.transform.position : Vector3.zero;
             var m1 = Roof(FortressPlan.RoofDoorX + 1.6f, 3.4f);
+            // a child's run (the run covers 4.8 m/s, at her 0.58 that's 2.8), at the pace she crosses it: no sliding feet
+            if (maya != null) maya.PuppetPlay(Pick(maya.body, "run", "walk"), 0.1f, Vector3.Distance(m0, m1) / 2.6f / (4.8f * 0.58f));
             yield return Cut(2.6f, u => Static(Roof(155.5f, -5.5f) + Vector3.up * 1.4f, Roof(155.5f, 0.5f) + Vector3.up * 0.8f, 44f), 0.02f,
-                u => { if (maya != null) { maya.SetFacing(-1); maya.PuppetPose(Vector3.Lerp(m0, m1, Mathf.SmoothStep(0f, 1f, u))); } });
-            if (maya != null) maya.PuppetPlay(Pick(maya.body, "kneel_hurt", "idle"), 0.2f);
+                u => { if (maya != null) { maya.PuppetPose(Vector3.Lerp(m0, m1, u)); maya.LookAtXZ(m1); } });       // the way she runs (into the depth too)
+            if (maya != null) { maya.PuppetPose(m1); maya.SetFacing(1); maya.PuppetPlay(Pick(maya.body, "kneel_hurt", "idle_loose"), 0.2f); }
             // he weighs the book, lets it fall, and draws the blade from his cane
-            if (bookProp != null) bookProp.position = Roof(FortressPlan.EdgeX - 1.9f, -1.5f) + Vector3.up * 0.04f;
-            if (voss != null) voss.PuppetPlay("idle", 0.2f);
+            if (bookProp != null) bookProp.position = Roof(FortressPlan.EdgeX - 1.6f, -1.6f) + Vector3.up * 0.04f;     // before his feet, not under his knee
+            if (voss != null) voss.PuppetPlay(Pick(voss.body, "idle_loose"), 0.2f);
             Say("VOSS", "...I did teach you better than to trust me.", 2.8f, vh);
             Sound.Play(Sfx.SwordSwing, 0.9f, vHead());
             Sound.Play(Sfx.Glint, 0.8f, vHead());
-            yield return Cut(2.8f, u => CineCam.LowAngleArc(vHead() + Vector3.down * 0.6f, u, 2.4f, -20f, 10f, 32f), 0.015f);
+            yield return Cut(2.8f, u => KLowArc(FortressPlan.RoofY, vHead() + Vector3.down * 0.6f, u, 2.4f, -20f, 10f, 32f), 0.015f);
             Say("YOU", "...I remember. All of it.", 2.4f);
             yield return Cut(2.4f, u => CineCam.DollyIn(HeroHead(), new Vector3(0.4f, 0.2f, 1f), u, 1.5f, 0.9f, 28f), 0.01f);
         }
@@ -333,7 +348,7 @@ namespace ProjectInk
                 yield return RealWait(1.2f);
             }
             Say("VOSS", "Show me what's left of my best student.", 2.6f, HeadOf(voss));
-            yield return Cut(2.6f, u => CineCam.LowAngleArc(new Vector3(155f, FortressPlan.RoofY + 1.2f, 0f), u, 5.0f, -70f, -110f, 40f), 0.02f);
+            yield return Cut(2.6f, u => KLowArc(FortressPlan.RoofY, new Vector3(155f, FortressPlan.RoofY + 1.2f, 0f), u, 5.0f, -70f, -110f, 40f), 0.02f);
             SetArena(138f, FortressPlan.RoofX1);
             FortressCheckpoint = 7;
             CineOff();
@@ -404,10 +419,13 @@ namespace ProjectInk
             yield return Cut(1.8f, u => CineCam.DollyIn(HeroHead(), new Vector3(0.4f, 0.1f, 1f), u, 1.6f, 1.0f, 28f), 0.01f);
             // bare hands: inside his blade, the wrist, the twist; the cane's blade rings off the stones
             var vp = voss.transform.position;
-            hero.CinePose(vp + Vector3.left * 0.62f);
+            int hs = hero.transform.position.x <= vp.x ? -1 : 1;           // on the side he's on (not always the left: through him)
+            hero.CinePose(new Vector3(vp.x + hs * 0.62f, vp.y, 0f));
+            hero.FaceTowards(vp.x);
+            voss.FaceTowards(hero.transform.position.x);
             hero.body.Play(hero.body.Has("clinch_enter") ? "clinch_enter" : "idle", 0.05f);
             voss.PuppetPlay(voss.body.Has("clinch_enter_v") ? "clinch_enter_v" : "hit_front", 0.05f);
-            yield return Cut(0.8f, u => Static(vp + new Vector3(-0.3f, 1.2f, -2.4f), vp + Vector3.up * 1.0f, 34f), 0.02f);
+            yield return Cut(0.8f, u => Static(vp + new Vector3(hs * 0.3f, 1.2f, -2.4f), vp + Vector3.up * 1.0f, 34f), 0.02f);
             voss.ShowCaneBlade(false);
             voss.KatanaBoss = false;
             Sound.Play(Sfx.SwordClash, 1f, vp, 0.7f);
@@ -456,24 +474,27 @@ namespace ProjectInk
             {
                 var hand = voss.body.Bone("hand.R");
                 if (hand == null) return;
+                // the pistol (FighterFactory's: its barrel along +z, the grip down -y) with its barrel along the hand,
+                // wrist to knuckles (measured: the hand bone to its fingers), its top on the thumb's side (the V4 hand's
+                // +x, tools/blender/v4_rig.py), at its real size. (It hung off the bone unturned: the barrel stuck out of
+                // his palm, square to his arm, and the aim line started beside it.)
+                var fing = voss.body.Bone("fingers.R");
+                var along = fing != null ? hand.InverseTransformDirection(fing.position - hand.position) : Vector3.up;
+                along = along.sqrMagnitude > 1e-8f ? along.normalized : Vector3.up;
+                var top = Vector3.right - along * Vector3.Dot(Vector3.right, along);
+                float s = Mathf.Max(0.01f, hand.lossyScale.x);
                 vossGun = new GameObject("VossGun").transform;
                 vossGun.SetParent(hand, false);
-                vossGun.localPosition = new Vector3(0f, 0.06f, 0f);
-                var ink = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.02f, 0.02f, 0.02f) };
-                foreach (var (p, s) in new[] { (Vector3.zero, new Vector3(0.05f, 0.11f, 0.035f)), (new Vector3(0f, 0.06f, 0.05f), new Vector3(0.045f, 0.045f, 0.16f)) })
-                {
-                    var c = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    Destroy(c.GetComponent<Collider>());
-                    c.transform.SetParent(vossGun, false);
-                    c.transform.localPosition = p;
-                    c.transform.localScale = s;
-                    c.GetComponent<Renderer>().sharedMaterial = ink;
-                }
+                vossGun.localRotation = Quaternion.LookRotation(along, top.sqrMagnitude > 1e-6f ? top.normalized : Vector3.forward);
+                vossGun.localScale = Vector3.one / s;
+                vossGun.localPosition = along * (0.03f / s);
+                FighterFactory.Model(vossGun, FightStyle.Gun, new Material(Shader.Find("Unlit/Color")) { color = new Color(0.02f, 0.02f, 0.02f) });
             }
             if (vossGun != null) vossGun.gameObject.SetActive(on);
         }
 
-        Vector3 VossMuzzle => vossGun != null ? vossGun.position + Vector3.right * (voss != null ? voss.Facing : 1) * 0.14f : voss != null ? voss.Chest + Vector3.up * 0.25f : Vector3.zero;
+        /// <summary>The muzzle: the end of the barrel (FighterFactory's pistol: z 0.17, 0.02 up).</summary>
+        Vector3 VossMuzzle => vossGun != null ? vossGun.TransformPoint(new Vector3(0f, 0.02f, 0.17f)) : voss != null ? voss.Chest + Vector3.up * 0.25f : Vector3.zero;
 
         void AimLine(bool on, float u = 0f)
         {
@@ -509,10 +530,13 @@ namespace ProjectInk
             {
                 var v0 = voss.transform.position;
                 float tx = Mathf.Clamp(v0.x - d * (3.8f - gap), 139f, FortressPlan.RoofX1 - 0.4f);
-                voss.PuppetPlay(Pick(voss.body, "dodge_back", "walk"), 0.05f, 1.6f);
-                for (float t = 0f; t < 0.32f; t += Time.deltaTime)
+                // backing off, still facing him (there's no "dodge_back": it fell to "walk", forward steps while he slid
+                // up to 3.3 m backwards in 0.32 s). A quick back-pedal, 2.2 m/s; the retreat covers 0.7 m/s
+                float back = Mathf.Abs(tx - v0.x), dur = Mathf.Max(0.32f, back / 2.2f);
+                voss.PuppetPlay(Pick(voss.body, "dodge_back", "retreat", "walk"), 0.05f, Mathf.Max(1f, back / dur / 0.7f));
+                for (float t = 0f; t < dur; t += Time.deltaTime)
                 {
-                    voss.PuppetPose(Vector3.Lerp(v0, new Vector3(tx, v0.y, v0.z), t / 0.32f));
+                    voss.PuppetPose(Vector3.Lerp(v0, new Vector3(tx, v0.y, v0.z), t / dur));
                     yield return null;
                 }
             }
@@ -643,10 +667,15 @@ namespace ProjectInk
             // over: one hand on the broken stone
             Sound.Play(Sfx.BodyFall, 0.9f, edge);
             Sound.Play(Sfx.Crate, 0.6f, edge);
-            var hang = edge + new Vector3(0.1f, -1.85f, -0.5f);
+            // hanging off the terrace's front edge (z -3.2), facing in at the stone, his hands on its lip: the V4 hang
+            // puts the root 0.22 out from an edge and 1.6 under its top (tools/blender/v4_hang.py), x his 1.04. (He hung
+            // side on, facing along the roof, his hands in the air off the edge.)
+            var hang = new Vector3(edge.x + 0.1f, FortressPlan.RoofY - 1.6f * 1.04f, -3.2f - 0.22f * 1.04f);
             voss.PuppetPose(hang);
+            voss.LookAtXZ(hang + Vector3.forward);
             voss.PuppetPlay(Pick(voss.body, "hang", "idle"), 0.05f);
             hero.CinePose(Roof(FortressPlan.EdgeX - 0.4f, -2.0f));
+            hero.LookAtXZ(hang);                                            // on his knee at the edge, turned to him below
             hero.body.Play(Pick(hero.body, "kneel_hand", "kneel_hold", "idle"), 0.2f);
             var vh = HeadOf(voss);
             // high, over the edge, down at him: the drop under him, the valley's lights
@@ -702,21 +731,21 @@ namespace ProjectInk
             Sound.Music("finale", 0.75f, false, 2.5f);
             hero.CinePose(Roof(FortressPlan.EdgeX - 2.4f));
             hero.SetFacing(-1);
-            hero.body.Play("idle", 0.3f);
+            hero.body.Play(Pick(hero.body, "idle_loose"), 0.3f);           // it's over: standing, not in his guard
             if (maya == null) yield break;
             // she runs to him across the wet stones
             var m0 = Roof(FortressPlan.RoofDoorX + 1.6f, 1.0f);
             var m1 = Roof(FortressPlan.EdgeX - 3.0f, 0f);
             maya.PuppetPose(m0);
             maya.SetFacing(1);
-            maya.PuppetPlay(Pick(maya.body, "run", "walk"), 0.1f, 1.3f);
+            maya.PuppetPlay(Pick(maya.body, "run", "walk"), 0.1f, Vector3.Distance(m0, m1) / 3.2f / (4.8f * 0.58f));   // her run at the pace she covers (it slid at 1.3)
             Sound.Play(Sfx.Splash, 0.5f, m0);
             yield return Cut(3.2f, u => Static(Roof(FortressPlan.EdgeX - 6f, -5.5f) + Vector3.up * 1.0f, Vector3.Lerp(m0, m1, u) + Vector3.up * 0.6f, 38f), 0.025f,
                 u => maya.PuppetPose(Vector3.Lerp(m0, m1, u)));
             // he goes down to her; she's in his arms
             hero.body.Play(Pick(hero.body, "kneel_hold", "kneel_hand", "idle"), 0.25f);
             maya.PuppetPose(Roof(FortressPlan.EdgeX - 2.85f, -0.1f));
-            maya.PuppetPlay("idle", 0.2f);
+            maya.PuppetPlay(Pick(maya.body, "idle_loose"), 0.2f);          // a child in her father's arms, not in a boxing guard
             var mh = HeadOf(maya);
             Sound.Play(Sfx.Cloth, 0.8f, m1);
             yield return Cut(2.4f, u => CineCam.DollyIn((mh.position + HeroHead()) * 0.5f, new Vector3(0.2f, -0.1f, 1f), u, 3.0f, 2.0f, 34f), 0.015f);
@@ -780,15 +809,16 @@ namespace ProjectInk
             hero.CinePose(new Vector3(bp.x - 0.7f, FortressPlan.RoofY, bp.z + 0.2f));
             hero.SetFacing(1);
             hero.body.Play(Pick(hero.body, "kneel_hand", "idle"), 0.3f);
-            if (maya != null) { maya.PuppetPose(new Vector3(bp.x - 1.3f, FortressPlan.RoofY, bp.z + 0.4f)); maya.SetFacing(1); maya.PuppetPlay("idle", 0.2f); }
+            if (maya != null) { maya.PuppetPose(new Vector3(bp.x - 1.3f, FortressPlan.RoofY, bp.z + 0.4f)); maya.SetFacing(1); maya.PuppetPlay(Pick(maya.body, "idle_loose"), 0.2f); }
             yield return Cut(3.0f, u => Static(bp + new Vector3(-0.5f, 0.6f, -0.9f), bp, 30f), 0.01f);
             if (bookProp != null) bookProp.gameObject.SetActive(false);
             Sound.Play(Sfx.Cloth, 0.7f, hero.Chest);
             Say("YOU", "...Forty-one names.", 2.2f);
             yield return Cut(2.4f, u => Static(HeroHead() + new Vector3(0.7f, -0.1f, -1.0f), HeroHead(), 30f), 0.01f);
-            hero.body.Play("idle", 0.3f);
-            // she comes to him; her hand finds his
-            if (maya != null) { maya.PuppetPose(new Vector3(bp.x - 0.95f, FortressPlan.RoofY, bp.z + 0.1f)); maya.PuppetPlay("idle", 0.2f); }
+            hero.body.Play(Pick(hero.body, "idle_loose"), 0.3f);
+            // she comes to him; her hand finds his: at his side, on the camera's side of him (0.25 behind him and 0.1
+            // off, she stood inside his body)
+            if (maya != null) { maya.PuppetPose(new Vector3(bp.x - 0.75f, FortressPlan.RoofY, bp.z + 0.2f - 0.46f)); maya.PuppetPlay(Pick(maya.body, "idle_loose"), 0.2f); }
             Say("MAYA", "Papa?", 1.4f, maya != null ? HeadOf(maya) : null);
             yield return Cut(1.8f, u => Static(Roof(bp.x - 1.0f, -3.5f) + Vector3.up * 1.0f, Roof(bp.x - 1.0f, bp.z) + Vector3.up * 0.8f, 36f), 0.01f);
             Say("YOU", "...Let's go home.", 2.2f);

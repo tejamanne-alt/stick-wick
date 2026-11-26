@@ -124,14 +124,29 @@ def build_road(coll, M):
     for x in range(298, 344, 2):                                                # the edge: posts and a rail, the drop beyond
         g.box((x, -3.0, 0.4), (0.16, 0.16, 0.8), M["stone_dark"])
     g.beam((298, -3.0, 0.76), (343, -3.0, 0.76), 0.07, 0.05, M["iron"])
-    # the retaining wall under the upper road (behind the lower one): cut stone, a drain, ivy dark
-    g.box(((322 + 352) / 2, BACK + 0.4, 1.7), (30.0, 0.8, 3.4), M["stone"])
-    g.box((322.0, BACK + 0.4, 1.7), (0.6, 0.8, 3.4), M["stone"])                  # its end (behind the lane: the lower road runs on)
-    floor_slab(g, 322.0, 384.0, 3.4, M["road"], front=-1.4, back=BACK + 2.4, thick=0.5)   # the upper road over it
+    # the retaining wall under the upper road (behind the lower one): cut stone, a drain, ivy dark. Where the gang's
+    # truck stands (x 327..334, y 2.25..4.75: KTruck) it's set back behind it, a bay under the upper road the truck
+    # rolls along (StoryKessel.TruckRolls: 4.8 m, to x 322.35): a wall at BACK + 0.4 was through the truck and hid it
+    bay0, bay1, bay_y = 322.0, 335.0, BACK + 2.6                                  # the bay, and its back wall's face
+    g.box(((bay1 + 352) / 2, BACK + 0.4, 1.7), (352 - bay1, 0.8, 3.4), M["stone"])
+    g.box(((bay0 + bay1) / 2, bay_y + 0.4, 1.7), (bay1 - bay0, 0.8, 3.4), M["stone"])
+    g.box((bay1, (BACK + bay_y) / 2 + 0.2, 1.7), (0.6, bay_y - BACK + 0.4, 3.4), M["stone"])   # the bay's side, at the wall's end
+    g.box((bay0, bay_y + 0.4, 1.7), (0.6, 0.8, 3.4), M["stone"])                 # its end (behind the lane: the lower road runs on)
+    floor_slab(g, bay0, bay1, 0.0, M["road"], front=BACK, back=bay_y)             # the bay's floor, under the truck
+    # the upper road over it: over the bend (x 344..352) its edge steps back behind the lane (z 0.35), so the steps
+    # climb in the lane up to it, not through the slab (they used to rise under it, a man's head and chest through it)
+    bend0, bend1 = 344.0, 352.0
+    floor_slab(g, bay0, bay1, 3.4, M["road"], front=-1.4, back=bay_y, thick=0.5)
+    floor_slab(g, bay1, bend0, 3.4, M["road"], front=-1.4, back=BACK + 2.4, thick=0.5)
+    floor_slab(g, bend0, bend1, 3.4, M["road"], front=0.35, back=BACK + 2.4, thick=0.5)
+    floor_slab(g, bend1, 384.0, 3.4, M["road"], front=-1.4, back=BACK + 2.4, thick=0.5)
     for x in range(323, 380, 2):
+        if bend0 < x < bend1:
+            continue                                                             # no rail on the bend's open edge
         g.box((x, -1.5, 3.8), (0.16, 0.16, 0.8), M["stone_dark"])
-    g.beam((323, -1.5, 4.16), (379, -1.5, 4.16), 0.07, 0.05, M["iron"])
-    steps(g, 344.0, 0.0, 352.0, 3.4, M["road"], front=-3.0, back=-1.45, n=12)    # the bend (seen as a ramp)
+    g.beam((323, -1.5, 4.16), (bend0 - 1, -1.5, 4.16), 0.07, 0.05, M["iron"])
+    g.beam((bend1 + 1, -1.5, 4.16), (379, -1.5, 4.16), 0.07, 0.05, M["iron"])
+    steps(g, bend0, 0.0, bend1, 3.4, M["road"], front=-3.0, back=0.3, n=12)       # the bend (seen as a ramp): the lane climbs it
     # the rock face above the upper road, pines on the slope
     D.terrain(g, 318, x1, BACK + 2.4, 18, lambda x, y: 3.4 + max(0.0, y - BACK - 2.4) ** 1.3 * 0.9, M["rock_top"], res=1.0, amp=0.8, seed=5.0)
     for x in range(320, 382, 5):
@@ -198,8 +213,9 @@ def build_barbican(coll, M):
     g.box((446.0, 0.5, z - 6.0), (4.0, 6.0, 0.6), M["rock_top"])                # the moat's floor, far down
     for x in (444.2, 447.8):
         g.box((x, 0.5, z - 3.0), (0.4, 6.0, 6.0), M["stone_y"])
-    # the drawbridge, UP: standing against the gatehouse, its chains
-    g.box((447.4, 0.0, z + 3.8), (0.3, 2.6, 7.4), M["planks_wall"])
+    # the drawbridge, UP: standing against the gatehouse, its chains. 3.4 m (to z + 3.5): the chain he climbs
+    # (StoryKessel.KBarbican) passes over it to the window; at 7.4 m it was through him
+    g.box((447.4, 0.0, z + 1.8), (0.3, 2.6, 3.4), M["planks_wall"])
     cx, cz = K.MARKS["drawbridge_chain"]
     g.beam((cx, -0.4, cz + 0.2), (448.0, -0.4, 21.6), 0.07, 0.07, M["iron"])
     g.beam((cx, 0.6, cz + 0.2), (448.0, 0.6, 21.6), 0.07, 0.07, M["iron"])
@@ -227,16 +243,31 @@ def build_passage(coll, M):
     x0, x1, z = K.P[6][0], K.P[6][1], K.P[6][2]
     floor_slab(g, x0, x1, z, M["flags"], back=BACK + 0.6, thick=4.0)
     g.box(((x0 + x1) / 2, BACK + 0.8, z + 3.0), (x1 - x0, 0.6, 6.0), M["stone_dark"])     # the passage's back wall
-    for k in range(8):                                                                   # its vault, in ribs
-        xx = x0 + 1.5 + k * 3.0
-        g.box((xx, 0.4, z + 5.4), (0.4, 3.6, 0.4), M["stone"])
-    g.box(((x0 + x1) / 2, 0.4, z + 5.8), (x1 - x0, 3.6, 0.4), M["stone"])               # the ceiling (the room above)
     # the room above (the chain's window, the murder holes in its floor)
     rx0, rx1, rz = K.P[5][0], K.P[5][1], K.P[5][2]
-    floor_slab(g, rx0, rx1, rz, M["planks"], back=BACK + 0.6, thick=0.3)
-    g.box(((rx0 + rx1) / 2, BACK + 0.8, rz + 2.0), (rx1 - rx0, 0.6, 4.0), M["stone_dark"])
     hx, _ = K.MARKS["murder_hole_drop"]
-    g.box((hx, 0.0, rz - 0.15), (1.0, 1.0, 0.32), M["iron"])                              # the hole's grate
+    H = 0.6                                                                              # the murder hole: 1.2 m square
+
+    def holed(xa, xb, ya, yb, zc, th, m):
+        """A slab (xa..xb, ya..yb) with the murder hole open through it (he drops through it: StoryKessel.KPassage)."""
+        g.box(((xa + hx - H) / 2, (ya + yb) / 2, zc), (hx - H - xa, yb - ya, th), m)
+        g.box(((hx + H + xb) / 2, (ya + yb) / 2, zc), (xb - hx - H, yb - ya, th), m)
+        g.box((hx, (ya - H) / 2, zc), (2 * H, -H - ya, th), m)
+        g.box((hx, (H + yb) / 2, zc), (2 * H, yb - H, th), m)
+
+    # its vault, in ribs, and its ceiling: under the room's floor (whose top is rz), not through it (the ceiling's top
+    # was rz + 0.4: a man in the room stood in stone to the shins)
+    for k in range(8):
+        xx = x0 + 1.5 + k * 3.0
+        if abs(xx - hx) < H + 0.3:
+            continue                                                                     # not across the hole
+        g.box((xx, 0.4, rz - 0.9), (0.4, 3.6, 0.4), M["stone"])
+    holed(x0, x1, -1.4, 2.2, rz - 0.5, 0.4, M["stone"])                                  # the ceiling (the room above)
+    holed(rx0, rx1, -1.6, BACK + 0.6, rz - 0.15, 0.3, M["planks"])                       # the room's floor
+    g.box(((rx0 + rx1) / 2, BACK + 0.8, rz + 2.0), (rx1 - rx0, 0.6, 4.0), M["stone_dark"])
+    for s in (-1, 1):                                                                    # the hole's iron frame (its grate long gone)
+        g.box((hx + s * (H + 0.04), 0.0, rz - 0.15), (0.08, 2 * H + 0.16, 0.32), M["iron"])
+        g.box((hx, s * (H + 0.04), rz - 0.15), (2 * H + 0.16, 0.08, 0.32), M["iron"])
     for tx in (rx0 + 2, rx1 - 2):
         g.box((tx, BACK + 0.2, rz + 1.6), (0.2, 0.2, 0.5), M["iron"])
         g.box((tx, BACK + 0.2, rz + 1.95), (0.15, 0.15, 0.2), M["fire"])
@@ -276,7 +307,7 @@ def build_wall(coll, M):
     x0, x1, z = K.P[7][0], K.P[7][1], K.P[7][2]
     # the curtain wall: its walk, the parapet with merlons on the cliff side (behind), the low parapet
     # on the courtyard side (in front: below the camera's eye, a drop beyond)
-    g.box(((x0 + x1) / 2, 0.8, z - 3.6), (x1 - x0 + 2, 5.0, 7.2), M["stone"])
+    g.box(((x0 + x1) / 2, 0.8, z - 3.6), (x1 - x0, 5.0, 7.2), M["stone"])      # (a metre longer each end, the stairs' tops climbed into it)
     floor_slab(g, x0, x1, z, M["flags"], front=-1.7, back=BACK + 0.4, thick=0.4)
     g.box(((x0 + x1) / 2, BACK + 0.8, z + 0.55), (x1 - x0, 0.6, 1.1), M["stone"])
     D.merlons(g, x0, x1, BACK + 0.8, z + 1.1, 0.6, M["stone"], w=0.9, gap=0.6, h=1.0)
@@ -318,7 +349,9 @@ def build_court(coll, M):
     for px in (lx0 + 0.2, (lx0 + lx1) / 2, lx1 - 0.2):
         g.box((px, BACK + 1.4, (z + lz) / 2), (0.25, 0.25, lz - z), M["planks_wall"])
     g.box(((lx0 + lx1) / 2, BACK + 2.0, (z + lz) / 2 + 1.5), (lx1 - lx0, 0.3, lz - z + 3.0), M["planks_wall"])
-    open_steps(g, K.S[6][2], K.S[6][3], K.S[6][0], K.S[6][1], M["planks"], front=-1.3, back=0.8, n=10)   # the roof's slope (the yard runs on under it)
+    # the roof's slope (the yard runs on under it): its boards just behind the lane, so a man walking the yard under
+    # it passes in front of them (in the lane they went through his chest and hips: it comes down to the yard)
+    open_steps(g, K.S[6][2], K.S[6][3], K.S[6][0], K.S[6][1], M["planks"], front=0.3, back=1.6, n=10)
     for k in range(9):                                                     # the ladder at the loft's edge
         g.box((lx0 - 0.15, -0.6, z + 0.3 + k * 0.36), (0.1, 0.5, 0.05), M["planks_wall"])
     for s in (-1, 1):
@@ -347,7 +380,7 @@ def build_court(coll, M):
     g.box((bx - 1.0, BACK + 1.15, z + 1.4), (1.4, 0.1, 2.8), M["planks_wall"])
     g.box((bx - 1.0, BACK + 1.6, z + 10.0), (1.6, 1.4, 2.0), M["stone"])
     g.cyl((bx - 1.0, BACK + 1.6, z + 9.6), 0.45, 0.7, M["copper"], n=14, r2=0.25)
-    g.beam((bx, -0.2, z + 9.4), (bx, -0.2, z + 1.0), 0.03, 0.03, M["planks_wall"])
+    g.beam((bx, 0.5, z + 9.4), (bx, 0.5, z + 1.0), 0.03, 0.03, M["planks_wall"])          # (behind the lane: in it, men walked through it)
     # the keep's face beyond: lit windows, the doorway into the gallery
     g.box((x1 + 0.2, BACK + 0.6, z + 9.0), (0.6, 4.0, 18.0), M["stone"])
     for wx3 in (538.0, 552.0, 566.0):
@@ -426,7 +459,9 @@ def build_hall(coll, M):
     g.box(((mx0 + mx1) / 2, -1.45, mz + 0.5), (mx1 - mx0, 0.1, 1.0), M["planks_wall"])     # its balustrade (low, in front)
     for bx in range(int(mx0), int(mx1), 1):
         g.box((bx + 0.5, -1.45, mz + 0.5), (0.06, 0.06, 1.0), M["planks_wall"])
-    open_steps(g, K.S[7][0], K.S[7][1], K.S[7][2], K.S[7][3], M["planks"], front=-1.3, back=0.6, n=12)   # open: the hall's floor runs on under it
+    # open: the hall's floor runs on under it. Its treads just behind the lane, so a man walking the hall under it
+    # passes in front of them (in the lane they went through his head and chest)
+    open_steps(g, K.S[7][0], K.S[7][1], K.S[7][2], K.S[7][3], M["planks"], front=0.3, back=1.6, n=12)
     # the fireplace at the far end, big enough to stand in
     fx, _ = K.MARKS["fireplace"]
     g.box((fx, BACK + 3.6, z + 2.0), (3.6, 1.2, 4.0), M["stone_dark"])
@@ -449,8 +484,15 @@ def build_chandelier(coll, M, name, x):
         g.beam((math.cos(a), math.sin(a), 0.0), (0, 0, 2.0), 0.03, 0.03, M["iron"])
     g.beam((0, 0, 2.0), (0, 0, 6.0), 0.04, 0.04, M["iron"])
     ob = g.finish(coll)
-    ob.location = (x, 0.4, 15.4 + 5.8)
+    ob.location = (x, 0.4, 15.4 + 5.8 + chandelier_lift(x))
     return ob
+
+
+def chandelier_lift(x):
+    """Over the minstrels' gallery a chandelier hangs higher: at 5.8 m over the hall it was 1.6 m over the gallery's
+    floor, in the lane, at the head of a man walking there."""
+    gx0, gx1 = K.P[12][0], K.P[12][1]
+    return 2.6 if gx0 - 1.2 <= x <= gx1 + 1.2 else 0.0
 
 
 # ---------------------------------------------------------------- L10 the tower stair, L11 the observatory
@@ -544,7 +586,7 @@ def lights(lightning=False):
                        (401.0, BACK + 0.6, 10.7, 200), (416.0, BACK + 0.6, 14.7, 200), (452.0, BACK, 17.8, 220),
                        (464.0, BACK, 17.8, 220), (468.0, BACK, 17.8, 220), (450.0, BACK, 23.2, 160), (456.0, BACK, 23.2, 160),
                        (516.0, BACK, 18.9, 200), (658.0, BACK + 2.4, 16.2, 900), (590.0, 0.6, 21.6, 120), (598.0, 0.6, 21.6, 120),
-                       (606.0, 0.6, 21.6, 120), (622.0, 0.4, 21.4, 260), (634.0, 0.4, 21.4, 260), (648.0, 0.4, 21.4, 260)):
+                       (606.0, 0.6, 21.6, 120), (622.0, 0.4, 21.4, 260), (634.0, 0.4, 21.4, 260), (648.0, 0.4, 21.4 + chandelier_lift(648.0), 260)):
         add("POINT", "Fire", (x, y, z), e, size=0.4, color=(1.0, 0.95, 0.88))
     for x, y, z in ((338.0, BACK - 0.6, 5.9), (538.0, BACK - 0.6, 21.6), (576.0, BACK - 0.6, 21.6)):
         add("SPOT", "Flood", (x, y, z), 1800, rot=(20, 0, 0))

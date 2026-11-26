@@ -51,8 +51,8 @@ namespace ProjectInk
         Vector3 trainHome;
         Enemy driver;
         int driverStage;                 // 0 not here, 1 boxer, 2 iron, 3 the car (scripted), 4 bare hands, 5 finale
-        bool carPrompt, carDodged;
-        float carPromptAt;
+        bool carPrompt, carDodged, carWrecked;
+        float carPromptAt, carSwerveEnd = 113.5f;
         string streetBanner;
         float streetBannerAt = -1f;
 
@@ -139,42 +139,48 @@ namespace ProjectInk
         {
             float door = StreetPlan.BankDoorX;
             hero.CinePose(new Vector3(door, 0f, 0.4f));
-            if (hero.body.Has("walk")) hero.body.Play("walk", 0.2f, true, 0.75f);
-            // the car's four, out on the pavement already, by the open door
+            // just down the steps: he stands while the picture comes up (no walk cycle on the spot)
+            if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0f);
+            // the car's four, out on the pavement already, by the open door: standing, not squared up yet
             var men = new Enemy[4];
-            float[] stand = { 9.6f, 11.2f, 12.6f, 14.4f };
+            var from = new Vector3[4];
+            var stand = new[] { new Vector3(9.6f, 0f, 0f), new Vector3(11.2f, 0f, 0f), new Vector3(12.6f, 0f, 0.9f), new Vector3(14.4f, 0f, 0f) };
             for (int i = 0; i < 4; i++)
             {
                 if (director == null) break;
                 var e = director.SpawnScripted(i == 3 ? Ru : Br, SpawnKind.RightDoor);
                 if (e == null) continue;
                 e.Puppet();
-                e.PuppetPose(new Vector3(StreetPlan.KerbCarX - 1.0f + i * 0.5f, 0f, -1.9f));
+                from[i] = new Vector3(StreetPlan.KerbCarX - 1.0f + i * 0.5f, 0f, -1.9f);
+                e.PuppetPose(from[i]);
                 e.SetFacing(-1);
-                e.PuppetPlay("idle", 0f);
+                e.PuppetPlay("idle_loose", 0f);
                 men[i] = e;
             }
             Sound.Play(Sfx.Door, 0.5f, new Vector3(door, 1f, 3f), 0.8f);
-            // he comes out of the doors and down the steps into the white morning
             yield return FadeIn(1.0f);
+            // he walks out across the pavement into the white morning; the four walk out to meet him. Each
+            // walk cycle is played at the pace he really covers the ground (no skating)
+            const float walkT = 4.2f, menFrom = 0.6f;
+            if (hero.body.Has("walk")) hero.body.Play("walk", 0.2f, true, 1.3f);
             float tt = 0f;
             var exit0 = hero.transform.position;
-            while (tt < 3.2f)
+            var exit1 = new Vector3(door + 6.0f, 0f, 0f);
+            while (tt < walkT)
             {
                 tt += StoryDt;
-                hero.CinePose(Vector3.Lerp(exit0, new Vector3(door + 6.0f, 0f, 0f), Mathf.SmoothStep(0f, 1f, tt / 3.2f)));
-                // the four walk out across the pavement to meet him
+                hero.CinePose(Vector3.Lerp(exit0, exit1, WalkPace(tt / walkT)));
                 for (int i = 0; i < 4; i++)
                 {
                     if (men[i] == null) continue;
-                    float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((tt - 0.6f) / 2.4f));
-                    men[i].PuppetPose(Vector3.Lerp(new Vector3(StreetPlan.KerbCarX - 1.0f + i * 0.5f, 0f, -1.9f), new Vector3(stand[i], 0f, i == 2 ? 0.9f : 0f), k));
-                    if (tt - StoryDt < 0.6f && tt >= 0.6f) men[i].PuppetPlay("walk", 0.2f);
+                    men[i].PuppetPose(Vector3.Lerp(from[i], stand[i], WalkPace(Mathf.Clamp01((tt - menFrom) / (walkT - menFrom)))));
+                    if (tt - StoryDt < menFrom && tt >= menFrom)
+                        men[i].PuppetPlay("walk", 0.2f, Mathf.Clamp(Vector3.Distance(from[i], stand[i]) / (walkT - menFrom) * 1.18f / 1.25f, 0.6f, 1.6f));
                 }
-                EndShot(new Vector3(door + 1.5f, 1.5f, -6.5f), new Vector3(Mathf.Lerp(door + 3f, 9f, tt / 3.2f), 1.2f, 0f), 40f);
+                EndShot(new Vector3(door + 1.5f, 1.5f, -6.5f), new Vector3(Mathf.Lerp(door + 3f, 9f, tt / walkT), 1.2f, 0f), 40f);
                 yield return null;
             }
-            foreach (var m0 in men) if (m0 != null) m0.PuppetPlay("idle", 0.2f);
+            foreach (var m0 in men) if (m0 != null) m0.PuppetPlay("idle_loose", 0.25f);
             if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.3f);
             var lead = men[0];
             yield return Hold(0.6f, () => EndShot(new Vector3(4.5f, 1.4f, -4.2f), new Vector3(8.5f, 1.3f, 0f), 34f));
@@ -185,8 +191,17 @@ namespace ProjectInk
             if (hero.body.Has("idle")) hero.body.Play("idle", 0.25f);              // the guard comes up
             Sound.Play(Sfx.Cloth, 0.8f);
             Say("YOU", "...Come and look.", 2.0f);
+            // the one out on the flank steps into the line: the fight is on the lane (z 0), and a man let go off it stays off it
+            if (men[2] != null)
+            {
+                var flank = men[2];
+                flank.PuppetPlay("walk", 0.15f, 1.0f);
+                StartCoroutine(StrollPath(flank, flank.PuppetPose, new[] { new Vector3(stand[2].x, 0f, 0f) }, 1.3f, StreetGround, true, null, -1,
+                                          () => flank.PuppetPlay("idle_loose", 0.2f)));
+            }
             yield return Hold(2.0f, () => EndShot(new Vector3(4.6f, 1.3f, -3.8f), new Vector3(9.0f, 1.25f, 0f), 34f));
             Say("THUG", "Have it your way. V wants it off your body.", 2.4f, lead != null ? HeadOf(lead) : null);
+            foreach (var m0 in men) if (m0 != null) m0.PuppetPlay("idle", 0.2f);  // now their guards come up
             Sound.Tension(true);
             if (director != null) director.ShowBanner("THE STREET  ·  1  ·  " + StreetPlan.ZoneName[0], 2.4f);
             foreach (var m0 in men)
@@ -211,15 +226,16 @@ namespace ProjectInk
             sWaveDone = -1f;
             sReady = true;
             phase = Phase.Street;
-            SetArena(SZ0(z) + (z == 0 ? -10f : 0.6f), SZ1(z) - 0.6f);
+            SetArena(SZ0(z) + (z == 0 ? -10f : 0.6f), Mathf.Min(SZ1(z) - 0.6f, StreetPlan.LaneX1));   // the last zone ends at the bus
             SetStreetDoors(z);
             if (!cut && z > 0 && director != null) director.ShowBanner($"{z + 1}  ·  {StreetPlan.ZoneName[z]}", 2.2f);
             if (z == 2) { nextTrainAt = Time.time + (cut ? 2.5f : 1.0f); }
             // under the arches: one on watch, his back to the way the hero comes (StoryLookouts)
             if (z == 2) PostLookout(SZ0(z) + 8.5f, 0f, 1, streetMen, "ONE ON WATCH UNDER THE ARCHES");
-            // the market: a length of scaffold pipe off a stall's frame, lying in the road (the pipe, early)
-            if (z == 1) PlaceWeapon(FightStyle.Pipe, 14, new Vector3(SZ0(z) + 5.5f, 0f, 0f));
             else lookout = null;
+            // the market: a length of scaffold pipe off a stall's frame, lying in the road (the pipe, early), between
+            // the crates (35.2, 39.0) and clear of the bottle by the first one
+            if (z == 1) PlaceWeapon(FightStyle.Pipe, 14, new Vector3(SZ0(z) + 7.0f, 0f, 0f));
             if (cut)
             {
                 if (z == 0) streetMen.Clear();
@@ -249,10 +265,12 @@ namespace ProjectInk
             float x0 = SZ0(z), x1 = SZ1(z), mid = (x0 + x1) * 0.5f;
             var pts = director.spawnPoints;
             void At(SpawnKind k, Vector3 p) { var t = pts[(int)k]; if (t != null) t.position = p; }
-            At(SpawnKind.RightDoor, new Vector3(x1 - 0.8f, 0f, 0f));
+            // the far end: at the crossroads that's the stalled bus (they come in off its front, not out of it)
+            At(SpawnKind.RightDoor, new Vector3(Mathf.Min(x1 - 0.8f, StreetPlan.LaneX1 - 0.4f), 0f, 0f));
             At(SpawnKind.LeftDoor, new Vector3(x0 + 0.8f, 0f, 0f));
-            // the back: out of a shop doorway, the side street, the arches
-            At(SpawnKind.Background, new Vector3(z == 3 ? 108f : mid + 2.5f, 0f, z == 3 ? 6f : 3.0f));
+            // the back: out of a shop doorway, the side street, the arches (under the railway: between the
+            // dumpsters at 67 and 79.5, not inside the second one)
+            At(SpawnKind.Background, new Vector3(z == 3 ? 108f : z == 2 ? mid - 1.5f : mid + 2.5f, 0f, z == 3 ? 6f : 3.0f));
             At(SpawnKind.UpperDoor, new Vector3(mid - 3f, 0f, 3.0f));
             At(SpawnKind.Ceiling, new Vector3(mid, 0f, 3.0f));
         }
@@ -307,7 +325,7 @@ namespace ProjectInk
         {
             if (sZone >= 3) { StartCoroutine(DriverArrives(false)); return; }
             sClear = true;
-            SetArena(SZ0(sZone) + 0.6f, SZ1(sZone + 1) - 0.6f);
+            SetArena(SZ0(sZone) + 0.6f, Mathf.Min(SZ1(sZone + 1) - 0.6f, StreetPlan.LaneX1));
             if (director != null) director.ShowBanner("CLEAR", 1.4f);
             Sound.Play(Sfx.WaveClear, 0.7f);
             sGoUntil = Time.unscaledTime + 30f;
@@ -398,13 +416,17 @@ namespace ProjectInk
             StreetCheckpoint = 3;
             driverStage = 0;
             hero.CineLock();
-            SetArena(SZ0(3) + 0.6f, SZ1(3) - 0.6f);
+            SetArena(SZ0(3) + 0.6f, StreetPlan.LaneX1);
             if (!cut) yield return RealWait(1.0f);
             // the black car screeches in off the road and stops at the kerb
             var park = new Vector3(StreetPlan.DriverCarX, 0f, StreetPlan.DriverCarZ);
             if (carPivot != null) { carPivot.position = park + Vector3.right * 34f; carPivot.rotation = Quaternion.Euler(0f, 180f, 0f); }
             Sound.Play(Sfx.CarRev, 1f, park + Vector3.right * 20f);
             barsPx = 92f;
+            // the cut to the car: he's set back to where the Driver walks up to him (the car shot can't see x < 113),
+            // so the Driver never walks into him or stops behind him
+            if (hero.transform.position.x > 113f) hero.CinePose(new Vector3(113f, 0f, 0f));
+            hero.SetFacing(1);
             float tt = 0f;
             while (tt < 2.0f)
             {
@@ -416,22 +438,17 @@ namespace ProjectInk
             }
             if (cam != null) cam.Shake(0.06f, 0.3f);
             Sound.Play(Sfx.CarDoor, 0.9f, park);
-            SpawnDriver(park + new Vector3(-1.2f, 0f, 1.5f));
+            // out of the car on the pavement side, by the front door (clear of the lights' post at x 121), and up to him
+            SpawnDriver(park + new Vector3(-0.3f, 0f, 1.5f));
             if (driver == null) { phase = Phase.End; yield break; }
-            driver.PuppetPlay("walk", 0.2f);
-            tt = 0f;
-            var d0 = driver.transform.position;
-            while (tt < 2.0f)
-            {
-                tt += StoryDt;
-                driver.PuppetPose(Vector3.Lerp(d0, new Vector3(StreetPlan.DriverCarX - 4.5f, 0f, 0f), Mathf.SmoothStep(0f, 1f, tt / 2.0f)));
-                EndShot(new Vector3(StreetPlan.DriverCarX - 9f, 1.4f, -5.5f), driver.transform.position + Vector3.up * 1.4f, 36f);
-                yield return null;
-            }
-            driver.PuppetPlay("idle", 0.2f);
+            driver.PuppetPlay("walk", 0.2f, 1.15f);
+            yield return StrollPath(driver, driver.PuppetPose, new[] { new Vector3(StreetPlan.DriverCarX - 4.5f, 0f, 0f) }, 1.45f, StreetGround, true,
+                () => EndShot(new Vector3(StreetPlan.DriverCarX - 9f, 1.4f, -5.5f), driver.transform.position + Vector3.up * 1.4f, 36f), -1);
+            driver.PuppetPlay("idle_loose", 0.2f);                // he talks first; the guard comes up after
             Sound.Play(Sfx.Cloth, 0.8f, driver.Chest);
             Say("THE DRIVER", "Remember me? I drove you. Every job, eleven years.", 3.2f, HeadOf(driver));
             yield return Hold(3.0f, () => EndShot(driver.transform.position + new Vector3(-2.4f, 1.3f, -2.4f), HeadOf(driver).position, 30f));
+            driver.PuppetPlay("idle", 0.25f);
             Say("THE DRIVER", "No? Then let's see what's left of you.", 2.4f, HeadOf(driver));
             if (director != null) director.ShowBanner("THE DRIVER", 2.6f);
             Sound.Play(Sfx.CineMassive, 0.7f);
@@ -450,28 +467,36 @@ namespace ProjectInk
         void UpdateDriver()
         {
             if (driver == null || driverStage >= 5) return;
+            if (carWrecked) KeepClearOfWreck();
             float hp = driver.HealthFraction;
             if (driverStage == 1 && hp <= 0.6f && driver.Alive) { driverStage = 2; StartCoroutine(TireIron()); }
             else if (driverStage == 2 && hp <= 0.3f && driver.Alive && driver.DriverPhase == 2) { driverStage = 3; StartCoroutine(TheCar()); }
         }
 
-        /// <summary>II: he backs off to the car's boot and comes back with a tire iron.</summary>
+        /// <summary>II: he backs off round the back of his car to the boot and comes back with a tire iron.</summary>
         IEnumerator TireIron()
         {
             driver.Puppet();
-            var boot = new Vector3(StreetPlan.DriverCarX + 2.6f, 0f, -1.4f);
-            var from = driver.transform.position;
-            driver.SetFacing(1);
-            driver.PuppetPlay("walk", 0.15f);
-            float tt = 0f;
-            while (tt < 1.2f) { tt += Time.deltaTime; driver.PuppetPose(Vector3.Lerp(from, boot, tt / 1.2f)); yield return null; }
+            // the car's nose points -x, so its boot is at +x: off the kerb behind it onto the road (clear of the
+            // lamp post at 126 and the bus's front at 125.4), facing the boot
+            var kerb = new Vector3(StreetPlan.DriverCarX + 3.0f, 0f, -1.9f);
+            var boot = new Vector3(StreetPlan.DriverCarX + 2.95f, 0f, StreetPlan.DriverCarZ);
+            driver.PuppetPlay("run", 0.15f, 0.8f);
+            yield return StrollPath(driver, driver.PuppetPose, new[] { kerb, boot }, 3.2f, StreetGround, false, null, -1);
             Sound.Play(Sfx.CarDoor, 1f, boot);
-            driver.PuppetPlay("idle", 0.1f);
-            yield return new WaitForSeconds(0.5f);
+            driver.PuppetPlay(driver.body.Has("pick_up") ? "pick_up" : "idle_loose", 0.12f);    // a reach into the boot, not a guard
+            yield return new WaitForSeconds(0.45f);
             driver.ShowIron(true);
             Sound.Play(Sfx.PipeHit, 0.6f, boot, 1.3f);
-            driver.SetFacing(-1);
+            yield return new WaitForSeconds(0.4f);
             driver.DriverPhase = 2;
+            // back up onto the pavement with it and into the lane (released off it, he'd fight off it), to his side of him
+            float hx = hero.transform.position.x;
+            float back = hx > 123f ? hx - 1.1f : StreetPlan.LaneX1 - 0.5f;
+            driver.PuppetPlay("walk", 0.15f, 1.1f);
+            yield return StrollPath(driver, driver.PuppetPose, new[] { kerb, new Vector3(back, 0f, 0f) }, 1.4f, StreetGround, false, null,
+                                    hero.transform.position.x >= back ? 1 : -1);
+            driver.FaceTowards(hero.transform.position.x);
             driver.PuppetPlay("sword_idle", 0.15f);
             Say("THE DRIVER", "Hold still.", 1.6f, HeadOf(driver));
             yield return new WaitForSeconds(0.4f);
@@ -485,27 +510,20 @@ namespace ProjectInk
             driver.Puppet();
             driver.ShowIron(false);
             Sound.Play(Sfx.PipeHit, 0.8f, driver.Chest, 0.8f);                   // flung down
-            var door = new Vector3(StreetPlan.DriverCarX - 0.6f, 0f, -1.9f);
-            var from = driver.transform.position;
-            driver.PuppetPlay("walk", 0.15f, 1.4f);
-            float tt = 0f;
-            while (tt < 1.0f) { tt += Time.deltaTime; driver.PuppetPose(Vector3.Lerp(from, door, tt / 1.0f)); yield return null; }
+            // back to his door, the pavement side: round the lights' post (x 121), never through it
+            var door = new Vector3(StreetPlan.DriverCarX - 0.3f, 0f, -1.8f);
+            driver.PuppetPlay("run", 0.15f, 0.85f);
+            yield return StrollPath(driver, driver.PuppetPose, new[] { new Vector3(door.x, 0f, -1.1f), door }, 3.4f, StreetGround, false);
             driver.Hide(true);
             Sound.Play(Sfx.CarDoor, 1f, door);
             Sound.Play(Sfx.CarRev, 1f, door);
             ShowStreetBanner("III  ·  THE CAR");
-            // he pulls out onto the pavement, then floors it along it
-            var park = carPivot != null ? carPivot.position : door;
-            var start = new Vector3(Mathf.Min(SZ1(3) - 3f, hero.transform.position.x + 16f), 0f, -0.1f);
-            tt = 0f;
-            while (tt < 1.0f && carPivot != null)
-            {
-                tt += Time.deltaTime;
-                carPivot.position = Vector3.Lerp(park, start, Mathf.SmoothStep(0f, 1f, tt / 1.0f));
-                yield return null;
-            }
-            float x = start.x, v = 4f;
-            float crashAt = StreetPlan.CrashX + 2.4f;
+            // he pulls away from the kerb along the road and swings up onto the pavement (past the lights, which
+            // leave no room before the bus) straight at him, then floors it along the pavement into the pillar.
+            // The car follows its line (CarRunZ), turned the way it's going and lifted onto the kerb.
+            carSwerveEnd = Mathf.Clamp(hero.transform.position.x - 1.5f, 103f, 113.5f);
+            float x = StreetPlan.DriverCarX, v = 2.5f;
+            float crashAt = StreetPlan.CrashX + 2.5f;              // the nose against the pillar's face
             carPrompt = false;
             carDodged = false;
             bool hit = false;
@@ -514,10 +532,18 @@ namespace ProjectInk
             while (x > crashAt && carPivot != null)
             {
                 v = Mathf.Min(17f, v + 14f * Time.deltaTime);
-                x -= v * Time.deltaTime;
-                carPivot.position = new Vector3(x, 0f, -0.1f);
-                float front = x - 2.4f, hx = hero.transform.position.x;
-                if (!carPrompt && !carDodged && front - hx < 7.5f && front > hx)
+                x = Mathf.Max(crashAt, x - v * Time.deltaTime);
+                PoseCar(x, crashAt);
+                KeepClearOfWreck();
+                float cz = CarRunZ(x, crashAt);
+                float front = x - 2.4f, hx = hero.transform.position.x, hz = hero.transform.position.z;
+                // a bin in its way goes flying on ahead of it
+                foreach (var dr in OilDrum.All)
+                    if (dr != null && dr.Available && Mathf.Abs(dr.transform.position.x - front) < 0.5f && Mathf.Abs(dr.transform.position.z - cz) < 1.25f)
+                        dr.Kick(-1, null, 19f);
+                // coming at him: it will be in his lane by the time it reaches him (past the lights it passes him by on the road)
+                bool coming = Mathf.Abs(CarRunZ(hx, crashAt) - hz) < 1.4f;
+                if (!carPrompt && !carDodged && coming && front - hx < 7.5f && front > hx)
                 {
                     carPrompt = true;
                     carPromptAt = Time.unscaledTime;
@@ -531,24 +557,29 @@ namespace ProjectInk
                         { carDodged = true; break; }
                     if (carDodged) StartCoroutine(DiveClear());
                 }
-                if (carPrompt && !carDodged && !hit && front < hx + 0.5f && front > hx - 2.5f && hero.transform.position.z < 0.8f)
+                // hit only where the car's body really meets him (not from the road, two metres off)
+                if (!carDodged && !hit && CarTouches(hero.transform.position))
                 {
                     hit = true;
                     carPrompt = false;
                     hero.TakeHit(new HitInfo { damage = 26f, direction = -1, knockback = 9f, knockdown = true, heavy = true });
                     Sound.Play(Sfx.PunchHeavy, 1f, hero.Chest, 0.7f);
                     if (cam != null) cam.Shake(0.3f, 0.3f);
+                    StartCoroutine(ThrownAside());
                 }
                 yield return null;
             }
             carPrompt = false;
-            // into the pillar
+            // into the pillar: the nose's corner against its face, kicked out a touch by the blow, the bonnet crumpled.
+            // Up on the pavement (its wheels on it, not sunk in it); the wreck fills the lane short of x 97.6
+            carWrecked = true;
             if (carPivot != null)
             {
-                carPivot.position = new Vector3(crashAt, 0f, -0.1f);
-                carPivot.rotation = Quaternion.Euler(0f, 192f, 0f);
+                carPivot.position = new Vector3(StreetPlan.CrashX + 2.27f, -StreetPlan.RoadY, -0.6f);
+                carPivot.rotation = Quaternion.Euler(0f, 184f, 0f);
                 carPivot.localScale = new Vector3(0.9f, 0.96f, 1f);
             }
+            KeepClearOfWreck();
             var crash = new Vector3(StreetPlan.CrashX, 0.8f, 0f);
             Sound.Play(Sfx.Boom, 1f, crash);
             Sound.Play(Sfx.Glass, 1f, crash);
@@ -561,18 +592,20 @@ namespace ProjectInk
             }
             Buzz();
             yield return new WaitForSeconds(1.4f);
-            // he falls out of the wreck, bleeding, bare-handed, and comes on
+            // he falls out of the wreck on the pavement side (its flank there is at z 0.4), bleeding, bare-handed, and
+            // comes on round its tail into the lane (to this side of the hero if he's standing there)
             Sound.Play(Sfx.CarDoor, 1f, crash);
-            driver.PuppetPose(new Vector3(crashAt + 0.4f, 0f, -1.4f));
+            driver.PuppetPose(new Vector3(StreetPlan.CrashX + 2.0f, 0f, 0.75f));
             driver.SetFacing(1);
             driver.Hide(false);
             driver.PuppetPlay("dazed", 0.1f);
             Sound.Play(Sfx.BruteHurt, 0.9f, driver.Chest, 0.8f);
             yield return new WaitForSeconds(0.6f);
-            float t2 = 0f;
-            var w0 = driver.transform.position;
-            driver.PuppetPlay("walk", 0.2f, 0.7f);
-            while (t2 < 1.0f) { t2 += Time.deltaTime; driver.PuppetPose(Vector3.Lerp(w0, new Vector3(crashAt + 1.6f, 0f, 0f), t2)); yield return null; }
+            float hx2 = hero.transform.position.x;
+            float lane = Mathf.Abs(hx2 - (StreetPlan.WreckClearX + 1.0f)) < 1.2f ? hx2 + 1.2f : StreetPlan.WreckClearX + 1.0f;
+            driver.PuppetPlay("walk", 0.2f, 1.1f);
+            yield return StrollPath(driver, driver.PuppetPose, new[] { new Vector3(StreetPlan.WreckClearX + 0.2f, 0f, 0.75f), new Vector3(lane, 0f, 0.75f), new Vector3(lane, 0f, 0f) },
+                                    1.4f, StreetGround, false, null, hero.transform.position.x >= lane ? 1 : -1);
             driver.FaceTowards(hero.transform.position.x);
             Say("THE DRIVER", "You owe me a car.", 1.8f, HeadOf(driver));
             driver.DriverPhase = 3;
@@ -597,10 +630,44 @@ namespace ProjectInk
             while (tt < 0.45f) { tt += Time.deltaTime; hero.CinePose(Vector3.Lerp(p0, p1, Mathf.SmoothStep(0f, 1f, tt / 0.45f))); yield return null; }
             if (hero.body.Has("idle")) hero.body.Play("idle", 0.2f);
             yield return new WaitForSeconds(1.2f);
-            tt = 0f;
+            // back into the lane on his feet (not a glide in his guard), and never into the wreck
             var p2 = hero.transform.position;
-            while (tt < 0.4f) { tt += Time.deltaTime; hero.CinePose(Vector3.Lerp(p2, new Vector3(p2.x, 0f, 0f), tt / 0.4f)); yield return null; }
+            var lane = new Vector3(carWrecked ? Mathf.Max(p2.x, StreetPlan.WreckClearX + 0.3f) : p2.x, 0f, 0f);
+            // from behind the wreck: along the pavement past its tail first, then into the lane
+            var way = lane.x > p2.x + 0.05f ? new[] { new Vector3(lane.x + 0.2f, 0f, Mathf.Min(p2.z, 1.1f)), lane } : new[] { lane };
+            if (hero.body.Has("run")) hero.body.Play("run", 0.12f, true, 0.75f);
+            yield return StrollPath(hero, hero.CinePose, way, 3.0f, StreetGround, false, null, -1);     // turned after the car
+            if (hero.body.Has("idle")) hero.body.Play("idle", 0.15f);
             hero.CineRelease();
+        }
+
+        /// <summary>Clipped by the car: thrown aside onto the pavement, out of its path (a hit sends him back along
+        /// x only, so the car would drive straight through him), then back into the lane once it's past.</summary>
+        IEnumerator ThrownAside()
+        {
+            const float aside = 1.4f;                       // the car's flank is at z 0.85 at most
+            float t = 0f;
+            while (t < 0.25f) { t += Time.deltaTime; SetHeroZ(Mathf.Lerp(0f, aside, Mathf.SmoothStep(0f, 1f, t / 0.25f))); yield return null; }
+            while (carPivot != null && !carWrecked && CarTouches(hero.transform.position + Vector3.back * aside)) yield return null;
+            yield return new WaitForSeconds(0.5f);
+            // short of the pillar the wreck is in the lane: along the pavement past its tail first
+            float x0 = hero.transform.position.x, x1 = carWrecked ? Mathf.Max(x0, StreetPlan.WreckClearX + 0.3f) : x0;
+            t = 0f;
+            if (x1 > x0 + 0.05f)
+                while (t < 0.4f) { t += Time.deltaTime; SetHeroXZ(Mathf.Lerp(x0, x1, Mathf.SmoothStep(0f, 1f, t / 0.4f)), aside); yield return null; }
+            t = 0f;
+            while (t < 0.45f) { t += Time.deltaTime; SetHeroZ(Mathf.Lerp(aside, 0f, Mathf.SmoothStep(0f, 1f, t / 0.45f))); yield return null; }
+            SetHeroZ(0f);
+        }
+
+        void SetHeroZ(float z) => SetHeroXZ(hero.transform.position.x, z);
+
+        void SetHeroXZ(float x, float z)
+        {
+            var p = hero.transform.position;
+            p.x = x;
+            p.z = z;
+            hero.transform.position = p;
         }
 
         void ShowStreetBanner(string s)
@@ -608,6 +675,112 @@ namespace ProjectInk
             streetBanner = s;
             streetBannerAt = Time.unscaledTime;
             if (director != null) director.ShowBanner(s, 2.2f);
+        }
+
+        // ================================================================ the car's line, walking people round things
+
+        /// <summary>Where the Driver's car's middle is in depth when its middle is at x: along the kerb on the
+        /// road (z -3.3), swung up onto the pavement ending at carSwerveEnd (its whole length clear of the
+        /// lights' post at 121 before it crosses the kerb: the bus leaves no room on the far side of the post),
+        /// along the pavement in the lane (z -0.1), and in its last 5 m drifting over towards the pillar (z -0.6).</summary>
+        float CarRunZ(float x, float crashAt)
+        {
+            const float road = StreetPlan.DriverCarZ, walk = -0.1f, pillar = -0.6f;
+            float xs = carSwerveEnd + 5.5f, xf = crashAt + 5f;
+            if (x >= xs) return road;
+            if (x > carSwerveEnd) return Mathf.Lerp(road, walk, Mathf.SmoothStep(0f, 1f, (xs - x) / 5.5f));
+            if (x > xf) return walk;
+            return Mathf.Lerp(walk, pillar, Mathf.SmoothStep(0f, 1f, (xf - x) / 5f));
+        }
+
+        /// <summary>The car on its line at x: turned the way it's going (its nose points -x at yaw 180), and up
+        /// the kerb's 15 cm as its wheels (at ±0.78 m) get onto the pavement.</summary>
+        void PoseCar(float x, float crashAt)
+        {
+            if (carPivot == null) return;
+            float z = CarRunZ(x, crashAt);
+            float slope = (CarRunZ(x - 0.1f, crashAt) - CarRunZ(x + 0.1f, crashAt)) / 0.2f;     // sideways per metre it goes
+            float y = -StreetPlan.RoadY * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-3.2f, -1.5f, z));
+            carPivot.position = new Vector3(x, y, z);
+            carPivot.rotation = Quaternion.Euler(0f, 180f + Mathf.Atan(slope) * Mathf.Rad2Deg, 0f);
+        }
+
+        /// <summary>The car's body (5.0 x 1.9 m) meets someone (0.5 m wide) at p.</summary>
+        bool CarTouches(Vector3 p)
+        {
+            if (carPivot == null) return false;
+            var local = Quaternion.Inverse(carPivot.rotation) * (p - carPivot.position);
+            return Mathf.Abs(local.x) < 2.76f && Mathf.Abs(local.z) < 1.2f;
+        }
+
+        /// <summary>From the car's run on, the lane short of the pillar is the wreck's: no one is sent or walks
+        /// back into it (the left edge follows him up to x 97.6, then stays). The camera's bounds are left alone.</summary>
+        void KeepClearOfWreck()
+        {
+            float min = Mathf.Min(StreetPlan.WreckClearX, hero.transform.position.x);
+            if (min <= hero.arenaMinX + 0.01f) return;
+            hero.arenaMinX = min;
+            foreach (var e in Enemy.All) if (e != null) e.arenaMinX = Mathf.Max(e.arenaMinX, min);
+        }
+
+        /// <summary>Feet on the pavement, or on the road a kerb's step below it.</summary>
+        static float StreetGround(Vector3 p) =>
+            Mathf.Lerp(StreetPlan.RoadY, 0f, Mathf.InverseLerp(StreetPlan.KerbEdgeZ - 0.1f, StreetPlan.KerbEdgeZ + 0.1f, p.z));
+
+        /// <summary>Progress along a walk: easing in and out over its first and last 15%, a steady pace between
+        /// (1.18x the average), so a walk cycle played at that pace keeps its feet on the ground.</summary>
+        static float WalkPace(float u)
+        {
+            const float a = 0.15f, vmax = 1f / (1f - a);
+            u = Mathf.Clamp01(u);
+            if (u < a) return vmax * u * u / (2f * a);
+            if (u <= 1f - a) return vmax * (a * 0.5f + u - a);
+            return 1f - vmax * (1f - u) * (1f - u) / (2f * a);
+        }
+
+        /// <summary>A puppet (one of them, or him) walked through waypoints at `speed` m/s, turning smoothly to face
+        /// the way he goes (depth included, LookAtXZ), his feet on `ground`; at the end turned to face `endFace`
+        /// (-1/+1; 0 leaves him as he is) and `done` called. Story time, or game time in a fight (`story` false).
+        /// The caller plays the walk (or run) at the pace it covers.</summary>
+        IEnumerator StrollPath(Fighter f, System.Action<Vector3> pose, Vector3[] pts, float speed, System.Func<Vector3, float> ground, bool story,
+                               System.Action frame = null, int endFace = 0, System.Action done = null)
+        {
+            if (f == null || pts == null || pts.Length == 0) yield break;
+            var p = f.transform.position;
+            var fwd = f.transform.rotation * Vector3.right;                  // a fighter faces his local +x
+            float yaw = Mathf.Atan2(fwd.z, fwd.x) * Mathf.Rad2Deg;
+            int i = 0;
+            while (i < pts.Length)
+            {
+                float dt = story ? StoryDt : Time.deltaTime;
+                var to = pts[i];
+                var d = new Vector3(to.x - p.x, 0f, to.z - p.z);
+                float left = d.magnitude, step = speed * dt;
+                if (left > 1e-3f) yaw = Mathf.MoveTowardsAngle(yaw, Mathf.Atan2(d.z, d.x) * Mathf.Rad2Deg, 540f * dt);
+                if (story && SkipNow) { p = pts[pts.Length - 1]; i = pts.Length; }
+                else if (step >= left) { p = new Vector3(to.x, p.y, to.z); i++; }
+                else p += d / left * step;
+                p.y = ground(p);
+                pose(p);
+                f.LookAtXZ(p + new Vector3(Mathf.Cos(yaw * Mathf.Deg2Rad), 0f, Mathf.Sin(yaw * Mathf.Deg2Rad)));
+                frame?.Invoke();
+                yield return null;
+                if (f == null) yield break;
+            }
+            if (endFace != 0)
+            {
+                float want = endFace > 0 ? 0f : 180f;
+                while (Mathf.Abs(Mathf.DeltaAngle(yaw, want)) > 2f && !(story && SkipNow))
+                {
+                    yaw = Mathf.MoveTowardsAngle(yaw, want, 540f * (story ? StoryDt : Time.deltaTime));
+                    f.LookAtXZ(f.transform.position + new Vector3(Mathf.Cos(yaw * Mathf.Deg2Rad), 0f, Mathf.Sin(yaw * Mathf.Deg2Rad)));
+                    frame?.Invoke();
+                    yield return null;
+                    if (f == null) yield break;
+                }
+                f.SetFacing(endFace);
+            }
+            done?.Invoke();
         }
 
         // ================================================================ the finale
@@ -622,7 +795,8 @@ namespace ProjectInk
             yield return RealWait(0.8f);
             hero.CinePuppet();
             d.Puppet();
-            float dx = Mathf.Clamp(d.transform.position.x, SZ0(3) + 3f, SZ1(3) - 4f);
+            // on the ground clear of the wreck (him kneeling at his left) and of the bus (his legs to his right)
+            float dx = Mathf.Clamp(d.transform.position.x, carWrecked ? StreetPlan.WreckClearX + 1.4f : SZ0(3) + 3f, StreetPlan.LaneX1 - 1.4f);
             d.PuppetPose(new Vector3(dx, 0f, 0f));
             d.SetFacing(-1);
             d.PuppetPlay(d.body.Has("lie_up") ? "lie_up" : "lie", 0.2f);
@@ -668,25 +842,24 @@ namespace ProjectInk
             Say("YOU", "...Elena.", 1.8f);
             Sound.Play(Sfx.Riser, 0.6f);
             yield return Hold(1.8f, onYou);
-            // he lets go, gets up, and runs for the side street, north, home
-            if (hero.body.Has("idle")) hero.body.Play("idle", 0.25f);
+            // he lets go, gets up, and runs for the side street, north, home: at a running pace whatever the
+            // distance, facing the way he runs, and round the man on the ground (z 0.95), never over him
+            if (hero.body.Has("idle_loose")) hero.body.Play("idle_loose", 0.25f);
             yield return Hold(0.5f, close);
-            hero.SetFacing(1);
-            hero.body.Play("run", 0.15f, true, 1.4f);
+            const float sideX = 108f;
             var h0 = hero.transform.position;
-            float tt = 0f;
-            while (tt < 3.4f)
+            var run = h0.x < sideX
+                ? new[] { new Vector3(h0.x + 0.3f, 0f, 0.95f), new Vector3(sideX, 0f, 0.95f), new Vector3(sideX, 0f, 16f) }
+                : new[] { new Vector3(sideX, 0f, 0.5f), new Vector3(sideX, 0f, 16f) };
+            hero.body.Play("run", 0.15f, true, 1.25f);
+            yield return StrollPath(hero, hero.CinePose, run, 5.0f, StreetGround, true, () =>
             {
-                tt += StoryDt;
-                float k = tt / 3.4f;
-                var p = k < 0.45f ? Vector3.Lerp(h0, new Vector3(108f, 0f, 0.5f), k / 0.45f)
-                                  : Vector3.Lerp(new Vector3(108f, 0f, 0.5f), new Vector3(108f, 0f, 16f), (k - 0.45f) / 0.55f);
-                if (k >= 0.45f) hero.transform.rotation = Quaternion.Euler(0f, -90f, 0f);        // up the side street, away from us
-                hero.CinePose(p);
-                if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.28f; Sound.Play(Sfx.Footstep, 0.6f, hero.transform.position, 1.1f); }
-                EndShot(new Vector3(106.5f, 1.6f, -8f), new Vector3(108f, 1.2f, Mathf.Max(0f, p.z * 0.6f)), 38f);
-                yield return null;
-            }
+                var p = hero.transform.position;
+                if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.28f; Sound.Play(Sfx.Footstep, 0.6f, p, 1.1f); }
+                // along the pavement with him, then held at the corner as he goes up the side street, away from us
+                float up = Mathf.Clamp01(p.z / 3f);
+                EndShot(new Vector3(Mathf.Lerp(p.x - 1.5f, 106.5f, up), 1.6f, -8f), new Vector3(Mathf.Lerp(p.x, sideX, up), 1.2f, Mathf.Max(0f, p.z * 0.6f)), 38f);
+            });
             yield return Hold(1.0f, () => EndShot(new Vector3(106.5f, 1.6f, -8f), new Vector3(108f, 1.2f, 8f), 38f));
             cardAt = Time.unscaledTime;
             cardLine = "We got there first.";
