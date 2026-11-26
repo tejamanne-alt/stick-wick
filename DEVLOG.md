@@ -2016,3 +2016,13 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **Toward him:** `advance`, a step-drag with the guard up. Stepping into him still takes hold.
   - **Away from him:** the new `retreat`. The rear foot reaches back on its ball, the lead draws after it, he never turns his back, and the guard never drops.
   - Held longer, he breaks into the run as before, turning away if he's leaving. Both clips are covered by the "never a walk on the spot" rule. The FBX is rebuilt (283 clips).
+- **Walking with the pipe.** It looked bad for three reasons:
+  - **A shuffle for every distance.** The old `rod_walk` was the boxer's step-drag shuffle.
+  - **A jolt on every start and stop.** It used the fist-guard stance, so he twisted out of the pipe stance each time.
+  - **Sliding feet.** He moved at 1.4 m/s while the clip stepped at most 1.05 m/s (its playback speed was capped), so the feet slid and the steps looked frantic.
+
+  Now:
+  - **`rod_walk`** is a real heel-toe walk at 1.4 m/s. The pipe rests back on the right shoulder in both hands, riding each step, and the clip plays at the speed he moves, so the feet don't slide.
+  - **In a fight** (for the first 0.9 s of a press), he uses step-drags in the pipe's own stance, facing his man: new `rod_step` in and `rod_back` out, at 1.2 m/s. The stance matches `rod_guard`, so starting and stopping don't jolt.
+  - **Easing.** The walk eases out of the stance (0.25 s).
+- **Stopping with a weapon.** Every stop in the walk loop played the fist idle, so with the pipe (or katana, sword or gun) he dropped into the boxing guard and later snapped into his weapon stance. Now it's always the idle that matches what's in his hands. The FBX is rebuilt (285 clips).

@@ -80,6 +80,9 @@ namespace ProjectInk
         const float GuardStepSpeed = 1.5f;      // m/s: quick, short step-drags
         const float GuardClipSpeed = 0.7f;      // the advance / retreat clips' own ground speed
         const float GuardStepTime = 0.9f;       // held longer than this, he runs
+        const float RodStepSpeed = 1.2f;        // the pipe's step-drags (heavier, a touch slower)
+        const float RodStepClip = 0.667f;       // rod_step / rod_back ground speed
+        const float RodWalkSpeed = 1.4f;        // rod_walk: a real walk with the pipe on the shoulder
 
         /// <summary>The nearest man who makes him keep his guard (see Threatened), within `range`.</summary>
         Enemy NearestThreat(float range)
@@ -100,7 +103,7 @@ namespace ProjectInk
         // Whatever put it there (input let go, a wall, a scene that started a walk and stopped moving him),
         // a walk or run cycle on a hero who isn't going anywhere is wrong: after a moment of standing
         // still he simply stands. Checked last thing every frame, against where he really is.
-        static readonly string[] Gaits = { "walk_alone", "walk", "run", "sprint", "katana_walk", "rod_walk", "advance", "retreat" };
+        static readonly string[] Gaits = { "walk_alone", "walk", "run", "sprint", "katana_walk", "rod_walk", "advance", "retreat", "rod_step", "rod_back" };
         Vector3 gaitLastPos;
         float gaitStill;
 
@@ -144,7 +147,7 @@ namespace ProjectInk
                 crouching = true;
                 return;
             }
-            if (crouching) { crouching = false; body.Play(IdleClipV4, 0.25f); }
+            if (crouching) { crouching = false; body.Play(IdleClip, 0.25f); }
 
             float a = Axis;
             int dir = Mathf.Abs(a) > 0.01f ? (a > 0 ? 1 : -1) : 0;
@@ -160,7 +163,7 @@ namespace ProjectInk
                     bool arrived = Mathf.Abs(dg) < 0.05f;
                     stepGoal = float.NaN; stepStuck = 0f; velocity.x = 0f;
                     if (arrived) ArriveAtThing();
-                    if (running) { running = false; body.Play(IdleClipV4, 0.2f); }
+                    if (running) { running = false; body.Play(IdleClip, 0.2f); }
                     return;
                 }
                 dir = dg > 0 ? 1 : -1; a = dir * 0.4f;
@@ -177,17 +180,20 @@ namespace ProjectInk
                 // in a fight, on his guard: a boxer's footwork for the first steps (step-drag in, or the
                 // back-step out still facing his man), never the street walk with the guard dropping;
                 // held on, he breaks into a run (turning away if he's leaving)
-                bool footwork = Contact && Style == FightStyle.Fists && !KatanaMode && carried == null &&
-                                float.IsNaN(stepGoal) && holdTime < GuardStepTime && body.Has("retreat") && Threatened;
+                // (the pipe the same, in its own stance: rod_step in, rod_back out)
+                bool rodSteps = RodMode && KatanaMode && body.Has("rod_back");
+                bool footwork = Contact && (rodSteps || (Style == FightStyle.Fists && !KatanaMode && carried == null && body.Has("retreat"))) &&
+                                float.IsNaN(stepGoal) && holdTime < GuardStepTime && Threatened;
                 if (footwork)
                 {
                     var man = NearestThreat(4.5f);
                     int face = man != null ? (man.transform.position.x > transform.position.x ? 1 : -1) : dir;
                     SetFacing(face);
                     if (dir == face && WalkIntoClinch(dir)) return;               // stepping into him: take hold
-                    velocity.x = Mathf.MoveTowards(velocity.x, dir * GuardStepSpeed, 10f * dt);
-                    string step = dir == face ? "advance" : "retreat";
-                    float stepPlay = Mathf.Clamp(Mathf.Abs(velocity.x) / GuardClipSpeed, 0.6f, 2.6f);
+                    float stepSpeed = rodSteps ? RodStepSpeed : GuardStepSpeed;
+                    velocity.x = Mathf.MoveTowards(velocity.x, dir * stepSpeed, 10f * dt);
+                    string step = rodSteps ? (dir == face ? "rod_step" : "rod_back") : dir == face ? "advance" : "retreat";
+                    float stepPlay = Mathf.Clamp(Mathf.Abs(velocity.x) / (rodSteps ? RodStepClip : GuardClipSpeed), 0.6f, 2.6f);
                     if (body.CurrentName != step) body.Play(step, 0.12f, false, stepPlay);
                     else body.SetSpeed(stepPlay);
                     walkLastX = transform.position.x;
@@ -206,7 +212,7 @@ namespace ProjectInk
                 if (KatanaMode)
                 {
                     if (sheathed && !GestureInput.IaiHolding) { sheathed = false; body.Play("katana_guard", 0.15f); }   // walking off: the blade comes out
-                    want = sheathed ? 0f : Mathf.Min(want, 1.4f);         // the katana: suri-ashi, never a run
+                    want = sheathed ? 0f : Mathf.Min(want, RodMode && body.Has("rod_step") ? RodWalkSpeed : 1.4f);   // the katana: suri-ashi; the pipe: a walk, never a run
                 }
                 float accel = Mathf.Abs(velocity.x) < want ? 9f : 12f;
                 velocity.x = Mathf.MoveTowards(velocity.x, dir * want, accel * dt);
@@ -217,16 +223,17 @@ namespace ProjectInk
                 walkBlocked = movedX < 0.002f && holdTime > 0.15f ? walkBlocked + dt : 0f;
                 if (walkBlocked > 0.12f)
                 {
-                    string stand = IdleClipV4;
+                    string stand = IdleClip;
                     if (body.CurrentName != stand) body.Play(stand, 0.2f);
                     running = false;
                     return;
                 }
                 float sp = Mathf.Abs(velocity.x);
                 string clip = KatanaMode ? (RodMode && body.Has("rod_walk") ? "rod_walk" : "katana_walk") : sp < 1.7f ? "walk_alone" : sp < 4.0f ? "run" : "sprint";
-                float clipSpeed = clip == "katana_walk" || clip == "rod_walk" ? 0.7f : clip == "walk_alone" ? WalkSpeed : clip == "run" ? JogSpeed : RunSpeedV4;
+                float clipSpeed = clip == "rod_walk" && body.Has("rod_step") ? RodWalkSpeed : clip == "katana_walk" || clip == "rod_walk" ? 0.7f
+                                : clip == "walk_alone" ? WalkSpeed : clip == "run" ? JogSpeed : RunSpeedV4;
                 float play = Mathf.Clamp(sp / clipSpeed, 0.55f, 1.5f);
-                if (body.CurrentName != clip) body.Play(clip, 0.15f, false, play);
+                if (body.CurrentName != clip) body.Play(clip, clip == "rod_walk" ? 0.25f : 0.15f, false, play);   // the pipe: out of its stance into the walk, eased
                 else body.SetSpeed(play);
                 running = true;
                 return;
@@ -239,14 +246,14 @@ namespace ProjectInk
                 running = false;
                 if (Mathf.Abs(velocity.x) > 2.4f && Grounded) { NoteRunStop(); BeginTraverse("run_stop", 0f); velocity.x = 0f; return; }
                 velocity.x = 0f;
-                body.Play(IdleClipV4, 0.2f);
+                body.Play(IdleClip, 0.2f);
                 return;
             }
             // relaxed when alone, the guard when someone comes near
             if (Time.time > idleCheckAt)
             {
                 idleCheckAt = Time.time + 0.3f;
-                string want = IdleClipV4;
+                string want = IdleClip;
                 if ((body.CurrentName == "idle" || body.CurrentName == "idle_alone") && body.CurrentName != want) body.Play(want, 0.45f);
             }
         }
