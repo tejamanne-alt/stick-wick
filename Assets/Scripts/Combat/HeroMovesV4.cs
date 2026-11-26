@@ -76,11 +76,31 @@ namespace ProjectInk
 
         string IdleClipV4 => MovesV4 && Style == FightStyle.Fists && !Threatened ? "idle_alone" : "idle";
 
+        // ------------------------------------------------------------------ footwork on guard
+        const float GuardStepSpeed = 1.5f;      // m/s: quick, short step-drags
+        const float GuardClipSpeed = 0.7f;      // the advance / retreat clips' own ground speed
+        const float GuardStepTime = 0.9f;       // held longer than this, he runs
+
+        /// <summary>The nearest man who makes him keep his guard (see Threatened), within `range`.</summary>
+        Enemy NearestThreat(float range)
+        {
+            Enemy best = null;
+            float bd = range;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.Alive || e.Fleeing || e.Unaware || e.IsDown || e.Held || e.Passive || e.Puppeted) continue;
+                if (Mathf.Abs(e.transform.position.y - transform.position.y) > 1.6f) continue;
+                float d = Mathf.Abs(e.transform.position.x - transform.position.x);
+                if (d < bd) { bd = d; best = e; }
+            }
+            return best;
+        }
+
         // ------------------------------------------------------------------ never a walk on the spot
         // Whatever put it there (input let go, a wall, a scene that started a walk and stopped moving him),
         // a walk or run cycle on a hero who isn't going anywhere is wrong: after a moment of standing
         // still he simply stands. Checked last thing every frame, against where he really is.
-        static readonly string[] Gaits = { "walk_alone", "walk", "run", "sprint", "katana_walk", "rod_walk" };
+        static readonly string[] Gaits = { "walk_alone", "walk", "run", "sprint", "katana_walk", "rod_walk", "advance", "retreat" };
         Vector3 gaitLastPos;
         float gaitStill;
 
@@ -90,7 +110,7 @@ namespace ProjectInk
             var p = transform.position;
             float moved = Mathf.Abs(p.x - gaitLastPos.x) + Mathf.Abs(p.z - gaitLastPos.z);
             gaitLastPos = p;
-            if (dt <= 0f || body == null || state == State.Dead) return;
+            if (dt <= 0f || body == null || state == State.Dead || traverse != null) { gaitStill = 0f; return; }
             if (System.Array.IndexOf(Gaits, body.CurrentName) < 0) { gaitStill = 0f; return; }
             // under 0.15 m/s is standing (a real walk is 1.1 m/s or more)
             gaitStill = moved < 0.15f * dt ? gaitStill + dt : 0f;
@@ -154,6 +174,27 @@ namespace ProjectInk
                 // running hard the other way: a real turn
                 if (velocity.x * dir < -2.2f) { BeginTraverse("run_turn", 0f); SetFacing(dir); return; }
                 if (TryLowerDown(dir)) return;                          // a raised floor's edge: lower himself down
+                // in a fight, on his guard: a boxer's footwork for the first steps (step-drag in, or the
+                // back-step out still facing his man), never the street walk with the guard dropping;
+                // held on, he breaks into a run (turning away if he's leaving)
+                bool footwork = Contact && Style == FightStyle.Fists && !KatanaMode && carried == null &&
+                                float.IsNaN(stepGoal) && holdTime < GuardStepTime && body.Has("retreat") && Threatened;
+                if (footwork)
+                {
+                    var man = NearestThreat(4.5f);
+                    int face = man != null ? (man.transform.position.x > transform.position.x ? 1 : -1) : dir;
+                    SetFacing(face);
+                    if (dir == face && WalkIntoClinch(dir)) return;               // stepping into him: take hold
+                    velocity.x = Mathf.MoveTowards(velocity.x, dir * GuardStepSpeed, 10f * dt);
+                    string step = dir == face ? "advance" : "retreat";
+                    float stepPlay = Mathf.Clamp(Mathf.Abs(velocity.x) / GuardClipSpeed, 0.6f, 2.6f);
+                    if (body.CurrentName != step) body.Play(step, 0.12f, false, stepPlay);
+                    else body.SetSpeed(stepPlay);
+                    walkLastX = transform.position.x;
+                    walkBlocked = 0f;
+                    running = true;
+                    return;
+                }
                 SetFacing(dir);
                 if (TryBarge(dir)) return;                              // flat out into him: the shoulder barge
                 if (Contact && WalkIntoClinch(dir)) return;

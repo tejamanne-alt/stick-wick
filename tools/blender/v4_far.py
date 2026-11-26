@@ -78,6 +78,34 @@ def _advance():
 CLIPS["advance"] = clip(18, _advance(), loop=True, speed=round(2 * STEP * 30 / 18, 3),
                         note="closing in behind the guard: step-drag, step-drag, the guard never drops")
 
+# ---------------------------------------------------------------- the retreat (the advance's mirror, a looped back-step)
+# Backing off behind the guard, still facing the man: the REAR foot reaches back first (low, on its
+# ball), the weight settles back onto it, then the lead foot draws back after it, heel-light; the feet
+# never cross or come together, the hips sink a touch as the weight lands, the chin stays down, the
+# guard never drops (the fists ride up a little as he gives ground). 0.42 m a cycle, like the advance.
+def _retreat():
+    k = []
+    S = -STEP
+    seq = [
+        (0, G(), "lin"),
+        (3, G(hx=-0.03, fR=(GR[0] - 0.12, 0.05, 20), hz=0.635, head=170, uaL=62, faL=150), "out"),                # the rear foot slides back
+        (5, G(hx=-0.08, fR=(GR[0] + S, 40), hz=0.628, chest=165, head=169, fL=(GL[0], 0)), "in"),                # lands on its ball, the weight back onto it
+        (7, G(hx=-0.12, fR=(GR[0] + S, 40), fL=(GL[0] - 0.1, 0.035, -4), hz=0.632, head=171, tw_head=3), "out"),   # the lead draws back, heel-light
+        (9, G(hx=S, fR=(GR[0] + S, 40), fL=(GL[0] + S, 0), hz=0.64, head=172, tw_head=0), "smooth"),
+        (12, G(hx=S - 0.03, fR=(GR[0] + S - 0.12, 0.05, 20), fL=(GL[0] + S, 0), hz=0.636, uaR=24, faR=164, head=171, tw_head=-3), "out"),
+        (14, G(hx=S - 0.08, fR=(GR[0] + 2 * S, 40), fL=(GL[0] + S, 0), hz=0.627, chest=165, head=169), "in"),
+        (16, G(hx=S - 0.12, fR=(GR[0] + 2 * S, 40), fL=(GL[0] + S - 0.1, 0.035, -4), hz=0.632), "out"),
+        (18, at(GUARD, 2 * S), "smooth"),
+    ]
+    n = 18
+    for f, p, e in seq:
+        k.append((f, at(p, -2 * S * f / n), e))       # loop in place: the game carries the root
+    return k
+
+
+CLIPS["retreat"] = clip(18, _retreat(), loop=True, speed=round(2 * STEP * 30 / 18, 3),
+                        note="backing off behind the guard: the rear foot back, the lead draws after it, still facing him")
+
 # ---------------------------------------------------------------- the rush in (two explosive step-drags)
 CLIPS["rush_in"] = clip(18, [
     (0, GUARD, "lin"),
