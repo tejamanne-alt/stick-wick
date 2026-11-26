@@ -421,6 +421,16 @@ namespace ProjectInk
             Sound.Play(Sfx.Whoosh, 0.4f, at);
         }
 
+        /// <summary>The knife away (into his belt): chapter 1's hall is fought bare-handed.</summary>
+        public void PutAwayKnife()
+        {
+            if (Style != FightStyle.Knife) return;
+            Knives = 0;
+            Style = FightStyle.Fists;
+            ApplyStyleVisuals();
+            if (state == State.Idle) body.Play(IdleClip, 0.2f);
+        }
+
         /// <summary>The pick-up test (chapter 1): the weapon drops out of his hands, so it can be taken again.</summary>
         public void PutDownForTest()
         {

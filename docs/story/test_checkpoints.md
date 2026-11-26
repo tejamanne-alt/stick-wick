@@ -44,7 +44,7 @@
 **For every new chapter:** add its checkpoints here and to `MainMenu.Checkpoints`. At least: its start, each fight zone, its boss fight, its ending after the boss, and every story beat worth replaying on its own. The entry points live in `StoryTest.cs` (and a `TestState` per chapter, like the bank's).
 
 ## CONTACT combat: what to try (any hall checkpoint in chapter 1)
-Use **Hall 1** (knife in hand) or **Hall 2**. On first meeting, the fight shows a COMBOS card, and a hint appears the first couple of times a parry or a grab is possible.
+Use **Hall 1** or **Hall 2** (the hall is fought bare-handed: the knife goes in his belt at the shutter). On first meeting, the fight shows a COMBOS card, and a hint appears the first couple of times a parry or a grab is possible.
 - **Movement:** he jogs (no sprint), hops low, and never runs up walls or flips. A swipe away is a short step back.
 - **Strings** (P = tap high, K = tap low; on keys, A/D punch and Z/X kick): `P P P P`, `K K K`, `P P K`, `K P P`, `P K P`, `P P P K`. The finisher's name shows when it lands, and it floors the man.
 - **Parry:** tap at a bare-handed man just as he swings (red flash, close in). His punch goes aside, his head snaps back and he is dazed. Your next tap high is PALM TO THE CHIN; a tap low is a head scissors.

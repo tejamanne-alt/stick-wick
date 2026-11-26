@@ -2218,3 +2218,7 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - The point never leaves his eyes.
   - **Both:** walking him down the guard holds as long as it's held. Backing off, after 1.2 s he turns and goes. Clips play near 1×, eased in, with 0.2 s blends.
   - **Build:** the FBX is rebuilt.
+- **Chapter 1's hall is fought bare-handed.**
+  - At the inner shutter he needs both hands to heave it up, so the knife goes into his belt (`PutAwayKnife`).
+  - Hall checkpoints, a retry after a defeat in the hall, and the boss test no longer hand him 3 knives.
+  - Knives dropped by throwers in the hall can still be picked up.

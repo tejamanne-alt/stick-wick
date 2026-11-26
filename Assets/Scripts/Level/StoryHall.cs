@@ -129,6 +129,7 @@ namespace ProjectInk
                 hero.CinePose(new Vector3(WarehousePlan.StoreHalf - 0.9f, y, 0f));
                 hero.SetFacing(1);
                 if (hero.body.Has("duck")) hero.body.Play("duck", 0.15f, true, 0.9f);
+                hero.PutAwayKnife();                                   // both hands for the shutter: the knife goes in his belt
                 Sound.Play(Sfx.Cloth, 0.8f);
             }
             if (AtH(2.25f)) { if (hero.body.Has("idle")) hero.body.Play("idle", 0.2f); Sound.Play(Sfx.HeroEffort, 0.9f, null, 0.9f); Sound.Play(Sfx.Latch, 1f, new Vector3(14f, 1f, 0f), 0.85f); }
@@ -181,6 +182,8 @@ namespace ProjectInk
         void BeginHall(int z, bool cut)
         {
             HallCheckpoint = z;
+            // the hall is fought bare-handed: no knife coming in (skipped to, or back here after a defeat)
+            if (z == 0 || cut) hero.PutAwayKnife();
             zone = z;
             wave = 0;
             queued = 0;
@@ -214,7 +217,6 @@ namespace ProjectInk
                     WeaponPickup.Spawn(FightStyle.Pipe, 14, new Vector3(ZoneX0(z) + 10.5f, 0f, 0f), director.weaponMaterial);
                     director.ShowBanner("PICK-UP TEST  ·  WALK OVER IT, OR RUN AT IT  ·  IT DROPS AFTER 4 S", 4f);
                 }
-                else if (hero.Style == FightStyle.Fists) hero.GiveWeapon(FightStyle.Knife, 3);
                 var sh = Find("InnerShutter");
                 if (sh != null) foreach (var r in sh.GetComponentsInChildren<Renderer>()) r.enabled = false;
                 Sound.Tension(true);

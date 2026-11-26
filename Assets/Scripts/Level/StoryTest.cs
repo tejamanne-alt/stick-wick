@@ -27,7 +27,7 @@ namespace ProjectInk
             if (sh != null) foreach (var r in sh.GetComponentsInChildren<Renderer>()) r.enabled = false;
             hero.CinePose(new Vector3(54.2f, 0f, 0f));
             hero.SetFacing(1);
-            if (hero.Style == FightStyle.Fists) hero.GiveWeapon(FightStyle.Knife, 3);
+            hero.PutAwayKnife();                                       // (the hall is fought bare-handed)
             Enemy boss = null;
             if (director != null)
             {
