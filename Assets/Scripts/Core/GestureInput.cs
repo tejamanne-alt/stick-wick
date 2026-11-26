@@ -237,7 +237,8 @@ namespace ProjectInk
                 int o = kv.Key;
                 if (o == id || o == stickId || o == crouchId || o == iaiId || consumed.Contains(o) || holding.ContainsKey(o)) continue;
                 if (!touchTime.TryGetValue(o, out var ot) || Mathf.Abs(ot - st) > PairWindow) continue;
-                if (SideOf(kv.Value) != -side) continue;
+                int oside = Classic ? (kv.Value.x < Screen.width * 0.5f ? -1 : 1) : SideOf(kv.Value);     // (the same rule as the tap's own side)
+                if (oside != -side) continue;
                 pend = new PairTap { on = true, cmd = c, side = side, low = TapLow(c), start = st, endedAt = now, other = o };
                 return true;
             }
@@ -472,16 +473,20 @@ namespace ProjectInk
                 return;
             }
             float now = UnityEngine.Time.unscaledTime;
-            foreach (var kv in touchTime)
-            {
-                if (kv.Key != id && kv.Key != stickId && now - kv.Value < 0.15f && !consumed.Contains(kv.Key))
+            // the arcade's two-finger RAMPAGE (two fingers down together). Never in the story: there, two thumbs
+            // at once are CROSSFIRE, read when they lift (TryPair). (This used to swallow both thumbs here, on
+            // the way down, so CROSSFIRE never arrived, not even from the training ground's demo fingers.)
+            if (StoryIntro.Instance == null)
+                foreach (var kv in touchTime)
                 {
-                    consumed.Add(kv.Key);
-                    consumed.Add(id);
-                    Push(Command.Rampage);
-                    break;
+                    if (kv.Key != id && kv.Key != stickId && now - kv.Value < 0.15f && !consumed.Contains(kv.Key))
+                    {
+                        consumed.Add(kv.Key);
+                        consumed.Add(id);
+                        Push(Command.Rampage);
+                        break;
+                    }
                 }
-            }
             touchStart[id] = pos;
             touchTime[id] = now;
             // a tap, and straight away a press on the same half: if it's held (a moment, not a quick tap: quick

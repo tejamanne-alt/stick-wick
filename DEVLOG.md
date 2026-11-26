@@ -2275,3 +2275,9 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - a pipe from under the kitchen sink at home;
     - a railing bar in the park.
   - **The katana stays in the fortress,** where the story gives it.
+- **Fix: CROSSFIRE never fired on a phone, not even in the training demo.**
+  - **The cause:** an old arcade gesture. Two fingers landing within 0.15 s were swallowed on the way down as RAMPAGE (which does nothing in the story), so the two-thumb tap never reached the CROSSFIRE detection. The demo's virtual fingers go through the same code, so watch mode failed too.
+  - **The fix:** that gesture is now arcade-only; in the story, two thumbs at once are CROSSFIRE.
+  - **Also:**
+    - the pairing now judges each thumb's side by the same rule as the tap itself (the screen's halves, in the controls the game uses);
+    - a CROSSFIRE lesson's step now ticks on the two-thumb tap.

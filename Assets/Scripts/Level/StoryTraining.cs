@@ -892,8 +892,8 @@ namespace ProjectInk
             bool kick = c == Command.KickLeft || c == Command.KickRight || c == Command.KickForward;
             switch (st.g)
             {
-                case Gest.TapHigh: return strike;
-                case Gest.TapLow: return kick;
+                case Gest.TapHigh: return strike || c == Command.Crossfire;      // (a CROSSFIRE lesson's step: both thumbs)
+                case Gest.TapLow: return kick || c == Command.Crossfire;
                 case Gest.TapMan:
                     {
                         var t = GestureInput.TappedEnemy;
