@@ -2207,3 +2207,14 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - After 1.2 s he turns and walks away.
   - **Smoothing:** both clips play near 1× with eased acceleration and 0.2 s blends. The old `advance` / `retreat` remain for the far-range advance.
   - **Build:** the FBX is rebuilt (317 clips).
+- **Moving on guard near a man with the pipe and the katana, reviewed the same way.**
+  - **The problems:** the step-drags played at 1.8× (pipe) and 1.6× (katana), and the hips lurched inside every step. With the katana, holding on near a man switched to the walk with the blade trailing low, so the guard dropped mid-approach.
+  - **The shared fix** (`v4_far.glide_drag`): the body glides at an even speed and only the feet step; the second foot starts as the first lands, so each step is one movement.
+  - **The pipe:**
+    - Towards him (`rod_step`, 0.9 m/s): he walks his man down, low and heavy, the pipe cocked on the right shoulder in both hands riding the stride a little, the chest side-on, the head level.
+    - Away (`rod_back`, 0.75 m/s): the gliding back-step, the pipe held still.
+  - **The katana:** okuri-ashi both ways (`katana_step` 0.9 m/s, `katana_back` 0.8 m/s), gliding and level.
+    - Going in, the point presses a finger's width as the front foot lands (seme); going back it lifts a touch.
+    - The point never leaves his eyes.
+  - **Both:** walking him down the guard holds as long as it's held. Backing off, after 1.2 s he turns and goes. Clips play near 1×, eased in, with 0.2 s blends.
+  - **Build:** the FBX is rebuilt.

@@ -2935,7 +2935,7 @@
     },
     {
       "name": "rod_step",
-      "frames": 18,
+      "frames": 26,
       "fps": 30,
       "loop": true,
       "hitFrame": -1,
@@ -2946,7 +2946,7 @@
     },
     {
       "name": "rod_back",
-      "frames": 18,
+      "frames": 16,
       "fps": 30,
       "loop": true,
       "hitFrame": -1,

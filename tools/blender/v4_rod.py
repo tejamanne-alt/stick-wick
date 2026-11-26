@@ -10,6 +10,8 @@ carrying the follow-through round. Heavy, slow to start, devastating when it lan
   rod_shin      ↘ / tap low: a low swing through his shins (his leg goes)
   rod_jab       tap: the butt end driven into his belly, short and quick (he folds)
   rod_spin      hold on yourself, let go: wound right round, the full turn: everyone in reach"""
+import math
+
 from v4_pose import P
 from v4_moves import clip
 import v4_far
@@ -65,51 +67,36 @@ def _rod_walk():
 CLIPS["rod_walk"] = clip(26, _rod_walk(), loop=True, speed=ROD_WALK_SPEED,
                          note="walking with the pipe on the shoulder: a real heel-toe walk, the pipe riding each step")
 
-# fighting distance: the step-drag in the pipe's own stance (side-on, the weight back, the pipe cocked):
-# forward, the lead foot slides out and the rear drags up; back, the rear reaches back and the lead draws
-# after it. The stance never changes from rod_guard, so starting and stopping never jolts.
-ROD_STEP = 0.2
-_RL, _RR = RG["fL"], RG["fR"]
+# fighting distance (reviewed: the old step-drags, played at 1.8x, lurched inside every step):
+#   rod_step  TOWARDS him: the pipe's stalk. He walks his man down, heavier and lower than the bare stalk,
+#             the pipe cocked on the right shoulder in both hands and riding the stride a little, the chest
+#             turned side-on behind it, the head level. 0.9 m/s.
+#   rod_back  AWAY, still facing him: the gliding back-step, the pipe held still and cocked; the rear foot
+#             back low on its ball, the lead after it; the body never lurches. 0.6 m/s.
+ROD_STEP = 0.16
+ROD_STALK_SPEED = 0.9
 
 
-def _rod_drag(sign):
-    """Two step-drags in the rod stance, `sign` 1 forward / -1 back, looped in place."""
-    S = sign * ROD_STEP
-    mover, dragger = ("fL", "fR") if sign > 0 else ("fR", "fL")
-    M0 = RG[mover]
-    D0 = RG[dragger]
-    land = (M0[0], 0) if sign > 0 else (M0[0], 34)                  # forward: the lead lands flat; back: the rear on its ball
-    rest_d = D0
-
-    def key(body, hz, m, d):
-        """The body shifted `body` metres; the feet at m / d (stance-space, before the cycle's own shift)."""
-        q = at(R(hz=hz), body)
-        q[mover] = m
-        q[dragger] = d
-        return q
-
-    def step(o):
-        """One step-drag starting from the stance shifted o."""
-        mx = M0[0] + o
-        dx = D0[0] + o
-        return [
-            (3, key(o + S * 0.15, 0.625, (mx + S * 0.6, 0.045, -6 if sign > 0 else 18), (dx,) + tuple(rest_d[1:])), "out"),
-            (5, key(o + S * 0.4, 0.62, (mx + S,) + tuple(land[1:]), (dx,) + tuple(rest_d[1:])), "in"),
-            (7, key(o + S * 0.65, 0.626, (mx + S,) + tuple(land[1:]), (dx + S * 0.5, 0.035, 26 if sign > 0 else -4)), "out"),
-            (9, at(R(), o + S), "smooth"),
-        ]
-    seq = [(0, R(), "lin")]
-    seq += step(0.0)
-    seq += [(f + 9, q, e) for f, q, e in step(S)]
-    n = 18
-    return [(f, at(p, -2 * S * f / n), e) for f, p, e in seq]      # loop in place: the game carries the root
+def _rod_stalk():
+    n = 26
+    base = 0.63
+    keys = []
+    for f, p, e in gait(n, ROD_STALK_SPEED, duty=0.64, lift=0.038, hz=base, bounce=0.006, bounce_low_at_mid=False,
+                        spine=174, chest=170, neck=164, head=172, arm_base=0, arm_amp=0, elbow=10, fist=160,
+                        twist=5, strike=-10, push=28):
+        bob = p["hz"] - base
+        q = P(p, tw_hips=p["tw_hips"] - 14, tw_spine=p.get("tw_spine", 0.0) - 10, tw_chest=p["tw_chest"] * 0.5 - 20,
+              tw_head=-p["tw_chest"] * 0.3, clL=(8, 4), clR=(6, 6),
+              **grip(-0.03, 1.035 + bob, 206 + 2 * math.sin(2 * math.pi * f / n)))
+        keys.append((f, q, e))
+    return keys
 
 
-ROD_STEP_SPEED = round(2 * ROD_STEP * 30 / 18, 3)
-CLIPS["rod_step"] = clip(18, _rod_drag(1), loop=True, speed=ROD_STEP_SPEED,
-                         note="closing in with the pipe cocked: the lead foot slides, the rear drags up, the stance never changes")
-CLIPS["rod_back"] = clip(18, _rod_drag(-1), loop=True, speed=ROD_STEP_SPEED,
-                         note="backing off with the pipe cocked: the rear foot reaches back, the lead draws after it, still facing him")
+CLIPS["rod_step"] = clip(26, _rod_stalk(), loop=True, speed=ROD_STALK_SPEED,
+                         note="walking him down with the pipe cocked on the shoulder: low, heavy, the head level")
+ROD_STEP_SPEED = round(2 * ROD_STEP * 30 / 16, 3)
+CLIPS["rod_back"] = clip(16, v4_far.glide_drag(RG, -1, ROD_STEP, 16, hz=0.625), loop=True, speed=ROD_STEP_SPEED,
+                         note="giving ground with the pipe cocked: the body glides back, the rear foot back low, the lead after it")
 
 CLIPS["rod_swing"] = clip(28, [
     (0, RG, "lin"),

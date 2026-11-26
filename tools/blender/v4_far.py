@@ -201,6 +201,45 @@ def _give_ground():
 CLIPS["guard_back"] = clip(14, _give_ground(), loop=True, speed=round(2 * GIVE_STEP * 30 / 14, 3),
                            note="giving ground: the body glides back, the rear foot back low, the lead after it; the lead hand out")
 
+# ---------------------------------------------------------------- the gliding step-drag (shared: the pipe's and the katana's)
+def glide_drag(base, sign, step, n, hz, lift=(0.02, 0.014), over=None):
+    """Two step-drags in `base`'s stance, looped in place, with the body GLIDING at an even speed (only the
+    feet step: never a lurch inside the step). sign 1: the lead foot slides out first and the rear follows;
+    -1: the rear reaches back first and the lead follows. The follower starts as the first foot lands, so
+    each step is one flowing movement. `over(f)` adds per-frame changes (the hands, a press)."""
+    S = sign * step
+    mover, dragger = ("fL", "fR") if sign > 0 else ("fR", "fL")
+    M0, D0 = base[mover], base[dragger]
+    h = n / 2.0
+
+    def win(f, a, b):
+        return min(1.0, max(0.0, (f - a) / (b - a)))
+
+    def sm(k):
+        return k * k * (3 - 2 * k)
+
+    keys = []
+    for f in range(n + 1):
+        km = [win(f, 0.07 * h, 0.5 * h), win(f, 1.07 * h, 1.5 * h)]
+        kd = [win(f, 0.43 * h, 0.93 * h), win(f, 1.43 * h, 1.93 * h)]
+        travel = 2 * S * f / n
+        mx = M0[0] + S * (sm(km[0]) + sm(km[1])) - travel
+        dx = D0[0] + S * (sm(kd[0]) + sm(kd[1])) - travel
+        ma = next((k for k in km if 0 < k < 1), None)
+        da = next((k for k in kd if 0 < k < 1), None)
+        m_pitch_air = -6 if sign > 0 else 20
+        d_pitch_air = 26 if sign > 0 else -3
+        fm = (mx, lift[0] * _m.sin(_m.pi * ma), m_pitch_air) if ma is not None else (mx,) + tuple(M0[1:])
+        fd = (dx, lift[1] * _m.sin(_m.pi * da), d_pitch_air) if da is not None else (dx,) + tuple(D0[1:])
+        st = (f % h) / h
+        p = P(base, hx=base.get("hx", 0.0) + sign * 0.005 * _m.sin(_m.pi * st), hz=hz - 0.003 * _m.sin(_m.pi * st),
+              **{mover: fm, dragger: fd})
+        if over is not None:
+            p = P(p, **over(f))
+        keys.append((f, p, "lin"))
+    return keys
+
+
 # ---------------------------------------------------------------- the rush in (two explosive step-drags)
 CLIPS["rush_in"] = clip(18, [
     (0, GUARD, "lin"),

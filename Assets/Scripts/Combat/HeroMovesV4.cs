@@ -93,11 +93,14 @@ namespace ProjectInk
         const float StalkSpeed = 1.0f, StalkClip = 1.0f;
         const float GiveSpeed = 0.8f, GiveClip = 0.643f;
         const float GiveTime = 1.2f;            // backing off longer than this: he turns and walks away
-        const float RodStepSpeed = 1.2f;        // the pipe's step-drags (heavier, a touch slower)
-        const float RodStepClip = 0.667f;       // rod_step / rod_back ground speed
+        // the pipe near a man (reviewed like the bare footwork): rod_step, walking him down with it cocked on the
+        // shoulder; rod_back, the gliding back-step. Each at its own clip's pace, played near 1x.
+        const float RodStepSpeed = 0.9f, RodStepClip = 0.9f;      // rod_step (the pipe's stalk)
+        const float RodBackSpeed = 0.75f, RodBackClip = 0.6f;     // rod_back
         const float RodWalkSpeed = 1.4f;        // rod_walk: a real walk with the pipe on the shoulder
-        const float SwordStepSpeed = 1.3f;      // the katana's okuri-ashi (quick, gliding)
-        const float SwordStepClip = 0.825f;     // katana_step / katana_back ground speed
+        // the katana near a man: okuri-ashi both ways, the body gliding level, the point on his eyes
+        const float SwordStepSpeed = 0.9f, SwordBackSpeed = 0.8f;
+        const float SwordStepClip = 0.75f;      // katana_step / katana_back ground speed
         const float SwordWalkSpeed = 1.3f;      // katana_walk: the swordsman's walk, the blade trailing
 
         /// <summary>The nearest man who makes him keep his guard (see Threatened), within `range`.</summary>
@@ -217,9 +220,11 @@ namespace ProjectInk
                 bool stalk = bareSteps && body.Has("guard_stalk");
                 // how long he may keep it up: the weapons' steps a moment; bare-handed walking him down, as long
                 // as it's held; backing off, a little longer, then he turns and goes
+                // (the pipe and the katana the same: walking him down they keep their guard; backing off, a while)
+                bool glide = stalk || rodSteps || swordSteps;
                 bool towards = false;
-                if (stalk) { var near = NearestThreat(4.5f); towards = near == null || (near.transform.position.x > transform.position.x ? 1 : -1) == dir; }
-                float keepUp = stalk ? (towards ? float.MaxValue : GiveTime) : GuardStepTime;
+                if (glide) { var near = NearestThreat(4.5f); towards = near == null || (near.transform.position.x > transform.position.x ? 1 : -1) == dir; }
+                float keepUp = glide ? (towards ? float.MaxValue : GiveTime) : GuardStepTime;
                 bool footwork = !runHeld && Contact && (rodSteps || swordSteps || bareSteps) &&
                                 float.IsNaN(stepGoal) && holdTime < keepUp && Threatened;
                 if (footwork)
@@ -228,14 +233,16 @@ namespace ProjectInk
                     int face = man != null ? (man.transform.position.x > transform.position.x ? 1 : -1) : dir;
                     SetFacing(face);
                     if (dir == face && WalkIntoClinch(dir)) return;               // stepping into him: take hold
-                    float stepSpeed = rodSteps ? RodStepSpeed : swordSteps ? SwordStepSpeed : stalk ? (dir == face ? StalkSpeed : GiveSpeed) : GuardStepSpeed;
-                    velocity.x = Mathf.MoveTowards(velocity.x, dir * stepSpeed, (stalk ? 6f : 10f) * dt);   // (bare: eased in, no lurch)
+                    bool fwd = dir == face;
+                    float stepSpeed = rodSteps ? (fwd ? RodStepSpeed : RodBackSpeed) : swordSteps ? (fwd ? SwordStepSpeed : SwordBackSpeed)
+                                    : stalk ? (fwd ? StalkSpeed : GiveSpeed) : GuardStepSpeed;
+                    velocity.x = Mathf.MoveTowards(velocity.x, dir * stepSpeed, (glide ? 6f : 10f) * dt);   // (eased in: no lurch)
                     string step = rodSteps ? (dir == face ? "rod_step" : "rod_back") : swordSteps ? (dir == face ? "katana_step" : "katana_back")
                                 : stalk ? (dir == face ? "guard_stalk" : "guard_back")
                                 : dir == face ? "advance" : "retreat";
-                    float stepClip = rodSteps ? RodStepClip : swordSteps ? SwordStepClip : stalk ? (dir == face ? StalkClip : GiveClip) : GuardClipSpeed;
-                    float stepPlay = Mathf.Clamp(Mathf.Abs(velocity.x) / stepClip, stalk ? 0.5f : 0.6f, stalk ? 1.5f : 2.6f);
-                    if (body.CurrentName != step) body.Play(step, stalk ? 0.2f : 0.12f, false, stepPlay);
+                    float stepClip = rodSteps ? (fwd ? RodStepClip : RodBackClip) : swordSteps ? SwordStepClip : stalk ? (fwd ? StalkClip : GiveClip) : GuardClipSpeed;
+                    float stepPlay = Mathf.Clamp(Mathf.Abs(velocity.x) / stepClip, glide ? 0.5f : 0.6f, glide ? 1.5f : 2.6f);
+                    if (body.CurrentName != step) body.Play(step, glide ? 0.2f : 0.12f, false, stepPlay);
                     else body.SetSpeed(stepPlay);
                     walkLastX = transform.position.x;
                     walkBlocked = 0f;

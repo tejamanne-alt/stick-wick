@@ -100,45 +100,33 @@ def _katana_walk():
 CLIPS["katana_walk"] = clip(28, _katana_walk(), loop=True, speed=KATANA_WALK_SPEED,
                             note="the swordsman's walk: level and gliding, the blade low along the thigh, its point trailing; the left hand on the saya")
 
-# Fighting distance: okuri-ashi in chudan. The front foot slides first (forward) or the rear one
-# (back), the other follows to the same gap; the feet never cross or close, the rear heel stays up, the
-# hips stay level, and the point never leaves his eyes. Going in, the point presses a finger's width
-# forward as the front foot lands (seme); going back, it lifts a touch as the rear foot lands.
-K_STEP = 0.22
+# Fighting distance: okuri-ashi in chudan (reviewed: the old loops, played at 1.6x, lurched inside every
+# step). The body GLIDES, level, at an even speed: only the feet work. Going in, the front foot skims out
+# and the rear follows to the same gap as it lands; going back, the rear first. The feet never cross or
+# close, the rear heel stays up, and the point never leaves his eyes: going in it presses a finger's width
+# forward as the front foot lands (seme); going back it lifts a touch as the rear lands. Near a man it's
+# kept up as long as it's held (the walk, with the blade trailing low, is for when nobody's near).
+K_STEP = 0.2
 
 
-def _katana_drag(sign):
-    S = sign * K_STEP
-    mover, dragger = ("fL", "fR") if sign > 0 else ("fR", "fL")
-    M0, D0 = KG[mover], KG[dragger]
-    land = (M0[0], 0) if sign > 0 else (M0[0], 34)
+def _seme(sign, n):
+    h = n / 2.0
 
-    def key(body, hz, m, d, press=0.0):
-        q = at(K(hz=hz, gx=0.3 + press, gz=0.84 + (0.02 if press < 0 else 0.0), a=135), body)
-        q[mover] = m
-        q[dragger] = d
-        return q
-
-    def step(o):
-        mx, dx = M0[0] + o, D0[0] + o
-        return [
-            (2, key(o + S * 0.12, 0.616, (mx + S * 0.55, 0.012, -4 if sign > 0 else 20), (dx,) + tuple(D0[1:])), "out"),     # the foot skims out
-            (4, key(o + S * 0.45, 0.613, (mx + S,) + tuple(land[1:]), (dx,) + tuple(D0[1:]), 0.025 * sign), "in"),            # lands: seme / the lift
-            (6, key(o + S * 0.75, 0.616, (mx + S,) + tuple(land[1:]), (dx + S * 0.55, 0.01, 30 if sign > 0 else 0)), "out"),  # the other follows, low
-            (8, at(KG, o + S), "smooth"),
-        ]
-    seq = [(0, KG, "lin")]
-    seq += step(0.0)
-    seq += [(f + 8, q, e) for f, q, e in step(S)]
-    n = 16
-    return [(f, at(p, -2 * S * f / n), e) for f, p, e in seq]          # loop in place: the game carries the root
+    def over(f):
+        st = (f % h) / h
+        k = math.sin(math.pi * min(1.0, max(0.0, (st - 0.35) / 0.5)))        # as the first foot lands
+        press = 0.022 * k * sign
+        return grip(0.3 + press, 0.84 + (0.015 * k if sign < 0 else 0.0), 135 - 3 * k * sign)
+    return over
 
 
 K_STEP_SPEED = round(2 * K_STEP * 30 / 16, 3)
-CLIPS["katana_step"] = clip(16, _katana_drag(1), loop=True, speed=K_STEP_SPEED,
-                            note="okuri-ashi in: the front foot slides, the rear follows, the point pressing on his eyes")
-CLIPS["katana_back"] = clip(16, _katana_drag(-1), loop=True, speed=K_STEP_SPEED,
-                            note="okuri-ashi out: the rear foot slides back, the front follows, the point never leaves him")
+CLIPS["katana_step"] = clip(16, v4_far.glide_drag(KG, 1, K_STEP, 16, hz=0.612, lift=(0.012, 0.01), over=_seme(1, 16)),
+                            loop=True, speed=K_STEP_SPEED,
+                            note="okuri-ashi in: gliding, the front foot skims out, the rear follows; the point presses (seme)")
+CLIPS["katana_back"] = clip(16, v4_far.glide_drag(KG, -1, K_STEP, 16, hz=0.612, lift=(0.012, 0.01), over=_seme(-1, 16)),
+                            loop=True, speed=K_STEP_SPEED,
+                            note="okuri-ashi out: gliding back, the rear foot first, the front follows; the point never leaves him")
 
 CLIPS["katana_retreat"] = clip(12, [
     (0, KG, "lin"),
