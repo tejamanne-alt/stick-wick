@@ -2082,3 +2082,8 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - **The Park**: a man watching the van in the car park.
   - **The Home** gets a pipe man on the landing (he drops it) and four more things to throw: a kitchen bottle, a houseplant, a wrench under the stairs, a plant on the landing.
   - **The silent takedown** can now happen in five of the six fight chapters, and the pipe in all of them.
+- **Letting go of a picked man.** There was no way to drop a target once tapped, short of him going down, fleeing or being left 16 m behind. Now the pick lets go when the hero turns away from him:
+  - a strike (tap) to the other side;
+  - walking away from him for over 1.2 s. The first steps of a back-step while still facing him don't count, so a tactical retreat keeps the pick.
+
+  His red brackets open out and fade (0.35 s), so it's seen to go. Tapping another man still switches straight to him.

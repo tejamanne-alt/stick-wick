@@ -1163,6 +1163,26 @@ namespace ProjectInk
 
         public void ClearLock() { Locked = null; }
 
+        /// <summary>The man just let go of (the HUD fades his brackets out), and when.</summary>
+        public Enemy LockReleased { get; private set; }
+        public float LockReleasedAt { get; private set; } = -9f;
+        float lockAwayFor;
+
+        /// <summary>Let go of the picked man: the player has turned away from him (struck the other side,
+        /// or walked off). The marker fades out so it's seen to go.</summary>
+        void ReleaseLock()
+        {
+            if (Locked == null) return;
+            LockReleased = Locked;
+            LockReleasedAt = Time.unscaledTime;
+            Locked = null;
+            lockAwayFor = 0f;
+            Tell("unlock");
+        }
+
+        /// <summary>Which side of him the picked man is on (0: none).</summary>
+        int LockedSide => Locked == null ? 0 : Locked.transform.position.x >= transform.position.x ? 1 : -1;
+
         /// <summary>Lock the next one along, the most dangerous first (the keyboard's T).</summary>
         public void LockNext()
         {
@@ -1419,6 +1439,8 @@ namespace ProjectInk
 
         void Strike(int side, bool kick = false)
         {
+            // a strike the other way from the man he picked: he's turned away from him, the pick goes
+            if (Locked != null && side != LockedSide && Mathf.Abs(Locked.transform.position.x - transform.position.x) > 0.3f) ReleaseLock();
             if (InRampage) { RampageStrike(side); return; }
             if (KatanaMode) { KatanaThrust(side, kick); return; }    // a tap with the katana: the thrust
             if (state == State.Idle && Time.time - lastAttackEnd > comboWindow) { comboStep = 0; closeStep = 0; punchStep = 0; kickStep = 0; ResetString(); }

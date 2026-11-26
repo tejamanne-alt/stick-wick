@@ -1445,6 +1445,13 @@ namespace ProjectInk
                 float bodyH = Mathf.Max(20f, fy - hy);
                 bool isLocked = e == locked;
                 float iconY = hy - 16f;
+                // let go of: the brackets open out and fade
+                float rel = e == hero.LockReleased && !isLocked ? (Time.unscaledTime - hero.LockReleasedAt) / 0.35f : 1f;
+                if (rel < 1f)
+                {
+                    float grow = 1f + 0.35f * rel, h0 = Mathf.Max(bodyH * 0.42f, 22f) * grow, t0 = hy - 6f - 8f * rel, b0 = fy + 6f + 8f * rel;
+                    Brackets(new Rect(fx - h0, t0, h0 * 2f, b0 - t0), 12f, 3f, new Color(1f, 0.22f, 0.16f, 0.8f * (1f - rel)));
+                }
                 if (!e.Passive && e.Type != EnemyType.Brawler) WeaponIcon(e.Type, fx, iconY, isLocked ? 1f : 0.8f, e.Telegraphing);
                 if (!isLocked) continue;
                 float pulse = 0.75f + 0.25f * Mathf.Sin(Time.unscaledTime * 7f);

@@ -173,6 +173,11 @@ namespace ProjectInk
             }
             else if (dir != 0) stepGoal = float.NaN;
 
+            // walking off away from the man he picked (a moment's backing off, still facing him, doesn't count):
+            // he's turned away from him, the pick goes
+            if (dir != 0 && LockedSide != 0 && dir != LockedSide) { lockAwayFor += dt; if (lockAwayFor > 1.2f) ReleaseLock(); }
+            else lockAwayFor = 0f;
+
             if (dir != 0 && Grounded)
             {
                 bool alone = Alone;
