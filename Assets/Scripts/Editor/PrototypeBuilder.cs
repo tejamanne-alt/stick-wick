@@ -339,6 +339,18 @@ namespace ProjectInk.EditorTools
             Debug.Log($"[Stick Wick] MoveSet: {set.entries.Count} clips ({string.Join(", ", set.entries.Select(e => e.name))})");
             if (set.Get("idle") == null || set.Get("jab") == null)
                 throw new BuildFailedException("Stickman clips missing - check the FBX import");
+            // every clip must move the body it plays on: its curves' paths must be the body's bones (a clip from a
+            // file imported with another root would play and move nothing: the men freeze and slide)
+            var body = AssetDatabase.LoadAssetAtPath<GameObject>(modelPaths[0]);
+            if (body != null)
+            {
+                var dead = set.entries.Where(e => e.clip != null && AnimationUtility.GetCurveBindings(e.clip)
+                                              .Count(b => b.type == typeof(Transform) && body.transform.Find(b.path) != null) == 0)
+                                      .Select(e => e.name).ToList();
+                if (dead.Count > 0)
+                    throw new BuildFailedException($"{dead.Count} clips do not bind to {modelPaths[0]} (curve paths miss its bones), e.g. " +
+                                                   string.Join(", ", dead.Take(12)) + " - reimport Assets/Art/StickmanV4 (StickmanImport keeps every root)");
+            }
             return set;
         }
 

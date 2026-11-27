@@ -187,7 +187,10 @@ namespace ProjectInk
             Say("THUG", "The book. Hand it over.", 2.4f, lead != null ? HeadOf(lead) : null);
             yield return Hold(2.4f, () => EndShot(new Vector3(6.8f, 1.5f, -2.6f), new Vector3(9.6f, 1.55f, 0f), 30f));
             Say("YOU", "You want it?", 1.6f);
-            yield return Hold(2.2f, () => EndShot(new Vector3(6.6f, 1.45f, -2.4f), new Vector3(1.6f, 1.45f, 0f), 30f));
+            // the reverse on him from their side, turned in towards the bank so its front (the doors he came out of)
+            // is behind him: looking down the street past the bank's corner (x -14) there is nothing to see
+            var hp0 = hero.transform.position;
+            yield return Hold(2.2f, () => EndShot(hp0 + new Vector3(2.9f, 1.5f, -2.6f), hp0 + new Vector3(-0.1f, 1.45f, 0.6f), 28f));
             if (hero.body.Has("idle")) hero.body.Play("idle", 0.25f);              // the guard comes up
             Sound.Play(Sfx.Cloth, 0.8f);
             Say("YOU", "...Come and look.", 2.0f);

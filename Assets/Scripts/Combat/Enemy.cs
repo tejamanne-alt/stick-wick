@@ -241,9 +241,14 @@ namespace ProjectInk
                     if (Boss && !Driver && dist > 4f && dist < 13f && Time.time > nextSpecialAt && !hero.IsDead && Random.value < dt * 0.9f && AttackTokens.TryTake(this))
                     { HasToken = true; BeginCharge(dx); break; }
                     if (ContactFlank(dt, dx)) break;
-                    if (dist > Ring + 0.3f) Walk(Mathf.Sign(dx));
-                    else if (dist < Ring - 0.7f) Walk(-Mathf.Sign(dx) * 0.6f);
-                    else GoWait();
+                    {
+                        // his place in the line: his own ring, or a body's width behind the man ahead of him
+                        float ring = QueueRing(dist, out _);
+                        bool queued = ring > Ring + 0.01f;
+                        if (dist > ring + 0.3f) Walk(Mathf.Sign(dx));
+                        else if (dist < ring - (queued ? 0.15f : 0.7f)) Walk(-Mathf.Sign(dx) * 0.6f);
+                        else GoWait();
+                    }
                     break;
                 case State.Wait:
                     FaceTowards(hero.transform.position.x);
@@ -251,8 +256,10 @@ namespace ProjectInk
                     if (TryThrowProp(dist, sameLevel)) break;
                     UpdateGuardStance();
                     if (Keep) break;
-                    if (!sameLevel || Mathf.Abs(dist - Ring) > 1.0f) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
-                    else if (!NoAttack && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
+                    float qRing = QueueRing(dist, out bool behindMate);
+                    bool tooClose = qRing > Ring + 0.01f && dist < qRing - 0.3f;     // the man ahead came back into me
+                    if (!sameLevel || Mathf.Abs(dist - qRing) > 1.0f || tooClose) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
+                    else if (!NoAttack && !behindMate && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
                         HasToken = true;
                         if (Boss && !Driver && TryBossSpecial(dist, dx)) break;

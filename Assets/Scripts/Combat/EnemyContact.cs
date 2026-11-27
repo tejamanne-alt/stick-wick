@@ -437,6 +437,37 @@ namespace ProjectInk
             return true;
         }
 
+        /// <summary>A body's width and a little: the least gap between two men in the same line.</summary>
+        const float QueueGap = 0.8f;
+
+        /// <summary>Men on the same side of the hero stand one behind another, never inside each other: the distance
+        /// I keep from him is my own ring, or a body's width past the man ahead of me in the line (nearer him),
+        /// whichever is further. `blocked`: a man of mine stands between me and the hero (I can't hit him through
+        /// my mate: I wait my turn, or work round, ContactFlank).</summary>
+        float QueueRing(float dist, out bool blocked)
+        {
+            blocked = false;
+            float need = Ring;
+            if (Ranged || Boss || hero == null) return need;
+            float hx = hero.transform.position.x;
+            float side = transform.position.x >= hx ? 1f : -1f;
+            float z = transform.position.z;
+            int me = All.IndexOf(this);                                                  // (ties: the earlier man is ahead)
+            foreach (var e in All)
+            {
+                if (e == this || e == null || !e.Alive || e.IsDown || e.Carried) continue;
+                if (e.state == State.Scripted || e.state == State.Enter || e.state == State.Flee || e.state == State.Unaware) continue;
+                float ex = (e.transform.position.x - hx) * side;
+                if (ex <= 0.05f) continue;                                               // the other side of him
+                if (Mathf.Abs(e.transform.position.z - z) > 0.6f) continue;              // beside the line (going round), not in it
+                bool ahead = ex < dist - 0.02f || (Mathf.Abs(ex - dist) <= 0.02f && All.IndexOf(e) < me);
+                if (!ahead) continue;
+                blocked = true;
+                need = Mathf.Max(need, ex + QueueGap);
+            }
+            return need;
+        }
+
         /// <summary>Hurt badly, he hangs back further and waits longer.</summary>
         float FearRing => StoryBrain && !Driver && !Cleaner && !Handler ? (HealthFraction < 0.3f ? 0.9f : 0f) + (RageFear ? 0.6f : 0f) : 0f;
 

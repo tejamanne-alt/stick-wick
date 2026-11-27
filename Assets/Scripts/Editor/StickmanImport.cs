@@ -69,6 +69,28 @@ namespace ProjectInk.EditorTools
             importer.importAnimation = true;
             importer.animationCompression = ModelImporterAnimationCompression.Off;
             importer.resampleCurves = true;
+            // The V4 part files hold the rig alone, a single root ("Stickman"), and Unity reuses a lone root as the
+            // prefab root: their clips' curves then start at "hips/..." while the body's (two roots: the rig and
+            // the mesh) start at "Stickman/hips/...", so none of them would move the body (walk, idle_loose, the
+            // far moves, CROSSFIRE, the weapons: the men froze in the bind pose and slid). Keep every root.
+            if (IsV4File(assetPath)) importer.preserveHierarchy = true;
+        }
+
+        /// <summary>Part files imported before the rule above keep their old curve paths until imported again:
+        /// on load, any V4 file still without it is re-imported (only those files, once).</summary>
+        [InitializeOnLoadMethod]
+        static void ReimportV4Parts()
+        {
+            EditorApplication.delayCall += () =>
+            {
+                foreach (var p in ModelPathsV4())
+                    if (AssetImporter.GetAtPath(p) is ModelImporter m && !m.preserveHierarchy)
+                    {
+                        m.preserveHierarchy = true;
+                        m.SaveAndReimport();
+                        Debug.Log("Stick Wick: re-imported " + p + " so its clips bind to the body");
+                    }
+            };
         }
 
         void OnPreprocessAnimation()
