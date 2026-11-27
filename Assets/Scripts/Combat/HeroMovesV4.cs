@@ -67,17 +67,30 @@ namespace ProjectInk
         {
             get
             {
-                if (Time.time - lastAttackEnd < 1.6f || Time.time - lastHurtAt < 1.6f) return true;
-                foreach (var e in Enemy.All)
-                {
-                    if (e == null || !e.Alive || e.Fleeing || e.Unaware || e.IsDown || e.Held || e.Passive || e.Puppeted) continue;
-                    if (Mathf.Abs(e.transform.position.y - transform.position.y) > 1.6f) continue;
-                    float dx = Mathf.Abs(e.transform.position.x - transform.position.x);
-                    if ((e.Engaged || e.Telegraphing || e.Charging) && dx < AloneRange) return true;
-                    if (!e.HoldFire && !e.Keep && dx < 3.2f) return true;
-                }
-                return false;
+                // the guard comes up at once and goes down only when nobody has threatened him for a while, and a man
+                // must step further off (4 m) than he came in (3.2 m): a man hovering at the edge, or one flicking in and
+                // out of his attack, no longer has the guard going up and down (the "shaking" guard)
+                bool now = ThreatNow(guardUp ? 4.0f : 3.2f);
+                if (now) { guardUp = true; guardDownAt = Time.time + 0.8f; }
+                else if (Time.time > guardDownAt) guardUp = false;
+                return guardUp;
             }
+        }
+        bool guardUp;
+        float guardDownAt;
+
+        bool ThreatNow(float near)
+        {
+            if (Time.time - lastAttackEnd < 1.6f || Time.time - lastHurtAt < 1.6f) return true;
+            foreach (var e in Enemy.All)
+            {
+                if (e == null || !e.Alive || e.Fleeing || e.Unaware || e.IsDown || e.Held || e.Passive || e.Puppeted) continue;
+                if (Mathf.Abs(e.transform.position.y - transform.position.y) > 1.6f) continue;
+                float dx = Mathf.Abs(e.transform.position.x - transform.position.x);
+                if ((e.Engaged || e.Telegraphing || e.Charging) && dx < AloneRange) return true;
+                if (!e.HoldFire && !e.Keep && dx < near) return true;
+            }
+            return false;
         }
 
         string IdleClipV4 => MovesV4 && Style == FightStyle.Fists && !Threatened ? "idle_alone" : "idle";
@@ -90,8 +103,10 @@ namespace ProjectInk
         // second, the hips lurching inside every step): towards him, THE STALK, a low real walk behind the
         // guard; away, GIVING GROUND, the body gliding back while the feet step. Each at its own pace,
         // played near 1x. Walking him down never drops the guard; backing off, after a while he turns and goes.
-        const float StalkSpeed = 1.0f, StalkClip = 1.0f;
-        const float GiveSpeed = 0.8f, GiveClip = 0.643f;
+        // (reviewed again: the stalk crouched and crossed its feet and the back-step snapped a foot every step, so
+        // the guard shook; both are now a boxer's step-drag, v4_far.py glide_drag, played at their own pace)
+        const float StalkSpeed = 0.8f, StalkClip = 0.788f;        // guard_stalk: the lead foot out, the rear after it
+        const float GiveSpeed = 0.72f, GiveClip = 0.712f;         // guard_back: the rear foot back, the lead after it
         const float GiveTime = 1.2f;            // backing off longer than this: he turns and walks away
         // the pipe near a man (reviewed like the bare footwork): rod_step, walking him down with it cocked on the
         // shoulder; rod_back, the gliding back-step. Each at its own clip's pace, played near 1x.

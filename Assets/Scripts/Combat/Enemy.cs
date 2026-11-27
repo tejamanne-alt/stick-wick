@@ -258,7 +258,7 @@ namespace ProjectInk
                     if (Keep) break;
                     float qRing = QueueRing(dist, out bool behindMate);
                     bool tooClose = qRing > Ring + 0.01f && dist < qRing - 0.3f;     // the man ahead came back into me
-                    if (!sameLevel || Mathf.Abs(dist - qRing) > 1.0f || tooClose) { state = State.Approach; body.Play("run", 0.1f, false, 0.85f); }
+                    if (!sameLevel || Mathf.Abs(dist - qRing) > 1.0f || tooClose) { state = State.Approach; if (dist >= 3.4f || !sameLevel) body.Play("run", 0.1f, false, 0.85f); }   // (close in: Walk picks the guard's step)
                     else if (!NoAttack && !behindMate && Time.time > waitUntil && !hero.IsDead && AttackTokens.TryTake(this))
                     {
                         HasToken = true;
@@ -739,6 +739,23 @@ namespace ProjectInk
 
         void Walk(float dirTimesSpeed)
         {
+            // close in on the hero, bare-handed, just finding his range (not closing from afar, not lunging in to hit,
+            // not running round him): a boxer's step-drag on guard at a boxer's pace, the same footwork as the hero's.
+            // (A full run cycle for half a metre's adjustment had the men's legs flailing in front of him.)
+            if (hero != null && Mathf.Abs(dirTimesSpeed) <= 1.05f && IdleClip == "idle" && !Ranged && Grounded && body.Has("guard_back"))
+            {
+                float hx = hero.transform.position.x - transform.position.x;
+                if (Mathf.Abs(hx) < 3.4f)
+                {
+                    bool towards = Mathf.Sign(dirTimesSpeed) == Mathf.Sign(hx);
+                    float pace = towards ? 0.8f : 0.72f, clipPace = towards ? 0.788f : 0.712f;   // (HeroMovesV4: StalkSpeed, GiveSpeed)
+                    velocity.x = Mathf.MoveTowards(velocity.x, Mathf.Sign(dirTimesSpeed) * pace, 6f * Time.deltaTime);
+                    string step = towards ? "guard_stalk" : "guard_back";
+                    float rate = Mathf.Clamp(Mathf.Abs(velocity.x) / clipPace, 0.5f, 1.3f);
+                    if (body.CurrentName != step) body.Play(step, 0.2f, false, rate); else body.SetSpeed(rate);
+                    return;
+                }
+            }
             velocity.x = dirTimesSpeed * walkSpeed;
             // the Foreman, badly hurt, drags a leg: a slower, heavier gait
             float gait = Foreman && Health < maxHealth * 0.4f ? 0.62f : 0.85f;

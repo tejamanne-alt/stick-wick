@@ -125,7 +125,6 @@ import math as _m
 from v4_clips import GUARD as _G
 from v4_moves import gait as _gait
 
-STALK_SPEED = 1.0
 _GARM = dict((k, _G[k]) for k in ("clL", "clR", "uaL", "faL", "haL", "yw_uaL", "yw_faL", "twL", "fiL",
                                   "uaR", "faR", "haR", "yw_uaR", "yw_faR", "twR", "fiR") if k in _G)
 
@@ -146,67 +145,22 @@ def _guard_arms(lead_out=0.0, paw=0.0, sway=0.0):
     return a
 
 
-def _stalk():
-    n = 24
-    keys = []
-    for f, p, e in _gait(n, STALK_SPEED, duty=0.62, lift=0.04, hz=0.64, bounce=0.005, bounce_low_at_mid=False,
-                         spine=173, chest=165, neck=158, head=171, arm_base=0, arm_amp=0, elbow=0, fist=165,
-                         twist=6, strike=-10, push=30):
-        ph = f / n
-        # the paw: on the second step (the lead foot landing), out and back
-        paw = max(0.0, _m.sin(_m.pi * (ph - 0.5) / 0.3)) if 0.5 <= ph <= 0.8 else 0.0
-        sway = _m.sin(2 * _m.pi * ph)
-        q = P(p, tw_hips=p["tw_hips"] - 8, tw_spine=p["tw_spine"] - 6, spine_mid=169, tw_chest=p["tw_chest"] * 0.5 - 6,
-              tw_head=-p["tw_chest"] * 0.4, **_guard_arms(0.85, paw, sway))
-        keys.append((f, q, e))
-    return keys
+# ---------------------------------------------------------------- the gliding step-drag (shared: bare hands, the pipe, the katana)
+# Reviewed again (the guard "shaking" on the move): each foot used to slide in three frames on a plain smoothstep,
+# its pitch jumped to the in-air angle in one frame, and a lifted foot was given the BALL's x as its ANKLE's x at
+# floor height (a planted foot is (ball x, pitch), a lifted one (ankle x, ankle z, pitch): v4_pose.solve). So at
+# every lift and landing the foot jumped about 10 cm and dropped through the floor for a frame: 16 cm pops, three
+# a second. Now a step is one unhurried movement: the foot slides over most of its half of the cycle on a quintic
+# ease (no jolt as it leaves or lands), skims a centimetre or two off the floor with its ankle carried from where
+# it really is, its pitch easing out and back with the lift; the other foot sets off before the first lands; the
+# hips glide at an even speed with only a slight weight shift onto the foot that lands.
+from v4_pose import ankle_of as _ankle_of
 
 
-CLIPS["guard_stalk"] = clip(24, _stalk(), loop=True, speed=STALK_SPEED,
-                            note="walking his man down: a low real walk behind the guard, head level, the lead hand pawing for range")
-
-GIVE_STEP = 0.15
-
-
-def _give_ground():
-    n, S = 14, -GIVE_STEP
-    GL0, GR0 = _G["fL"][0], _G["fR"][0]
-    keys = []
-
-    def move(f, a, b):
-        return min(1.0, max(0.0, (f - a) / (b - a)))
-
-    for f in range(n + 1):
-        # the rear foot: back over frames 1-4 and 9-12; the lead after it: 5-8 and 13-16
-        kr1, kr2 = move(f, 0.5, 3.5), move(f, 7.5, 10.5)      # the lead follows as the rear lands: one flowing step
-        kl1, kl2 = move(f, 3.0, 6.5), move(f, 10.0, 13.5)
-        sm = lambda k: k * k * (3 - 2 * k)
-        rx = GR0 + S * (sm(kr1) + sm(kr2))
-        lx = GL0 + S * (sm(kl1) + sm(kl2))
-        r_air = (0 < kr1 < 1) or (0 < kr2 < 1)
-        l_air = (0 < kl1 < 1) or (0 < kl2 < 1)
-        kr = kr1 if 0 < kr1 < 1 else kr2
-        kl = kl1 if 0 < kl1 < 1 else kl2
-        fR = (rx, 0.022 * _m.sin(_m.pi * kr), 26) if r_air else (rx, 40)
-        fL = (lx, 0.016 * _m.sin(_m.pi * kl), -3) if l_air else (lx, 0)
-        travel = 2 * S * f / n                                     # the hips glide back evenly
-        step = (f % 7) / 7.0
-        hx = travel - 0.006 * _m.sin(_m.pi * step)                # (a few millimetres of give as the rear foot takes him)
-        hz = 0.628 - 0.003 * _m.sin(_m.pi * step)                 # knees kept bent: never a straight leg reaching back
-        p = P(_G, hx=hx, hz=hz, fL=fL, fR=fR, head=171, tw_head=0.0, **_guard_arms(1.0, 0.0, 0.0))
-        keys.append((f, at(p, -travel), "lin"))                    # in place: the game carries the root
-    return keys
-
-
-CLIPS["guard_back"] = clip(14, _give_ground(), loop=True, speed=round(2 * GIVE_STEP * 30 / 14, 3),
-                           note="giving ground: the body glides back, the rear foot back low, the lead after it; the lead hand out")
-
-# ---------------------------------------------------------------- the gliding step-drag (shared: the pipe's and the katana's)
-def glide_drag(base, sign, step, n, hz, lift=(0.02, 0.014), over=None):
-    """Two step-drags in `base`'s stance, looped in place, with the body GLIDING at an even speed (only the
-    feet step: never a lurch inside the step). sign 1: the lead foot slides out first and the rear follows;
-    -1: the rear reaches back first and the lead follows. The follower starts as the first foot lands, so
-    each step is one flowing movement. `over(f)` adds per-frame changes (the hands, a press)."""
+def glide_drag(base, sign, step, n, hz, lift=(0.016, 0.012), over=None):
+    """Two step-drags in `base`'s stance, looped in place (the game carries the root), the body GLIDING at an
+    even speed. sign 1: the lead foot slides out first and the rear follows; -1: the rear reaches back first and
+    the lead follows. `over(f)` adds per-frame changes (the hands, a press)."""
     S = sign * step
     mover, dragger = ("fL", "fR") if sign > 0 else ("fR", "fL")
     M0, D0 = base[mover], base[dragger]
@@ -215,30 +169,74 @@ def glide_drag(base, sign, step, n, hz, lift=(0.02, 0.014), over=None):
     def win(f, a, b):
         return min(1.0, max(0.0, (f - a) / (b - a)))
 
-    def sm(k):
-        return k * k * (3 - 2 * k)
+    def sm(k):                                    # smootherstep: zero speed and zero acceleration at both ends
+        return k * k * k * (k * (6 * k - 15) + 10)
+
+    def foot(x, rest, k, up, air_pitch):
+        """A foot whose ball is at x: planted as in the stance, or (0 < k < 1) on its way, skimming."""
+        rp = rest[-1]                             # its pitch in the stance (the rear heel up, the lead flat)
+        if k is None:
+            return (x, rp)
+        s = _m.sin(_m.pi * k)
+        pitch = rp + (air_pitch - rp) * s
+        ax, az = _ankle_of(x, pitch)              # the ankle from where the ball really is: no jump at lift-off
+        return (ax, az + up * s, pitch)
 
     keys = []
     for f in range(n + 1):
-        km = [win(f, 0.07 * h, 0.5 * h), win(f, 1.07 * h, 1.5 * h)]
-        kd = [win(f, 0.43 * h, 0.93 * h), win(f, 1.43 * h, 1.93 * h)]
+        # the first foot slides over 0-62% of each half; the second sets off at 38% and arrives at the half
+        km = [win(f, 0.0, 0.62 * h), win(f, h, 1.62 * h)]
+        kd = [win(f, 0.38 * h, h), win(f, 1.38 * h, 2 * h)]
         travel = 2 * S * f / n
         mx = M0[0] + S * (sm(km[0]) + sm(km[1])) - travel
         dx = D0[0] + S * (sm(kd[0]) + sm(kd[1])) - travel
         ma = next((k for k in km if 0 < k < 1), None)
         da = next((k for k in kd if 0 < k < 1), None)
-        m_pitch_air = -6 if sign > 0 else 20
-        d_pitch_air = 26 if sign > 0 else -3
-        fm = (mx, lift[0] * _m.sin(_m.pi * ma), m_pitch_air) if ma is not None else (mx,) + tuple(M0[1:])
-        fd = (dx, lift[1] * _m.sin(_m.pi * da), d_pitch_air) if da is not None else (dx,) + tuple(D0[1:])
+        m_air = M0[-1] - 4 if sign > 0 else M0[-1] + 10      # out: the toes a touch up; back: onto the ball
+        d_air = D0[-1] + 8 if sign > 0 else D0[-1] + 4
         st = (f % h) / h
-        p = P(base, hx=base.get("hx", 0.0) + sign * 0.005 * _m.sin(_m.pi * st), hz=hz - 0.003 * _m.sin(_m.pi * st),
-              **{mover: fm, dragger: fd})
+        shift = _m.sin(_m.pi * st)                  # the weight onto the foot that lands, a centimetre
+        p = P(base, hx=base.get("hx", 0.0) + sign * 0.008 * shift, hz=hz - 0.004 * shift,
+              **{mover: foot(mx, M0, ma, lift[0], m_air), dragger: foot(dx, D0, da, lift[1], d_air)})
         if over is not None:
             p = P(p, **over(f))
         keys.append((f, p, "lin"))
     return keys
 
+
+# ---------------------------------------------------------------- THE GUARD ON THE MOVE (bare hands, the knife)
+# Reviewed again: the stalk (a low walk behind the guard) crouched and crossed its feet, and backing off snapped a
+# foot every step (above): seen in play the guard shook. Now a boxer's step-drag both ways, made with glide_drag:
+# towards him the lead foot slides out and the rear follows it the same distance; away, the rear reaches back and
+# the lead follows. The feet never cross, the stance never narrows or splays; the knees soft, the head level, the
+# chin down behind the lead shoulder; the guard held tight on the line (the lead fist a forearm out at chin height,
+# the rear at the jaw, elbows in). Pressing, the lead hand paws out a few centimetres as the lead foot lands
+# (feeling for the range); giving ground it stays a little further out (keeping him off). Three steps a second.
+STALK_STEP, STALK_N = 0.21, 16
+STALK_SPEED = round(2 * STALK_STEP * 30 / STALK_N, 3)          # 0.788 m/s
+GIVE_STEP, GIVE_N = 0.19, 16
+GIVE_SPEED = round(2 * GIVE_STEP * 30 / GIVE_N, 3)             # 0.712 m/s
+
+
+def _guard_over(sign, n):
+    h = n / 2.0
+
+    def over(f):
+        ph = (f % h) / h
+        # pressing: the paw as the lead foot lands (0.45-0.9 of each step), out and back
+        paw = max(0.0, _m.sin(_m.pi * (ph - 0.45) / 0.45)) if sign > 0 and 0.45 <= ph <= 0.9 else 0.0
+        a = _guard_arms(0.75 if sign > 0 else 0.9, 0.55 * paw, 0.0)
+        a.update(head=171, tw_head=0.0)
+        return a
+    return over
+
+
+CLIPS["guard_stalk"] = clip(STALK_N, glide_drag(_G, 1, STALK_STEP, STALK_N, hz=0.632, over=_guard_over(1, STALK_N)),
+                            loop=True, speed=STALK_SPEED,
+                            note="pressing on guard: the lead foot slides out, the rear follows; feet never cross, the lead hand paws")
+CLIPS["guard_back"] = clip(GIVE_N, glide_drag(_G, -1, GIVE_STEP, GIVE_N, hz=0.63, over=_guard_over(-1, GIVE_N)),
+                           loop=True, speed=GIVE_SPEED,
+                           note="giving ground on guard: the rear foot reaches back, the lead follows; the lead hand out")
 
 # ---------------------------------------------------------------- the rush in (two explosive step-drags)
 CLIPS["rush_in"] = clip(18, [

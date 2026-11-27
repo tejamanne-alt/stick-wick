@@ -2373,3 +2373,13 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - It's made at the old walk's measured ground speed (1.18 m/s), so every scene's hand-tuned playback rate still keeps the feet planted.
   - `walk` moved from the story file into the body's file. The other 361 clips are unchanged (`check_v4_fbx.py`).
   - **The hero walks his own walk in the scenes:** `ClipPlayer.Substitute` plays `walk_alone` wherever a scene asks him to `walk`, at 1.18/1.25 of the rate, so his feet stay planted at the scene's pace.
+- **The guard on the move, fixed (it shook).**
+  - **The shake:** the shared step-drag (`v4_far.glide_drag`) and the bare-hand back-step moved each foot in about 3 frames on a plain smoothstep. The foot's pitch jumped to its in-air angle in one frame.
+  - **The bigger snap:** a lifted foot was given the ball's x as its ankle's x, at floor height. A planted foot is (ball x, pitch); a lifted one is (ankle x, ankle z, pitch). So at every lift and landing the foot jumped about 10 cm and dipped through the floor for a frame: foot jerks of 16–18 cm/frame², about three a second.
+  - **The stalk forward** was a crouched walk whose feet crossed.
+  - **Now a boxer's step-drag both ways** (`guard_stalk`, `guard_back`). The lead slides out and the rear follows, or the rear reaches back and the lead follows. The stance stays 33 cm or wider, the feet never cross, and the guard stays tight; the lead hand paws as the lead foot lands.
+  - **The step-drag helper:** each foot slides over most of its half of the cycle on a quintic ease, skims 1–2 cm with its ankle carried from where it really is, and eases its pitch with the lift. The hips glide evenly with a 1 cm weight shift.
+  - **Measured:** the worst foot jerk is 3.6–4.5 (the walk's is 5.8). The pipe's and the katana's back and forward steps get the same fix.
+  - **Paces:** 0.79 m/s pressing, 0.71 giving ground. The hero plays them near 1x (`StalkSpeed`, `GiveSpeed`).
+  - **The guard no longer flickers:** `Threatened` comes up at once (a man within 3.2 m). It goes down only once nobody has threatened for 0.8 s and the men are past 4 m.
+  - **Enemies near the hero** find their range with the same step-drag at the same pace, instead of a run cycle for half a metre. Running stays for closing from afar, lunging in and going round. Going back from waiting to approaching no longer starts a run for one frame when close.
