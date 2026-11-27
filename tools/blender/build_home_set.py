@@ -839,7 +839,7 @@ def structure(gs, gd, M):
     gs.box((29.5, (YF + YB) / 2, 0.003), (9.0, YB - YF, 0.006), M["kitchen_floor"])
     gs.box((1.55, (YF + YB) / 2, 0.003), (2.9, YB - YF, 0.006), M["hall_tiles"])
     gs.box(((X0 + X1) / 2, (YF + 2.4) / 2, FLOOR2 - 0.1), (X1 - X0, 2.4 - YF, 0.2), M["boards_up"])   # upstairs (open over the stairs)
-    gs.box(((STAIR_X1 + 0.2 + X1) / 2, 3.3, FLOOR2 - 0.1), (X1 - STAIR_X1 - 0.2, 1.8, 0.2), M["boards_up"])
+    gs.box(((STAIR_X1 + X1) / 2, 3.3, FLOOR2 - 0.1), (X1 - STAIR_X1, 1.8, 0.2), M["boards_up"])     # the landing, right to the top tread (no slit)
     gs.box(((X0 + X1) / 2, (YF + 2.4) / 2, H1 - 0.01), (X1 - X0 - 0.2, 2.4 - YF, 0.02), M["ceiling"])
     gs.box(((STAIR_X1 + 0.2 + X1) / 2, 3.3, H1 - 0.01), (X1 - STAIR_X1 - 0.4, 1.8, 0.02), M["ceiling"])
     gs.box(((X0 + X1) / 2, (YF + YB) / 2, H2 + 0.05), (X1 - X0, YB - YF, 0.1), M["ceiling"])
@@ -893,7 +893,9 @@ def structure(gs, gd, M):
         gs.box(((X0 + X1) / 2, y, 6.05), (X1 - X0 + 0.8, 0.04, 0.22), M["white_paint"])
     # ---- cross walls with doorways, their frames, the doors (open, back against the wall)
     for x in DOORS1[1:]:
-        wall_with_door(gs, x, 0.0, FLOOR2 - 0.2, M["plaster_y"])
+        # (the hall / study wall at x 9 stops at the stairs' stringer: the flight (to x 9.4) runs past it, and
+        # the wall used to carry on through the top treads where he climbs)
+        wall_with_door(gs, x, 0.0, FLOOR2 - 0.2, M["plaster_y"], y1=(2.55 if STAIR_X0 < x < STAIR_X1 else YB))
         architrave(gs, x, 0.0, M)
         door_leaf(gs, gd, (x + 0.1, 0.66, 0.0), 86 + rnd.uniform(-4, 2), M, w=1.24, h=2.16)
     for x in DOORS2:

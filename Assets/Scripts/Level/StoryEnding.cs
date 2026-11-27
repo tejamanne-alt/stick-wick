@@ -16,6 +16,10 @@ namespace ProjectInk
     /// phone fall and walks out of the big door into the rain. CHAPTER 1 COMPLETE.</summary>
     public partial class StoryIntro
     {
+        /// <summary>The ending's kneel spot is this far behind the Foreman's body in depth (his head lies towards
+        /// the hero, and kneeling in line put the hero's front knee inside it).</summary>
+        const float EndingKneelZ = 0.38f;
+
         public static bool BossReached;
         float headYaw;
         bool headYawOn;
@@ -111,6 +115,10 @@ namespace ProjectInk
             // (facing the way he walks: he used to walk backwards to the body when he came from its far
             // side; and from there he goes round behind it, not through it)
             float hx0 = hero.transform.position.x, hz0 = hero.transform.position.z, kneelX = landX - 1.05f;
+            // he kneels a little behind the body in depth: the Foreman lies with his head towards him (its centre
+            // about landX - 0.78, 0.3 across), and kneeling in line put his front knee inside it. From the camera
+            // side he's now kneeling just beyond the head, over him, every close-up still on the two of them.
+            // (EndingKneelZ)
             bool round = hx0 > landX - 0.8f;
             hero.SetFacing(kneelX >= hx0 ? 1 : -1);
             endingWalkYaw = hero.Facing > 0 ? 0f : 180f;
@@ -121,7 +129,7 @@ namespace ProjectInk
                 t1 += StoryDt;
                 float k = Mathf.SmoothStep(0f, 1f, t1 / 2.2f);
                 var was = hero.transform.position;
-                hero.CinePose(new Vector3(Mathf.Lerp(hx0, kneelX, k), 0f, Mathf.Lerp(hz0, 0f, k) + (round ? 0.75f * Mathf.Sin(Mathf.PI * k) : 0f)));
+                hero.CinePose(new Vector3(Mathf.Lerp(hx0, kneelX, k), 0f, Mathf.Lerp(hz0, EndingKneelZ, k) + (round ? 0.75f * Mathf.Sin(Mathf.PI * k) : 0f)));
                 TurnAsHeWalks(hero.transform.position - was, StoryDt);
                 if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.55f; Sound.Play(Sfx.Footstep, 0.7f, hero.transform.position, 0.8f); }
                 EndShot(new Vector3(landX - 4.6f, 0.32f, -3.1f), new Vector3(landX - 0.8f, 0.6f, 0f), 40f);
@@ -343,7 +351,7 @@ namespace ProjectInk
             {
                 tn += StoryDt;
                 headYaw = Mathf.Sin(tn * 3.2f) * 26f * Mathf.Clamp01(tn / 0.6f) * (1f - Mathf.Clamp01((tn - 3.6f) / 0.6f));
-                hero.CinePose(new Vector3(stand - 0.5f * Mathf.SmoothStep(0f, 1f, tn / 3f), 0f, 0f));      // backing away
+                hero.CinePose(new Vector3(stand - 0.5f * Mathf.SmoothStep(0f, 1f, tn / 3f), 0f, EndingKneelZ));      // backing away
                 if (tn > 2.6f && tn - StoryDt <= 2.6f) Say("YOU", "That wasn't... I didn't...", 1.8f);
                 Rain();
                 EndShot(new Vector3(mx - 0.3f, 0.9f, -3.0f + 0.4f * tn / 4.2f), HeadC() + Vector3.down * 0.4f, 32f);
@@ -380,7 +388,7 @@ namespace ProjectInk
                 while (tk < 1.4f)
                 {
                     tk += StoryDt;
-                    hero.CinePose(new Vector3(Mathf.Lerp(sx, landX - 0.95f, Mathf.SmoothStep(0f, 1f, tk / 1.3f)), 0f, 0f));
+                    hero.CinePose(new Vector3(Mathf.Lerp(sx, landX - 0.95f, Mathf.SmoothStep(0f, 1f, tk / 1.3f)), 0f, EndingKneelZ));   // (beside his head again, not in it)
                     if (Time.unscaledTime > footAt) { footAt = Time.unscaledTime + 0.6f; Sound.Play(Sfx.Footstep, 0.55f, hero.transform.position, 0.8f); }
                     EndShot(new Vector3(landX - 3.0f, 0.35f, -2.2f), new Vector3(landX - 0.6f, 0.6f, 0f), 36f);
                     yield return null;

@@ -508,8 +508,41 @@ namespace ProjectInk
         IEnumerator TheCar()
         {
             driver.Puppet();
-            driver.ShowIron(false);
-            Sound.Play(Sfx.PipeHit, 0.8f, driver.Chest, 0.8f);                   // flung down
+            // The car can only come at him along the pavement left of x 115: between the lights' post (121) and the
+            // bus (125.4) there's no room for it to swing up onto the kerb, and there it would pass him by on the
+            // road. So if he's up by the car, the iron is hurled at him first and drives him back down the
+            // pavement; and for the car the lane ends at 115 (given back when it's in the pillar).
+            const float CarLaneMax = 115f;
+            if (hero.transform.position.x > CarLaneMax - 0.3f)
+            {
+                driver.FaceTowards(hero.transform.position.x);
+                driver.PuppetPlay(driver.body.Has("throw_object") ? "throw_object" : "cross", 0.08f);
+                yield return new WaitForSeconds(0.22f);
+                driver.ShowIron(false);
+                Sound.Play(Sfx.PipeHit, 1f, hero.Chest, 1.1f);
+                Sound.Play(Sfx.HeroHurt, 0.9f, hero.Chest);
+                if (CameraDirector.Instance != null) CameraDirector.Instance.Shake(0.18f, 0.2f);
+                hero.CinePuppet();
+                hero.SetFacing(1);
+                if (hero.body.Has("stumble_back")) hero.body.Play("stumble_back", 0.04f, true, 1f);
+                var from = hero.transform.position;
+                var to = new Vector3(CarLaneMax - 0.6f, from.y, 0f);
+                float ts = 0f;
+                while (ts < 0.6f)
+                {
+                    ts += Time.deltaTime;
+                    float k = 1f - (1f - Mathf.Clamp01(ts / 0.6f)) * (1f - Mathf.Clamp01(ts / 0.6f));   // fast, then slowing
+                    hero.CinePose(Vector3.Lerp(from, to, k));
+                    yield return null;
+                }
+                hero.CineRelease();
+            }
+            else
+            {
+                driver.ShowIron(false);
+                Sound.Play(Sfx.PipeHit, 0.8f, driver.Chest, 0.8f);               // flung down
+            }
+            SetArena(hero.arenaMinX, CarLaneMax);
             // back to his door, the pavement side: round the lights' post (x 121), never through it
             var door = new Vector3(StreetPlan.DriverCarX - 0.3f, 0f, -1.8f);
             driver.PuppetPlay("run", 0.15f, 0.85f);
@@ -609,6 +642,7 @@ namespace ProjectInk
             driver.FaceTowards(hero.transform.position.x);
             Say("THE DRIVER", "You owe me a car.", 1.8f, HeadOf(driver));
             driver.DriverPhase = 3;
+            SetArena(hero.arenaMinX, StreetPlan.LaneX1);                       // the lane back, now the car's in the pillar
             driver.PuppetRelease();
             driver.QueueEnrage();
             driverStage = 4;
