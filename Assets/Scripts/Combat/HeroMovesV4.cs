@@ -78,6 +78,8 @@ namespace ProjectInk
         }
         bool guardUp;
         float guardDownAt;
+        /// <summary>The guard's footwork is on (kept on to 4 m), and, this hold, he has already given it up to walk away.</summary>
+        bool footworkOn, footworkDone;
 
         bool ThreatNow(float near)
         {
@@ -238,14 +240,22 @@ namespace ProjectInk
                 // as it's held; backing off, a little longer, then he turns and goes
                 // (the pipe and the katana the same: walking him down they keep their guard; backing off, a while)
                 bool glide = stalk || rodSteps || swordSteps;
-                bool towards = false;
-                if (glide) { var near = NearestThreat(4.5f); towards = near == null || (near.transform.position.x > transform.position.x ? 1 : -1) == dir; }
+                // the guard's footwork only with a man actually there: an able man within 3 m (kept to 4 m once it's
+                // on, so it doesn't flick at the edge), walking him down or backing off from him. Walking on with
+                // nobody near (a fight just won, the last man down behind him) is the walk: it used to follow
+                // `Threatened`, which stays on for a while after any blow, and the walk and the guard's shuffle
+                // took turns ("walking like dancing")
+                var man = NearestThreat(footworkOn ? 4.0f : 3.0f);
+                bool towards = man != null && (man.transform.position.x > transform.position.x ? 1 : -1) == dir;
                 float keepUp = glide ? (towards ? float.MaxValue : GiveTime) : GuardStepTime;
-                bool footwork = !runHeld && Contact && (rodSteps || swordSteps || bareSteps) &&
-                                float.IsNaN(stepGoal) && holdTime < keepUp && Threatened;
+                bool footwork = man != null && !runHeld && Contact && (rodSteps || swordSteps || bareSteps) &&
+                                float.IsNaN(stepGoal) && holdTime < keepUp;
+                // once he has turned to walk away (backed off long enough), he keeps walking for this hold
+                if (footworkOn && !footwork) footworkDone = true;
+                if (footworkDone && !towards) footwork = false;
+                footworkOn = footwork;
                 if (footwork)
                 {
-                    var man = NearestThreat(4.5f);
                     int face = man != null ? (man.transform.position.x > transform.position.x ? 1 : -1) : dir;
                     SetFacing(face);
                     if (dir == face && WalkIntoClinch(dir)) return;               // stepping into him: take hold
@@ -314,6 +324,7 @@ namespace ProjectInk
 
             // let go
             holdTime = 0f;
+            footworkOn = footworkDone = false;
             if (running)
             {
                 running = false;

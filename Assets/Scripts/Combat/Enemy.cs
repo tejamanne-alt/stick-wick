@@ -737,6 +737,8 @@ namespace ProjectInk
                 WaveDirector.Instance.OnEnvironmentKill(this, before > 0f && Health <= 0f ? "WALL SPLAT KILL" : "WALL SPLAT", before > 0f && Health <= 0f ? 220 : 120);
         }
 
+        bool onGuardSteps;
+
         void Walk(float dirTimesSpeed)
         {
             // close in on the hero, bare-handed, just finding his range (not closing from afar, not lunging in to hit,
@@ -745,8 +747,10 @@ namespace ProjectInk
             if (hero != null && Mathf.Abs(dirTimesSpeed) <= 1.05f && IdleClip == "idle" && !Ranged && Grounded && body.Has("guard_back"))
             {
                 float hx = hero.transform.position.x - transform.position.x;
-                if (Mathf.Abs(hx) < 3.4f)
+                // (kept to 4 m once on, so a man near the edge doesn't flick between the step and the run)
+                if (Mathf.Abs(hx) < (onGuardSteps ? 4.0f : 3.4f))
                 {
+                    onGuardSteps = true;
                     bool towards = Mathf.Sign(dirTimesSpeed) == Mathf.Sign(hx);
                     float pace = towards ? 0.8f : 0.72f, clipPace = towards ? 0.788f : 0.712f;   // (HeroMovesV4: StalkSpeed, GiveSpeed)
                     velocity.x = Mathf.MoveTowards(velocity.x, Mathf.Sign(dirTimesSpeed) * pace, 6f * Time.deltaTime);
@@ -756,6 +760,7 @@ namespace ProjectInk
                     return;
                 }
             }
+            onGuardSteps = false;
             velocity.x = dirTimesSpeed * walkSpeed;
             // the Foreman, badly hurt, drags a leg: a slower, heavier gait
             float gait = Foreman && Health < maxHealth * 0.4f ? 0.62f : 0.85f;

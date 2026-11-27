@@ -2383,3 +2383,11 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **Paces:** 0.79 m/s pressing, 0.71 giving ground. The hero plays them near 1x (`StalkSpeed`, `GiveSpeed`).
   - **The guard no longer flickers:** `Threatened` comes up at once (a man within 3.2 m). It goes down only once nobody has threatened for 0.8 s and the men are past 4 m.
   - **Enemies near the hero** find their range with the same step-drag at the same pace, instead of a run cycle for half a metre. Running stays for closing from afar, lunging in and going round. Going back from waiting to approaching no longer starts a run for one frame when close.
+- **The walk no longer turns into the guard's shuffle ("walking like dancing")**, in every chapter (the movement code is shared).
+  - **The cause:** the guard's footwork followed `Threatened`, which stays on for 1.6 s after any blow given or taken (plus the guard's new 0.8 s). A man counted as standing (getting up, waiting at the back) also kept it on. So walking on after a fight, the walk and the step-drag took turns.
+  - **Now the footwork needs an able man actually there:** within 3 m, kept to 4 m once on, so it doesn't flick at the edge.
+    - Walking him down, he walks until he's close, then the guard comes up and he steps in (one switch).
+    - Backing off from him, he steps back on guard for 1.2 s, then turns and walks for the rest of that hold.
+    - With nobody near it's always the walk.
+  - The pipe and the katana follow the same rule.
+  - **Enemies** take their guard steps inside 3.4 m and keep them to 4 m, so a man at the edge doesn't flick between the step and the run.
