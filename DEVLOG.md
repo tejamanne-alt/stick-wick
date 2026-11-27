@@ -2353,3 +2353,7 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - **The guard:** the scene build fails if any clip's curves miss the body's bones, naming the clips.
 - **The line:** men on the same side of the hero stand one behind another, a body's width apart (`QueueRing`), never inside each other. A man with a mate between him and the hero waits his turn (or is sent round) rather than swinging through him.
 - **The street opening:** the "You want it?" reverse is turned in towards the bank, so its front and doors are behind him (it looked past the bank's corner into nothing).
+- **Checked after the fix:** `tools/check_v4_fbx.py`, run after any export.
+  - Against the pre-split file: all 362 clips are in exactly one file each, and all 81,450 key channels are identical. The skeleton is identical in all four files. The JSON timings are unchanged.
+  - Every clip the game code plays exists (209 are named directly; composed names like `rod_scoop` and `cf_*_v` exist too).
+  - Not checked here: playback in Unity.
