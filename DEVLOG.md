@@ -2391,3 +2391,12 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - With nobody near it's always the walk.
   - The pipe and the katana follow the same rule.
   - **Enemies** take their guard steps inside 3.4 m and keep them to 4 m, so a man at the edge doesn't flick between the step and the run.
+- **The walks are taken from life.** "Walking when nobody is there is not good": the hand-keyed walks (the gait engine) never read as a person.
+  - **Sources:** `walk_alone` (the hero) is now a real person's walk, CMU motion capture 16_15. `walk` (everyone in the scenes) is a different person, CMU 02_01, so the men don't walk like him. Built by `tools/blender/v4_walk_mocap.py`.
+  - **Averaging:** the recording's clean cycles (heel strike to heel strike) are averaged into one, which removes the capture's jitter and leaves a seamless loop.
+  - **Scaling:** lengths are scaled by his leg (0.64 m against the actor's 0.89 m). Time is scaled by the square root of that, the way a shorter body walks, so the rhythm and weight are the actor's.
+  - **Feet:** they follow the actor's own paths, held out of the floor. A foot is set on the floor exactly only while it's still over the ground, from the actor's ground speed. A foot swinging low before it lands keeps a small clearance that fades in, so no heel drag.
+  - **Hips, trunk, arms:** the hips keep the actor's rise and fall and the surge inside each step, against a root moving at the average speed. The trunk keeps its pitch about his standing posture, and the pelvis and shoulders their counter-turn. The arms swing a little wider than the actor's for the stickman's short arms; the elbows are relaxed (at most 30–45°) and the hands half open.
+  - **Measured on the keys:** the ball of each planted foot holds within 0.3–1.6 cm over its 11–12 frames on the floor, and the heel lands within 0.7 cm. No foot goes through the floor.
+  - **Paces:** the hero walks at the clip's own 0.99 m/s (`WalkSpeed`); the everyday walk covers 1.06 m/s.
+  - **Scenes keep their pace:** every scene's walk rate was tuned to 1.18 m/s, so `walk` plays at 1.18/1.06 of the rate asked (`Fighter.Awake`). On the hero, `walk_alone` plays at 1.18/0.99. `ClipPlayer.SetSpeed` keeps a substituted clip's rate.

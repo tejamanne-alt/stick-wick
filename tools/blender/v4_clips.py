@@ -503,6 +503,11 @@ import v4_moves  # noqa: E402
 
 CLIPS.update(v4_moves.CLIPS)
 
+# ---------------------------------------------------------------- the hero's walk, from life (replaces the keyed one)
+import v4_walk_mocap  # noqa: E402
+
+CLIPS.update(v4_walk_mocap.CLIPS)
+
 # ---------------------------------------------------------------- hanging from an edge
 import v4_hang  # noqa: E402
 

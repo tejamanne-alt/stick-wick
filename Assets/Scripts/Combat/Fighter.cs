@@ -64,11 +64,18 @@ namespace ProjectInk
         Transform hipsBone;
         bool hipsLooked;
 
+        /// <summary>The ground a scene's "walk" at 1x was paced to cover (m/s), and the everyday walk's own ground speed.</summary>
+        public const float SceneWalkPace = 1.18f, EverydayWalkClip = 1.059f;
+
         protected virtual void Awake()
         {
             Health = maxHealth;
             if (body == null) body = GetComponentInChildren<ClipPlayer>();
             body.CalibrateFacing();
+            // the everyday walk (from life, tools/blender/v4_walk_mocap.py) covers EverydayWalkClip m/s at 1x; every scene's
+            // walk rate was tuned to the first walk's 1.18 m/s, so it plays at their ratio and the feet stay planted
+            // (the hero swaps in his own walk: HeroController)
+            body.Substitute("walk", "walk", SceneWalkPace / EverydayWalkClip);
             renderers = GetComponentsInChildren<SkinnedMeshRenderer>(); // body only, not the motion trails
             _block = new MaterialPropertyBlock();
             if (renderers.Length > 0 && renderers[0].sharedMaterial != null && renderers[0].sharedMaterial.HasProperty(ColorId))

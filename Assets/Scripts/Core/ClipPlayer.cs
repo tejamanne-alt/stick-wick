@@ -22,6 +22,8 @@ namespace ProjectInk
         readonly AnimationClipPlayable[] slot = new AnimationClipPlayable[Slots];
         readonly MoveSet.Entry[] slotEntry = new MoveSet.Entry[Slots];
         readonly float[] weight = new float[Slots];
+        /// <summary>Each slot's stand-in rate (Substitute): a later SetSpeed keeps it.</summary>
+        readonly float[] slotRate = { 1f, 1f, 1f, 1f, 1f, 1f };
         readonly float[] fadeFrom = new float[Slots];
         int current = -1;
         float fade = 1f, fadeTime = 0.1f;
@@ -172,7 +174,8 @@ namespace ProjectInk
         /// <summary>Play a clip by name, blending from whatever is playing now.</summary>
         public MoveSet.Entry Play(string clipName, float crossfade = 0.1f, bool restart = true, float speed = 1f)
         {
-            if (standIns != null && standIns.TryGetValue(clipName, out var stand)) { clipName = stand.clip; speed *= stand.rate; }
+            float rate = 1f;
+            if (standIns != null && standIns.TryGetValue(clipName, out var stand)) { clipName = stand.clip; rate = stand.rate; speed *= rate; }
             var entry = moves != null ? moves.Get(clipName) : null;
             if (entry == null || entry.clip == null)
             {
@@ -182,6 +185,7 @@ namespace ProjectInk
             if (!restart && current >= 0 && slotEntry[current] == entry)
             {
                 slot[current].SetSpeed(speed);
+                slotRate[current] = rate;
                 return entry;
             }
 
@@ -207,6 +211,7 @@ namespace ProjectInk
             graph.Connect(p, 0, mixer, s);
             slot[s] = p;
             slotEntry[s] = entry;
+            slotRate[s] = rate;
             weight[s] = 0f;
 
             // everything else fades out from where it is now
@@ -223,7 +228,7 @@ namespace ProjectInk
 
         public void SetSpeed(float speed)
         {
-            if (current >= 0 && slot[current].IsValid()) slot[current].SetSpeed(speed);
+            if (current >= 0 && slot[current].IsValid()) slot[current].SetSpeed(speed * slotRate[current]);
         }
 
         void Update()

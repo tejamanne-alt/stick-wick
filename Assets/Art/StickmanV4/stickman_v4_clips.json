@@ -1780,30 +1780,6 @@
       "file": "StickmanV4.fbx"
     },
     {
-      "name": "walk_alone",
-      "frames": 26,
-      "fps": 30,
-      "loop": true,
-      "hitFrame": -1,
-      "loadFrame": -1,
-      "reach": 0.0,
-      "endShift": 0.0,
-      "v4": true,
-      "file": "StickmanV4.fbx"
-    },
-    {
-      "name": "walk",
-      "frames": 24,
-      "fps": 30,
-      "loop": true,
-      "hitFrame": -1,
-      "loadFrame": -1,
-      "reach": 0.0,
-      "endShift": 0.0,
-      "v4": true,
-      "file": "StickmanV4.fbx"
-    },
-    {
       "name": "run",
       "frames": 16,
       "fps": 30,
@@ -2010,6 +1986,30 @@
     {
       "name": "carry_walk",
       "frames": 26,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true,
+      "file": "StickmanV4.fbx"
+    },
+    {
+      "name": "walk_alone",
+      "frames": 30,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true,
+      "file": "StickmanV4.fbx"
+    },
+    {
+      "name": "walk",
+      "frames": 28,
       "fps": 30,
       "loop": true,
       "hitFrame": -1,

@@ -27,6 +27,8 @@ That is all the build needs:
 | 88_01 | dodge (backflip) |
 | 90_18 | knockdown |
 | 09_02 | run |
+| 16_15 | walk_alone: the hero's walk (three cycles averaged, scaled to him: tools/blender/v4_walk_mocap.py) |
+| 02_01 | walk: the everyday walk in the scenes (two cycles averaged, the same way) |
 
 To add or re-cut moves:
 1. Put the source BVH files in `tools/mocap/bvh/`. They are not committed, and are fetched from the mirror above as `data/0XX/XX_YY.bvh`.
