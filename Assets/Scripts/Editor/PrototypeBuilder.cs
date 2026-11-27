@@ -117,12 +117,15 @@ namespace ProjectInk.EditorTools
             bool v3 = newBody && (v4 || (File.Exists(StickmanImport.ModelPathV3) && File.Exists(StickmanImport.ClipJsonPathV3)));
             string modelPath = v4 ? StickmanImport.ModelPathV4 : v3 ? StickmanImport.ModelPathV3 : StickmanImport.ModelPath;
             AssetDatabase.ImportAsset(modelPath, ImportAssetOptions.ForceUpdate);
+            // (the V4 clips come from the body's file and its part files: StickmanImport.ModelPathsV4)
+            var clipFiles = v4 ? StickmanImport.ModelPathsV4() : new[] { modelPath };
+            foreach (var f in clipFiles) if (f != modelPath) AssetDatabase.ImportAsset(f, ImportAssetOptions.ForceUpdate);
 
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
             if (model == null) throw new BuildFailedException(modelPath + " not found - run tools/blender/build_stickman.py (and build_stickman_v3.py)");
-            var moves = v4 ? BuildMoveSet(modelPath, StickmanImport.ClipJsonPathV4, GenDir + "/StickmanMovesV4.asset")
-                      : v3 ? BuildMoveSet(modelPath, StickmanImport.ClipJsonPathV3, GenDir + "/StickmanMovesV3.asset")
-                           : BuildMoveSet(modelPath, StickmanImport.ClipJsonPath, GenDir + "/StickmanMoves.asset");
+            var moves = v4 ? BuildMoveSet(clipFiles, StickmanImport.ClipJsonPathV4, GenDir + "/StickmanMovesV4.asset")
+                      : v3 ? BuildMoveSet(clipFiles, StickmanImport.ClipJsonPathV3, GenDir + "/StickmanMovesV3.asset")
+                           : BuildMoveSet(clipFiles, StickmanImport.ClipJsonPath, GenDir + "/StickmanMoves.asset");
 
             // Look of the reference: flat black silhouettes on a soft grey backdrop. Everything is
             // unlit, so no lights are needed and phones render it cheaply.
@@ -304,7 +307,7 @@ namespace ProjectInk.EditorTools
             Debug.Log("[Stick Wick] scene built: " + scenePath);
         }
 
-        static MoveSet BuildMoveSet(string modelPath, string jsonPath, string path)
+        static MoveSet BuildMoveSet(string[] modelPaths, string jsonPath, string path)
         {
             var set = AssetDatabase.LoadAssetAtPath<MoveSet>(path);
             if (set == null)
@@ -313,7 +316,8 @@ namespace ProjectInk.EditorTools
                 AssetDatabase.CreateAsset(set, path);
             }
             var info = StickmanImport.LoadClipInfo(jsonPath);
-            var clips = AssetDatabase.LoadAllAssetsAtPath(modelPath)
+            // every clip in every file (the V4 body's clips are split over several: StickmanImport.ModelPathsV4)
+            var clips = modelPaths.SelectMany(mp => AssetDatabase.LoadAllAssetsAtPath(mp))
                 .OfType<AnimationClip>().Where(c => !c.name.StartsWith("__preview__")).ToList();
             set.entries = new List<MoveSet.Entry>();
             foreach (var c in clips)

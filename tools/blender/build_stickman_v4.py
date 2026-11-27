@@ -3,7 +3,8 @@
     /home/user/.venv-blender/bin/python tools/blender/build_stickman_v4.py [--preview] [--only=a,b]
 
 Writes
-    Assets/Art/StickmanV4/StickmanV4.fbx           body + rig + every clip
+    Assets/Art/StickmanV4/StickmanV4.fbx           body + rig + the core clips
+    Assets/Art/StickmanV4/StickmanV4_<part>.fbx    rig + the rest, by part (FILES: story, far, weapons)
     Assets/Art/StickmanV4/stickman_v4_clips.json    timing (hit, load, reach, endShift)
     docs/previews/v4/<clip>.png                     contact sheets (--preview)
 
@@ -105,23 +106,66 @@ def transfer(src, dst, name, frames, fist):
     return act
 
 
+# The clips are split over four files, each well under GitHub's 50 MB (the single file had reached 66 MB
+# and grows with every clip). The first has the body and the rig; the others the rig and their clips only
+# (Unity binds a clip to the body by bone path, whichever file it came from: StickmanImport, PrototypeBuilder).
+# A clip's file follows the module that makes it, so new clips land in the right one by themselves.
+FILES = {
+    "main": "StickmanV4.fbx",              # the body; the guard, strikes, reactions; the clinch; moving; hanging
+    "story": "StickmanV4_story.fbx",       # the story's own (carried over from the earlier bodies: cutscenes, mocap)
+    "far": "StickmanV4_far.fbx",           # far range and near range (the reads, CROSSFIRE bare-handed)
+    "weapons": "StickmanV4_weapons.fbx",   # the pipe, the katana, armed CROSSFIRE, the weapon's block
+}
+
+
+def clip_files():
+    """Clip name -> which file it goes in (the module that makes it; carried-over clips: the story file)."""
+    import v4_far, v4_near, v4_katana, v4_rod, v4_cf_armed, v4_armed_def
+    where = {}
+    for g, mods in (("far", (v4_far, v4_near)), ("weapons", (v4_katana, v4_rod, v4_cf_armed, v4_armed_def))):
+        for m in mods:
+            for n in m.CLIPS:
+                where[n] = g
+    return lambda name: where.get(name, "main" if name in V4_CLIPS else "story")
+
+
 def export(dst, body, meta):
     os.makedirs(OUT_DIR, exist_ok=True)
-    bpy.ops.object.select_all(action="DESELECT")
-    dst.select_set(True)
-    body.select_set(True)
-    bpy.context.view_layer.objects.active = dst
-    path = os.path.join(OUT_DIR, "StickmanV4.fbx")
-    bpy.ops.export_scene.fbx(
-        filepath=path, use_selection=True, object_types={"ARMATURE", "MESH"},
-        apply_scale_options="FBX_SCALE_ALL", axis_forward="-Z", axis_up="Y",
-        add_leaf_bones=False, primary_bone_axis="Y", secondary_bone_axis="X",
-        armature_nodetype="NULL", bake_anim=True, bake_anim_use_all_actions=True,
-        bake_anim_use_nla_strips=False, bake_anim_force_startend_keying=True,
-        bake_anim_simplify_factor=0.0, mesh_smooth_type="FACE")
+    file_of = clip_files()
+    # The FBX exporter takes every action in the file that fits the rig, so each part is exported from a
+    # fresh copy of the built scene with the other parts' actions deleted.
+    import tempfile
+    for a in bpy.data.actions:
+        a.use_fake_user = True                  # (unassigned actions would not be saved)
+    rig_name, body_name = dst.name, body.name
+    tmp = os.path.join(tempfile.gettempdir(), "stickman_v4_build.blend")
+    bpy.ops.wm.save_as_mainfile(filepath=tmp, copy=True)
+    for g, fname in FILES.items():
+        bpy.ops.wm.open_mainfile(filepath=tmp)
+        keep = {m["name"] for m in meta if file_of(m["name"]) == g}
+        for a in list(bpy.data.actions):
+            if a.name not in keep:
+                bpy.data.actions.remove(a)
+        rig, mesh = bpy.data.objects[rig_name], bpy.data.objects[body_name]
+        bpy.ops.object.select_all(action="DESELECT")
+        rig.select_set(True)
+        if g == "main":
+            mesh.select_set(True)
+        bpy.context.view_layer.objects.active = rig
+        path = os.path.join(OUT_DIR, fname)
+        bpy.ops.export_scene.fbx(
+            filepath=path, use_selection=True, object_types={"ARMATURE", "MESH"} if g == "main" else {"ARMATURE"},
+            apply_scale_options="FBX_SCALE_ALL", axis_forward="-Z", axis_up="Y",
+            add_leaf_bones=False, primary_bone_axis="Y", secondary_bone_axis="X",
+            armature_nodetype="NULL", bake_anim=True, bake_anim_use_all_actions=True,
+            bake_anim_use_nla_strips=False, bake_anim_force_startend_keying=True,
+            bake_anim_simplify_factor=0.0, mesh_smooth_type="FACE")
+        print("exported", path, len(keep), "clips", round(os.path.getsize(path) / 1e6, 1), "MB")
+    bpy.ops.wm.open_mainfile(filepath=tmp)       # (left as built, for anything that runs after)
+    os.remove(tmp)
     with open(os.path.join(OUT_DIR, "stickman_v4_clips.json"), "w") as f:
-        json.dump(dict(clips=meta), f, indent=2)
-    print("exported", path, len(meta), "clips")
+        json.dump(dict(clips=[dict(m, file=FILES[file_of(m["name"])]) for m in meta]), f, indent=2)
+    print("exported", len(meta), "clips in", len(FILES), "files")
 
 
 def build(preview=False):

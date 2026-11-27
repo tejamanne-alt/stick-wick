@@ -2338,3 +2338,12 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
     - Low-angle lenses follow the subject's floor.
     - Enemies hang on the V4 body's own offsets.
     - Throwable props are out of crates and drums.
+- **The character model split into four files** (it had reached 66 MB, over GitHub's recommended 50 MB, and grew with every clip).
+  - **The files:**
+    - `StickmanV4.fbx` (19 MB): the body, the rig and the core clips.
+    - `StickmanV4_story.fbx` (17 MB): the carried-over story clips.
+    - `StickmanV4_far.fbx` (12 MB): far and near range.
+    - `StickmanV4_weapons.fbx` (17 MB): the pipe, the katana, armed CROSSFIRE and the block.
+  - **The export:** a clip's file follows the Blender module that makes it, so new clips land in the right one. Each part is exported from a fresh copy of the built scene, since the FBX exporter takes every action that fits the rig. The clip JSON notes each clip's file.
+  - **Unity:** the import rules cover every V4 file (`StickmanImport.IsV4File`), and the move set gathers its clips from all of them (`ModelPathsV4`). The clips bind to the body by bone path, whichever file they come from. Nothing changes in the game.
+  - **Why not Git LFS:** GitHub's free LFS quota (1 GB) would fill in about 18 rebuilds of a 55 MB file.

@@ -18,8 +18,22 @@ namespace ProjectInk.EditorTools
         /// feet and toes; every clip carried over (tools/blender/build_stickman_v4.py).</summary>
         public const string ModelPathV4 = "Assets/Art/StickmanV4/StickmanV4.fbx";
         public const string ClipJsonPathV4 = "Assets/Art/StickmanV4/stickman_v4_clips.json";
-        static bool Ours(string p) => p == ModelPath || p == ModelPathV3 || p == ModelPathV4;
-        static string JsonFor(string p) => p == ModelPathV4 ? ClipJsonPathV4 : p == ModelPathV3 ? ClipJsonPathV3 : ClipJsonPath;
+        /// <summary>The V4 clips are split over several files (each well under GitHub's 50 MB): StickmanV4.fbx has
+        /// the body, the rig and the core clips; StickmanV4_&lt;part&gt;.fbx the rig and the rest (build_stickman_v4.py
+        /// FILES). A clip binds to the body by bone path, whichever file it comes from.</summary>
+        public static bool IsV4File(string p) => p.StartsWith("Assets/Art/StickmanV4/StickmanV4") && p.EndsWith(".fbx");
+
+        /// <summary>Every file holding V4 clips: the body's first, then its parts.</summary>
+        public static string[] ModelPathsV4()
+        {
+            var parts = System.IO.Directory.Exists("Assets/Art/StickmanV4")
+                ? System.IO.Directory.GetFiles("Assets/Art/StickmanV4", "StickmanV4_*.fbx").Select(f => f.Replace('\\', '/')).OrderBy(f => f)
+                : Enumerable.Empty<string>();
+            return new[] { ModelPathV4 }.Concat(parts).ToArray();
+        }
+
+        static bool Ours(string p) => p == ModelPath || p == ModelPathV3 || IsV4File(p);
+        static string JsonFor(string p) => IsV4File(p) ? ClipJsonPathV4 : p == ModelPathV3 ? ClipJsonPathV3 : ClipJsonPath;
 
         [System.Serializable] public class ClipInfo { public string name; public int frames; public int fps; public bool loop; public int hitFrame; public float endShift; public int loadFrame = -1; public float reach; }
         [System.Serializable] public class ClipList { public ClipInfo[] clips; }

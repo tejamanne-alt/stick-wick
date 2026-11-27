@@ -5,336 +5,384 @@
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sword_a",
       "frames": 11,
       "fps": 30,
       "loop": false,
-      "hitFrame": 3
+      "hitFrame": 3,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sword_b",
       "frames": 12,
       "fps": 30,
       "loop": false,
-      "hitFrame": 4
+      "hitFrame": 4,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sword_c",
       "frames": 15,
       "fps": 30,
       "loop": false,
-      "hitFrame": 5
+      "hitFrame": 5,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sword_back",
       "frames": 12,
       "fps": 30,
       "loop": false,
-      "hitFrame": 4
+      "hitFrame": 4,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sword_leap",
       "frames": 22,
       "fps": 30,
       "loop": false,
-      "hitFrame": 11
+      "hitFrame": 11,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sword_rise",
       "frames": 15,
       "fps": 30,
       "loop": false,
-      "hitFrame": 4
+      "hitFrame": 4,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sword_iai",
       "frames": 26,
       "fps": 30,
       "loop": false,
-      "hitFrame": 4
+      "hitFrame": 4,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "gun_idle",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "gun_shoot",
       "frames": 10,
       "fps": 30,
       "loop": false,
-      "hitFrame": 2
+      "hitFrame": 2,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "gun_shoot_back",
       "frames": 12,
       "fps": 30,
       "loop": false,
-      "hitFrame": 3
+      "hitFrame": 3,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "gun_shoot_down",
       "frames": 14,
       "fps": 30,
       "loop": false,
-      "hitFrame": 4
+      "hitFrame": 4,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "gun_whip",
       "frames": 12,
       "fps": 30,
       "loop": false,
-      "hitFrame": 4
+      "hitFrame": 4,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "gun_throw",
       "frames": 20,
       "fps": 30,
       "loop": false,
-      "hitFrame": 9
+      "hitFrame": 9,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "gun_reload",
       "frames": 20,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "front_flip",
       "frames": 18,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "throw_weapon",
       "frames": 14,
       "fps": 30,
       "loop": false,
-      "hitFrame": 5
+      "hitFrame": 5,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "getup",
       "frames": 20,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "taunt",
       "frames": 32,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "gun_aim",
       "frames": 10,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "climb_up",
       "frames": 16,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "stomp",
       "frames": 14,
       "fps": 30,
       "loop": false,
-      "hitFrame": 7
+      "hitFrame": 7,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "swing_hold",
       "frames": 12,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "slide_kick",
       "frames": 16,
       "fps": 30,
       "loop": false,
-      "hitFrame": 5
+      "hitFrame": 5,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "grab_attack",
       "frames": 12,
       "fps": 30,
       "loop": false,
-      "hitFrame": 6
+      "hitFrame": 6,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "hold_victim",
       "frames": 16,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "struggle",
       "frames": 16,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "pike",
       "frames": 12,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "lie",
       "frames": 48,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "allfours",
       "frames": 36,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "rise",
       "frames": 54,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "idle_loose",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "look_hands",
       "frames": 48,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "touch_temple",
       "frames": 36,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "walk",
       "frames": 24,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "trip",
       "frames": 22,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "prone",
       "frames": 48,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "crawl",
       "frames": 32,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "reach_grab",
       "frames": 26,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "prone_knife",
       "frames": 40,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "rise_knife",
       "frames": 44,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "kneel_hold",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "kneel_grip",
       "frames": 8,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "lie_up",
       "frames": 48,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "lie_gun",
       "frames": 12,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "clothesline",
       "frames": 16,
       "fps": 30,
       "loop": false,
-      "hitFrame": 6
+      "hitFrame": 6,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "block_low",
       "frames": 8,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "catch_kick",
       "frames": 14,
       "fps": 30,
       "loop": false,
-      "hitFrame": 3
+      "hitFrame": 3,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "clothesline_v",
@@ -342,91 +390,104 @@
       "fps": 30,
       "loop": false,
       "hitFrame": 6,
-      "endShift": -0.3684
+      "endShift": -0.3684,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "kneel_hurt",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sit_bound",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sit_shock",
       "frames": 12,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sit_slump",
       "frames": 30,
       "fps": 30,
       "loop": false,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "hold_cord",
       "frames": 40,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "kneel_hand",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sit_drive",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "sit_drive_talk",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "talk_walkie",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "kneel_grave",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "push_swing",
       "frames": 48,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "hold_hand",
       "frames": 90,
       "fps": 30,
       "loop": true,
-      "hitFrame": -1
+      "hitFrame": -1,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "front_kick",
@@ -434,7 +495,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": 14,
-      "source": "CMU 86_06"
+      "source": "CMU 86_06",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "roundhouse",
@@ -442,7 +504,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": 16,
-      "source": "CMU 86_08"
+      "source": "CMU 86_08",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "flying_kick",
@@ -450,7 +513,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": 24,
-      "source": "CMU 90_05"
+      "source": "CMU 90_05",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "spin_kick",
@@ -458,7 +522,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": 14,
-      "source": "CMU 88_06"
+      "source": "CMU 88_06",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "dodge",
@@ -466,7 +531,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": -1,
-      "source": "CMU 88_01"
+      "source": "CMU 88_01",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "knockdown",
@@ -474,7 +540,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": -1,
-      "source": "CMU 90_18"
+      "source": "CMU 90_18",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "gedan_barai",
@@ -482,7 +549,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": 17,
-      "source": "CMU 135_05"
+      "source": "CMU 135_05",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "one_two_three",
@@ -490,7 +558,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": 18,
-      "source": "CMU 14_02"
+      "source": "CMU 14_02",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "jab_hook",
@@ -498,7 +567,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": 14,
-      "source": "CMU 14_03"
+      "source": "CMU 14_03",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "fall_face",
@@ -506,7 +576,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": -1,
-      "source": "CMU 90_16"
+      "source": "CMU 90_16",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "getup_face",
@@ -514,7 +585,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": -1,
-      "source": "CMU 140_01"
+      "source": "CMU 140_01",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "getup_side",
@@ -522,7 +594,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": -1,
-      "source": "CMU 140_03"
+      "source": "CMU 140_03",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "getup_back",
@@ -530,7 +603,8 @@
       "fps": 30,
       "loop": false,
       "hitFrame": -1,
-      "source": "CMU 139_18"
+      "source": "CMU 139_18",
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "body_shot",
@@ -540,7 +614,8 @@
       "hitFrame": 5,
       "loadFrame": 3,
       "reach": 0.85,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "coil",
@@ -550,7 +625,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "power_cross",
@@ -560,7 +636,8 @@
       "hitFrame": 5,
       "loadFrame": 0,
       "reach": 1.15,
-      "endShift": 0.3
+      "endShift": 0.3,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "guard_up",
@@ -570,7 +647,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "guard_hold",
@@ -580,7 +658,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "guard_hit",
@@ -590,7 +669,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "duck",
@@ -600,7 +680,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "step_out",
@@ -610,7 +691,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": -0.32
+      "endShift": -0.32,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "step_in",
@@ -620,7 +702,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.32
+      "endShift": 0.32,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "hop",
@@ -630,7 +713,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "trap_elbow",
@@ -640,7 +724,8 @@
       "hitFrame": 6,
       "loadFrame": -1,
       "reach": 0.8,
-      "endShift": 0.12
+      "endShift": 0.12,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "liver_shot",
@@ -650,7 +735,8 @@
       "hitFrame": 3,
       "loadFrame": -1,
       "reach": 0.75,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "counter_cross",
@@ -660,7 +746,8 @@
       "hitFrame": 4,
       "loadFrame": -1,
       "reach": 1.1,
-      "endShift": 0.26
+      "endShift": 0.26,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "hit_launch",
@@ -670,7 +757,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "hit_down",
@@ -680,7 +768,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.0
+      "endShift": 0.0,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "parried_v",
@@ -690,7 +779,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.12
+      "endShift": 0.12,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "whiff_stumble",
@@ -700,7 +790,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.42
+      "endShift": 0.42,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "shuffle_fwd",
@@ -710,7 +801,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": 0.24
+      "endShift": 0.24,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "shuffle_back",
@@ -720,7 +812,8 @@
       "hitFrame": -1,
       "loadFrame": -1,
       "reach": 0.0,
-      "endShift": -0.24
+      "endShift": -0.24,
+      "file": "StickmanV4_story.fbx"
     },
     {
       "name": "idle",
@@ -731,7 +824,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "jab",
@@ -742,7 +836,8 @@
       "loadFrame": 1,
       "reach": 0.95,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "cross",
@@ -753,7 +848,8 @@
       "loadFrame": 2,
       "reach": 1.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lead_hook",
@@ -764,7 +860,8 @@
       "loadFrame": 2,
       "reach": 0.9,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hook",
@@ -775,7 +872,8 @@
       "loadFrame": 5,
       "reach": 0.95,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "uppercut",
@@ -786,7 +884,8 @@
       "loadFrame": 4,
       "reach": 0.95,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "elbow",
@@ -797,7 +896,8 @@
       "loadFrame": 2,
       "reach": 0.75,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "back_fist",
@@ -808,7 +908,8 @@
       "loadFrame": 2,
       "reach": 1.05,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "palm_strike",
@@ -819,7 +920,8 @@
       "loadFrame": 3,
       "reach": 0.95,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "oi_zuki",
@@ -830,7 +932,8 @@
       "loadFrame": 3,
       "reach": 1.15,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "gyaku_zuki",
@@ -841,7 +944,8 @@
       "loadFrame": 2,
       "reach": 1.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "low_kick",
@@ -852,7 +956,8 @@
       "loadFrame": 3,
       "reach": 0.95,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "mawashi_geri",
@@ -863,7 +968,8 @@
       "loadFrame": 6,
       "reach": 0.95,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "mae_geri",
@@ -874,7 +980,8 @@
       "loadFrame": 5,
       "reach": 0.95,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "side_kick",
@@ -885,7 +992,8 @@
       "loadFrame": 6,
       "reach": 1.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "back_kick",
@@ -896,7 +1004,8 @@
       "loadFrame": 3,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hammer_fist",
@@ -907,7 +1016,8 @@
       "loadFrame": 4,
       "reach": 0.9,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "knee",
@@ -918,7 +1028,8 @@
       "loadFrame": 3,
       "reach": 0.75,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "parry",
@@ -929,7 +1040,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "slip",
@@ -940,7 +1052,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "block_high",
@@ -951,7 +1064,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "block_hold",
@@ -962,7 +1076,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "block_hit",
@@ -973,7 +1088,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "windup",
@@ -984,7 +1100,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hit_front",
@@ -995,7 +1112,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hit_chin",
@@ -1006,7 +1124,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hit_up",
@@ -1017,7 +1136,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hit_body",
@@ -1028,7 +1148,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hit_legs",
@@ -1039,7 +1160,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hit_shoved",
@@ -1050,7 +1172,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "stumble_back",
@@ -1061,7 +1184,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hit_back",
@@ -1072,7 +1196,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "dazed",
@@ -1083,7 +1208,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "clinch_enter",
@@ -1094,7 +1220,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "clinch_enter_v",
@@ -1105,7 +1232,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "clinch",
@@ -1116,7 +1244,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "clinch_v",
@@ -1127,7 +1256,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "clinch_strain",
@@ -1138,7 +1268,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "clinch_strain_v",
@@ -1149,7 +1280,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "clinch_knee",
@@ -1160,7 +1292,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "clinch_knee_v",
@@ -1171,7 +1304,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "thigh_knee",
@@ -1182,7 +1316,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "thigh_knee_v",
@@ -1193,7 +1328,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "plum_knee",
@@ -1204,7 +1340,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "plum_knee_v",
@@ -1215,7 +1352,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.42,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "headbutt",
@@ -1226,7 +1364,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "headbutt_v",
@@ -1237,7 +1376,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.2,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "sweep",
@@ -1248,7 +1388,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "sweep_v",
@@ -1259,7 +1400,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.45,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "reap",
@@ -1270,7 +1412,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.3,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "reap_v",
@@ -1281,7 +1424,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.62,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hip_throw",
@@ -1292,7 +1436,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.08,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hip_throw_v",
@@ -1303,7 +1448,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.5,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "shoulder_throw",
@@ -1314,7 +1460,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.08,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "shoulder_throw_v",
@@ -1325,7 +1472,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.5,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "suplex",
@@ -1336,7 +1484,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.08,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "suplex_v",
@@ -1347,7 +1496,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.77,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "body_slam",
@@ -1358,7 +1508,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.1,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "body_slam_v",
@@ -1369,7 +1520,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.4,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "ddt",
@@ -1380,7 +1532,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.42,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "ddt_v",
@@ -1391,7 +1544,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.05,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "guillotine_in",
@@ -1402,7 +1556,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "guillotine_in_v",
@@ -1413,7 +1568,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "guillotine",
@@ -1424,7 +1580,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "guillotine_v",
@@ -1435,7 +1592,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "guillotine_drop",
@@ -1446,7 +1604,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.34,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "guillotine_drop_v",
@@ -1457,7 +1616,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "guillotine_let",
@@ -1468,7 +1628,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "guillotine_let_v",
@@ -1479,7 +1640,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.18,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_lift",
@@ -1490,7 +1652,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_lift_v",
@@ -1501,7 +1664,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_hold",
@@ -1512,7 +1676,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_hold_v",
@@ -1523,7 +1688,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_slam",
@@ -1534,7 +1700,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.2,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_slam_v",
@@ -1545,7 +1712,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.44,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_suplex",
@@ -1556,7 +1724,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.06,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_suplex_v",
@@ -1567,7 +1736,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.72,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_drop",
@@ -1578,7 +1748,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lock_drop_v",
@@ -1589,7 +1760,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.06,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "shove",
@@ -1600,7 +1772,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "shoved_v",
@@ -1611,7 +1784,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "walk_alone",
@@ -1622,7 +1796,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "run",
@@ -1633,7 +1808,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "sprint",
@@ -1644,7 +1820,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "sneak",
@@ -1655,7 +1832,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "idle_alone",
@@ -1666,7 +1844,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "crouch_idle",
@@ -1677,7 +1856,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "run_stop",
@@ -1688,7 +1868,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.24,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "run_turn",
@@ -1699,7 +1880,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "jump",
@@ -1710,7 +1892,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "jump_run",
@@ -1721,7 +1904,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "land_light",
@@ -1732,7 +1916,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "land_run",
@@ -1743,7 +1928,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "vault",
@@ -1754,7 +1940,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.16,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "pick_up",
@@ -1765,7 +1952,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "push",
@@ -1776,7 +1964,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "sentry",
@@ -1787,7 +1976,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "unlock",
@@ -1798,7 +1988,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "carry_stand",
@@ -1809,7 +2000,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "carry_walk",
@@ -1820,7 +2012,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "lower_down",
@@ -1831,7 +2024,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hang",
@@ -1842,7 +2036,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hang_swing",
@@ -1853,7 +2048,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hang_climb",
@@ -1864,7 +2060,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hang_drop",
@@ -1875,7 +2072,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "hang_fall",
@@ -1886,7 +2084,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "drop_on",
@@ -1897,7 +2096,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "ankle_pull",
@@ -1908,7 +2108,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "land_soft",
@@ -1919,7 +2120,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "land_heavy",
@@ -1930,7 +2132,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4.fbx"
     },
     {
       "name": "advance",
@@ -1941,7 +2144,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "retreat",
@@ -1952,7 +2156,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "guard_stalk",
@@ -1963,7 +2168,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "guard_back",
@@ -1974,7 +2180,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "rush_in",
@@ -1985,7 +2192,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.1,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "rush_burst",
@@ -1996,7 +2204,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "rush_strike",
@@ -2007,7 +2216,8 @@
       "loadFrame": -1,
       "reach": 1.02,
       "endShift": 0.5,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "spear",
@@ -2018,7 +2228,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.9,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "spear_v",
@@ -2029,7 +2240,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.72,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "head_scissors",
@@ -2040,7 +2252,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.6,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "head_scissors_v",
@@ -2051,7 +2264,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.94,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "arm_catch",
@@ -2062,7 +2276,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "arm_catch_v",
@@ -2073,7 +2288,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "arm_hold",
@@ -2084,7 +2300,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "arm_hold_v",
@@ -2095,7 +2312,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "armbar_drop",
@@ -2106,7 +2324,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.3,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "armbar_drop_v",
@@ -2117,7 +2336,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.15,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "arm_break",
@@ -2128,7 +2348,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "arm_break_v",
@@ -2139,7 +2360,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.32,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "duck_behind",
@@ -2150,7 +2372,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.12,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "duck_behind_v",
@@ -2161,7 +2384,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "back_hold",
@@ -2172,7 +2396,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "back_hold_v",
@@ -2183,7 +2408,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "back_kidney",
@@ -2194,7 +2420,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "back_kidney_v",
@@ -2205,7 +2432,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "german_suplex",
@@ -2216,7 +2444,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.06,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "german_suplex_v",
@@ -2227,7 +2456,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -1.05,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "flying_knee",
@@ -2238,7 +2468,8 @@
       "loadFrame": -1,
       "reach": 1.15,
       "endShift": 0.86,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "slide_tackle",
@@ -2249,7 +2480,8 @@
       "loadFrame": -1,
       "reach": 2.1,
       "endShift": 2.12,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "shoulder_barge",
@@ -2260,7 +2492,8 @@
       "loadFrame": -1,
       "reach": 0.95,
       "endShift": 0.9,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "throw_object",
@@ -2271,7 +2504,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.2,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "sidestep",
@@ -2282,7 +2516,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "swat",
@@ -2293,7 +2528,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "chain_lash",
@@ -2304,7 +2540,8 @@
       "loadFrame": -1,
       "reach": 2.6,
       "endShift": 0.14,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "chain_drag",
@@ -2315,7 +2552,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "chain_drag_v",
@@ -2326,7 +2564,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.78,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "takedown_choke",
@@ -2337,7 +2576,8 @@
       "loadFrame": -1,
       "reach": 0.52,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "takedown_choke_v",
@@ -2348,7 +2588,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.55,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "unaware",
@@ -2359,7 +2600,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "liver_hook",
@@ -2370,7 +2612,8 @@
       "loadFrame": -1,
       "reach": 0.75,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "body_cross",
@@ -2381,7 +2624,8 @@
       "loadFrame": -1,
       "reach": 0.95,
       "endShift": 0.08,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "rear_elbow",
@@ -2392,7 +2636,8 @@
       "loadFrame": -1,
       "reach": 0.62,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "elbow_up",
@@ -2403,7 +2648,8 @@
       "loadFrame": -1,
       "reach": 0.55,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "rising_knee",
@@ -2414,7 +2660,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.04,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "overhand",
@@ -2425,7 +2672,8 @@
       "loadFrame": -1,
       "reach": 1.1,
       "endShift": 0.16,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "head_kick",
@@ -2436,7 +2684,8 @@
       "loadFrame": -1,
       "reach": 0.8,
       "endShift": 0.04,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cover_high",
@@ -2447,7 +2696,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cover_low",
@@ -2458,7 +2708,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "fold",
@@ -2469,7 +2720,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "head_back",
@@ -2480,7 +2732,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "overreach",
@@ -2491,7 +2744,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "leg_buckle",
@@ -2502,7 +2756,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "wall_slump",
@@ -2513,7 +2768,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "crossfire",
@@ -2524,7 +2780,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "crossfire_a_v",
@@ -2535,7 +2792,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -1.5,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "crossfire_b_v",
@@ -2546,7 +2804,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -1.2,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cf_knees",
@@ -2557,7 +2816,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cf_knees_a_v",
@@ -2568,7 +2828,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.72,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cf_knees_b_v",
@@ -2579,7 +2840,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.77,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cf_split",
@@ -2590,7 +2852,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cf_split_a_v",
@@ -2601,7 +2864,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.66,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cf_split_b_v",
@@ -2612,7 +2876,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.06,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cf_into",
@@ -2623,7 +2888,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cf_into_a_v",
@@ -2634,7 +2900,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 1.36,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "cf_into_b_v",
@@ -2645,7 +2912,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.64,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_far.fbx"
     },
     {
       "name": "katana_guard",
@@ -2656,7 +2924,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_walk",
@@ -2667,7 +2936,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_step",
@@ -2678,7 +2948,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_back",
@@ -2689,7 +2960,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_retreat",
@@ -2700,7 +2972,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.42,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "kesa",
@@ -2711,7 +2984,8 @@
       "loadFrame": -1,
       "reach": 1.25,
       "endShift": 0.12,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "gyaku",
@@ -2722,7 +2996,8 @@
       "loadFrame": -1,
       "reach": 1.2,
       "endShift": 0.12,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "oroshi",
@@ -2733,7 +3008,8 @@
       "loadFrame": -1,
       "reach": 1.25,
       "endShift": 0.156,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "kiriage",
@@ -2744,7 +3020,8 @@
       "loadFrame": -1,
       "reach": 1.15,
       "endShift": 0.12,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "yoko",
@@ -2755,7 +3032,8 @@
       "loadFrame": -1,
       "reach": 1.3,
       "endShift": 0.12,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "ushiro",
@@ -2766,7 +3044,8 @@
       "loadFrame": -1,
       "reach": 1.2,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "tsuki",
@@ -2777,7 +3056,8 @@
       "loadFrame": -1,
       "reach": 1.5,
       "endShift": 0.26,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "tsuki_low",
@@ -2788,7 +3068,8 @@
       "loadFrame": -1,
       "reach": 1.5,
       "endShift": 0.26,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "k_parry_high",
@@ -2799,7 +3080,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "k_parry_low",
@@ -2810,7 +3092,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "k_parry_rise",
@@ -2821,7 +3104,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "chiburi",
@@ -2832,7 +3116,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "iai_sheathe",
@@ -2843,7 +3128,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "iai_hold",
@@ -2854,7 +3140,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "iai_draw",
@@ -2865,7 +3152,8 @@
       "loadFrame": -1,
       "reach": 1.45,
       "endShift": 0.54,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_pass",
@@ -2876,7 +3164,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 3.2,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_discard",
@@ -2887,7 +3176,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "k_windup_high",
@@ -2898,7 +3188,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "k_windup_low",
@@ -2909,7 +3200,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "k_parried",
@@ -2920,7 +3212,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "cut_down",
@@ -2931,7 +3224,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.5,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "cut_down_back",
@@ -2942,7 +3236,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.64,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_run",
@@ -2953,7 +3248,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_jump",
@@ -2964,7 +3260,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_jump_run",
@@ -2975,7 +3272,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_land",
@@ -2986,7 +3284,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_air_cut",
@@ -2997,7 +3296,8 @@
       "loadFrame": -1,
       "reach": 1.35,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_crouch",
@@ -3008,7 +3308,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_sneak",
@@ -3019,7 +3320,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_takedown",
@@ -3030,7 +3332,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.15,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_pick_up",
@@ -3041,7 +3344,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_scoop",
@@ -3052,7 +3356,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_guard",
@@ -3063,7 +3368,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_walk",
@@ -3074,7 +3380,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_step",
@@ -3085,7 +3392,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_back",
@@ -3096,7 +3404,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_swing",
@@ -3107,7 +3416,8 @@
       "loadFrame": -1,
       "reach": 1.35,
       "endShift": 0.18,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_overhead",
@@ -3118,7 +3428,8 @@
       "loadFrame": -1,
       "reach": 1.2,
       "endShift": 0.16,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_rising",
@@ -3129,7 +3440,8 @@
       "loadFrame": -1,
       "reach": 1.2,
       "endShift": 0.14,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_shin",
@@ -3140,7 +3452,8 @@
       "loadFrame": -1,
       "reach": 1.3,
       "endShift": 0.1,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_jab",
@@ -3151,7 +3464,8 @@
       "loadFrame": -1,
       "reach": 1.2,
       "endShift": 0.22,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_spin",
@@ -3162,7 +3476,8 @@
       "loadFrame": -1,
       "reach": 1.6,
       "endShift": 0.26,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_backhand",
@@ -3173,7 +3488,8 @@
       "loadFrame": -1,
       "reach": 1.3,
       "endShift": 0.12,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_chop",
@@ -3184,7 +3500,8 @@
       "loadFrame": -1,
       "reach": 1.2,
       "endShift": 0.14,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_evade",
@@ -3195,7 +3512,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.55,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_coil",
@@ -3206,7 +3524,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_unwind",
@@ -3217,7 +3536,8 @@
       "loadFrame": -1,
       "reach": 1.6,
       "endShift": 0.26,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_run",
@@ -3228,7 +3548,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_jump",
@@ -3239,7 +3560,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_jump_run",
@@ -3250,7 +3572,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_land",
@@ -3261,7 +3584,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_air_smash",
@@ -3272,7 +3596,8 @@
       "loadFrame": -1,
       "reach": 1.4,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_crouch",
@@ -3283,7 +3608,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_sneak",
@@ -3294,7 +3620,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_takedown",
@@ -3305,7 +3632,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.12,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_pick_up",
@@ -3316,7 +3644,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_scoop",
@@ -3327,7 +3656,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_ends",
@@ -3338,7 +3668,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_ends_a_v",
@@ -3349,7 +3680,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.98,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_ends_b_v",
@@ -3360,7 +3692,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.5,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_scythe",
@@ -3371,7 +3704,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_scythe_a_v",
@@ -3382,7 +3716,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.42,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_scythe_b_v",
@@ -3393,7 +3728,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.42,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_windup",
@@ -3404,7 +3740,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_windup_a_v",
@@ -3415,7 +3752,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.5,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_windup_b_v",
@@ -3426,7 +3764,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.3,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_shoulder",
@@ -3437,7 +3776,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_shoulder_a_v",
@@ -3448,7 +3788,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.5,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_cf_shoulder_b_v",
@@ -3459,7 +3800,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.86,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_line",
@@ -3470,7 +3812,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_line_a_v",
@@ -3481,7 +3824,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.47,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_line_b_v",
@@ -3492,7 +3836,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.47,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_kneel",
@@ -3503,7 +3848,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_kneel_a_v",
@@ -3514,7 +3860,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.51,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_kneel_b_v",
@@ -3525,7 +3872,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.51,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_thrust",
@@ -3536,7 +3884,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_thrust_a_v",
@@ -3547,7 +3896,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.47,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_thrust_b_v",
@@ -3558,7 +3908,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.59,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_rise",
@@ -3569,7 +3920,8 @@
       "loadFrame": -1,
       "reach": 0.6,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_rise_a_v",
@@ -3580,7 +3932,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.44,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_cf_rise_b_v",
@@ -3591,7 +3944,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": -0.47,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_block_high",
@@ -3602,7 +3956,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_block_low",
@@ -3613,7 +3968,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "rod_hit",
@@ -3624,7 +3980,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_block_high",
@@ -3635,7 +3992,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_block_low",
@@ -3646,7 +4004,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "katana_hit",
@@ -3657,7 +4016,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "hand_shake",
@@ -3668,7 +4028,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     },
     {
       "name": "shin_hurt",
@@ -3679,7 +4040,8 @@
       "loadFrame": -1,
       "reach": 0.0,
       "endShift": 0.0,
-      "v4": true
+      "v4": true,
+      "file": "StickmanV4_weapons.fbx"
     }
   ]
 }
