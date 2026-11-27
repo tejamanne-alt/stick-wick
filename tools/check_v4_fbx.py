@@ -108,6 +108,15 @@ def main():
     for c in js:
         if where.get(c["name"]) != [c["file"]]: ok = False; print("  clip", c["name"], "is in", where.get(c["name"]), "- the JSON says", c["file"])
         elif c["name"] not in new[c["file"]]["clips"]: ok = False; print("  clip", c["name"], "has no curves")
+    # the rig's own node (its axis turn) must hold one value in every clip: a clip whose root curves landed on the
+    # model's root (a part file imported without its root) tipped the whole body over and threw the eyes off
+    rig = {}
+    for f, m in new.items():
+        for c, ch in m["clips"].items():
+            for (b, prop, axis), (t, v) in ch.items():
+                if b == "Stickman": rig.setdefault((prop, axis), set()).update(round(x, 3) for x in v)
+    moving = {k: v for k, v in rig.items() if len(v) > 1}
+    if moving: ok = False; print("  the rig's own node moves in some clips:", moving)
     if len(sys.argv) > 1:
         old = load(sys.argv[1]); diff = 0
         for c in old["takes"]:

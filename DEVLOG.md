@@ -2357,3 +2357,8 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - Against the pre-split file: all 362 clips are in exactly one file each, and all 81,450 key channels are identical. The skeleton is identical in all four files. The JSON timings are unchanged.
   - Every clip the game code plays exists (209 are named directly; composed names like `rod_scoop` and `cf_*_v` exist too).
   - Not checked here: playback in Unity.
+- **The enemies' eyes off the head (and the tipped bodies):** every clip also keys the rig's own node (a constant -90° axis turn). In a part file imported without its root, that key landed on the model's root.
+  - Every clip from a part file tipped the whole body over: the round blobs with an "arm up" in the street intro, and the hero as a dark column. The core clips stood it back up.
+  - An enemy's eyes are measured at spawn, after a front-kick sample to find his facing. That clip is in the story file, so the eyes were measured on the tipped body and ended up at chest height. The hero's eyes are measured in the editor and were fine.
+  - Fixed by the import rule above. As well: the facing sample (`FighterFactory.Forward` and `ClipPlayer.CalibrateFacing`) now puts back every transform it touched (`ClipPlayer.Snapshot`), so no sample can leave the body displaced before the eyes or weapons are measured.
+  - `check_v4_fbx.py` also checks that the rig's node holds one value in every clip.

@@ -74,16 +74,23 @@ namespace ProjectInk
 
         /// <summary>Which way the model faces (world, horizontal), measured exactly as
         /// ClipPlayer.CalibrateFacing does at runtime: the knee against the hips at the hit of
-        /// the front kick. Leaves the model in that pose. +X if it cannot tell.</summary>
+        /// the front kick. Leaves the model exactly as it found it (the sample can move more than the bones: the
+        /// eyes and the weapons were once measured on a body the sample had left displaced). +X if it cannot tell.</summary>
         public static Vector3 Forward(ClipPlayer player, MoveSet moves)
         {
             var kick = moves != null ? moves.Get("front_kick") : null;
             var hips = player.Bone("hips");
             var knee = player.Bone("shin.R");
             if (kick == null || kick.clip == null || hips == null || knee == null) return Vector3.right;
-            try { kick.clip.SampleAnimation(player.gameObject, kick.hitTime > 0 ? kick.hitTime : kick.Length * 0.4f); }
-            catch { return Vector3.right; }
-            var fwd = knee.position - hips.position;
+            var restore = ClipPlayer.Snapshot(player.transform);
+            Vector3 fwd;
+            try
+            {
+                kick.clip.SampleAnimation(player.gameObject, kick.hitTime > 0 ? kick.hitTime : kick.Length * 0.4f);
+                fwd = knee.position - hips.position;
+            }
+            catch { fwd = Vector3.zero; }
+            restore();
             fwd.y = 0f;
             return fwd.sqrMagnitude < 1e-4f ? Vector3.right : fwd.normalized;
         }

@@ -50,15 +50,34 @@ namespace ProjectInk
             var hips = Bone("hips");
             var knee = Bone("shin.R");
             if (kick == null || kick.clip == null || hips == null || knee == null) return;
+            // the sample may set more than the bones (the rig's own node, or this object if a clip's root curves
+            // land on it): everything goes back as it was, only the measurement is kept
+            var restore = Snapshot(transform);
             transform.localRotation = Quaternion.identity;
             kick.clip.SampleAnimation(gameObject, kick.hitTime > 0 ? kick.hitTime : kick.Length * 0.4f);
             Vector3 fwd = transform.InverseTransformPoint(knee.position) - transform.InverseTransformPoint(hips.position);
+            restore();
             fwd.y = 0f;
             if (fwd.sqrMagnitude < 1e-4f) return;
             // a pure turn about the vertical axis (FromToRotation is ambiguous for opposite vectors)
             float yaw = Vector3.SignedAngle(fwd.normalized, Vector3.right, Vector3.up);
             calibration = Quaternion.AngleAxis(yaw, Vector3.up);
             transform.localRotation = calibration;
+        }
+
+        /// <summary>Every transform under `root` (itself included) as it is now; call the result to put them back.</summary>
+        public static System.Action Snapshot(Transform root)
+        {
+            var all = root.GetComponentsInChildren<Transform>(true);
+            var p = new Vector3[all.Length];
+            var r = new Quaternion[all.Length];
+            var s = new Vector3[all.Length];
+            for (int i = 0; i < all.Length; i++) { p[i] = all[i].localPosition; r[i] = all[i].localRotation; s[i] = all[i].localScale; }
+            return () =>
+            {
+                for (int i = 0; i < all.Length; i++)
+                    if (all[i] != null) { all[i].localPosition = p[i]; all[i].localRotation = r[i]; all[i].localScale = s[i]; }
+            };
         }
 
         /// <summary>The parent just turned round instantly: ease the body round instead.</summary>
