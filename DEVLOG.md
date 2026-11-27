@@ -2368,3 +2368,8 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - Now facing is read from the feet in the rest pose (foot to toes, from the mesh's bind poses), so no clip has to play.
   - Bodies without toes (the older ones) still use the kick, but a kick that doesn't move the knee 20 cm forward is rejected with a warning instead of turning the body.
   - `FighterFactory.Forward` (eyes, scar, weapons) reads the feet the same way.
+- **The everyday walk rebuilt.** Every scene's walking (58 uses: the men from the car, the guard, Pell, the Driver, the hero in cutscenes) played `walk`: the first body's four-pose walk, carried over unchanged. It had short (0.41 m), flat-footed steps, a stiff trunk with almost no rise, and one arm swinging bent.
+  - It's now made by the V4 gait engine like the hero's own walk (`v4_moves.py` `walk`): heel first, rolling through to a push off the toes, a 3.6 cm rise over each foot, 0.46 m steps, upright with the head level, open relaxed hands, an even 40 cm arm swing, and the shoulders turning against the hips.
+  - It's made at the old walk's measured ground speed (1.18 m/s), so every scene's hand-tuned playback rate still keeps the feet planted.
+  - `walk` moved from the story file into the body's file. The other 361 clips are unchanged (`check_v4_fbx.py`).
+  - **The hero walks his own walk in the scenes:** `ClipPlayer.Substitute` plays `walk_alone` wherever a scene asks him to `walk`, at 1.18/1.25 of the rate, so his feet stay planted at the scene's pace.

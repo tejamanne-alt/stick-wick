@@ -273,14 +273,6 @@
       "file": "StickmanV4_story.fbx"
     },
     {
-      "name": "walk",
-      "frames": 24,
-      "fps": 30,
-      "loop": true,
-      "hitFrame": -1,
-      "file": "StickmanV4_story.fbx"
-    },
-    {
       "name": "trip",
       "frames": 22,
       "fps": 30,
@@ -1790,6 +1782,18 @@
     {
       "name": "walk_alone",
       "frames": 26,
+      "fps": 30,
+      "loop": true,
+      "hitFrame": -1,
+      "loadFrame": -1,
+      "reach": 0.0,
+      "endShift": 0.0,
+      "v4": true,
+      "file": "StickmanV4.fbx"
+    },
+    {
+      "name": "walk",
+      "frames": 24,
       "fps": 30,
       "loop": true,
       "hitFrame": -1,

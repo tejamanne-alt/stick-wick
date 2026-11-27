@@ -117,6 +117,18 @@ CLIPS["walk_alone"] = clip(26, gait(26, WALK_SPEED, duty=0.6, lift=0.06, hz=0.66
                                     spine=177, chest=172, neck=168, head=173, arm_base=1, arm_amp=19, elbow=11, fist=90,
                                     twist=7, strike=-18, push=38),
                            loop=True, speed=WALK_SPEED, note="the Wick walk: composed, purposeful; heel planted, chest leading, chin down, loose hands")
+# THE EVERYDAY WALK (anyone walking in a scene: the men from the car, the guard, Pell, the Driver, Harrow; on the
+# hero his own walk stands in for it, ClipPlayer.Substitute). It replaces the first body's four-pose walk (short flat-
+# footed steps, a stiff trunk, one arm swinging bent). An ordinary man's unhurried walk, made at that walk's ground
+# speed (1.18 m/s: what every scene's playback rate was tuned to, so no scene's feet skate): heel first, rolling
+# through to the toes; a rise over each foot; upright, the head level and eyes front (not the hero's chest-led lean);
+# open relaxed hands and an easy swing from the shoulder, a little further forward than back; the shoulders turning
+# a touch against the hips.
+EVERYDAY_SPEED = 1.18
+CLIPS["walk"] = clip(24, gait(24, EVERYDAY_SPEED, duty=0.61, lift=0.055, hz=0.666, bounce=0.018, bounce_low_at_mid=False,
+                              spine=179, chest=176, neck=172, head=176, arm_base=3, arm_amp=24, elbow=14, fist=60,
+                              twist=8, strike=-15, push=34, hands_relaxed=True),
+                     loop=True, speed=EVERYDAY_SPEED, note="the everyday walk: unhurried, upright, heel to toe, an easy arm swing")
 # THE RUN (TAP, THEN HOLD): one run for every pace from the first stride (3.4 m/s) to flat out (4.6), made
 # at 4 m/s so the feet stay planted across the range. A flight phase, a midfoot landing under the hips,
 # leaning in from the ankles, the head steady and level, the arms bent near ninety and driving forward and

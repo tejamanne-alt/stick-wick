@@ -156,9 +156,23 @@ namespace ProjectInk
 
         public bool Has(string clipName) => moves != null && moves.Get(clipName) != null;
 
+        /// <summary>Clips this body plays in another's place, at a rate: on the hero, his own walk wherever a scene
+        /// asks for "walk" (HeroController), slowed to the everyday walk's ground speed so his feet stay planted.</summary>
+        System.Collections.Generic.Dictionary<string, (string clip, float rate)> standIns;
+
+        /// <summary>Whenever `asked` is played, play `clip` instead, its rate multiplied by `rate` (a no-op if this
+        /// body has no `clip`).</summary>
+        public void Substitute(string asked, string clip, float rate)
+        {
+            if (!Has(clip)) return;
+            standIns ??= new System.Collections.Generic.Dictionary<string, (string, float)>();
+            standIns[asked] = (clip, rate);
+        }
+
         /// <summary>Play a clip by name, blending from whatever is playing now.</summary>
         public MoveSet.Entry Play(string clipName, float crossfade = 0.1f, bool restart = true, float speed = 1f)
         {
+            if (standIns != null && standIns.TryGetValue(clipName, out var stand)) { clipName = stand.clip; speed *= stand.rate; }
             var entry = moves != null ? moves.Get(clipName) : null;
             if (entry == null || entry.clip == null)
             {

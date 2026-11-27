@@ -94,7 +94,13 @@ namespace ProjectInk
             HeroSpot.Attach(this);                                          // the spotlight pool that marks the hero
             SetTrails(false);
             ApplyStyleVisuals();
+            // in the scenes he walks his own walk (the Wick walk), not the everyday walk the others use: slowed by the
+            // two walks' ground speeds (1.18 against 1.25 m/s), so every scene's tuned pace keeps his feet planted
+            body.Substitute("walk", "walk_alone", EverydayWalkSpeed / WalkSpeed);
         }
+
+        /// <summary>The everyday walk's ground speed ("walk", tools/blender/v4_moves.py EVERYDAY_SPEED).</summary>
+        const float EverydayWalkSpeed = 1.18f;
 
         void Start()
         {
