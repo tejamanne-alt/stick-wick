@@ -2362,3 +2362,9 @@ While a scene plays by itself (the hero locked, no prompt waiting), two buttons 
   - An enemy's eyes are measured at spawn, after a front-kick sample to find his facing. That clip is in the story file, so the eyes were measured on the tipped body and ended up at chest height. The hero's eyes are measured in the editor and were fine.
   - Fixed by the import rule above. As well: the facing sample (`FighterFactory.Forward` and `ClipPlayer.CalibrateFacing`) now puts back every transform it touched (`ClipPlayer.Snapshot`), so no sample can leave the body displaced before the eyes or weapons are measured.
   - `check_v4_fbx.py` also checks that the rig's node holds one value in every clip.
+- **Everyone facing the screen, "hands raised":** a fighter learns which way his body faces at spawn (`ClipPlayer.CalibrateFacing`): it played the front kick and measured hips to knee. `front_kick` is in the story file, so it didn't play. The knee stayed where it stands, 9 cm to the side of the hips, and that sideways offset was taken for "forward". Every body was turned 90° to face the camera.
+  - Seen from the front, the boxing guard's two fists beside the face read as raised hands.
+  - The intro's one-arm-up thugs were the tipped bodies (above).
+  - Now facing is read from the feet in the rest pose (foot to toes, from the mesh's bind poses), so no clip has to play.
+  - Bodies without toes (the older ones) still use the kick, but a kick that doesn't move the knee 20 cm forward is rejected with a warning instead of turning the body.
+  - `FighterFactory.Forward` (eyes, scar, weapons) reads the feet the same way.

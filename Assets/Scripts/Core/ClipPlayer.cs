@@ -41,11 +41,16 @@ namespace ProjectInk
             return null;
         }
 
-        /// <summary>Rotate this model so its kicks and punches point along the parent's +X.
-        /// Measured from the clips themselves, so it is right whatever axis conversion the
-        /// FBX import applied.</summary>
+        /// <summary>Rotate this model so its kicks and punches point along the parent's +X (the fight runs along x;
+        /// the camera sees him side on). Measured from the body itself (its feet in the rest pose; the older bodies,
+        /// with no toes: the knee at a front kick's hit), so it is right whatever axis conversion the import applied.</summary>
         public void CalibrateFacing()
         {
+            // the feet: in the rest pose they point the way he faces (foot -> toes), read from the skinned mesh's
+            // bind poses, so no clip has to play. (Measured from a kick alone, a kick that did not play once left
+            // the knee where it stands, its 9 cm to the side of the hips, and every body turned to face the screen.)
+            var rest = RestForward();
+            if (rest.sqrMagnitude > 0f) { SetCalibration(rest); return; }
             var kick = moves != null ? moves.Get("front_kick") : null;
             var hips = Bone("hips");
             var knee = Bone("shin.R");
@@ -58,11 +63,44 @@ namespace ProjectInk
             Vector3 fwd = transform.InverseTransformPoint(knee.position) - transform.InverseTransformPoint(hips.position);
             restore();
             fwd.y = 0f;
-            if (fwd.sqrMagnitude < 1e-4f) return;
+            // at the kick's hit the knee is well out in front (30 cm and more); less, and the kick did not play
+            if (fwd.magnitude < 0.2f) { Debug.LogWarning($"[ClipPlayer] {transform.parent?.name}: can't tell which way the body faces (front_kick did not move the knee); left as imported"); return; }
+            SetCalibration(fwd);
+        }
+
+        void SetCalibration(Vector3 fwd)
+        {
+            fwd.y = 0f;
             // a pure turn about the vertical axis (FromToRotation is ambiguous for opposite vectors)
             float yaw = Vector3.SignedAngle(fwd.normalized, Vector3.right, Vector3.up);
             calibration = Quaternion.AngleAxis(yaw, Vector3.up);
             transform.localRotation = calibration;
+        }
+
+        /// <summary>The way the body faces in its rest pose, in this object's own space with no calibration (level):
+        /// the feet point forward, foot to toes, both feet, taken from the skinned mesh's bind poses (whatever pose the
+        /// bones are in now). Zero if the rig has no toes (the older bodies) or the bind poses can't be read.</summary>
+        public Vector3 RestForward()
+        {
+            var smr = GetComponentInChildren<SkinnedMeshRenderer>(true);
+            if (smr == null || smr.sharedMesh == null) return Vector3.zero;
+            Matrix4x4[] bind;
+            try { bind = smr.sharedMesh.bindposes; } catch { return Vector3.zero; }
+            var bones = smr.bones;
+            if (bind == null || bones == null || bind.Length != bones.Length) return Vector3.zero;
+            int Find(string n) { for (int i = 0; i < bones.Length; i++) if (bones[i] != null && bones[i].name == n) return i; return -1; }
+            var sum = Vector3.zero;
+            foreach (var side in new[] { "L", "R" })
+            {
+                int f = Find("foot." + side), t = Find("toes." + side);
+                if (f < 0 || t < 0) continue;
+                // a bone's rest position in the mesh's space: its bind pose undone, applied to its origin
+                sum += bind[t].inverse.MultiplyPoint3x4(Vector3.zero) - bind[f].inverse.MultiplyPoint3x4(Vector3.zero);
+            }
+            // mesh space -> this object's space, as if it were not turned at all
+            var dir = Quaternion.Inverse(transform.rotation) * smr.transform.TransformDirection(sum);
+            dir.y = 0f;
+            return dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.zero;
         }
 
         /// <summary>Every transform under `root` (itself included) as it is now; call the result to put them back.</summary>

@@ -78,6 +78,9 @@ namespace ProjectInk
         /// eyes and the weapons were once measured on a body the sample had left displaced). +X if it cannot tell.</summary>
         public static Vector3 Forward(ClipPlayer player, MoveSet moves)
         {
+            // the feet in the rest pose (foot -> toes), as ClipPlayer.CalibrateFacing reads them: no clip has to play
+            var rest = player.RestForward();
+            if (rest.sqrMagnitude > 0f) { var w = player.transform.rotation * rest; w.y = 0f; return w.normalized; }
             var kick = moves != null ? moves.Get("front_kick") : null;
             var hips = player.Bone("hips");
             var knee = player.Bone("shin.R");
@@ -92,7 +95,7 @@ namespace ProjectInk
             catch { fwd = Vector3.zero; }
             restore();
             fwd.y = 0f;
-            return fwd.sqrMagnitude < 1e-4f ? Vector3.right : fwd.normalized;
+            return fwd.magnitude < 0.2f ? Vector3.right : fwd.normalized;     // (a kick that did not play: the knee 9 cm to the side)
         }
 
         /// <summary>Put a model into its bind (rest) pose, from the skinned mesh's bind poses,
